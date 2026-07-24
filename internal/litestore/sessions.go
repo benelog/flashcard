@@ -111,17 +111,8 @@ func (s *Store) RecordReview(ctx context.Context, userID, sessionID, cardID uuid
 }
 
 func (s *Store) FinishSession(ctx context.Context, userID, sessionID uuid.UUID, completed bool) error {
-	res, err := s.db.ExecContext(ctx,
+	return requireRowAffected(s.db.ExecContext(ctx,
 		`update study_sessions set ended_at = ?, completed = ?
 		 where user_id = ? and id = ?`,
-		fmtTime(time.Now()), completed, userID.String(), sessionID.String())
-	if err != nil {
-		return err
-	}
-	if n, err := res.RowsAffected(); err != nil {
-		return err
-	} else if n == 0 {
-		return store.ErrNotFound
-	}
-	return nil
+		fmtTime(time.Now()), completed, userID.String(), sessionID.String()))
 }

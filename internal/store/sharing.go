@@ -49,7 +49,7 @@ const shareSlugLen = 5
 
 var shareSlugSpace = new(big.Int).Exp(big.NewInt(36), big.NewInt(shareSlugLen), nil)
 
-func newShareSlug() string {
+func NewShareSlug() string {
 	n, err := rand.Int(rand.Reader, shareSlugSpace)
 	if err != nil {
 		panic("crypto/rand failed: " + err.Error())
@@ -74,7 +74,7 @@ func (s *Store) ShareDeck(ctx context.Context, userID, deckID uuid.UUID) (ShareI
 			   shared_at = coalesce(shared_at, now())
 			 where user_id = $1 and id = $2
 			 returning share_slug, shared_at`,
-			userID, deckID, newShareSlug()).
+			userID, deckID, NewShareSlug()).
 			Scan(&info.ShareSlug, &info.SharedAt)
 		if errors.Is(err, pgx.ErrNoRows) {
 			return info, ErrNotFound
@@ -94,16 +94,9 @@ func isUniqueViolation(err error) bool {
 }
 
 func (s *Store) UnshareDeck(ctx context.Context, userID, deckID uuid.UUID) error {
-	tag, err := s.pool.Exec(ctx,
+	return requireRowAffected(s.pool.Exec(ctx,
 		`update decks set share_slug = null, shared_at = null
-		 where user_id = $1 and id = $2`, userID, deckID)
-	if err != nil {
-		return err
-	}
-	if tag.RowsAffected() == 0 {
-		return ErrNotFound
-	}
-	return nil
+		 where user_id = $1 and id = $2`, userID, deckID))
 }
 
 const sharedDeckSelect = `

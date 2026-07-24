@@ -17,33 +17,48 @@ func isNotFound(err error) bool {
 	return errors.Is(err, store.ErrNotFound)
 }
 
+// funcMap은 템플릿 안에서 부를 수 있는 함수 목록이다. 왼쪽 이름이 템플릿 표기,
+// 오른쪽이 실제 함수다.
+// tag::func-map[]
 var funcMap = template.FuncMap{
-	"icon":      icon,
-	"asset":     asset,
-	"hasPrefix": strings.HasPrefix,
-	"deref":     deref,
-	"pct":       pct,
-	"pct100":    func(f float64) int { return int(math.Round(f * 100)) },
-	"add":       func(a, b int) int { return a + b },
-	"koDate":    koDate,
-	"ruleLabel": ruleLabelJSON,
-	"ruleRaw":   func(raw json.RawMessage) string { return string(raw) },
-	"typeLabel": typeLabel,
+	"icon":         icon,
+	"asset":        asset,
+	"hasPrefix":    strings.HasPrefix,
+	"orEmpty":      orEmpty,
+	"percent":      percent,
+	"ratioPercent": ratioPercent,
+	"add":          func(a, b int) int { return a + b },
+	"koDate":       koDate,
+	"ruleLabel":    ruleLabelJSON,
+	"ruleRaw":      func(raw json.RawMessage) string { return string(raw) },
+	"typeLabel":    typeLabel,
 }
 
-func deref(s *string) string {
+// end::func-map[]
+
+// orEmpty prints an optional (nullable) field: 값이 없으면 빈칸이다. 템플릿에서
+// nil 포인터를 그대로 쓰면 "<nil>"이 찍히기 때문에 반드시 거쳐야 한다.
+func orEmpty(s *string) string {
 	if s == nil {
 		return ""
 	}
 	return *s
 }
 
-// pct returns round(a/b*100), guarding the empty case.
-func pct(a, b int) int {
-	if b == 0 {
+// tag::percent[]
+// percent returns round(part/whole*100), guarding the empty case.
+func percent(part, whole int) int {
+	if whole == 0 {
 		return 0
 	}
-	return int(math.Round(float64(a) / float64(b) * 100))
+	return int(math.Round(float64(part) / float64(whole) * 100))
+}
+
+// end::percent[]
+
+// ratioPercent turns a stored 0~1 ratio (오답률 같은 값) into a percentage.
+func ratioPercent(ratio float64) int {
+	return int(math.Round(ratio * 100))
 }
 
 // koDate formats a timestamp the way the shared-deck gallery shows it.

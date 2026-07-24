@@ -5,6 +5,7 @@ import (
 	"time"
 )
 
+// tag::correct-progression[]
 var now = time.Date(2026, 7, 7, 12, 0, 0, 0, time.UTC)
 
 func TestCorrectProgression(t *testing.T) {
@@ -22,6 +23,7 @@ func TestCorrectProgression(t *testing.T) {
 			t.Fatalf("rep %d: due = %v, want %v", i+1, due, wantDue)
 		}
 	}
+	// end::correct-progression[]
 	if s.Repetitions != 4 {
 		t.Fatalf("repetitions = %d, want 4", s.Repetitions)
 	}
@@ -49,6 +51,7 @@ func TestLapseResets(t *testing.T) {
 	}
 }
 
+// tag::ease-floor[]
 func TestEaseFloor(t *testing.T) {
 	s := NewState()
 	for range 10 {
@@ -58,3 +61,5 @@ func TestEaseFloor(t *testing.T) {
 		t.Fatalf("ease = %v, want floor %v", s.EaseFactor, MinEase)
 	}
 }
+
+// end::ease-floor[]

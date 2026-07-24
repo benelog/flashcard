@@ -104,14 +104,7 @@ func (s *Store) RecordReview(ctx context.Context, userID, sessionID, cardID uuid
 }
 
 func (s *Store) FinishSession(ctx context.Context, userID, sessionID uuid.UUID, completed bool) error {
-	tag, err := s.pool.Exec(ctx,
+	return requireRowAffected(s.pool.Exec(ctx,
 		`update study_sessions set ended_at = now(), completed = $3
-		 where user_id = $1 and id = $2`, userID, sessionID, completed)
-	if err != nil {
-		return err
-	}
-	if tag.RowsAffected() == 0 {
-		return ErrNotFound
-	}
-	return nil
+		 where user_id = $1 and id = $2`, userID, sessionID, completed))
 }

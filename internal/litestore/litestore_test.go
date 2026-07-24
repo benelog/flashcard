@@ -13,6 +13,7 @@ import (
 	"github.com/benelog/flashcard/internal/store"
 )
 
+// tag::fixture[]
 func testStore(t *testing.T) (*Store, uuid.UUID) {
 	t.Helper()
 	s, err := Open(filepath.Join(t.TempDir(), "test.db"))
@@ -26,6 +27,8 @@ func testStore(t *testing.T) (*Store, uuid.UUID) {
 	}
 	return s, userID
 }
+
+// end::fixture[]
 
 func mustDeck(t *testing.T, s *Store, userID uuid.UUID, name string) store.Deck {
 	t.Helper()
@@ -307,6 +310,7 @@ func TestSmartRules(t *testing.T) {
 		}
 	}
 
+	// tag::subtest-table[]
 	tests := []struct {
 		name string
 		rule smartrules.Rule
@@ -318,6 +322,7 @@ func TestSmartRules(t *testing.T) {
 		{"stale nulls first",
 			smartrules.Rule{Type: smartrules.Stale, NotReviewedDays: 7, Limit: 20},
 			[]string{"alpha", "beta"}},
+		// end::subtest-table[]
 		{"tag overlap",
 			smartrules.Rule{Type: smartrules.Tag, Tags: []string{"verb", "adj"}, Limit: 20},
 			[]string{"alpha"}},
@@ -325,9 +330,11 @@ func TestSmartRules(t *testing.T) {
 			smartrules.Rule{Type: smartrules.Recent, AddedWithinDays: 7, Limit: 20},
 			[]string{"beta", "alpha"}},
 	}
+	// tag::subtest-run[]
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			cards, err := s.CardsByRule(ctx, userID, tt.rule)
+			// end::subtest-run[]
 			if err != nil {
 				t.Fatal(err)
 			}

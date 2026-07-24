@@ -17,6 +17,7 @@ const (
 	Recent    RuleType = "recent"
 )
 
+// tag::rule[]
 type Rule struct {
 	Type            RuleType `json:"type"`
 	MinAttempts     int      `json:"minAttempts,omitempty"`
@@ -27,6 +28,9 @@ type Rule struct {
 	Limit           int      `json:"limit,omitempty"`
 }
 
+// end::rule[]
+
+// tag::parse[]
 func Parse(raw []byte) (Rule, error) {
 	var r Rule
 	if err := json.Unmarshal(raw, &r); err != nil {
@@ -35,6 +39,9 @@ func Parse(raw []byte) (Rule, error) {
 	return r, r.Validate()
 }
 
+// end::parse[]
+
+// tag::validate-head[]
 func (r *Rule) Validate() error {
 	if r.Limit <= 0 || r.Limit > 200 {
 		r.Limit = 20
@@ -44,6 +51,7 @@ func (r *Rule) Validate() error {
 		if r.MinAttempts <= 0 {
 			r.MinAttempts = 3
 		}
+		// end::validate-head[]
 		if r.MinErrorRate <= 0 || r.MinErrorRate > 1 {
 			r.MinErrorRate = 0.4
 		}
@@ -51,10 +59,12 @@ func (r *Rule) Validate() error {
 		if r.NotReviewedDays <= 0 {
 			r.NotReviewedDays = 7
 		}
+	// tag::validate-tag[]
 	case Tag:
 		if len(r.Tags) == 0 {
 			return fmt.Errorf("tag rule requires tags")
 		}
+	// end::validate-tag[]
 	case Recent:
 		if r.AddedWithinDays <= 0 {
 			r.AddedWithinDays = 7

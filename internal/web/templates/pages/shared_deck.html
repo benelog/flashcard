@@ -4,12 +4,12 @@
   <a class="btn btn-icon" href="/shared" aria-label="뒤로">{{icon "chev-left"}}</a>
   <div class="fill">
     <h1 class="truncate title-sm">{{$deck.Name}}</h1>
-    <p class="tiny muted flat">{{if $deck.OwnerName}}{{deref $deck.OwnerName}}{{else}}익명{{end}} 님의 공유 덱 · {{$deck.CardCount}}장</p>
+    <p class="tiny muted flat">{{if $deck.OwnerName}}{{orEmpty $deck.OwnerName}}{{else}}익명{{end}} 님의 공유 덱 · {{$deck.CardCount}}장</p>
   </div>
 </header>
 
 {{if $deck.Description}}
-<p class="small flat">{{deref $deck.Description}}</p>
+<p class="small flat">{{orEmpty $deck.Description}}</p>
 {{end}}
 
 {{if .LoggedIn}}

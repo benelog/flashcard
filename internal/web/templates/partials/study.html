@@ -8,9 +8,9 @@
 <input type="hidden" name="queue" value="{{.QueueJoined}}">
 <input type="hidden" name="missed" value="{{.MissedJoined}}">
 <input type="hidden" name="round" value="{{.State.Round}}">
-<input type="hidden" name="round_len" value="{{.State.RoundLen}}">
-<input type="hidden" name="fp_total" value="{{.State.FPTotal}}">
-<input type="hidden" name="fp_correct" value="{{.State.FPCorrect}}">
+<input type="hidden" name="round_len" value="{{.State.RoundCards}}">
+<input type="hidden" name="fp_total" value="{{.State.FirstPassTotal}}">
+<input type="hidden" name="fp_correct" value="{{.State.FirstPassCorrect}}">
 <input type="hidden" name="tts_rate" value="{{.State.TtsRate}}">
 {{end}}
 
@@ -26,7 +26,7 @@
     <div class="finish-icon">{{icon "party"}}</div>
     <h2 class="study-end-title done">학습 완료!</h2>
     <div class="stat-3">
-      <div class="stat-box"><div class="stat-num">{{.State.FPTotal}}장</div><div class="stat-label">카드</div></div>
+      <div class="stat-box"><div class="stat-num">{{.State.FirstPassTotal}}장</div><div class="stat-label">카드</div></div>
       <div class="stat-box"><div class="stat-num">{{.Accuracy}}%</div><div class="stat-label">1차 정답률</div></div>
       <div class="stat-box"><div class="stat-num">{{.State.Round}}</div><div class="stat-label">라운드</div></div>
     </div>
@@ -53,7 +53,7 @@
         <button class="btn btn-icon" aria-label="그만하기">{{icon "x"}}</button>
       </form>
       <span class="study-title">{{.State.Title}}</span>
-      <span>{{if gt .State.Round 1}}{{.State.Round}}R · {{end}}{{add .Index 1}}/{{.State.RoundLen}}</span>
+      <span>{{if gt .State.Round 1}}{{.State.Round}}R · {{end}}{{add .Index 1}}/{{.State.RoundCards}}</span>
     </div>
 
     <div class="progress"><div class="progress-bar" style="width:{{.ProgressPct}}%"></div></div>
@@ -73,7 +73,7 @@
             </div>
             <div class="face-center">
               <p class="question">{{if $textFirst}}{{.Text}}{{else}}{{.Meaning}}{{end}}</p>
-              {{if and $textFirst .Phonetic}}<p class="small muted">{{deref .Phonetic}}</p>{{end}}
+              {{if and $textFirst .Phonetic}}<p class="small muted">{{orEmpty .Phonetic}}</p>{{end}}
             </div>
             <p class="tiny faint center hint">탭해서 정답 보기</p>
           </div>
@@ -84,9 +84,9 @@
             </div>
             <div class="face-center">
               <p class="answer">{{if $textFirst}}{{.Meaning}}{{else}}{{.Text}}{{end}}</p>
-              {{if and (not $textFirst) .Phonetic}}<p class="small muted">{{deref .Phonetic}}</p>{{end}}
-              {{if .Example}}<p class="example">{{deref .Example}}</p>{{end}}
-              {{if .Notes}}<p class="tiny muted">{{deref .Notes}}</p>{{end}}
+              {{if and (not $textFirst) .Phonetic}}<p class="small muted">{{orEmpty .Phonetic}}</p>{{end}}
+              {{if .Example}}<p class="example">{{orEmpty .Example}}</p>{{end}}
+              {{if .Notes}}<p class="tiny muted">{{orEmpty .Notes}}</p>{{end}}
             </div>
           </div>
         </div>

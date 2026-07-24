@@ -56,14 +56,19 @@ func (s *Store) CardsByRule(ctx context.Context, userID uuid.UUID, rule smartrul
 	if err != nil {
 		return nil, err
 	}
-	ids := []string{}
+	ids := []uuid.UUID{}
 	for rows.Next() {
 		var id string
 		if err := rows.Scan(&id); err != nil {
 			rows.Close()
 			return nil, err
 		}
-		ids = append(ids, id)
+		parsed, err := uuid.Parse(id)
+		if err != nil {
+			rows.Close()
+			return nil, err
+		}
+		ids = append(ids, parsed)
 	}
 	rows.Close()
 	if err := rows.Err(); err != nil {
@@ -76,7 +81,7 @@ func (s *Store) CardsByRule(ctx context.Context, userID uuid.UUID, rule smartrul
 	args = make([]any, 0, len(ids)+1)
 	args = append(args, userID.String())
 	for _, id := range ids {
-		args = append(args, id)
+		args = append(args, id.String())
 	}
 	rows, err = s.db.QueryContext(ctx,
 		cardSelect+` where user_id = ? and id in (`+placeholders(len(ids))+`)`, args...)
@@ -87,17 +92,7 @@ func (s *Store) CardsByRule(ctx context.Context, userID uuid.UUID, rule smartrul
 	if err != nil {
 		return nil, err
 	}
-	byID := make(map[string]store.Card, len(cards))
-	for _, c := range cards {
-		byID[c.ID.String()] = c
-	}
-	ordered := make([]store.Card, 0, len(cards))
-	for _, id := range ids {
-		if c, ok := byID[id]; ok {
-			ordered = append(ordered, c)
-		}
-	}
-	return ordered, nil
+	return store.SortCardsByIDOrder(cards, ids), nil
 }
 
 func (s *Store) CountByRule(ctx context.Context, userID uuid.UUID, rule smartrules.Rule) (int, error) {

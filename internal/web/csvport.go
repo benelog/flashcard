@@ -1,130 +1,61 @@
 package web
 
 import (
-	"encoding/csv"
 	"fmt"
-	"io"
-	"net/http"
-	"strings"
 
 	"github.com/gin-gonic/gin"
 
 	"github.com/benelog/flashcard/internal/auth"
+	"github.com/benelog/flashcard/internal/cardcsv"
 	"github.com/benelog/flashcard/internal/store"
 )
 
-// parseCSVCards reads an uploaded deck CSV. The header row names the columns
-// (text,meaning,type,tags,phonetic,example — 옛 내보내기의 front,back 헤더도
-// 인식한다); 태그는 | 로 구분한다.
-func parseCSVCards(r io.Reader) (cards []store.CardInput, invalid int, err error) {
-	reader := csv.NewReader(r)
-	reader.FieldsPerRecord = -1 // 행마다 열 수가 달라도 허용
-	reader.LazyQuotes = true
-
-	header, err := reader.Read()
-	if err != nil {
-		return nil, 0, fmt.Errorf("CSV 헤더를 읽지 못했어요: %w", err)
-	}
-	col := map[string]int{}
-	for i, name := range header {
-		name = strings.ToLower(strings.TrimSpace(strings.TrimPrefix(name, "\uFEFF")))
-		col[name] = i
-	}
-	pick := func(row []string, names ...string) string {
-		for _, n := range names {
-			if i, ok := col[n]; ok && i < len(row) {
-				if v := strings.TrimSpace(row[i]); v != "" {
-					return v
-				}
-			}
-		}
-		return ""
-	}
-
-	for {
-		row, rerr := reader.Read()
-		if rerr == io.EOF {
-			break
-		}
-		if rerr != nil {
-			invalid++
-			continue
-		}
-		text := pick(row, "text", "front")
-		meaning := pick(row, "meaning", "back")
-		if text == "" || meaning == "" {
-			invalid++
-			continue
-		}
-		cardType := strings.ToLower(pick(row, "type"))
-		switch cardType {
-		case "word", "sentence", "idiom", "concept":
-		default:
-			cardType = "word"
-		}
-		cards = append(cards, store.CardInput{
-			Text:     text,
-			Meaning:  meaning,
-			CardType: cardType,
-			Tags:     splitTags(pick(row, "tags"), "|"),
-			Phonetic: optField(pick(row, "phonetic")),
-			Example:  optField(pick(row, "example")),
-		})
-	}
-	return cards, invalid, nil
-}
-
-// importCSV handles the deck page's file-upload form.
+// importCSV handles the deck page's file-upload form. 실패는 모두 덱 화면으로
+// 되돌아가며 플래시 메시지로 알린다.
 func (w *Web) importCSV(c *gin.Context) {
 	slug := c.Param("slug")
-	back := "/decks/" + slug
+	deckURL := "/decks/" + slug
 
 	file, _, err := c.Request.FormFile("file")
 	if err != nil {
-		setFlash(c, "error", "CSV 파일을 선택해주세요")
-		c.Redirect(http.StatusSeeOther, back)
+		redirectWithFlash(c, flashError, "CSV 파일을 선택해주세요", deckURL)
 		return
 	}
 	defer file.Close()
 
-	cards, invalid, err := parseCSVCards(file)
+	cards, dropped, err := cardcsv.Parse(file)
 	if err != nil {
-		setFlash(c, "error", "CSV 파일을 읽지 못했어요")
-		c.Redirect(http.StatusSeeOther, back)
+		redirectWithFlash(c, flashError, "CSV 파일을 읽지 못했어요", deckURL)
 		return
 	}
 	if len(cards) == 0 {
-		msg := "가져올 카드가 없어요. text,meaning (또는 front,back) 헤더가 있는 CSV인지 확인해주세요"
-		if invalid > 0 {
-			msg += fmt.Sprintf(" (%d행 오류)", invalid)
+		message := "가져올 카드가 없어요. text,meaning (또는 front,back) 헤더가 있는 CSV인지 확인해주세요"
+		if dropped > 0 {
+			message += fmt.Sprintf(" (%d행 오류)", dropped)
 		}
-		setFlash(c, "error", msg)
-		c.Redirect(http.StatusSeeOther, back)
+		redirectWithFlash(c, flashError, message, deckURL)
 		return
 	}
-	if len(cards) > 2000 {
-		setFlash(c, "error", "한 번에 2000장까지만 가져올 수 있어요")
-		c.Redirect(http.StatusSeeOther, back)
+	if len(cards) > store.MaxBulkCards {
+		redirectWithFlash(c, flashError,
+			fmt.Sprintf("한 번에 %d장까지만 가져올 수 있어요", store.MaxBulkCards), deckURL)
 		return
 	}
 
-	userID := auth.UserID(c)
-	deckID, err := w.store.DeckIDBySlug(c.Request.Context(), userID, slug)
+	deckID, ok := w.deckIDFromPath(c)
+	if !ok {
+		return
+	}
+	added, err := w.store.BulkCreateCards(c.Request.Context(), auth.UserID(c), deckID, cards)
 	if err != nil {
 		w.failPage(c, err)
 		return
 	}
-	res, err := w.store.BulkCreateCards(c.Request.Context(), userID, deckID, cards)
-	if err != nil {
-		w.failPage(c, err)
-		return
+	message := fmt.Sprintf("%d개 추가, %d개 중복 건너뜀", added.Added, added.Skipped)
+	if dropped > 0 {
+		message += fmt.Sprintf(", %d개 오류", dropped)
 	}
-	msg := fmt.Sprintf("%d개 추가, %d개 중복 건너뜀", res.Added, res.Skipped)
-	if invalid > 0 {
-		msg += fmt.Sprintf(", %d개 오류", invalid)
-	}
-	setFlash(c, "info", msg)
-	c.Redirect(http.StatusSeeOther, back)
+	redirectWithFlash(c, flashInfo, message, deckURL)
 }
 
 // exportCSV streams the deck as CSV, same format as the API's /export.
@@ -143,14 +74,7 @@ func (w *Web) exportCSV(c *gin.Context) {
 
 	c.Header("Content-Type", "text/csv; charset=utf-8")
 	c.Header("Content-Disposition", fmt.Sprintf("attachment; filename=%q", "deck-"+deck.Slug+".csv"))
-	c.Writer.Write([]byte{0xEF, 0xBB, 0xBF}) // UTF-8 BOM (Excel 호환)
-	cw := csv.NewWriter(c.Writer)
-	cw.Write([]string{"text", "meaning", "type", "tags", "phonetic", "example"})
-	for _, card := range cards {
-		cw.Write([]string{
-			card.Text, card.Meaning, card.CardType,
-			strings.Join(card.Tags, "|"), deref(card.Phonetic), deref(card.Example),
-		})
+	if err := cardcsv.Write(c.Writer, cards); err != nil {
+		_ = c.Error(err)
 	}
-	cw.Flush()
 }

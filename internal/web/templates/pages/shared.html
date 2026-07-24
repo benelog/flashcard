@@ -15,8 +15,8 @@
       </span>
       <span class="small muted no-shrink">{{.CardCount}}장</span>
     </div>
-    <p class="tiny muted deck-card-desc">{{if .OwnerName}}{{deref .OwnerName}}{{else}}익명{{end}} · {{koDate .SharedAt}}</p>
-    {{if .Description}}<p class="truncate small muted deck-card-desc">{{deref .Description}}</p>{{end}}
+    <p class="tiny muted deck-card-desc">{{if .OwnerName}}{{orEmpty .OwnerName}}{{else}}익명{{end}} · {{koDate .SharedAt}}</p>
+    {{if .Description}}<p class="truncate small muted deck-card-desc">{{orEmpty .Description}}</p>{{end}}
   </a>
   {{else}}
   <p class="empty">아직 공유된 덱이 없어요.<br>

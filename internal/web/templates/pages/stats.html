@@ -24,7 +24,7 @@
 <section class="stack">
   <h2>덱별 성취도 <span class="normal">(3주 이상 간격에 도달한 카드 비율)</span></h2>
   {{range .Data.Summary.Decks}}
-  {{$p := pct .MatureCards .TotalCards}}
+  {{$p := percent .MatureCards .TotalCards}}
   <div class="tile">
     <div class="row-between small">
       <span class="medium">{{.Name}}</span>

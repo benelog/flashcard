@@ -6,6 +6,7 @@ import (
 	"net/url"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 
 	"github.com/benelog/flashcard/internal/auth"
 )
@@ -14,7 +15,7 @@ import (
 // which has no login) go straight through.
 func (w *Web) loginPage(c *gin.Context) {
 	next := safeNext(c.Query("next"))
-	if w.cfg.AuthMode == "local" || auth.OptionalUserID(c) != nilUUID {
+	if w.cfg.AuthMode == "local" || auth.OptionalUserID(c) != uuid.Nil {
 		c.Redirect(http.StatusSeeOther, next)
 		return
 	}
@@ -29,7 +30,7 @@ func (w *Web) startOAuth(c *gin.Context) {
 		w.renderError(c, http.StatusNotFound, "지원하지 않는 로그인 방식이에요.")
 		return
 	}
-	if w.gt == nil {
+	if w.goTrue == nil {
 		c.Redirect(http.StatusSeeOther, "/")
 		return
 	}
@@ -37,7 +38,7 @@ func (w *Web) startOAuth(c *gin.Context) {
 	setCookie(c, pkceCookie, verifier, 300)
 	setCookie(c, nextCookie, safeNext(c.Query("next")), 300)
 	redirectTo := origin(c) + "/auth/callback"
-	c.Redirect(http.StatusSeeOther, w.gt.authorizeURL(provider, redirectTo, pkceChallenge(verifier)))
+	c.Redirect(http.StatusSeeOther, w.goTrue.authorizeURL(provider, redirectTo, pkceChallenge(verifier)))
 }
 
 // oauthCallback finishes the flow: trade the code for tokens and store them
@@ -57,7 +58,7 @@ func (w *Web) oauthCallback(c *gin.Context) {
 		return
 	}
 	code := c.Query("code")
-	if w.gt == nil || code == "" {
+	if w.goTrue == nil || code == "" {
 		log.Printf("oauth callback: no code in callback")
 		setFlash(c, "error", "로그인에 실패했어요. 다시 시도해주세요.")
 		c.Redirect(http.StatusSeeOther, "/login")
@@ -71,7 +72,7 @@ func (w *Web) oauthCallback(c *gin.Context) {
 		c.Redirect(http.StatusSeeOther, "/login")
 		return
 	}
-	tok, err := w.gt.exchangeCode(c.Request.Context(), code, verifier)
+	tok, err := w.goTrue.exchangeCode(c.Request.Context(), code, verifier)
 	if err != nil {
 		log.Printf("oauth callback: code exchange failed: %v", err)
 		setFlash(c, "error", "로그인에 실패했어요. 다시 시도해주세요.")
@@ -83,11 +84,11 @@ func (w *Web) oauthCallback(c *gin.Context) {
 }
 
 func (w *Web) logout(c *gin.Context) {
-	if w.gt != nil {
+	if w.goTrue != nil {
 		if at := cookieValue(c, accessCookie); at != "" {
 			// Best-effort revocation; clearing cookies signs the browser out
 			// regardless.
-			_ = w.gt.logout(c.Request.Context(), at)
+			_ = w.goTrue.logout(c.Request.Context(), at)
 		}
 	}
 	w.clearAuthCookies(c)

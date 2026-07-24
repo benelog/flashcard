@@ -51,15 +51,6 @@ func (s *Store) CreateSmartDeck(ctx context.Context, userID uuid.UUID, name stri
 }
 
 func (s *Store) DeleteSmartDeck(ctx context.Context, userID, id uuid.UUID) error {
-	res, err := s.db.ExecContext(ctx,
-		`delete from smart_decks where user_id = ? and id = ?`, userID.String(), id.String())
-	if err != nil {
-		return err
-	}
-	if n, err := res.RowsAffected(); err != nil {
-		return err
-	} else if n == 0 {
-		return store.ErrNotFound
-	}
-	return nil
+	return requireRowAffected(s.db.ExecContext(ctx,
+		`delete from smart_decks where user_id = ? and id = ?`, userID.String(), id.String()))
 }

@@ -8,13 +8,13 @@ import (
 func TestNewShareSlug(t *testing.T) {
 	distinct := make(map[string]bool)
 	for i := 0; i < 200; i++ {
-		slug := newShareSlug()
+		slug := NewShareSlug()
 		if len(slug) != shareSlugLen {
-			t.Fatalf("newShareSlug() = %q, want %d chars", slug, shareSlugLen)
+			t.Fatalf("NewShareSlug() = %q, want %d chars", slug, shareSlugLen)
 		}
 		for _, c := range slug {
 			if !strings.ContainsRune(slugAlphabet, c) {
-				t.Fatalf("newShareSlug() = %q contains non-Base36 char %q", slug, c)
+				t.Fatalf("NewShareSlug() = %q contains non-Base36 char %q", slug, c)
 			}
 		}
 		distinct[slug] = true
@@ -23,6 +23,6 @@ func TestNewShareSlug(t *testing.T) {
 	// are possible and handled by the unique-index retry in ShareDeck, so global
 	// uniqueness is deliberately not asserted here.
 	if len(distinct) < 2 {
-		t.Fatalf("newShareSlug() looks constant: %d distinct in 200 draws", len(distinct))
+		t.Fatalf("NewShareSlug() looks constant: %d distinct in 200 draws", len(distinct))
 	}
 }

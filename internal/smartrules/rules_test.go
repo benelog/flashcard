@@ -34,6 +34,7 @@ func TestLimitClamped(t *testing.T) {
 	}
 }
 
+// tag::queries-build[]
 func TestQueriesBuild(t *testing.T) {
 	for _, raw := range []string{
 		`{"type":"high_error"}`,
@@ -48,6 +49,7 @@ func TestQueriesBuild(t *testing.T) {
 		if q, _ := r.Query(); q == "" {
 			t.Fatalf("empty query for %s", raw)
 		}
+		// end::queries-build[]
 		if q, _ := r.CountQuery(); q == "" {
 			t.Fatalf("empty count query for %s", raw)
 		}

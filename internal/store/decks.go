@@ -9,6 +9,7 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
+// tag::deck[]
 type Deck struct {
 	ID          uuid.UUID  `json:"id"`
 	Slug        string     `json:"slug"`
@@ -21,6 +22,8 @@ type Deck struct {
 	UpdatedAt   time.Time  `json:"updatedAt"`
 }
 
+// end::deck[]
+
 const deckSelect = `
 	select d.id, d.name, d.description,
 	       (select count(*) from cards c where c.deck_id = d.id) as card_count,
@@ -30,15 +33,18 @@ const deckSelect = `
 func scanDeck(row pgx.Row) (Deck, error) {
 	var d Deck
 	var seq int64
+	// tag::scan-not-found[]
 	err := row.Scan(&d.ID, &d.Name, &d.Description, &d.CardCount,
 		&d.ShareSlug, &d.SharedAt, &d.CreatedAt, &d.UpdatedAt, &seq)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return d, ErrNotFound
 	}
-	d.Slug = encodeDeckSlug(seq)
+	// end::scan-not-found[]
+	d.Slug = EncodeDeckSlug(seq)
 	return d, err
 }
 
+// tag::list-decks[]
 func (s *Store) ListDecks(ctx context.Context, userID uuid.UUID) ([]Deck, error) {
 	rows, err := s.pool.Query(ctx, deckSelect+` where d.user_id = $1 order by d.created_at desc`, userID)
 	if err != nil {
@@ -56,23 +62,26 @@ func (s *Store) ListDecks(ctx context.Context, userID uuid.UUID) ([]Deck, error)
 	return decks, rows.Err()
 }
 
+// end::list-decks[]
+
 func (s *Store) GetDeck(ctx context.Context, userID, deckID uuid.UUID) (Deck, error) {
 	return scanDeck(s.pool.QueryRow(ctx, deckSelect+` where d.user_id = $1 and d.id = $2`, userID, deckID))
 }
 
 // GetDeckBySlug loads a deck by its public Base36 URL slug.
 func (s *Store) GetDeckBySlug(ctx context.Context, userID uuid.UUID, slug string) (Deck, error) {
-	seq, err := decodeDeckSlug(slug)
+	seq, err := DecodeDeckSlug(slug)
 	if err != nil {
 		return Deck{}, ErrNotFound
 	}
 	return scanDeck(s.pool.QueryRow(ctx, deckSelect+` where d.user_id = $1 and d.seq = $2`, userID, seq))
 }
 
+// tag::deck-id-by-slug[]
 // DeckIDBySlug resolves a deck slug to the internal deck id, doubling as the
 // caller's ownership/existence check.
 func (s *Store) DeckIDBySlug(ctx context.Context, userID uuid.UUID, slug string) (uuid.UUID, error) {
-	seq, err := decodeDeckSlug(slug)
+	seq, err := DecodeDeckSlug(slug)
 	if err != nil {
 		return uuid.Nil, ErrNotFound
 	}
@@ -85,6 +94,8 @@ func (s *Store) DeckIDBySlug(ctx context.Context, userID uuid.UUID, slug string)
 	return id, err
 }
 
+// end::deck-id-by-slug[]
+
 func (s *Store) CreateDeck(ctx context.Context, userID uuid.UUID, name string, description *string) (Deck, error) {
 	return scanDeck(s.pool.QueryRow(ctx,
 		`with ins as (
@@ -96,29 +107,20 @@ func (s *Store) CreateDeck(ctx context.Context, userID uuid.UUID, name string, d
 }
 
 func (s *Store) UpdateDeck(ctx context.Context, userID, deckID uuid.UUID, name *string, description *string) (Deck, error) {
-	tag, err := s.pool.Exec(ctx,
+	err := requireRowAffected(s.pool.Exec(ctx,
 		`update decks set
 		   name = coalesce($3, name),
 		   description = coalesce($4, description),
 		   updated_at = now()
 		 where user_id = $1 and id = $2`,
-		userID, deckID, name, description)
+		userID, deckID, name, description))
 	if err != nil {
 		return Deck{}, err
-	}
-	if tag.RowsAffected() == 0 {
-		return Deck{}, ErrNotFound
 	}
 	return s.GetDeck(ctx, userID, deckID)
 }
 
 func (s *Store) DeleteDeck(ctx context.Context, userID, deckID uuid.UUID) error {
-	tag, err := s.pool.Exec(ctx, `delete from decks where user_id = $1 and id = $2`, userID, deckID)
-	if err != nil {
-		return err
-	}
-	if tag.RowsAffected() == 0 {
-		return ErrNotFound
-	}
-	return nil
+	return requireRowAffected(s.pool.Exec(ctx,
+		`delete from decks where user_id = $1 and id = $2`, userID, deckID))
 }

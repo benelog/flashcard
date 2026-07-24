@@ -24,11 +24,11 @@ func TestTemplatesParse(t *testing.T) {
 	}
 
 	phonetic := "/tɛst/"
-	card := &store.Card{Text: "test", Meaning: "시험", CardType: "word", Phonetic: &phonetic}
+	card := &store.Card{Text: "test", Meaning: "시험", CardType: store.CardTypeWord, Phonetic: &phonetic}
 	state := studyState{
 		SessionID: "s", Direction: "text_to_meaning", Title: "덱 학습",
-		ReturnURL: "/", Queue: []string{"a", "b"}, Round: 1, RoundLen: 2,
-		FPTotal: 2, TtsRate: 0.9,
+		ReturnURL: "/", Queue: []string{"a", "b"}, Round: 1, RoundCards: 2,
+		FirstPassTotal: 2, TtsRate: defaultTtsRate,
 	}
 	for _, v := range []studyBodyView{
 		{Phase: "studying", State: state, Card: card, TextTTS: "test", BackTTS: "test"},

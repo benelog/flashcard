@@ -43,12 +43,6 @@ func (s *Store) CreateSmartDeck(ctx context.Context, userID uuid.UUID, name stri
 }
 
 func (s *Store) DeleteSmartDeck(ctx context.Context, userID, id uuid.UUID) error {
-	tag, err := s.pool.Exec(ctx, `delete from smart_decks where user_id = $1 and id = $2`, userID, id)
-	if err != nil {
-		return err
-	}
-	if tag.RowsAffected() == 0 {
-		return ErrNotFound
-	}
-	return nil
+	return requireRowAffected(s.pool.Exec(ctx,
+		`delete from smart_decks where user_id = $1 and id = $2`, userID, id))
 }

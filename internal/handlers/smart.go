@@ -57,12 +57,14 @@ func (h *Handlers) CreateSmartDeck(c *gin.Context) {
 		badRequest(c, "name and rule are required")
 		return
 	}
+	// tag::normalize-rule[]
 	rule, err := smartrules.Parse(body.Rule)
 	if err != nil {
 		badRequest(c, err.Error())
 		return
 	}
 	normalized, _ := json.Marshal(rule)
+	// end::normalize-rule[]
 	deck, err := h.Store.CreateSmartDeck(c.Request.Context(), auth.UserID(c), strings.TrimSpace(body.Name), normalized)
 	if err != nil {
 		fail(c, err)
@@ -72,7 +74,7 @@ func (h *Handlers) CreateSmartDeck(c *gin.Context) {
 }
 
 func (h *Handlers) DeleteSmartDeck(c *gin.Context) {
-	id, ok := pathUUID(c, "id")
+	id, ok := uuidFromPath(c, "id")
 	if !ok {
 		return
 	}

@@ -41,19 +41,14 @@ func (s *Store) GetOrCreateProfile(ctx context.Context, userID uuid.UUID, displa
 }
 
 func (s *Store) UpdateProfile(ctx context.Context, userID uuid.UUID, displayName *string, settings json.RawMessage) (store.Profile, error) {
-	res, err := s.db.ExecContext(ctx,
+	err := requireRowAffected(s.db.ExecContext(ctx,
 		`update profiles set
 		   display_name = coalesce(?, display_name),
 		   settings = coalesce(?, settings)
 		 where id = ?`,
-		displayName, jsonArg(settings), userID.String())
+		displayName, jsonArg(settings), userID.String()))
 	if err != nil {
 		return store.Profile{}, err
-	}
-	if n, err := res.RowsAffected(); err != nil {
-		return store.Profile{}, err
-	} else if n == 0 {
-		return store.Profile{}, store.ErrNotFound
 	}
 	return s.scanProfile(ctx, userID)
 }

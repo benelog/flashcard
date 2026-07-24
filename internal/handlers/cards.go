@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"encoding/csv"
 	"fmt"
 	"net/http"
 	"strings"
@@ -9,9 +8,11 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/benelog/flashcard/internal/auth"
+	"github.com/benelog/flashcard/internal/cardcsv"
 	"github.com/benelog/flashcard/internal/store"
 )
 
+// tag::card-body[]
 type cardBody struct {
 	DeckSlug string   `json:"deckSlug"`
 	Text     string   `json:"text"`
@@ -23,6 +24,9 @@ type cardBody struct {
 	Notes    *string  `json:"notes"`
 }
 
+// end::card-body[]
+
+// tag::to-input[]
 func (b *cardBody) toInput() (store.CardInput, string) {
 	b.Text = strings.TrimSpace(b.Text)
 	b.Meaning = strings.TrimSpace(b.Meaning)
@@ -30,11 +34,14 @@ func (b *cardBody) toInput() (store.CardInput, string) {
 		return store.CardInput{}, "text and meaning are required"
 	}
 	if b.CardType == "" {
-		b.CardType = "word"
+		b.CardType = store.DefaultCardType
 	}
-	if !validCardType(b.CardType) {
-		return store.CardInput{}, "cardType must be word, sentence, idiom or concept"
+	// API는 폼·CSV와 달리 모르는 종류를 조용히 고치지 않는다. 프로그램이 보내는
+	// 값이라 오타라면 알려 주는 편이 낫다.
+	if !store.IsCardType(b.CardType) {
+		return store.CardInput{}, "cardType must be " + strings.Join(store.CardTypes, ", ")
 	}
+	// end::to-input[]
 	if b.Tags == nil {
 		b.Tags = []string{}
 	}
@@ -45,19 +52,8 @@ func (b *cardBody) toInput() (store.CardInput, string) {
 	}, ""
 }
 
-// resolveDeck fills in.DeckID from the body's deck slug.
-func (h *Handlers) resolveDeck(c *gin.Context, b *cardBody, in *store.CardInput) bool {
-	deckID, err := h.Store.DeckIDBySlug(c.Request.Context(), auth.UserID(c), b.DeckSlug)
-	if err != nil {
-		fail(c, err)
-		return false
-	}
-	in.DeckID = deckID
-	return true
-}
-
 func (h *Handlers) ListDeckCards(c *gin.Context) {
-	deckID, ok := h.pathDeckID(c)
+	deckID, ok := h.deckIDFromPath(c)
 	if !ok {
 		return
 	}
@@ -80,9 +76,12 @@ func (h *Handlers) CreateCard(c *gin.Context) {
 		badRequest(c, msg)
 		return
 	}
-	if !h.resolveDeck(c, &body, &in) {
+	// 새 카드는 경로가 아니라 본문의 덱 슬러그로 어느 덱에 담길지 정한다.
+	deckID, ok := h.deckIDBySlug(c, body.DeckSlug)
+	if !ok {
 		return
 	}
+	in.DeckID = deckID
 	card, err := h.Store.CreateCard(c.Request.Context(), auth.UserID(c), in)
 	if err != nil {
 		fail(c, err)
@@ -92,7 +91,7 @@ func (h *Handlers) CreateCard(c *gin.Context) {
 }
 
 func (h *Handlers) GetCard(c *gin.Context) {
-	cardID, ok := pathUUID(c, "id")
+	cardID, ok := uuidFromPath(c, "id")
 	if !ok {
 		return
 	}
@@ -105,7 +104,7 @@ func (h *Handlers) GetCard(c *gin.Context) {
 }
 
 func (h *Handlers) UpdateCard(c *gin.Context) {
-	cardID, ok := pathUUID(c, "id")
+	cardID, ok := uuidFromPath(c, "id")
 	if !ok {
 		return
 	}
@@ -130,7 +129,7 @@ func (h *Handlers) UpdateCard(c *gin.Context) {
 }
 
 func (h *Handlers) DeleteCard(c *gin.Context) {
-	cardID, ok := pathUUID(c, "id")
+	cardID, ok := uuidFromPath(c, "id")
 	if !ok {
 		return
 	}
@@ -143,7 +142,7 @@ func (h *Handlers) DeleteCard(c *gin.Context) {
 
 // BulkCreateCards imports rows the client parsed from CSV.
 func (h *Handlers) BulkCreateCards(c *gin.Context) {
-	deckID, ok := h.pathDeckID(c)
+	deckID, ok := h.deckIDFromPath(c)
 	if !ok {
 		return
 	}
@@ -154,8 +153,8 @@ func (h *Handlers) BulkCreateCards(c *gin.Context) {
 		badRequest(c, "invalid body")
 		return
 	}
-	if len(body.Cards) == 0 || len(body.Cards) > 2000 {
-		badRequest(c, "cards must contain 1-2000 rows")
+	if len(body.Cards) == 0 || len(body.Cards) > store.MaxBulkCards {
+		badRequest(c, fmt.Sprintf("cards must contain 1-%d rows", store.MaxBulkCards))
 		return
 	}
 	inputs := make([]store.CardInput, 0, len(body.Cards))
@@ -176,7 +175,7 @@ func (h *Handlers) BulkCreateCards(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"added": res.Added, "skipped": res.Skipped, "invalid": invalid})
 }
 
-// ExportDeck streams the deck as CSV (UTF-8 BOM for Excel compatibility).
+// ExportDeck streams the deck as CSV, the same format 가져오기 reads back.
 func (h *Handlers) ExportDeck(c *gin.Context) {
 	userID := auth.UserID(c)
 	deck, err := h.Store.GetDeckBySlug(c.Request.Context(), userID, c.Param("slug"))
@@ -191,21 +190,8 @@ func (h *Handlers) ExportDeck(c *gin.Context) {
 	}
 
 	c.Header("Content-Type", "text/csv; charset=utf-8")
-	c.Header("Content-Disposition", fmt.Sprintf("attachment; filename=%q", "deck-"+deck.ID.String()+".csv"))
-	c.Writer.Write([]byte{0xEF, 0xBB, 0xBF}) // UTF-8 BOM
-	w := csv.NewWriter(c.Writer)
-	w.Write([]string{"text", "meaning", "type", "tags", "phonetic", "example"})
-	deref := func(s *string) string {
-		if s == nil {
-			return ""
-		}
-		return *s
+	c.Header("Content-Disposition", fmt.Sprintf("attachment; filename=%q", "deck-"+deck.Slug+".csv"))
+	if err := cardcsv.Write(c.Writer, cards); err != nil {
+		_ = c.Error(err)
 	}
-	for _, card := range cards {
-		w.Write([]string{
-			card.Text, card.Meaning, card.CardType,
-			strings.Join(card.Tags, "|"), deref(card.Phonetic), deref(card.Example),
-		})
-	}
-	w.Flush()
 }

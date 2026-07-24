@@ -52,6 +52,7 @@ func pkceChallenge(verifier string) string {
 	return base64.RawURLEncoding.EncodeToString(sum[:])
 }
 
+// tag::authorize-url[]
 // authorizeURL is where the login button points: GoTrue redirects on to the
 // provider (Google/GitHub) and eventually back to redirectTo with ?code=.
 func (g *goTrue) authorizeURL(provider, redirectTo, challenge string) string {
@@ -63,6 +64,8 @@ func (g *goTrue) authorizeURL(provider, redirectTo, challenge string) string {
 	}
 	return g.baseURL + "/auth/v1/authorize?" + q.Encode()
 }
+
+// end::authorize-url[]
 
 func (g *goTrue) token(ctx context.Context, grantType string, body any) (tokenResponse, error) {
 	var tok tokenResponse

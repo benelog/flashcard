@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 
 	"github.com/benelog/flashcard/internal/auth"
 )
@@ -92,7 +93,7 @@ func (w *Web) withUser() gin.HandlerFunc {
 		}
 		// Access token missing or expired: try the refresh token once.
 		if rt := cookieValue(c, refreshCookie); rt != "" {
-			if tok, err := w.gt.refresh(c.Request.Context(), rt); err == nil {
+			if tok, err := w.goTrue.refresh(c.Request.Context(), rt); err == nil {
 				w.setAuthCookies(c, tok)
 				if id, email, err := auth.ParseUser(tok.AccessToken, w.cfg.JWKSURL, w.cfg.JWTSecret); err == nil {
 					auth.SetUserID(c, id)
@@ -111,7 +112,7 @@ func (w *Web) withUser() gin.HandlerFunc {
 // where they were headed.
 func (w *Web) requireUser() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		if auth.OptionalUserID(c) != nilUUID {
+		if auth.OptionalUserID(c) != uuid.Nil {
 			c.Next()
 			return
 		}
@@ -138,8 +139,22 @@ func safeNext(next string) string {
 
 // Flash messages survive one redirect via a short-lived cookie.
 
+// 플래시 종류. 템플릿이 이 값을 그대로 CSS 클래스로 쓴다.
+const (
+	flashInfo  = "info"
+	flashError = "error"
+)
+
 func setFlash(c *gin.Context, kind, message string) {
 	setCookie(c, flashCookie, kind+"|"+message, 60)
+}
+
+// redirectWithFlash is the PRG (Post/Redirect/Get) ending every form handler
+// shares: leave a one-shot message, then send the browser somewhere it can
+// safely reload. 303을 쓰므로 새로고침해도 폼이 다시 제출되지 않는다.
+func redirectWithFlash(c *gin.Context, kind, message, path string) {
+	setFlash(c, kind, message)
+	c.Redirect(http.StatusSeeOther, path)
 }
 
 // takeFlash reads and clears the pending flash message, if any.
@@ -151,7 +166,7 @@ func takeFlash(c *gin.Context) (kind, message string) {
 	clearCookie(c, flashCookie)
 	kind, message, ok := strings.Cut(raw, "|")
 	if !ok {
-		return "info", raw
+		return flashInfo, raw
 	}
 	return kind, message
 }

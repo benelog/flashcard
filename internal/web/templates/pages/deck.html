@@ -53,7 +53,7 @@
       <p class="truncate card-name">{{.Text}}</p>
       <p class="truncate small muted card-meaning">{{.Meaning}}</p>
       {{if gt .Attempts 0}}
-      <p class="tiny faint card-stat">시도 {{.Attempts}}회 · 오답률 {{pct100 .ErrorRate}}%</p>
+      <p class="tiny faint card-stat">시도 {{.Attempts}}회 · 오답률 {{ratioPercent .ErrorRate}}%</p>
       {{end}}
     </div>
     <a class="btn btn-icon" href="/cards/{{.ID}}" aria-label="카드 수정">{{icon "pencil"}}</a>

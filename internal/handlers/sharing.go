@@ -21,7 +21,7 @@ func pathSlug(c *gin.Context) (string, bool) {
 }
 
 func (h *Handlers) ShareDeck(c *gin.Context) {
-	deckID, ok := h.pathDeckID(c)
+	deckID, ok := h.deckIDFromPath(c)
 	if !ok {
 		return
 	}
@@ -34,7 +34,7 @@ func (h *Handlers) ShareDeck(c *gin.Context) {
 }
 
 func (h *Handlers) UnshareDeck(c *gin.Context) {
-	deckID, ok := h.pathDeckID(c)
+	deckID, ok := h.deckIDFromPath(c)
 	if !ok {
 		return
 	}

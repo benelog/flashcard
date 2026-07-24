@@ -31,7 +31,7 @@ func TestMapEntries(t *testing.T) {
 		},
 	}}
 
-	got := mapEntries(entries)
+	got := summarizeEntries(entries)
 	if got.Phonetic != "/ˌserənˈdɪpɪti/" {
 		t.Errorf("phonetic = %q", got.Phonetic)
 	}
@@ -45,7 +45,7 @@ func TestMapEntries(t *testing.T) {
 }
 
 func TestMapEntriesEmpty(t *testing.T) {
-	got := mapEntries(nil)
+	got := summarizeEntries(nil)
 	if got.Phonetic != "" || got.Definition != "" || got.Example != "" {
 		t.Errorf("expected zero entry, got %+v", got)
 	}

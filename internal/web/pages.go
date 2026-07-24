@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 
 	"github.com/benelog/flashcard/internal/auth"
 	"github.com/benelog/flashcard/internal/smartrules"
@@ -21,16 +20,29 @@ type profileSettings struct {
 	DailyGoal int     `json:"dailyGoal,omitempty"`
 }
 
-func parseSettings(p store.Profile) profileSettings {
-	s := profileSettings{TtsRate: 0.9, DailyGoal: 50}
-	_ = json.Unmarshal(p.Settings, &s)
-	if s.TtsRate <= 0 {
-		s.TtsRate = 0.9
+// 설정을 저장한 적 없는 사용자, 그리고 저장된 값이 범위를 벗어난 경우의 값이다.
+const (
+	defaultTtsRate   = 0.9
+	defaultDailyGoal = 50
+)
+
+func defaultSettings() profileSettings {
+	return profileSettings{TtsRate: defaultTtsRate, DailyGoal: defaultDailyGoal}
+}
+
+// settingsFrom reads the profile's settings blob, falling back to the defaults
+// for anything missing or out of range. 설정 JSON은 사용자가 바꿔 온 것이 아니라
+// 우리가 쓴 것이지만, 예전 버전이 쓴 값이 남아 있을 수 있어 늘 검사한다.
+func settingsFrom(profile store.Profile) profileSettings {
+	settings := defaultSettings()
+	_ = json.Unmarshal(profile.Settings, &settings)
+	if settings.TtsRate <= 0 {
+		settings.TtsRate = defaultTtsRate
 	}
-	if s.DailyGoal <= 0 {
-		s.DailyGoal = 50
+	if settings.DailyGoal <= 0 {
+		settings.DailyGoal = defaultDailyGoal
 	}
-	return s
+	return settings
 }
 
 // ---------- 홈 ----------
@@ -121,8 +133,7 @@ func (w *Web) decksPage(c *gin.Context) {
 func (w *Web) createDeck(c *gin.Context) {
 	name := strings.TrimSpace(c.PostForm("name"))
 	if name == "" {
-		setFlash(c, "error", "덱 이름을 입력해주세요")
-		c.Redirect(http.StatusSeeOther, "/decks")
+		redirectWithFlash(c, flashError, "덱 이름을 입력해주세요", "/decks")
 		return
 	}
 	deck, err := w.store.CreateDeck(c.Request.Context(), auth.UserID(c), name, nil)
@@ -163,18 +174,18 @@ func (w *Web) shareURL(c *gin.Context, deck store.Deck) string {
 }
 
 func (w *Web) deleteDeck(c *gin.Context) {
-	userID := auth.UserID(c)
-	deckID, err := w.store.DeckIDBySlug(c.Request.Context(), userID, c.Param("slug"))
-	if err == nil {
-		err = w.store.DeleteDeck(c.Request.Context(), userID, deckID)
+	deckID, ok := w.deckIDFromPath(c)
+	if !ok {
+		return
 	}
-	if err != nil {
+	if err := w.store.DeleteDeck(c.Request.Context(), auth.UserID(c), deckID); err != nil {
 		w.failPage(c, err)
 		return
 	}
-	setFlash(c, "info", "덱을 삭제했어요")
-	// htmx 요청이면 HX-Redirect로, 일반 폼이면 303으로 이동한다.
-	if c.GetHeader("HX-Request") != "" {
+	setFlash(c, flashInfo, "덱을 삭제했어요")
+	// 삭제한 덱의 화면에 머물 수 없으므로 목록으로 보낸다. htmx 요청은 조각만
+	// 갈아 끼우므로 이동을 HX-Redirect 헤더로 지시해야 한다.
+	if isHTMX(c) {
 		c.Header("HX-Redirect", "/decks")
 		c.Status(http.StatusOK)
 		return
@@ -184,34 +195,31 @@ func (w *Web) deleteDeck(c *gin.Context) {
 
 // ---------- 공유 ----------
 
-func (w *Web) shareDeck(c *gin.Context) {
-	userID := auth.UserID(c)
-	ctx := c.Request.Context()
-	deckID, err := w.store.DeckIDBySlug(ctx, userID, c.Param("slug"))
-	if err == nil {
-		_, err = w.store.ShareDeck(ctx, userID, deckID)
-	}
-	if err != nil {
-		w.failPage(c, err)
+func (w *Web) shareDeck(c *gin.Context)   { w.setDeckShared(c, true) }
+func (w *Web) unshareDeck(c *gin.Context) { w.setDeckShared(c, false) }
+
+// setDeckShared turns the deck's public link on or off and returns to the deck
+// page either way.
+func (w *Web) setDeckShared(c *gin.Context, shared bool) {
+	deckID, ok := w.deckIDFromPath(c)
+	if !ok {
 		return
 	}
-	setFlash(c, "info", "덱을 공유했어요")
-	c.Redirect(http.StatusSeeOther, "/decks/"+c.Param("slug"))
-}
-
-func (w *Web) unshareDeck(c *gin.Context) {
 	userID := auth.UserID(c)
 	ctx := c.Request.Context()
-	deckID, err := w.store.DeckIDBySlug(ctx, userID, c.Param("slug"))
-	if err == nil {
+	var err error
+	message := "공유를 해제했어요"
+	if shared {
+		_, err = w.store.ShareDeck(ctx, userID, deckID)
+		message = "덱을 공유했어요"
+	} else {
 		err = w.store.UnshareDeck(ctx, userID, deckID)
 	}
 	if err != nil {
 		w.failPage(c, err)
 		return
 	}
-	setFlash(c, "info", "공유를 해제했어요")
-	c.Redirect(http.StatusSeeOther, "/decks/"+c.Param("slug"))
+	redirectWithFlash(c, flashInfo, message, "/decks/"+c.Param("slug"))
 }
 
 func (w *Web) sharedGalleryPage(c *gin.Context) {
@@ -253,8 +261,7 @@ func (w *Web) importSharedDeck(c *gin.Context) {
 		w.failPage(c, err)
 		return
 	}
-	setFlash(c, "info", "'"+deck.Name+"' 덱을 가져왔어요")
-	c.Redirect(http.StatusSeeOther, "/decks/"+deck.Slug)
+	redirectWithFlash(c, flashInfo, "'"+deck.Name+"' 덱을 가져왔어요", "/decks/"+deck.Slug)
 }
 
 // ---------- 카드 편집 ----------
@@ -277,23 +284,21 @@ type cardFormView struct {
 }
 
 func (w *Web) newCardPage(c *gin.Context) {
-	slug := c.Param("slug")
-	// 존재하지 않는 덱이면 404를 먼저 낸다.
-	if _, err := w.store.DeckIDBySlug(c.Request.Context(), auth.UserID(c), slug); err != nil {
-		w.failPage(c, err)
+	// 존재하지 않는 덱이면 빈 폼을 보여 주기 전에 404를 낸다.
+	if _, ok := w.deckIDFromPath(c); !ok {
 		return
 	}
+	slug := c.Param("slug")
 	w.render(c, http.StatusOK, "card_form", "새 카드", cardFormView{
 		Action:   "/decks/" + slug + "/cards",
 		BackURL:  "/decks/" + slug,
-		CardType: "word",
+		CardType: store.DefaultCardType,
 	})
 }
 
 func (w *Web) editCardPage(c *gin.Context) {
-	cardID, err := uuid.Parse(c.Param("id"))
-	if err != nil {
-		w.renderError(c, http.StatusNotFound, "찾을 수 없는 카드예요.")
+	cardID, ok := w.uuidFromPath(c, "id", "찾을 수 없는 카드예요.")
+	if !ok {
 		return
 	}
 	card, err := w.store.GetCard(c.Request.Context(), auth.UserID(c), cardID)
@@ -309,33 +314,30 @@ func (w *Web) editCardPage(c *gin.Context) {
 		Meaning:  card.Meaning,
 		CardType: card.CardType,
 		Tags:     strings.Join(card.Tags, ", "),
-		Phonetic: deref(card.Phonetic),
-		Example:  deref(card.Example),
-		Notes:    deref(card.Notes),
+		Phonetic: orEmpty(card.Phonetic),
+		Example:  orEmpty(card.Example),
+		Notes:    orEmpty(card.Notes),
 	})
 }
 
-// cardInputFromForm normalizes the posted card fields; empty text/meaning is
-// the only rejection.
+// cardInputFromForm normalizes the posted card fields. 두 번째 반환값은 이 폼을
+// 저장할 수 있는지로, 원문과 뜻이 모두 있어야 참이다.
 func cardInputFromForm(c *gin.Context) (store.CardInput, bool) {
 	in := store.CardInput{
 		Text:     strings.TrimSpace(c.PostForm("text")),
 		Meaning:  strings.TrimSpace(c.PostForm("meaning")),
-		CardType: c.PostForm("card_type"),
-		Tags:     splitTags(c.PostForm("tags"), ","),
+		CardType: store.NormalizeCardType(c.PostForm("card_type")),
+		Tags:     splitAndTrim(c.PostForm("tags"), ","),
+		Phonetic: nilIfBlank(c.PostForm("phonetic")),
+		Example:  nilIfBlank(c.PostForm("example")),
+		Notes:    nilIfBlank(c.PostForm("notes")),
 	}
-	switch in.CardType {
-	case "word", "sentence", "idiom", "concept":
-	default:
-		in.CardType = "word"
-	}
-	in.Phonetic = optField(c.PostForm("phonetic"))
-	in.Example = optField(c.PostForm("example"))
-	in.Notes = optField(c.PostForm("notes"))
 	return in, in.Text != "" && in.Meaning != ""
 }
 
-func optField(v string) *string {
+// nilIfBlank keeps an empty optional field out of the database as NULL rather
+// than as an empty string, so "적지 않았다"와 "빈 값을 적었다"가 섞이지 않는다.
+func nilIfBlank(v string) *string {
 	v = strings.TrimSpace(v)
 	if v == "" {
 		return nil
@@ -343,49 +345,45 @@ func optField(v string) *string {
 	return &v
 }
 
-func splitTags(raw, sep string) []string {
-	tags := []string{}
-	for _, t := range strings.Split(raw, sep) {
-		if t = strings.TrimSpace(t); t != "" {
-			tags = append(tags, t)
+// splitAndTrim cuts a separated list, dropping padding and empty items. 태그
+// 입력("a, b,")과 학습 큐의 카드 ID 목록이 모두 이 모양이다.
+func splitAndTrim(raw, separator string) []string {
+	items := []string{}
+	for _, item := range strings.Split(raw, separator) {
+		if item = strings.TrimSpace(item); item != "" {
+			items = append(items, item)
 		}
 	}
-	return tags
+	return items
 }
 
 func (w *Web) createCard(c *gin.Context) {
 	slug := c.Param("slug")
 	in, ok := cardInputFromForm(c)
 	if !ok {
-		setFlash(c, "error", "원문과 뜻을 모두 입력해주세요")
-		c.Redirect(http.StatusSeeOther, "/decks/"+slug+"/cards/new")
+		redirectWithFlash(c, flashError, "원문과 뜻을 모두 입력해주세요", "/decks/"+slug+"/cards/new")
 		return
 	}
-	userID := auth.UserID(c)
-	deckID, err := w.store.DeckIDBySlug(c.Request.Context(), userID, slug)
-	if err != nil {
-		w.failPage(c, err)
+	deckID, ok := w.deckIDFromPath(c)
+	if !ok {
 		return
 	}
 	in.DeckID = deckID
-	if _, err := w.store.CreateCard(c.Request.Context(), userID, in); err != nil {
+	if _, err := w.store.CreateCard(c.Request.Context(), auth.UserID(c), in); err != nil {
 		w.failPage(c, err)
 		return
 	}
-	setFlash(c, "info", "카드를 추가했어요")
-	c.Redirect(http.StatusSeeOther, "/decks/"+slug)
+	redirectWithFlash(c, flashInfo, "카드를 추가했어요", "/decks/"+slug)
 }
 
 func (w *Web) updateCard(c *gin.Context) {
-	cardID, err := uuid.Parse(c.Param("id"))
-	if err != nil {
-		w.renderError(c, http.StatusNotFound, "찾을 수 없는 카드예요.")
+	cardID, ok := w.uuidFromPath(c, "id", "찾을 수 없는 카드예요.")
+	if !ok {
 		return
 	}
 	in, ok := cardInputFromForm(c)
 	if !ok {
-		setFlash(c, "error", "원문과 뜻을 모두 입력해주세요")
-		c.Redirect(http.StatusSeeOther, "/cards/"+cardID.String())
+		redirectWithFlash(c, flashError, "원문과 뜻을 모두 입력해주세요", "/cards/"+cardID.String())
 		return
 	}
 	card, err := w.store.UpdateCard(c.Request.Context(), auth.UserID(c), cardID, in)
@@ -393,14 +391,12 @@ func (w *Web) updateCard(c *gin.Context) {
 		w.failPage(c, err)
 		return
 	}
-	setFlash(c, "info", "카드를 수정했어요")
-	c.Redirect(http.StatusSeeOther, "/decks/"+card.DeckSlug)
+	redirectWithFlash(c, flashInfo, "카드를 수정했어요", "/decks/"+card.DeckSlug)
 }
 
 func (w *Web) deleteCard(c *gin.Context) {
-	cardID, err := uuid.Parse(c.Param("id"))
-	if err != nil {
-		w.renderError(c, http.StatusNotFound, "찾을 수 없는 카드예요.")
+	cardID, ok := w.uuidFromPath(c, "id", "찾을 수 없는 카드예요.")
+	if !ok {
 		return
 	}
 	if err := w.store.DeleteCard(c.Request.Context(), auth.UserID(c), cardID); err != nil {
@@ -408,11 +404,11 @@ func (w *Web) deleteCard(c *gin.Context) {
 		return
 	}
 	// htmx가 목록의 해당 <li>를 지우도록 빈 본문을 돌려준다.
-	if c.GetHeader("HX-Request") != "" {
+	if isHTMX(c) {
 		c.Status(http.StatusOK)
 		return
 	}
-	setFlash(c, "info", "카드를 삭제했어요")
+	setFlash(c, flashInfo, "카드를 삭제했어요")
 	redirectBack(c, "/decks")
 }
 
@@ -421,7 +417,7 @@ func (w *Web) deleteCard(c *gin.Context) {
 func (w *Web) saveSmartDeck(c *gin.Context) {
 	rule, err := smartrules.Parse([]byte(c.PostForm("rule")))
 	if err != nil {
-		setFlash(c, "error", "잘못된 규칙이에요")
+		setFlash(c, flashError, "잘못된 규칙이에요")
 		redirectBack(c, "/decks")
 		return
 	}
@@ -435,33 +431,35 @@ func (w *Web) saveSmartDeck(c *gin.Context) {
 		return
 	}
 	// 학습 화면의 저장 버튼(htmx)은 배지로 바꿔치기만 한다.
-	if c.GetHeader("HX-Request") != "" {
+	if isHTMX(c) {
 		w.renderPartial(c, "saved_badge", nil)
 		return
 	}
-	setFlash(c, "info", "스마트 덱으로 저장했어요")
+	setFlash(c, flashInfo, "스마트 덱으로 저장했어요")
 	redirectBack(c, "/decks")
 }
 
 func (w *Web) deleteSmartDeck(c *gin.Context) {
-	id, err := uuid.Parse(c.Param("id"))
-	if err != nil {
-		w.renderError(c, http.StatusNotFound, "찾을 수 없는 스마트 덱이에요.")
+	smartDeckID, ok := w.uuidFromPath(c, "id", "찾을 수 없는 스마트 덱이에요.")
+	if !ok {
 		return
 	}
-	if err := w.store.DeleteSmartDeck(c.Request.Context(), auth.UserID(c), id); err != nil {
+	if err := w.store.DeleteSmartDeck(c.Request.Context(), auth.UserID(c), smartDeckID); err != nil {
 		w.failPage(c, err)
 		return
 	}
-	if c.GetHeader("HX-Request") != "" {
+	// htmx가 목록의 해당 항목을 지우도록 빈 본문을 돌려준다.
+	if isHTMX(c) {
 		c.Status(http.StatusOK)
 		return
 	}
-	setFlash(c, "info", "스마트 덱을 삭제했어요")
-	c.Redirect(http.StatusSeeOther, "/decks")
+	redirectWithFlash(c, flashInfo, "스마트 덱을 삭제했어요", "/decks")
 }
 
 // ---------- 통계 ----------
+
+// chartDays is how many days the stats bar chart shows.
+const chartDays = 30
 
 type chartDay struct {
 	Date       string
@@ -476,7 +474,7 @@ func (w *Web) statsPage(c *gin.Context) {
 	ctx := c.Request.Context()
 	tz, loc := clientTZ(c)
 
-	daily, err := w.store.DailyStats(ctx, userID, tz, 30)
+	daily, err := w.store.DailyStats(ctx, userID, tz, chartDays)
 	if err != nil {
 		w.failPage(c, err)
 		return
@@ -487,33 +485,36 @@ func (w *Web) statsPage(c *gin.Context) {
 		return
 	}
 
-	// 최근 30일을 빈 날 포함해 채운다. 막대 높이는 서버에서 %로 계산해
-	// 템플릿은 그리기만 한다.
-	byDate := map[string]store.DailyStat{}
-	maxTotal := 1
-	for _, d := range daily {
-		byDate[d.Date] = d
-		if d.Total > maxTotal {
-			maxTotal = d.Total
+	// 공부하지 않은 날은 DB에 행이 없다. 차트에 그 날을 빈칸으로 남기려면 날짜를
+	// 하루씩 세어 채워야 한다. 막대 높이는 서버에서 %로 계산해 템플릿은 그리기만
+	// 한다.
+	statOf := map[string]store.DailyStat{}
+	busiestDay := 1 // 가장 많이 푼 날이 막대 100%의 기준이다 (0으로 나누지 않도록 1부터)
+	for _, stat := range daily {
+		statOf[stat.Date] = stat
+		if stat.Total > busiestDay {
+			busiestDay = stat.Total
 		}
 	}
-	days := make([]chartDay, 0, 30)
+	days := make([]chartDay, 0, chartDays)
 	today := time.Now().In(loc)
-	for i := 29; i >= 0; i-- {
-		date := today.AddDate(0, 0, -i).Format("2006-01-02")
-		d := byDate[date]
+	for daysAgo := chartDays - 1; daysAgo >= 0; daysAgo-- {
+		date := today.AddDate(0, 0, -daysAgo).Format("2006-01-02")
+		stat := statOf[date]
 		days = append(days, chartDay{
 			Date:       date,
-			Total:      d.Total,
-			CorrectPct: pct(d.Correct, maxTotal),
-			WrongPct:   pct(d.Total-d.Correct, maxTotal),
-			Title:      date + ": " + strconv.Itoa(d.Total) + "회 (정답 " + strconv.Itoa(d.Correct) + ")",
+			Total:      stat.Total,
+			CorrectPct: percent(stat.Correct, busiestDay),
+			WrongPct:   percent(stat.Total-stat.Correct, busiestDay),
+			Title:      date + ": " + strconv.Itoa(stat.Total) + "회 (정답 " + strconv.Itoa(stat.Correct) + ")",
 		})
 	}
 
+	// 아직 한 번도 풀지 않았으면 정답률이라는 것이 없다. 템플릿이 0%와 구별하도록
+	// -1로 표시한다.
 	accuracy := -1
 	if summary.TotalReviews > 0 {
-		accuracy = pct(summary.CorrectReviews, summary.TotalReviews)
+		accuracy = percent(summary.CorrectReviews, summary.TotalReviews)
 	}
 
 	w.render(c, http.StatusOK, "stats", "통계", gin.H{
@@ -533,24 +534,31 @@ func (w *Web) settingsPage(c *gin.Context) {
 	}
 	w.render(c, http.StatusOK, "settings", "설정", gin.H{
 		"Profile":  profile,
-		"Settings": parseSettings(profile),
+		"Settings": settingsFrom(profile),
 	})
 }
 
+// 설정값이 머무를 수 있는 범위. 벗어난 값이 오면 기본값을 그대로 둔다.
+const (
+	minTtsRate, maxTtsRate     = 0.5, 1.5
+	minDailyGoal, maxDailyGoal = 5, 200
+)
+
 func (w *Web) saveSettings(c *gin.Context) {
 	name := strings.TrimSpace(c.PostForm("display_name"))
-	settings := profileSettings{TtsRate: 0.9, DailyGoal: 50}
-	if v, err := strconv.ParseFloat(c.PostForm("tts_rate"), 64); err == nil && v >= 0.5 && v <= 1.5 {
-		settings.TtsRate = v
+	settings := defaultSettings()
+	if rate, err := strconv.ParseFloat(c.PostForm("tts_rate"), 64); err == nil &&
+		rate >= minTtsRate && rate <= maxTtsRate {
+		settings.TtsRate = rate
 	}
-	if v, err := strconv.Atoi(c.PostForm("daily_goal")); err == nil && v >= 5 && v <= 200 {
-		settings.DailyGoal = v
+	if goal, err := strconv.Atoi(c.PostForm("daily_goal")); err == nil &&
+		goal >= minDailyGoal && goal <= maxDailyGoal {
+		settings.DailyGoal = goal
 	}
 	raw, _ := json.Marshal(settings)
 	if _, err := w.store.UpdateProfile(c.Request.Context(), auth.UserID(c), &name, raw); err != nil {
 		w.failPage(c, err)
 		return
 	}
-	setFlash(c, "info", "저장했어요")
-	c.Redirect(http.StatusSeeOther, "/settings")
+	redirectWithFlash(c, flashInfo, "저장했어요", "/settings")
 }

@@ -1,3 +1,5 @@
+// tag::head[]
+
 // Package srs implements a binary-grade variant of SM-2. The UI only offers
 // 맞음/틀림, mapped to SM-2 quality 5 and 2 respectively.
 package srs
@@ -15,6 +17,9 @@ const (
 	easeLossIncorrect = 0.32
 )
 
+// end::head[]
+
+// tag::state[]
 type State struct {
 	EaseFactor   float64
 	IntervalDays float64
@@ -25,6 +30,9 @@ func NewState() State {
 	return State{EaseFactor: InitialEase}
 }
 
+// end::state[]
+
+// tag::grade[]
 // Grade returns the next SRS state and due time after a first-pass answer.
 // Retry-round answers must not be graded.
 func Grade(s State, correct bool, now time.Time) (State, time.Time) {
@@ -47,3 +55,5 @@ func Grade(s State, correct bool, now time.Time) (State, time.Time) {
 	due := now.Add(time.Duration(s.IntervalDays * float64(24*time.Hour)))
 	return s, due
 }
+
+// end::grade[]

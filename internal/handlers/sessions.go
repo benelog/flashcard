@@ -91,7 +91,7 @@ func (h *Handlers) CreateSession(c *gin.Context) {
 }
 
 func (h *Handlers) RecordReview(c *gin.Context) {
-	sessionID, ok := pathUUID(c, "id")
+	sessionID, ok := uuidFromPath(c, "id")
 	if !ok {
 		return
 	}
@@ -113,7 +113,7 @@ func (h *Handlers) RecordReview(c *gin.Context) {
 }
 
 func (h *Handlers) FinishSession(c *gin.Context) {
-	sessionID, ok := pathUUID(c, "id")
+	sessionID, ok := uuidFromPath(c, "id")
 	if !ok {
 		return
 	}

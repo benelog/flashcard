@@ -5,6 +5,10 @@ import (
 	"strings"
 )
 
+// 이 파일의 슬러그 함수는 대문자 이름으로 공개한다. 다른 Store 구현
+// (internal/litestore)이 같은 규칙으로 슬러그를 만들어야 하기 때문이다. 규칙을
+// 양쪽에 베껴 두면 로컬과 운영의 덱 주소가 달라진다.
+//
 // Deck URL slugs are always exactly 4 Base36 characters. Base36 (0-9, a-z) is
 // case-insensitive, so users can type a slug without worrying about case.
 // Exposing the raw seq column directly would leak a sequential counter ("0001",
@@ -12,6 +16,7 @@ import (
 // the 36^4 slug space: consecutive decks land on scattered, non-obvious slugs.
 // The mapping is a bijection, so a slug still decodes back to its seq for
 // lookups. The UUID id stays internal.
+// tag::slug-constants[]
 const slugAlphabet = "0123456789abcdefghijklmnopqrstuvwxyz"
 
 // slugLen is the fixed slug width; slugSpace = 36^slugLen is the number of
@@ -29,7 +34,10 @@ const slugMul = 1038007
 
 var slugMulInv = modInverse(slugMul, slugSpace)
 
-func encodeDeckSlug(seq int64) string {
+// end::slug-constants[]
+
+// tag::encode[]
+func EncodeDeckSlug(seq int64) string {
 	if seq <= 0 || seq >= slugSpace {
 		return ""
 	}
@@ -42,7 +50,9 @@ func encodeDeckSlug(seq int64) string {
 	return string(buf[:])
 }
 
-func decodeDeckSlug(s string) (int64, error) {
+// end::encode[]
+
+func DecodeDeckSlug(s string) (int64, error) {
 	if len(s) != slugLen {
 		return 0, fmt.Errorf("invalid deck slug %q", s)
 	}

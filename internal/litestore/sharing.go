@@ -30,13 +30,8 @@ func (s *Store) ShareDeck(ctx context.Context, userID, deckID uuid.UUID) (store.
 		if isUniqueViolation(err) {
 			continue
 		}
-		if err != nil {
+		if err := requireRowAffected(res, err); err != nil {
 			return info, err
-		}
-		if n, err := res.RowsAffected(); err != nil {
-			return info, err
-		} else if n == 0 {
-			return info, store.ErrNotFound
 		}
 		var sharedAt string
 		err = s.db.QueryRowContext(ctx,
@@ -59,18 +54,9 @@ func isUniqueViolation(err error) bool {
 }
 
 func (s *Store) UnshareDeck(ctx context.Context, userID, deckID uuid.UUID) error {
-	res, err := s.db.ExecContext(ctx,
+	return requireRowAffected(s.db.ExecContext(ctx,
 		`update decks set share_slug = null, shared_at = null
-		 where user_id = ? and id = ?`, userID.String(), deckID.String())
-	if err != nil {
-		return err
-	}
-	if n, err := res.RowsAffected(); err != nil {
-		return err
-	} else if n == 0 {
-		return store.ErrNotFound
-	}
-	return nil
+		 where user_id = ? and id = ?`, userID.String(), deckID.String()))
 }
 
 const sharedDeckSelect = `
@@ -81,7 +67,7 @@ const sharedDeckSelect = `
 	join profiles p on p.id = d.user_id
 	where d.share_slug is not null`
 
-func scanSharedDeck(r row) (store.SharedDeckSummary, error) {
+func scanSharedDeck(r rowScanner) (store.SharedDeckSummary, error) {
 	var d store.SharedDeckSummary
 	var sharedAt string
 	err := r.Scan(&d.ShareSlug, &d.Name, &d.Description, &d.CardCount,

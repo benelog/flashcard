@@ -6,7 +6,7 @@
 
   <label class="field">
     <span class="field-label">이름</span>
-    <input name="display_name" value="{{deref .Data.Profile.DisplayName}}">
+    <input name="display_name" value="{{orEmpty .Data.Profile.DisplayName}}">
   </label>
 
   <label class="field">

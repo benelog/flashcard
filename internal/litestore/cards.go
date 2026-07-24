@@ -18,7 +18,7 @@ const cardSelect = `
 	       notes, created_at, attempts, error_rate, interval_days, due_at, last_reviewed_at
 	from cards_with_stats`
 
-func scanCard(r row) (store.Card, error) {
+func scanCard(r rowScanner) (store.Card, error) {
 	var c store.Card
 	var id, deckID, tags, createdAt, dueAt string
 	var lastReviewed sql.NullString
@@ -134,37 +134,23 @@ func (s *Store) CreateCard(ctx context.Context, userID uuid.UUID, in store.CardI
 }
 
 func (s *Store) UpdateCard(ctx context.Context, userID, cardID uuid.UUID, in store.CardInput) (store.Card, error) {
-	res, err := s.db.ExecContext(ctx,
+	err := requireRowAffected(s.db.ExecContext(ctx,
 		`update cards set
 		   text = ?, meaning = ?, card_type = ?, tags = ?,
 		   phonetic = ?, example = ?, notes = ?, updated_at = ?
 		 where user_id = ? and id = ?`,
 		in.Text, in.Meaning, in.CardType, tagsJSON(in.Tags),
 		in.Phonetic, in.Example, in.Notes, fmtTime(time.Now()),
-		userID.String(), cardID.String())
+		userID.String(), cardID.String()))
 	if err != nil {
 		return store.Card{}, err
-	}
-	if n, err := res.RowsAffected(); err != nil {
-		return store.Card{}, err
-	} else if n == 0 {
-		return store.Card{}, store.ErrNotFound
 	}
 	return s.GetCard(ctx, userID, cardID)
 }
 
 func (s *Store) DeleteCard(ctx context.Context, userID, cardID uuid.UUID) error {
-	res, err := s.db.ExecContext(ctx,
-		`delete from cards where user_id = ? and id = ?`, userID.String(), cardID.String())
-	if err != nil {
-		return err
-	}
-	if n, err := res.RowsAffected(); err != nil {
-		return err
-	} else if n == 0 {
-		return store.ErrNotFound
-	}
-	return nil
+	return requireRowAffected(s.db.ExecContext(ctx,
+		`delete from cards where user_id = ? and id = ?`, userID.String(), cardID.String()))
 }
 
 // BulkCreateCards inserts many cards, skipping texts that already exist

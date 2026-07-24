@@ -30,8 +30,6 @@ var templateFS embed.FS
 //go:embed static
 var staticFS embed.FS
 
-var nilUUID = uuid.Nil
-
 // assetVersion fingerprints the embedded CSS/JS. The templates hang it off
 // every asset URL as ?v=…, so a deploy changes the URL itself: the service
 // worker (which serves static files stale-while-revalidate) can never pair a
@@ -53,10 +51,10 @@ var assetVersion = sync.OnceValue(func() string {
 func asset(path string) string { return path + "?v=" + assetVersion() }
 
 type Web struct {
-	store handlers.Store
-	cfg   *config.Config
-	gt    *goTrue
-	pages map[string]*template.Template
+	store  handlers.Store
+	cfg    *config.Config
+	goTrue *goTrue
+	pages  map[string]*template.Template
 	// partials holds the shared fragments (study body, form fields, …) that
 	// htmx endpoints render standalone.
 	partials *template.Template
@@ -65,12 +63,13 @@ type Web struct {
 func New(cfg *config.Config, s handlers.Store) *Web {
 	w := &Web{store: s, cfg: cfg}
 	if cfg.AuthMode != "local" {
-		w.gt = newGoTrue(cfg.SupabaseURL, cfg.SupabaseAnonKey)
+		w.goTrue = newGoTrue(cfg.SupabaseURL, cfg.SupabaseAnonKey)
 	}
 	w.parseTemplates()
 	return w
 }
 
+// tag::parse-templates[]
 func (w *Web) parseTemplates() {
 	base := template.Must(template.New("").Funcs(funcMap).
 		ParseFS(templateFS, "templates/layout.html", "templates/partials/*.html"))
@@ -86,6 +85,8 @@ func (w *Web) parseTemplates() {
 		w.pages[name] = template.Must(template.Must(base.Clone()).ParseFS(templateFS, f))
 	}
 }
+
+// end::parse-templates[]
 
 // view is the root object every template executes against.
 type view struct {
@@ -104,7 +105,7 @@ func (w *Web) newView(c *gin.Context, title string, data any) view {
 	return view{
 		Title:     title,
 		Path:      c.Request.URL.Path,
-		LoggedIn:  auth.OptionalUserID(c) != nilUUID,
+		LoggedIn:  auth.OptionalUserID(c) != uuid.Nil,
 		LocalMode: w.cfg.AuthMode == "local",
 		Email:     userEmail(c),
 		Flash:     msg,
@@ -113,6 +114,7 @@ func (w *Web) newView(c *gin.Context, title string, data any) view {
 	}
 }
 
+// tag::render[]
 func (w *Web) render(c *gin.Context, status int, page, title string, data any) {
 	tpl, ok := w.pages[page]
 	if !ok {
@@ -125,6 +127,8 @@ func (w *Web) render(c *gin.Context, status int, page, title string, data any) {
 		_ = c.Error(err)
 	}
 }
+
+// end::render[]
 
 // renderPartial writes a single fragment — the response to an htmx request.
 func (w *Web) renderPartial(c *gin.Context, name string, data any) {
@@ -147,6 +151,35 @@ func (w *Web) failPage(c *gin.Context, err error) {
 	}
 	fmt.Println("web internal error:", err)
 	w.renderError(c, http.StatusInternalServerError, "일시적인 오류가 발생했어요. 잠시 후 다시 시도해주세요.")
+}
+
+// isHTMX reports whether htmx sent this request. htmx로 온 요청에는 페이지
+// 한 장이 아니라 바꿔 끼울 조각만 돌려준다.
+func isHTMX(c *gin.Context) bool {
+	return c.GetHeader("HX-Request") != ""
+}
+
+// deckIDFromPath resolves the :slug path parameter to the visitor's deck id.
+// 남의 덱이나 없는 덱은 여기서 404로 끝나므로, 부르는 쪽은 소유권을 다시 확인하지
+// 않아도 된다. false를 받으면 응답은 이미 쓰인 상태다.
+func (w *Web) deckIDFromPath(c *gin.Context) (uuid.UUID, bool) {
+	deckID, err := w.store.DeckIDBySlug(c.Request.Context(), auth.UserID(c), c.Param("slug"))
+	if err != nil {
+		w.failPage(c, err)
+		return uuid.Nil, false
+	}
+	return deckID, true
+}
+
+// uuidFromPath reads a UUID path parameter, answering 404 with notFound when it
+// is malformed. 주소를 손으로 고쳐 넣은 경우라 "없는 것"과 구별할 이유가 없다.
+func (w *Web) uuidFromPath(c *gin.Context, name, notFound string) (uuid.UUID, bool) {
+	id, err := uuid.Parse(c.Param(name))
+	if err != nil {
+		w.renderError(c, http.StatusNotFound, notFound)
+		return uuid.Nil, false
+	}
+	return id, true
 }
 
 // Register wires every HTML route into the shared Gin engine. The JSON API

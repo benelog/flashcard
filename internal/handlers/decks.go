@@ -18,6 +18,7 @@ func (h *Handlers) ListDecks(c *gin.Context) {
 	c.JSON(http.StatusOK, decks)
 }
 
+// tag::get-deck[]
 func (h *Handlers) GetDeck(c *gin.Context) {
 	deck, err := h.Store.GetDeckBySlug(c.Request.Context(), auth.UserID(c), c.Param("slug"))
 	if err != nil {
@@ -27,6 +28,9 @@ func (h *Handlers) GetDeck(c *gin.Context) {
 	c.JSON(http.StatusOK, deck)
 }
 
+// end::get-deck[]
+
+// tag::create-deck[]
 func (h *Handlers) CreateDeck(c *gin.Context) {
 	var body struct {
 		Name        string  `json:"name"`
@@ -44,8 +48,10 @@ func (h *Handlers) CreateDeck(c *gin.Context) {
 	c.JSON(http.StatusCreated, deck)
 }
 
+// end::create-deck[]
+
 func (h *Handlers) UpdateDeck(c *gin.Context) {
-	deckID, ok := h.pathDeckID(c)
+	deckID, ok := h.deckIDFromPath(c)
 	if !ok {
 		return
 	}
@@ -70,7 +76,7 @@ func (h *Handlers) UpdateDeck(c *gin.Context) {
 }
 
 func (h *Handlers) DeleteDeck(c *gin.Context) {
-	deckID, ok := h.pathDeckID(c)
+	deckID, ok := h.deckIDFromPath(c)
 	if !ok {
 		return
 	}

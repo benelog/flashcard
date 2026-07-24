@@ -36,9 +36,9 @@ type apiEntry struct {
 	} `json:"meanings"`
 }
 
-// mapEntries condenses the API response: first phonetic, up to two
+// summarizeEntries condenses the API response: first phonetic, up to two
 // "(품사) 뜻" lines, and the first example.
-func mapEntries(entries []apiEntry) dictEntry {
+func summarizeEntries(entries []apiEntry) dictEntry {
 	var out dictEntry
 	if len(entries) == 0 {
 		return out
@@ -90,7 +90,7 @@ func lookupWord(word string) (dictEntry, error) {
 	if err := json.NewDecoder(res.Body).Decode(&entries); err != nil {
 		return dictEntry{}, err
 	}
-	return mapEntries(entries), nil
+	return summarizeEntries(entries), nil
 }
 
 // dictionaryLookup fills the card form from the dictionary. The htmx button

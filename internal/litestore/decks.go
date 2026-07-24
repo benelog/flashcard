@@ -17,7 +17,7 @@ const deckSelect = `
 	       d.share_slug, d.shared_at, d.created_at, d.updated_at, d.seq
 	from decks d`
 
-func scanDeck(r row) (store.Deck, error) {
+func scanDeck(r rowScanner) (store.Deck, error) {
 	var d store.Deck
 	var id, createdAt, updatedAt string
 	var sharedAt sql.NullString
@@ -114,34 +114,23 @@ func (s *Store) CreateDeck(ctx context.Context, userID uuid.UUID, name string, d
 }
 
 func (s *Store) UpdateDeck(ctx context.Context, userID, deckID uuid.UUID, name *string, description *string) (store.Deck, error) {
-	res, err := s.db.ExecContext(ctx,
+	err := requireRowAffected(s.db.ExecContext(ctx,
 		`update decks set
 		   name = coalesce(?, name),
 		   description = coalesce(?, description),
 		   updated_at = ?
 		 where user_id = ? and id = ?`,
-		name, description, fmtTime(time.Now()), userID.String(), deckID.String())
+		name, description, fmtTime(time.Now()), userID.String(), deckID.String()))
 	if err != nil {
 		return store.Deck{}, err
-	}
-	if n, err := res.RowsAffected(); err != nil {
-		return store.Deck{}, err
-	} else if n == 0 {
-		return store.Deck{}, store.ErrNotFound
 	}
 	return s.GetDeck(ctx, userID, deckID)
 }
 
+// tag::delete-deck[]
 func (s *Store) DeleteDeck(ctx context.Context, userID, deckID uuid.UUID) error {
-	res, err := s.db.ExecContext(ctx,
-		`delete from decks where user_id = ? and id = ?`, userID.String(), deckID.String())
-	if err != nil {
-		return err
-	}
-	if n, err := res.RowsAffected(); err != nil {
-		return err
-	} else if n == 0 {
-		return store.ErrNotFound
-	}
-	return nil
+	return requireRowAffected(s.db.ExecContext(ctx,
+		`delete from decks where user_id = ? and id = ?`, userID.String(), deckID.String()))
 }
+
+// end::delete-deck[]

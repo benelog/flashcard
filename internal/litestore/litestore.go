@@ -13,6 +13,8 @@ import (
 	"time"
 
 	_ "modernc.org/sqlite"
+
+	"github.com/benelog/flashcard/internal/store"
 )
 
 //go:embed schema.sql
@@ -54,10 +56,31 @@ func (s *Store) Close() error {
 	return s.db.Close()
 }
 
-// row lets scan helpers accept both *sql.Row and *sql.Rows.
-type row interface {
+// rowScanner lets scan helpers accept both *sql.Row and *sql.Rows.
+type rowScanner interface {
 	Scan(dest ...any) error
 }
+
+// tag::require-row-affected[]
+// requireRowAffected wraps an Exec that must touch exactly the caller's row.
+// The pgx store has the same helper for the same reason: every write is scoped
+// by user_id, so "no row matched" means the row is missing or belongs to
+// someone else, and both are ErrNotFound to the caller.
+func requireRowAffected(res sql.Result, err error) error {
+	if err != nil {
+		return err
+	}
+	n, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if n == 0 {
+		return store.ErrNotFound
+	}
+	return nil
+}
+
+// end::require-row-affected[]
 
 func fmtTime(t time.Time) string {
 	return t.UTC().Format(timeLayout)
