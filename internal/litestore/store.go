@@ -100,10 +100,10 @@ func requireRowAffected(res sql.Result, err error) error {
 
 // end::require-row-affected[]
 
-// scanCardID reads a single id column, for the queries that pick ids first and
-// fetch the rows in a second pass. SQLite는 uuid 타입이 없어 text로 담기므로
-// 여기서 되돌린다.
-func scanCardID(r rowScanner) (uuid.UUID, error) {
+// scanUUID는 id 열 하나만 읽는다. id를 먼저 고르고 행은 두 번째 질의로 가져오는
+// 질의들이 쓴다. internal/pgstore에 같은 이름의 짝이 있다. SQLite는 uuid 타입이
+// 없어 text로 담기므로 여기서 되돌린다.
+func scanUUID(r rowScanner) (uuid.UUID, error) {
 	var id string
 	if err := r.Scan(&id); err != nil {
 		return uuid.Nil, err

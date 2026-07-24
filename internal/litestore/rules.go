@@ -56,7 +56,7 @@ func (s *Store) CardsByRule(ctx context.Context, userID uuid.UUID, rule smartrul
 	if err != nil {
 		return nil, err
 	}
-	ids, err := collect(rows, scanCardID)
+	ids, err := collect(rows, scanUUID)
 	if err != nil {
 		return nil, err
 	}

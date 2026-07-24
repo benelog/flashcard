@@ -324,7 +324,7 @@ cascade는 편리한 만큼 파괴력도 커서, 의도치 않은 연쇄 삭제�
 
 한 가지 SQLite만의 함정이 있다.
 SQLite는 옛 버전과의 호환 때문에 외래 키 강제를 꺼 둔 채 출발하므로, 접속할 때마다 `foreign_keys` 프래그마(pragma, 접속 단위 설정)로 켜야 한다.
-이 앱은 DB 파일을 여는 접속 문자열에 이 설정을 붙여 둔다(`internal/litestore/litestore.go`의 `Open`).
+이 앱은 DB 파일을 여는 접속 문자열에 이 설정을 붙여 둔다(`internal/litestore/store.go`의 `Open`).
 켜는 것을 잊으면 위의 cascade와 참조 검사가 전부 조용히 무시되니, SQLite에서 외래 키를 쓸 때 가장 먼저 확인할 항목이다.
 
 === NOT NULL, check, UNIQUE: 제약을 DB에 맡긴다
@@ -391,7 +391,7 @@ SQLite도 PostgreSQL도 외래 키에 인덱스를 자동으로 만들지 않으
 
 타입 목록에서 봤듯 SQLite에는 날짜·시각 전용 타입도 없다.
 이 앱의 답은 모든 시각 컬럼을 text로 두되, 표기를 단 하나의 고정 폭 형식으로 통일하는 것이다.
-`internal/litestore/litestore.go`에서 발췌한, 그 형식을 정의하는 상수다.
+`internal/litestore/store.go`에서 발췌한, 그 형식을 정의하는 상수다.
 
 [source,go]
 ----
@@ -539,7 +539,7 @@ if _, err := tx.ExecContext(ctx,
 중간 어디서든 에러로 빠져나가면 rollback이 실행되어 로그 삽입까지 포함해 전부 되돌아가고, 끝까지 가야만 두 변경이 함께 확정된다.
 
 둘째, 상태를 읽는 select에 잠금 문이 없다.
-주석이 말하듯 SQLite는 한 시점에 쓰기 트랜잭션을 하나만 허용하고 이 스토어는 아예 연결을 하나로 제한하므로(`internal/litestore/litestore.go`), 읽기-계산-쓰기 사이에 다른 갱신이 끼어들 수 없다.
+주석이 말하듯 SQLite는 한 시점에 쓰기 트랜잭션을 하나만 허용하고 이 스토어는 아예 연결을 하나로 제한하므로(`internal/litestore/store.go`), 읽기-계산-쓰기 사이에 다른 갱신이 끼어들 수 없다.
 여러 접속이 같은 행을 동시에 고칠 수 있는 운영 PostgreSQL에서는 사정이 달라서, 같은 함수의 운영 구현(`internal/pgstore/sessions.go`)은 `select ... for update`로 행 잠금을 건다.
 잠금 없이 두 요청이 각자 읽은 값으로 계산해 덮어쓰면, 한쪽의 갱신이 소리 없이 사라지는 갱신 유실(lost update)이 생기기 때문이다.
 

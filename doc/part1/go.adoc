@@ -419,11 +419,11 @@ include::../../internal/smartrules/rules.go[tag=parse]
 어느 JSON 키를 어느 필드에 넣을지는 포인터 절의 `Deck`에서 본 구조체 태그(`` `json:"..."` ``)가 알려 준다.
 
 쓰기 방향이 `json.Marshal`이다.
-internal/handlers/smart.go에서 스마트 덱을 저장하기 전, 규칙을 정돈된 JSON으로 다시 만드는 부분이다.
+internal/handlers/smartdecks.go에서 스마트 덱을 저장하기 전, 규칙을 정돈된 JSON으로 다시 만드는 부분이다.
 
 [source,go]
 ----
-include::../../internal/handlers/smart.go[tag=normalize-rule]
+include::../../internal/handlers/smartdecks.go[tag=normalize-rule]
 ----
 
 사용자가 보낸 규칙 JSON을 `Parse`로 해석하면, 그 안의 `Validate`가 빠진 값에 기본값을 채운다.

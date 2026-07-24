@@ -174,7 +174,7 @@ func (w *Web) withUser() gin.HandlerFunc {
 그 목록이 무엇이고 코드의 이력을 어떻게 남기는지는 14장에서 다룬다.
 
 그런데 테이블을 만드는 명령을 한 번도 실행하지 않았는데도 5장에서 설계한 테이블들이 전부 준비되어 있다.
-5장 끝에서 로컬 SQLite의 스키마는 서버가 시작할 때 통째로 적용된다고 했는데, 그 일을 하는 코드가 `internal/litestore/litestore.go`에 있다.
+5장 끝에서 로컬 SQLite의 스키마는 서버가 시작할 때 통째로 적용된다고 했는데, 그 일을 하는 코드가 `internal/litestore/store.go`에 있다.
 이 코드는 SQLite 파일과 그것이 담길 폴더를 없으면 만들어 가며 열고, 소스에 함께 임베드된 스키마를 곧바로 적용한다.
 
 [source,go]

@@ -375,12 +375,12 @@ Flashcard에서 인증은 로그인 처리가 맡고(로컬 모드는 고정 사
 
 고치거나 지운 뒤에는 몇 행이 영향을 받았는지가 돌아온다.
 store 계층은 이 값으로 "그런 행이 없었다"를 판정한다.
-`internal/litestore/litestore.go`의 도우미 함수다.
+`internal/litestore/store.go`의 도우미 함수다.
 Go 문법은 6·7장에서 배우니 지금은 "몇 행이 지워졌는지 세어 0이면 없는 것으로 처리한다"는 흐름만 보면 된다.
 
 [source,go]
 ----
-include::../../internal/litestore/litestore.go[tag=require-row-affected]
+include::../../internal/litestore/store.go[tag=require-row-affected]
 ----
 
 지워진 행이 0이면 애초에 그런 덱이 없었다는 뜻이므로, store 계층은 "그런 것이 없다"를 뜻하는 에러 값(`model.ErrNotFound`, 7장에서 다룬다)을 돌려준다.
