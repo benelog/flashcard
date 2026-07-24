@@ -111,7 +111,7 @@ Go 템플릿의 문법은 `{{`와 `}}`로 감싼 자리 표시가 거의 전부�
 
 학습 화면 조각에서 발췌했다.
 문제를 영어로 낼지 뜻으로 낼지를 변수 `$textFirst`에 담아 두고, `with .Card`로 점이 카드 하나로 바뀐 안쪽에서 읽어 주기 속도 같은 바깥 값은 `$`로 꺼낸다.
-블록 안에는 아직 설명하지 않은 것들(읽어 주기 버튼이 쓰는 `data-tts` 속성, 화면 낭독기를 위한 `aria-label`, 뒤의 FuncMap 절에서 볼 `deref` 함수)이 섞여 있으니, 지금은 `$textFirst`와 `$`만 눈여겨보면 된다.
+블록 안에는 아직 설명하지 않은 것들(읽어 주기 버튼이 쓰는 `data-tts` 속성, 화면 낭독기를 위한 `aria-label`, 뒤의 FuncMap 절에서 볼 `orEmpty` 함수)이 섞여 있으니, 지금은 `$textFirst`와 `$`만 눈여겨보면 된다.
 
 `internal/web/templates/partials/study.html`:
 
@@ -124,7 +124,7 @@ Go 템플릿의 문법은 `{{`와 `}}`로 감싼 자리 표시가 거의 전부�
   {{if $textFirst}}<button type="button" class="tts" data-tts="{{$.TextTTS}}" data-tts-rate="{{$.State.TtsRate}}" aria-label="영어 읽어주기">{{icon "volume"}}</button>{{end}}
   <!-- ... -->
   <p class="question">{{if $textFirst}}{{.Text}}{{else}}{{.Meaning}}{{end}}</p>
-  {{if and $textFirst .Phonetic}}<p class="small muted">{{deref .Phonetic}}</p>{{end}}
+  {{if and $textFirst .Phonetic}}<p class="small muted">{{orEmpty .Phonetic}}</p>{{end}}
 <!-- ... -->
 {{end}}
 ----
@@ -212,21 +212,7 @@ Flashcard는 서버가 켜질 때 템플릿을 한 번만 파싱해 둔다.
 
 [source,go]
 ----
-func (w *Web) parseTemplates() {
-	base := template.Must(template.New("").Funcs(funcMap).
-		ParseFS(templateFS, "templates/layout.html", "templates/partials/*.html"))
-	w.partials = base
-
-	pageFiles, err := fs.Glob(templateFS, "templates/pages/*.html")
-	if err != nil {
-		panic(err)
-	}
-	w.pages = make(map[string]*template.Template, len(pageFiles))
-	for _, f := range pageFiles {
-		name := strings.TrimSuffix(f[strings.LastIndex(f, "/")+1:], ".html")
-		w.pages[name] = template.Must(template.Must(base.Clone()).ParseFS(templateFS, f))
-	}
-}
+include::../../internal/web/web.go[tag=parse-templates]
 ----
 
 base 복제본에 `home.html`을 얹으면 그 안에서 `content`는 홈 화면 본문이 되고, `w.pages["home"]`은 "레이아웃 + 조각 + 홈 본문"을 갖춘 완성 집합이 된다.
@@ -241,18 +227,7 @@ base 복제본에 `home.html`을 얹으면 그 안에서 `content`는 홈 화면
 
 [source,go]
 ----
-func (w *Web) render(c *gin.Context, status int, page, title string, data any) {
-	tpl, ok := w.pages[page]
-	if !ok {
-		panic("unknown page template: " + page)
-	}
-	c.Status(status)
-	c.Header("Content-Type", "text/html; charset=utf-8")
-	c.Header("Cache-Control", "no-store") // pages are per-user; never share
-	if err := tpl.ExecuteTemplate(c.Writer, "layout", w.newView(c, title, data)); err != nil {
-		_ = c.Error(err)
-	}
-}
+include::../../internal/web/web.go[tag=render]
 ----
 
 `ExecuteTemplate`의 두 번째 인자가 `"layout"`이다.
@@ -269,28 +244,13 @@ func (w *Web) render(c *gin.Context, status int, page, title string, data any) {
 
 [source,go]
 ----
-var funcMap = template.FuncMap{
-	"icon":      icon,
-	"hasPrefix": strings.HasPrefix,
-	"deref":     deref,
-	"pct":       pct,
-	// ...
-	"koDate":    koDate,
-	"ruleLabel": ruleLabelJSON,
-	"ruleRaw":   func(raw json.RawMessage) string { return string(raw) },
-	"typeLabel": typeLabel,
-}
+include::../../internal/web/funcs.go[tag=func-map]
 
-// pct returns round(a/b*100), guarding the empty case.
-func pct(a, b int) int {
-	if b == 0 {
-		return 0
-	}
-	return int(math.Round(float64(a) / float64(b) * 100))
-}
+include::../../internal/web/funcs.go[tag=percent]
 ----
 
-앞선 발췌의 `{{deref .Phonetic}}`과 `{{hasPrefix .Path "/decks"}}`가 등록된 함수 호출이었고, 통계 페이지의 `{{$p := pct .MatureCards .TotalCards}}`, 공유 갤러리의 `{{koDate .SharedAt}}`, 학습 카드의 `{{typeLabel .CardType}}`도 마찬가지다.
+앞선 발췌의 `{{orEmpty .Phonetic}}`과 `{{hasPrefix .Path "/decks"}}`가 등록된 함수 호출이었고, 통계 페이지의 `{{$p := percent .MatureCards .TotalCards}}`, 공유 갤러리의 `{{koDate .SharedAt}}`, 학습 카드의 `{{typeLabel .CardType}}`도 마찬가지다.
+왼쪽의 이름은 템플릿에서 부를 때 쓰는 이름이라 Go 함수 이름과 같을 필요가 없지만, 두 곳을 오가며 읽어야 하므로 같게 두었다.
 `parseTemplates`에서 `Funcs(funcMap)`를 base에 걸어 두었기 때문에, base를 복제한 모든 페이지가 같은 함수들을 쓴다.
 
 이 중 `icon`은 특별하다.

@@ -91,57 +91,7 @@ Flashcard는 화면까지 Go 서버가 렌더링하므로(11장) 검증이 전�
 
 [source,yaml]
 ----
-name: CI
-
-on:
-  push:
-    branches: [main, release]
-    paths-ignore:
-      - 'doc/**'
-  pull_request:
-    paths-ignore:
-      - 'doc/**'
-  workflow_dispatch:
-
-concurrency:
-  group: ci-${{ github.ref }}
-  cancel-in-progress: true
-
-jobs:
-  go:
-    name: Go (build, vet, test, gofmt)
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
-        with:
-          go-version-file: go.mod
-          cache: true
-
-      - name: gofmt
-        run: |
-          unformatted=$(gofmt -l .)
-          if [ -n "$unformatted" ]; then
-            echo "다음 파일이 gofmt를 통과하지 못했습니다:"
-            echo "$unformatted"
-            exit 1
-          fi
-
-      - name: go build
-        run: go build ./...
-
-      - name: go vet
-        run: go vet ./...
-
-      - name: go test
-        run: go test ./...
-
-      - name: Vercel 호환 검사 (api/ 는 internal/ 을 import 할 수 없다)
-        run: |
-          if grep -rq 'benelog/flashcard/internal' api/; then
-            echo "api/ 가 internal/ 패키지를 import 합니다. pkg/ 로 옮기세요."
-            exit 1
-          fi
+include::../../.github/workflows/ci.yml[]
 ----
 
 위에서부터 읽어 보자.

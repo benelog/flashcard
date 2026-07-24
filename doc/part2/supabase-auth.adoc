@@ -241,7 +241,7 @@ func (w *Web) startOAuth(c *gin.Context) {
 	setCookie(c, pkceCookie, verifier, 300)
 	setCookie(c, nextCookie, safeNext(c.Query("next")), 300)
 	redirectTo := origin(c) + "/auth/callback"
-	c.Redirect(http.StatusSeeOther, w.gt.authorizeURL(provider, redirectTo, pkceChallenge(verifier)))
+	c.Redirect(http.StatusSeeOther, w.goTrue.authorizeURL(provider, redirectTo, pkceChallenge(verifier)))
 }
 ----
 
@@ -259,17 +259,7 @@ func (w *Web) startOAuth(c *gin.Context) {
 
 [source,go]
 ----
-// authorizeURL is where the login button points: GoTrue redirects on to the
-// provider (Google/GitHub) and eventually back to redirectTo with ?code=.
-func (g *goTrue) authorizeURL(provider, redirectTo, challenge string) string {
-	q := url.Values{
-		"provider":              {provider},
-		"redirect_to":           {redirectTo},
-		"code_challenge":        {challenge},
-		"code_challenge_method": {"s256"},
-	}
-	return g.baseURL + "/auth/v1/authorize?" + q.Encode()
-}
+include::../../internal/web/gotrue.go[tag=authorize-url]
 ----
 
 이 주소로 이동한 브라우저는 GoTrue를 거쳐 Google이나 GitHub의 동의 화면으로 넘어간다(③).
@@ -289,12 +279,12 @@ func (w *Web) oauthCallback(c *gin.Context) {
 	clearCookie(c, nextCookie)
 
 	code := c.Query("code")
-	if w.gt == nil || code == "" || verifier == "" {
+	if w.goTrue == nil || code == "" || verifier == "" {
 		setFlash(c, "error", "로그인에 실패했어요. 다시 시도해주세요.")
 		c.Redirect(http.StatusSeeOther, "/login")
 		return
 	}
-	tok, err := w.gt.exchangeCode(c.Request.Context(), code, verifier)
+	tok, err := w.goTrue.exchangeCode(c.Request.Context(), code, verifier)
 	if err != nil {
 		setFlash(c, "error", "로그인에 실패했어요. 다시 시도해주세요.")
 		c.Redirect(http.StatusSeeOther, "/login")
@@ -483,7 +473,7 @@ func (w *Web) withUser() gin.HandlerFunc {
 		}
 		// Access token missing or expired: try the refresh token once.
 		if rt := cookieValue(c, refreshCookie); rt != "" {
-			if tok, err := w.gt.refresh(c.Request.Context(), rt); err == nil {
+			if tok, err := w.goTrue.refresh(c.Request.Context(), rt); err == nil {
 				w.setAuthCookies(c, tok)
 				if id, email, err := auth.ParseUser(tok.AccessToken, w.cfg.JWKSURL, w.cfg.JWTSecret); err == nil {
 					auth.SetUserID(c, id)
@@ -513,7 +503,7 @@ func (w *Web) withUser() gin.HandlerFunc {
 // where they were headed.
 func (w *Web) requireUser() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		if auth.OptionalUserID(c) != nilUUID {
+		if auth.OptionalUserID(c) != uuid.Nil {
 			c.Next()
 			return
 		}
@@ -554,11 +544,11 @@ func safeNext(next string) string {
 [source,go]
 ----
 func (w *Web) logout(c *gin.Context) {
-	if w.gt != nil {
+	if w.goTrue != nil {
 		if at := cookieValue(c, accessCookie); at != "" {
 			// Best-effort revocation; clearing cookies signs the browser out
 			// regardless.
-			_ = w.gt.logout(c.Request.Context(), at)
+			_ = w.goTrue.logout(c.Request.Context(), at)
 		}
 	}
 	w.clearAuthCookies(c)

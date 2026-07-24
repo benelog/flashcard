@@ -303,9 +303,7 @@ Gin에서는 요청과 응답을 함께 다루는 `gin.Context` 하나만 인자
 
 [source,go]
 ----
-func (h *Handlers) Healthz(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{"ok": true})
-}
+include::../../internal/handlers/handlers.go[tag=healthz]
 ----
 
 `c.JSON`은 인자를 JSON으로 직렬화하고 Content-Type 헤더와 상태 코드를 설정한다.
@@ -336,14 +334,7 @@ internal/handlers/decks.go의 덱 단건 조회다.
 
 [source,go]
 ----
-func (h *Handlers) GetDeck(c *gin.Context) {
-	deck, err := h.Store.GetDeckBySlug(c.Request.Context(), auth.UserID(c), c.Param("slug"))
-	if err != nil {
-		fail(c, err)
-		return
-	}
-	c.JSON(http.StatusOK, deck)
-}
+include::../../internal/handlers/decks.go[tag=get-deck]
 ----
 
 라우트의 `:slug` 자리에 매칭된 값을 `c.Param("slug")`로 꺼낸다.
@@ -383,22 +374,7 @@ internal/handlers/cards.go의 CSV 내보내기 핸들러 `ExportDeck`은 `c.Head
 
 [source,go]
 ----
-func (h *Handlers) CreateDeck(c *gin.Context) {
-	var body struct {
-		Name        string  `json:"name"`
-		Description *string `json:"description"`
-	}
-	if err := c.ShouldBindJSON(&body); err != nil || strings.TrimSpace(body.Name) == "" {
-		badRequest(c, "name is required")
-		return
-	}
-	deck, err := h.Store.CreateDeck(c.Request.Context(), auth.UserID(c), strings.TrimSpace(body.Name), body.Description)
-	if err != nil {
-		fail(c, err)
-		return
-	}
-	c.JSON(http.StatusCreated, deck)
-}
+include::../../internal/handlers/decks.go[tag=create-deck]
 ----
 
 요청 본문 전용 타입은 핸들러 안의 익명 구조체(anonymous struct)로 선언했다.
@@ -446,27 +422,9 @@ func (h *Handlers) UpdateDeck(c *gin.Context) {
 
 [source,go]
 ----
-type cardBody struct {
-	DeckSlug string   `json:"deckSlug"`
-	Text     string   `json:"text"`
-	Meaning  string   `json:"meaning"`
-	CardType string   `json:"cardType"`
-	Tags     []string `json:"tags"`
-	// ...
-}
+include::../../internal/handlers/cards.go[tag=card-body]
 
-func (b *cardBody) toInput() (store.CardInput, string) {
-	b.Text = strings.TrimSpace(b.Text)
-	b.Meaning = strings.TrimSpace(b.Meaning)
-	if b.Text == "" || b.Meaning == "" {
-		return store.CardInput{}, "text and meaning are required"
-	}
-	if b.CardType == "" {
-		b.CardType = "word"
-	}
-	if !validCardType(b.CardType) {
-		return store.CardInput{}, "cardType must be word, sentence, idiom or concept"
-	}
+include::../../internal/handlers/cards.go[tag=to-input]
 	// ...
 }
 ----
@@ -475,8 +433,13 @@ func (b *cardBody) toInput() (store.CardInput, string) {
 두 번째 반환값은 검증 실패 사유이고, 빈 문자열이면 통과다.
 정규화(공백 제거), 기본값 채우기(`cardType` 미지정 시 word), 허용값 검사가 이 한 함수에 모여 있어서, 카드를 받는 세 핸들러가 검증 규칙을 공유한다.
 
+허용값 목록 자체는 여기 있지 않고 `store.IsCardType`이 들고 있다.
+카드가 들어오는 길이 이 JSON API 말고도 웹 폼과 CSV 가져오기까지 셋이라, 종류 목록을 세 곳에 베껴 두면 한 곳만 고치는 사고가 나기 때문이다.
+같은 목록을 쓰되 어긋난 값을 만났을 때의 처분은 입구마다 다르다.
+프로그램이 보내는 API 요청은 오타를 400으로 되돌려 알려 주고, 사람이 채우는 폼과 CSV는 `store.NormalizeCardType`으로 기본 종류를 채워 등록을 살린다.
+
 일괄 등록 핸들러 `BulkCreateCards`도 같은 함수를 행 단위로 재사용하지만 실패 정책이 다르다.
-단건 생성은 검증 실패 시 즉시 400이지만, CSV에서 파싱한 최대 2,000행의 일괄 등록은 불량 행만 건너뛰고 나머지를 저장한 뒤 건너뛴 개수를 `invalid`로 응답에 담는다.
+단건 생성은 검증 실패 시 즉시 400이지만, CSV에서 파싱한 최대 2,000행(`store.MaxBulkCards`)의 일괄 등록은 불량 행만 건너뛰고 나머지를 저장한 뒤 건너뛴 개수를 `invalid`로 응답에 담는다.
 같은 검증 로직이라도 실패를 어떻게 다룰지는 엔드포인트의 성격에 따라 달라진다는 점을 보여 주는 예다.
 
 === 에러 응답을 도우미 함수로 통일한다
@@ -486,18 +449,7 @@ internal/handlers/handlers.go는 두 개의 도우미로 이를 통일한다.
 
 [source,go]
 ----
-func fail(c *gin.Context, err error) {
-	if errors.Is(err, store.ErrNotFound) {
-		c.JSON(http.StatusNotFound, gin.H{"error": "not found"})
-		return
-	}
-	log.Printf("internal error: %v", err)
-	c.JSON(http.StatusInternalServerError, gin.H{"error": "internal error"})
-}
-
-func badRequest(c *gin.Context, msg string) {
-	c.JSON(http.StatusBadRequest, gin.H{"error": msg})
-}
+include::../../internal/handlers/handlers.go[tag=error-helpers]
 ----
 
 `badRequest`는 클라이언트 잘못(400)을, `fail`은 서버 측 처리 결과를 담당한다.
@@ -751,19 +703,7 @@ internal/store/decks.go의 스토어 쪽 코드다.
 
 [source,go]
 ----
-func (s *Store) DeckIDBySlug(ctx context.Context, userID uuid.UUID, slug string) (uuid.UUID, error) {
-	seq, err := decodeDeckSlug(slug)
-	if err != nil {
-		return uuid.Nil, ErrNotFound
-	}
-	var id uuid.UUID
-	err = s.pool.QueryRow(ctx,
-		`select id from decks where user_id = $1 and seq = $2`, userID, seq).Scan(&id)
-	if errors.Is(err, pgx.ErrNoRows) {
-		return uuid.Nil, ErrNotFound
-	}
-	return id, err
-}
+include::../../internal/store/decks.go[tag=deck-id-by-slug]
 ----
 
 핸들러 쪽 대응부는 internal/handlers/handlers.go의 도우미다.
@@ -771,14 +711,9 @@ func (s *Store) DeckIDBySlug(ctx context.Context, userID uuid.UUID, slug string)
 
 [source,go]
 ----
-func (h *Handlers) pathDeckID(c *gin.Context) (uuid.UUID, bool) {
-	id, err := h.Store.DeckIDBySlug(c.Request.Context(), auth.UserID(c), c.Param("slug"))
-	if err != nil {
-		fail(c, err)
-		return uuid.Nil, false
-	}
-	return id, true
-}
+include::../../internal/handlers/handlers.go[tag=deck-id-from-path]
+
+include::../../internal/handlers/handlers.go[tag=deck-id-by-slug]
 ----
 
 역할 분담이 뚜렷하다.

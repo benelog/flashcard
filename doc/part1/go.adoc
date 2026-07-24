@@ -19,25 +19,15 @@ Flashcard의 UI는 맞음/틀림 두 버튼만 제공하므로, 원래 0~5점인
 === 패키지 선언과 SM-2 상수
 
 파일의 앞부분부터 보자.
-패키지 선언, 임포트, 그리고 알고리즘이 쓰는 상수들이 차례로 나온다.
+패키지를 설명하는 주석, 패키지 선언, 임포트, 그리고 알고리즘이 쓰는 상수들이 차례로 나온다.
 
 [source,go]
 ----
-package srs
-
-import (
-	"math"
-	"time"
-)
-
-const (
-	MinEase     = 1.3
-	InitialEase = 2.5
-	// SM-2 ease deltas for q=5 and q=2.
-	easeGainCorrect   = 0.1
-	easeLossIncorrect = 0.32
-)
+include::../../internal/srs/srs.go[tag=head]
 ----
+
+`package` 선언 바로 앞에 붙은 주석은 그 패키지 전체를 설명하는 문서로 취급된다.
+여기서는 이 패키지가 SM-2라는 알고리즘의 변형이며 UI가 맞음/틀림 두 가지만 제공한다는 사실을 밝혀 두었다.
 
 모든 Go 파일은 `package` 선언으로 시작하고, 같은 디렉터리의 파일은 같은 패키지에 속한다.
 `import` 블록에는 이 파일이 쓰는 패키지를 나열하는데, 쓰지 않는 임포트는 컴파일 에러가 난다.
@@ -57,15 +47,7 @@ const (
 
 [source,go]
 ----
-type State struct {
-	EaseFactor   float64
-	IntervalDays float64
-	Repetitions  int
-}
-
-func NewState() State {
-	return State{EaseFactor: InitialEase}
-}
+include::../../internal/srs/srs.go[tag=state]
 ----
 
 구조체는 필드를 묶은 값 타입으로, `EaseFactor`(용이도)는 간격이 늘어나는 배율, `IntervalDays`는 다음 복습까지의 간격(일), `Repetitions`는 연속 정답 횟수다.
@@ -99,28 +81,7 @@ func NewState() State {
 
 [source,go]
 ----
-// Grade returns the next SRS state and due time after a first-pass answer.
-// Retry-round answers must not be graded.
-func Grade(s State, correct bool, now time.Time) (State, time.Time) {
-	if correct {
-		s.Repetitions++
-		switch s.Repetitions {
-		case 1:
-			s.IntervalDays = 1
-		case 2:
-			s.IntervalDays = 6
-		default:
-			s.IntervalDays = math.Round(s.IntervalDays * s.EaseFactor)
-		}
-		s.EaseFactor += easeGainCorrect
-	} else {
-		s.Repetitions = 0
-		s.IntervalDays = 1
-		s.EaseFactor = math.Max(MinEase, s.EaseFactor-easeLossIncorrect)
-	}
-	due := now.Add(time.Duration(s.IntervalDays * float64(24*time.Hour)))
-	return s, due
-}
+include::../../internal/srs/srs.go[tag=grade]
 ----
 
 시그니처(Signature), 즉 함수의 이름과 매개변수·반환값을 적은 첫 줄부터 보자.
@@ -172,13 +133,7 @@ Go는 숫자 타입 간 암묵적 변환을 허용하지 않으므로, `float64`
 
 [source,go]
 ----
-func Parse(raw []byte) (Rule, error) {
-	var r Rule
-	if err := json.Unmarshal(raw, &r); err != nil {
-		return r, fmt.Errorf("invalid rule json: %w", err)
-	}
-	return r, r.Validate()
-}
+include::../../internal/smartrules/rules.go[tag=parse]
 ----
 
 6장에서 본 관례가 그대로 나온다.
@@ -201,7 +156,7 @@ internal/store/store.go에서 발췌했다.
 
 [source,go]
 ----
-var ErrNotFound = errors.New("not found")
+include::../../internal/store/store.go[tag=not-found]
 ----
 
 `ErrNotFound`는 "요청한 행이 없다"를 뜻하는 store 패키지 공용 에러 값이다.
@@ -209,11 +164,7 @@ internal/store/decks.go에서는 DB 드라이버의 에러를 이 값으로 번�
 
 [source,go]
 ----
-	err := row.Scan(&d.ID, &d.Name, &d.Description, &d.CardCount,
-		&d.ShareSlug, &d.SharedAt, &d.CreatedAt, &d.UpdatedAt, &seq)
-	if errors.Is(err, pgx.ErrNoRows) {
-		return d, ErrNotFound
-	}
+include::../../internal/store/decks.go[tag=scan-not-found]
 ----
 
 pgx 드라이버가 돌려준 `pgx.ErrNoRows`를 `errors.Is`로 알아본 뒤 `ErrNotFound`로 바꿔 돌려주므로, store 패키지를 쓰는 쪽은 드라이버가 무엇인지 몰라도 된다.
@@ -259,20 +210,9 @@ Go에서 함수의 인자는 복사되어 전달된다.
 
 [source,go]
 ----
-func (r *Rule) Validate() error {
-	if r.Limit <= 0 || r.Limit > 200 {
-		r.Limit = 20
-	}
-	switch r.Type {
-	case HighError:
-		if r.MinAttempts <= 0 {
-			r.MinAttempts = 3
-		}
+include::../../internal/smartrules/rules.go[tag=validate-head]
 		// ...
-	case Tag:
-		if len(r.Tags) == 0 {
-			return fmt.Errorf("tag rule requires tags")
-		}
+include::../../internal/smartrules/rules.go[tag=validate-tag]
 	// ...
 	}
 	return nil
@@ -301,14 +241,7 @@ internal/store/decks.go에서 덱 하나의 정보를 담는 `Deck` 구조체를
 
 [source,go]
 ----
-type Deck struct {
-	ID          uuid.UUID  `json:"id"`
-	Name        string     `json:"name"`
-	Description *string    `json:"description"`
-	// ...
-	SharedAt    *time.Time `json:"sharedAt"`
-	CreatedAt   time.Time  `json:"createdAt"`
-}
+include::../../internal/store/decks.go[tag=deck]
 ----
 
 `Description`이 `string`이 아니라 `*string`인 것은, 4장에서 본 NULL(값 자체가 없음)을 Go 쪽에서 어떻게 받을 것인가의 문제다.
@@ -344,22 +277,7 @@ Go에서 일상적으로 쓰는 컬렉션 타입은 슬라이스(Slice)와 맵(M
 
 [source,go]
 ----
-func (s *Store) ListDecks(ctx context.Context, userID uuid.UUID) ([]Deck, error) {
-	rows, err := s.pool.Query(ctx, deckSelect+` where d.user_id = $1 order by d.created_at desc`, userID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	decks := []Deck{}
-	for rows.Next() {
-		d, err := scanDeck(rows)
-		if err != nil {
-			return nil, err
-		}
-		decks = append(decks, d)
-	}
-	return decks, rows.Err()
-}
+include::../../internal/store/decks.go[tag=list-decks]
 ----
 
 `decks := []Deck{}`로 빈 슬라이스를 만들고, `append`로 원소를 덧붙인다.
@@ -375,41 +293,29 @@ internal/store/cards.go에서 CSV 대량 등록 시 중복 카드를 걸러내�
 
 [source,go]
 ----
-	seen := map[string]bool{}
+include::../../internal/store/cards.go[tag=seen-head]
 	// ...
-	for rows.Next() {
-		var f string
+include::../../internal/store/cards.go[tag=seen-fill]
 		// ...
-		seen[f] = true
-	}
+include::../../internal/store/cards.go[tag=seen-mark]
 ----
 
 `map[string]bool`은 문자열 키마다 불리언 값을 붙여 두는 맵이다.
 기존 카드의 정규화된 텍스트를 `seen`에 넣어 두고, 새 카드를 넣기 전에 존재 여부를 확인하는 집합(Set) 용도다.
 
-슬라이스와 맵이 함께 일하는 장면은 같은 파일의 `CardsByRule` 마지막 부분에 있다.
-스마트 규칙으로 고른 카드 ID 목록(`ids`)의 순서에 맞춰, DB에서 읽어 온 카드들(`cards`)을 재정렬하는 코드다.
+슬라이스와 맵이 함께 일하는 장면은 같은 파일의 `SortCardsByIDOrder`다.
+스마트 규칙으로 고른 카드 ID 목록(`ids`)의 순서에 맞춰, DB에서 읽어 온 카드들(`cards`)을 재정렬하는 함수다.
 
 [source,go]
 ----
-	byID := make(map[uuid.UUID]Card, len(cards))
-	for _, c := range cards {
-		byID[c.ID] = c
-	}
-	ordered := make([]Card, 0, len(cards))
-	for _, id := range ids {
-		if c, ok := byID[id]; ok {
-			ordered = append(ordered, c)
-		}
-	}
-	return ordered, nil
+include::../../internal/store/cards.go[tag=sort-by-id-order]
 ----
 
 `make`는 크기를 지정해 슬라이스나 맵을 만드는 내장 함수다.
 `make([]Card, 0, len(cards))`는 길이 0, 용량 `len(cards)`인 슬라이스, 즉 아직 비었지만 카드 수만큼 자리를 예약해 둔 슬라이스를 만든다.
 덧붙일 개수를 미리 알기 때문에 용량을 예약했고, 이어지는 `append`는 예약된 자리를 채우기만 하므로 앞서 말한 배열 이사가 일어나지 않는다.
 
-`if c, ok := byID[id]; ok`는 맵 조회의 comma-ok 관용구다.
+`if card, ok := cardOf[id]; ok`는 맵 조회의 comma-ok 관용구다.
 맵에서 키를 읽으면 값과 함께 "그 키가 실제로 있었는지"를 두 번째 반환값(불리언)으로 받을 수 있다.
 없는 키를 읽어도 에러가 나지 않고 제로값이 나오기 때문에, "값이 마침 제로값인 것"과 "키가 아예 없는 것"을 구별하려면 이 두 번째 값이 필요하다.
 
@@ -417,13 +323,7 @@ internal/store/cards.go에서 CSV 대량 등록 시 중복 카드를 걸러내�
 
 [source,go]
 ----
-type Rule struct {
-	Type            RuleType `json:"type"`
-	MinAttempts     int      `json:"minAttempts,omitempty"`
-	// ...
-	Tags            []string `json:"tags,omitempty"`
-	Limit           int      `json:"limit,omitempty"`
-}
+include::../../internal/smartrules/rules.go[tag=rule]
 ----
 
 `Tags []string`은 문자열 슬라이스 필드이고, 제로값은 `nil` 슬라이스다.
@@ -442,13 +342,7 @@ internal/store/cards.go의 `BulkCreateCards`는 카드 텍스트를 비교용 �
 
 [source,go]
 ----
-	for _, in := range inputs {
-		key := strings.ToLower(strings.TrimSpace(in.Text))
-		if key == "" || seen[key] {
-			res.Skipped++
-			continue
-		}
-		seen[key] = true
+include::../../internal/store/cards.go[tag=dedup-key]
 		// ...
 	}
 ----
@@ -459,20 +353,16 @@ internal/store/cards.go의 `BulkCreateCards`는 카드 텍스트를 비교용 �
 
 두 번째는 목록을 한 줄로 잇는 반대 방향의 조작이다.
 덱을 CSV 파일로 내보낼 때는 카드 한 장의 태그 목록을 한 칸에 담아야 한다.
-internal/handlers/cards.go에서 카드 하나를 CSV 한 행으로 쓰는 부분이다.
+internal/cardcsv/cardcsv.go에서 카드 하나를 CSV 한 행으로 쓰는 부분이다.
 
 [source,go]
 ----
-	for _, card := range cards {
-		w.Write([]string{
-			card.Text, card.Meaning, card.CardType,
-			strings.Join(card.Tags, "|"), deref(card.Phonetic), deref(card.Example),
-		})
-	}
+include::../../internal/cardcsv/cardcsv.go[tag=write-rows]
 ----
 
-`strings.Join(card.Tags, "|")`는 태그 슬라이스를 `|` 문자로 이어 `verb|basic`처럼 하나의 문자열로 만든다.
-CSV의 칸 구분자인 쉼표와 겹치지 않는 문자를 구분자로 골랐다.
+`strings.Join(card.Tags, tagSeparator)`는 태그 슬라이스를 `|` 문자로 이어 `verb|basic`처럼 하나의 문자열로 만든다.
+CSV의 칸 구분자인 쉼표와 겹치지 않는 문자를 구분자로 골라 상수에 이름을 붙여 두었다.
+`orEmpty`는 값이 없을 수 있는 필드(`*string`)를 빈칸으로 바꾸는 함수인데, 포인터를 다룬 앞 절의 `nil` 이야기가 여기서 쓰인다.
 자르기(Split), 다듬기(TrimSpace), 잇기(Join), 대소문자 통일(ToLower)까지, 문자열에 하고 싶은 일은 대부분 `strings` 패키지에 이미 함수로 준비되어 있다.
 
 == JSON 직렬화
@@ -494,13 +384,7 @@ Flashcard에서 프런트엔드와 백엔드가 데이터를 주고받을 때, �
 
 [source,go]
 ----
-func Parse(raw []byte) (Rule, error) {
-	var r Rule
-	if err := json.Unmarshal(raw, &r); err != nil {
-		return r, fmt.Errorf("invalid rule json: %w", err)
-	}
-	return r, r.Validate()
-}
+include::../../internal/smartrules/rules.go[tag=parse]
 ----
 
 `json.Unmarshal`은 JSON 텍스트(`raw`)를 해석해 구조체 `r`의 필드에 채워 넣는다.
@@ -511,12 +395,7 @@ internal/handlers/smart.go에서 스마트 덱을 저장하기 전, 규칙을 �
 
 [source,go]
 ----
-	rule, err := smartrules.Parse(body.Rule)
-	if err != nil {
-		badRequest(c, err.Error())
-		return
-	}
-	normalized, _ := json.Marshal(rule)
+include::../../internal/handlers/smart.go[tag=normalize-rule]
 ----
 
 사용자가 보낸 규칙 JSON을 `Parse`로 해석하면, 그 안의 `Validate`가 빠진 값에 기본값을 채운다.

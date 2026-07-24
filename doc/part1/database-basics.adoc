@@ -375,24 +375,25 @@ Flashcard에서 인증은 로그인 처리가 맡고(로컬 모드는 고정 사
 
 고치거나 지운 뒤에는 몇 행이 영향을 받았는지가 돌아온다.
 store 계층은 이 값으로 "그런 행이 없었다"를 판정한다.
-`internal/litestore/decks.go`의 `DeleteDeck`에서 발췌했다.
+`internal/litestore/litestore.go`의 도우미 함수다.
 Go 문법은 6·7장에서 배우니 지금은 "몇 행이 지워졌는지 세어 0이면 없는 것으로 처리한다"는 흐름만 보면 된다.
 
 [source,go]
 ----
-res, err := s.db.ExecContext(ctx,
-	`delete from decks where user_id = ? and id = ?`, userID.String(), deckID.String())
-// ...
-if n, err := res.RowsAffected(); err != nil {
-	return err
-} else if n == 0 {
-	return store.ErrNotFound
-}
+include::../../internal/litestore/litestore.go[tag=require-row-affected]
 ----
 
 지워진 행이 0이면 애초에 그런 덱이 없었다는 뜻이므로, store 계층은 "그런 것이 없다"를 뜻하는 에러 값(`store.ErrNotFound`, 7장에서 다룬다)을 돌려준다.
 그 에러를 받은 쪽은 웹에서 "그런 것이 없다"를 뜻하는 표준 응답 번호인 404로 답한다.
 SQL의 실행 결과가 Go의 에러 처리와 HTTP 상태 코드로 이어지는 연결 고리다.
+
+이 판정은 덱 삭제만이 아니라 수정·공유 해제·세션 종료에도 똑같이 필요해서, 쓰기 함수마다 같은 코드를 여섯 번 적는 대신 도우미 하나로 모았다.
+쓰는 쪽은 `internal/litestore/decks.go`의 `DeleteDeck`처럼 한 줄이 된다.
+
+[source,go]
+----
+include::../../internal/litestore/decks.go[tag=delete-deck]
+----
 
 한편 덱을 지우면 그 덱의 카드들은 어떻게 될까.
 답은 앞서 DDL에서 본 `on delete cascade`에 있는데, 삭제 정책의 설계는 5장에서 정리한다.
