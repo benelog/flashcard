@@ -85,7 +85,7 @@ func (s *Store) StatsSummary(ctx context.Context, userID uuid.UUID, tz string, l
 	if err := rows.Err(); err != nil {
 		return sum, err
 	}
-	sum.Streak = streak(days, time.Now().In(loc))
+	sum.Streak = Streak(days, time.Now().In(loc))
 
 	rows, err = s.pool.Query(ctx,
 		`select d.id, d.name,
@@ -112,28 +112,28 @@ func (s *Store) StatsSummary(ctx context.Context, userID uuid.UUID, tz string, l
 	return sum, rows.Err()
 }
 
-// streak counts consecutive study days ending today or yesterday. reviewDays
-// must be distinct local dates in descending order.
-func streak(reviewDays []time.Time, now time.Time) int {
-	if len(reviewDays) == 0 {
-		return 0
+// Streak counts consecutive study days ending today, or yesterday when today's
+// studying hasn't started yet: 하루가 아직 끝나지 않았다는 이유로 어제까지 쌓은
+// 기록을 0으로 만들면 안 된다.
+//
+// reviewDays는 사용자의 시간대로 읽은 학습 시각들이고, 순서도 중복도 상관없다.
+// Postgres 구현과 SQLite 구현이 각각 다른 방식으로 세던 것을 이 함수 하나로
+// 모았으므로 두 환경의 연속일 수가 어긋날 일이 없다.
+func Streak(reviewDays []time.Time, now time.Time) int {
+	studied := make(map[string]bool, len(reviewDays))
+	for _, d := range reviewDays {
+		studied[d.Format(time.DateOnly)] = true
 	}
-	today := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.UTC)
-	first := reviewDays[0]
-	first = time.Date(first.Year(), first.Month(), first.Day(), 0, 0, 0, 0, time.UTC)
-	gap := int(today.Sub(first).Hours() / 24)
-	if gap > 1 {
-		return 0
+	// 날짜만 세면 되므로 시각은 정오에 고정한다. 자정에서 하루씩 빼면 서머타임이
+	// 시작되는 날 없는 시각이 되어 Go가 날짜를 하루 밀어 버릴 수 있다.
+	day := time.Date(now.Year(), now.Month(), now.Day(), 12, 0, 0, 0, now.Location())
+	if !studied[day.Format(time.DateOnly)] {
+		day = day.AddDate(0, 0, -1)
 	}
-	count := 1
-	prev := first
-	for _, d := range reviewDays[1:] {
-		d = time.Date(d.Year(), d.Month(), d.Day(), 0, 0, 0, 0, time.UTC)
-		if int(prev.Sub(d).Hours()/24) != 1 {
-			break
-		}
+	count := 0
+	for studied[day.Format(time.DateOnly)] {
 		count++
-		prev = d
+		day = day.AddDate(0, 0, -1)
 	}
 	return count
 }

@@ -24,8 +24,9 @@ const (
 )
 
 const (
-	refreshMaxAge = 30 * 24 * 60 * 60 // matches Supabase's default refresh window
-	emailKey      = "web.email"
+	refreshMaxAge   = 30 * 24 * 60 * 60  // matches Supabase's default refresh window
+	dirCookieMaxAge = 180 * 24 * 60 * 60 // 지난번에 고른 학습 방향은 오래 기억해 둔다
+	emailKey        = "web.email"
 )
 
 // isHTTPS reports whether the original request came in over TLS (directly or

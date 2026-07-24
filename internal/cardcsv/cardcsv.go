@@ -41,8 +41,8 @@ func Write(w io.Writer, cards []store.Card) error {
 			card.Meaning,
 			card.CardType,
 			strings.Join(card.Tags, tagSeparator),
-			orEmpty(card.Phonetic),
-			orEmpty(card.Example),
+			store.OrEmpty(card.Phonetic),
+			store.OrEmpty(card.Example),
 		}); err != nil {
 			return err
 		}
@@ -101,8 +101,8 @@ func Parse(r io.Reader) (cards []store.CardInput, dropped int, err error) {
 			Meaning:  meaning,
 			CardType: store.NormalizeCardType(strings.ToLower(firstValue(row, "type"))),
 			Tags:     SplitTags(firstValue(row, "tags")),
-			Phonetic: nilIfBlank(firstValue(row, "phonetic")),
-			Example:  nilIfBlank(firstValue(row, "example")),
+			Phonetic: store.NilIfBlank(firstValue(row, "phonetic")),
+			Example:  store.NilIfBlank(firstValue(row, "example")),
 		})
 	}
 	return cards, dropped, nil
@@ -123,18 +123,4 @@ func SplitTags(cell string) []string {
 // spreadsheet may have left on the first header cell.
 func normalizeHeader(name string) string {
 	return strings.ToLower(strings.TrimSpace(strings.TrimPrefix(name, "\uFEFF")))
-}
-
-func nilIfBlank(v string) *string {
-	if v = strings.TrimSpace(v); v == "" {
-		return nil
-	}
-	return &v
-}
-
-func orEmpty(s *string) string {
-	if s == nil {
-		return ""
-	}
-	return *s
 }

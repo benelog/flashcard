@@ -3,6 +3,7 @@ package store
 import (
 	"context"
 	"errors"
+	"slices"
 	"strings"
 	"time"
 
@@ -64,12 +65,7 @@ var CardTypes = []string{CardTypeWord, CardTypeSentence, CardTypeIdiom, CardType
 // IsCardType reports whether t is one of the accepted types. JSON API 요청처럼
 // 잘못된 값을 400으로 되돌려 줘야 하는 곳에서 쓴다.
 func IsCardType(t string) bool {
-	for _, valid := range CardTypes {
-		if t == valid {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(CardTypes, t)
 }
 
 // NormalizeCardType maps blank or unrecognized input to DefaultCardType. 폼과

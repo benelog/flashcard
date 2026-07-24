@@ -30,6 +30,17 @@ type Rule struct {
 
 // end::rule[]
 
+// Suggested lists the canned rules the app recommends without being asked:
+// 홈 화면의 추천 타일과 JSON API의 /suggestions가 같은 묶음을 내놓도록 목록을
+// 여기 하나만 둔다. 부르는 쪽이 Limit 등을 손봐도 서로 영향이 없게 매번 새로
+// 만들어 돌려준다.
+func Suggested() []Rule {
+	return []Rule{
+		{Type: HighError, MinAttempts: 3, MinErrorRate: 0.4, Limit: 20},
+		{Type: Stale, NotReviewedDays: 7, Limit: 20},
+	}
+}
+
 // tag::parse[]
 func Parse(raw []byte) (Rule, error) {
 	var r Rule

@@ -288,15 +288,7 @@ func (w *Web) registerStatic(r *gin.Engine) {
 // clientTZ returns the visitor's IANA timezone, reported by app.js in a
 // cookie. Before the first page load (or with JS off) it falls back to UTC.
 func clientTZ(c *gin.Context) (string, *time.Location) {
-	tz := cookieValue(c, tzCookie)
-	if tz == "" {
-		return "UTC", time.UTC
-	}
-	loc, err := time.LoadLocation(tz)
-	if err != nil {
-		return "UTC", time.UTC
-	}
-	return tz, loc
+	return handlers.Location(cookieValue(c, tzCookie))
 }
 
 // endOfToday bounds the due-card queue, in the visitor's local day.

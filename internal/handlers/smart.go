@@ -16,17 +16,13 @@ import (
 func (h *Handlers) Suggestions(c *gin.Context) {
 	userID := auth.UserID(c)
 	ctx := c.Request.Context()
-	canned := []smartrules.Rule{
-		{Type: smartrules.HighError, MinAttempts: 3, MinErrorRate: 0.4, Limit: 20},
-		{Type: smartrules.Stale, NotReviewedDays: 7, Limit: 20},
-	}
 	type suggestion struct {
 		Type  smartrules.RuleType `json:"type"`
 		Count int                 `json:"count"`
 		Rule  smartrules.Rule     `json:"rule"`
 	}
 	out := []suggestion{}
-	for _, rule := range canned {
+	for _, rule := range smartrules.Suggested() {
 		n, err := h.Store.CountByRule(ctx, userID, rule)
 		if err != nil {
 			fail(c, err)

@@ -70,7 +70,7 @@ func (s *Store) StatsSummary(ctx context.Context, userID uuid.UUID, tz string, l
 	if err != nil {
 		return sum, err
 	}
-	days := map[string]bool{}
+	days := []time.Time{}
 	for rows.Next() {
 		var reviewedAt string
 		if err := rows.Scan(&reviewedAt); err != nil {
@@ -82,21 +82,13 @@ func (s *Store) StatsSummary(ctx context.Context, userID uuid.UUID, tz string, l
 			rows.Close()
 			return sum, err
 		}
-		days[t.In(loc).Format("2006-01-02")] = true
+		days = append(days, t.In(loc))
 	}
 	rows.Close()
 	if err := rows.Err(); err != nil {
 		return sum, err
 	}
-	now := time.Now().In(loc)
-	day := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, loc)
-	if !days[day.Format("2006-01-02")] {
-		day = day.AddDate(0, 0, -1)
-	}
-	for days[day.Format("2006-01-02")] {
-		sum.Streak++
-		day = day.AddDate(0, 0, -1)
-	}
+	sum.Streak = store.Streak(days, time.Now().In(loc))
 
 	rows, err = s.db.QueryContext(ctx,
 		`select d.id, d.name,

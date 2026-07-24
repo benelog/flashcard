@@ -7,10 +7,9 @@
 
 <form method="post" action="{{$f.Action}}" class="stack-lg">
   <div class="type-pills">
-    <label><input class="pill-radio" type="radio" name="card_type" value="word" {{if eq $f.CardType "word"}}checked{{end}}><span class="pill-label">단어</span></label>
-    <label><input class="pill-radio" type="radio" name="card_type" value="sentence" {{if eq $f.CardType "sentence"}}checked{{end}}><span class="pill-label">문장</span></label>
-    <label><input class="pill-radio" type="radio" name="card_type" value="idiom" {{if eq $f.CardType "idiom"}}checked{{end}}><span class="pill-label">숙어</span></label>
-    <label><input class="pill-radio" type="radio" name="card_type" value="concept" {{if eq $f.CardType "concept"}}checked{{end}}><span class="pill-label">개념</span></label>
+    {{range cardTypes}}
+    <label><input class="pill-radio" type="radio" name="card_type" value="{{.}}" {{if eq $f.CardType .}}checked{{end}}><span class="pill-label">{{typeLabel .}}</span></label>
+    {{end}}
   </div>
 
   <label class="field">

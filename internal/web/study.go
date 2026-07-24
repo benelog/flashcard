@@ -7,6 +7,7 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -61,24 +62,12 @@ func (v studyBodyView) ProgressPct() int { return percent(v.Index, v.State.Round
 // studyPage starts a session. Without ?direction= it renders the direction
 // chooser first, keeping every other query parameter.
 func (w *Web) studyPage(c *gin.Context) {
-	direction := c.Query("direction")
-	if direction == "" {
-		last := cookieValue(c, dirCookie)
-		if last != "meaning_to_text" {
-			last = "text_to_meaning"
-		}
-		base := c.Request.URL.Query()
-		w.render(c, http.StatusOK, "study_direction", "학습", gin.H{
-			"Last":      last,
-			"TextFirst": "/study?" + withParam(base, "direction", "text_to_meaning"),
-			"TextLast":  "/study?" + withParam(base, "direction", "meaning_to_text"),
-		})
+	if c.Query("direction") == "" {
+		w.directionChooser(c)
 		return
 	}
-	if direction != "text_to_meaning" && direction != "meaning_to_text" {
-		direction = "text_to_meaning"
-	}
-	setCookie(c, dirCookie, direction, 180*24*60*60)
+	direction := store.NormalizeDirection(c.Query("direction"))
+	setCookie(c, dirCookie, direction, dirCookieMaxAge)
 
 	userID := auth.UserID(c)
 	ctx := c.Request.Context()
@@ -91,60 +80,12 @@ func (w *Web) studyPage(c *gin.Context) {
 	}
 	settings := settingsFrom(profile)
 
-	mode := c.Query("mode")
-	if mode == "" {
-		mode = "due"
-	}
-	title := c.Query("title")
-	if title == "" {
-		switch mode {
-		case "due":
-			title = "오늘 복습"
-		case "smart":
-			title = "스마트 학습"
-		default:
-			title = "덱 학습"
-		}
-	}
-
-	var cards []store.Card
-	var deckID *uuid.UUID
-	var ruleJSON json.RawMessage
-	returnURL := "/"
-
-	switch mode {
-	case "deck":
-		id, perr := uuid.Parse(c.Query("deckId"))
-		if perr != nil {
-			w.renderError(c, http.StatusNotFound, "찾을 수 없는 덱이에요.")
-			return
-		}
-		deckID = &id
-		cards, err = w.store.ListCards(ctx, userID, id)
-		if err == nil {
-			rand.Shuffle(len(cards), func(i, j int) { cards[i], cards[j] = cards[j], cards[i] })
-		}
-		returnURL = "/decks"
-	case "due":
-		cards, err = w.store.DueCards(ctx, userID, endOfToday(loc), settings.DailyGoal)
-	case "smart":
-		rule, perr := smartrules.Parse([]byte(c.Query("rule")))
-		if perr != nil {
-			w.renderError(c, http.StatusNotFound, "잘못된 학습 규칙이에요.")
-			return
-		}
-		ruleJSON, _ = json.Marshal(rule)
-		cards, err = w.store.CardsByRule(ctx, userID, rule)
-	default:
-		w.renderError(c, http.StatusNotFound, "잘못된 학습 모드예요.")
-		return
-	}
-	if err != nil {
-		w.failPage(c, err)
+	plan, ok := w.planStudy(c, settings.DailyGoal, loc)
+	if !ok {
 		return
 	}
 
-	sess, err := w.store.CreateSession(ctx, userID, mode, direction, deckID, ruleJSON, len(cards))
+	sess, err := w.store.CreateSession(ctx, userID, plan.Mode, direction, plan.DeckID, plan.Rule, len(plan.Cards))
 	if err != nil {
 		w.failPage(c, err)
 		return
@@ -153,27 +94,115 @@ func (w *Web) studyPage(c *gin.Context) {
 	state := studyState{
 		SessionID:      sess.ID.String(),
 		Direction:      direction,
-		Title:          title,
-		ReturnURL:      returnURL,
+		Title:          plan.Title,
+		ReturnURL:      plan.ReturnURL,
 		Round:          1,
-		RoundCards:     len(cards),
-		FirstPassTotal: len(cards),
+		RoundCards:     len(plan.Cards),
+		FirstPassTotal: len(plan.Cards),
 		TtsRate:        settings.TtsRate,
 	}
-	for _, card := range cards {
+	for _, card := range plan.Cards {
 		state.Queue = append(state.Queue, card.ID.String())
 	}
 
 	body := w.studyBody(c, state)
 	// 스마트 학습이면 "이 조건을 스마트 덱으로 저장" 버튼에 쓸 규칙을 넘긴다.
 	saveRule := ""
-	if mode == "smart" && len(cards) > 0 && c.Query("saved") == "" {
-		saveRule = string(ruleJSON)
+	if plan.Mode == store.ModeSmart && len(plan.Cards) > 0 && c.Query("saved") == "" {
+		saveRule = string(plan.Rule)
 	}
-	w.render(c, http.StatusOK, "study", title, gin.H{
+	w.render(c, http.StatusOK, "study", plan.Title, gin.H{
 		"Body":     body,
 		"SaveRule": saveRule,
 	})
+}
+
+// directionChooser asks which way to study before the session starts. 지난번에
+// 고른 방향을 쿠키에서 꺼내 먼저 보여 주고, 두 링크 모두 나머지 질의 문자열
+// (mode, deckId, rule …)을 그대로 물고 간다.
+func (w *Web) directionChooser(c *gin.Context) {
+	base := c.Request.URL.Query()
+	w.render(c, http.StatusOK, "study_direction", "학습", gin.H{
+		"Last":      store.NormalizeDirection(cookieValue(c, dirCookie)),
+		"TextFirst": "/study?" + withParam(base, "direction", store.TextToMeaning),
+		"TextLast":  "/study?" + withParam(base, "direction", store.MeaningToText),
+	})
+}
+
+// studyPlan is the card list one session will run through, plus where those
+// cards came from. 모드마다 카드를 고르는 방법도, 학습을 마치고 돌아갈 곳도 다르다.
+type studyPlan struct {
+	Mode      string
+	Title     string
+	Cards     []store.Card
+	DeckID    *uuid.UUID      // 덱 학습일 때만
+	Rule      json.RawMessage // 스마트 학습일 때만, 정규화된 규칙
+	ReturnURL string
+}
+
+// planStudy picks the cards for the requested mode. false를 받으면 응답은 이미
+// 쓰인 상태이므로 부르는 쪽은 그대로 돌아가면 된다.
+func (w *Web) planStudy(c *gin.Context, dailyGoal int, loc *time.Location) (studyPlan, bool) {
+	userID := auth.UserID(c)
+	ctx := c.Request.Context()
+
+	plan := studyPlan{Mode: c.Query("mode"), ReturnURL: "/"}
+	if plan.Mode == "" {
+		plan.Mode = store.DefaultMode
+	}
+
+	var err error
+	switch plan.Mode {
+	case store.ModeDeck:
+		deckID, perr := uuid.Parse(c.Query("deckId"))
+		if perr != nil {
+			w.renderError(c, http.StatusNotFound, "찾을 수 없는 덱이에요.")
+			return plan, false
+		}
+		plan.DeckID = &deckID
+		plan.ReturnURL = "/decks"
+		plan.Cards, err = w.store.ListCards(ctx, userID, deckID)
+		if err == nil {
+			// 덱 순서대로 외워 버리지 않도록 섞는다.
+			rand.Shuffle(len(plan.Cards), func(i, j int) {
+				plan.Cards[i], plan.Cards[j] = plan.Cards[j], plan.Cards[i]
+			})
+		}
+	case store.ModeDue:
+		plan.Cards, err = w.store.DueCards(ctx, userID, endOfToday(loc), dailyGoal)
+	case store.ModeSmart:
+		rule, perr := smartrules.Parse([]byte(c.Query("rule")))
+		if perr != nil {
+			w.renderError(c, http.StatusNotFound, "잘못된 학습 규칙이에요.")
+			return plan, false
+		}
+		plan.Rule, _ = json.Marshal(rule)
+		plan.Cards, err = w.store.CardsByRule(ctx, userID, rule)
+	default:
+		w.renderError(c, http.StatusNotFound, "잘못된 학습 모드예요.")
+		return plan, false
+	}
+	if err != nil {
+		w.failPage(c, err)
+		return plan, false
+	}
+	plan.Title = studyTitle(c.Query("title"), plan.Mode)
+	return plan, true
+}
+
+// studyTitle names the study screen. 추천 타일이나 스마트 덱에서 온 링크는 자기
+// 이름을 실어 보내므로 그것을 쓰고, 없으면 모드에 맞는 기본 제목을 붙인다.
+func studyTitle(requested, mode string) string {
+	if requested != "" {
+		return requested
+	}
+	switch mode {
+	case store.ModeDue:
+		return "오늘 복습"
+	case store.ModeSmart:
+		return "스마트 학습"
+	}
+	return "덱 학습"
 }
 
 func withParam(q url.Values, key, value string) string {
@@ -234,13 +263,9 @@ func stateFromForm(c *gin.Context) studyState {
 	if rate <= 0 {
 		rate = defaultTtsRate
 	}
-	direction := c.PostForm("direction")
-	if direction != "meaning_to_text" {
-		direction = "text_to_meaning"
-	}
 	return studyState{
 		SessionID:        c.PostForm("session"),
-		Direction:        direction,
+		Direction:        store.NormalizeDirection(c.PostForm("direction")),
 		Title:            c.PostForm("title"),
 		ReturnURL:        safeNext(c.PostForm("return_url")),
 		Queue:            splitAndTrim(c.PostForm("queue"), ","),

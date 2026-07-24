@@ -80,12 +80,8 @@ func (w *Web) homePage(c *gin.Context) {
 	}
 
 	// 홈 화면 추천 타일: 지금 카드가 있는 고정 규칙만 노출한다.
-	canned := []smartrules.Rule{
-		{Type: smartrules.HighError, MinAttempts: 3, MinErrorRate: 0.4, Limit: 20},
-		{Type: smartrules.Stale, NotReviewedDays: 7, Limit: 20},
-	}
 	var suggestions []suggestionView
-	for _, rule := range canned {
+	for _, rule := range smartrules.Suggested() {
 		n, err := w.store.CountByRule(ctx, userID, rule)
 		if err != nil {
 			w.failPage(c, err)
@@ -314,9 +310,9 @@ func (w *Web) editCardPage(c *gin.Context) {
 		Meaning:  card.Meaning,
 		CardType: card.CardType,
 		Tags:     strings.Join(card.Tags, ", "),
-		Phonetic: orEmpty(card.Phonetic),
-		Example:  orEmpty(card.Example),
-		Notes:    orEmpty(card.Notes),
+		Phonetic: store.OrEmpty(card.Phonetic),
+		Example:  store.OrEmpty(card.Example),
+		Notes:    store.OrEmpty(card.Notes),
 	})
 }
 
@@ -328,21 +324,11 @@ func cardInputFromForm(c *gin.Context) (store.CardInput, bool) {
 		Meaning:  strings.TrimSpace(c.PostForm("meaning")),
 		CardType: store.NormalizeCardType(c.PostForm("card_type")),
 		Tags:     splitAndTrim(c.PostForm("tags"), ","),
-		Phonetic: nilIfBlank(c.PostForm("phonetic")),
-		Example:  nilIfBlank(c.PostForm("example")),
-		Notes:    nilIfBlank(c.PostForm("notes")),
+		Phonetic: store.NilIfBlank(c.PostForm("phonetic")),
+		Example:  store.NilIfBlank(c.PostForm("example")),
+		Notes:    store.NilIfBlank(c.PostForm("notes")),
 	}
 	return in, in.Text != "" && in.Meaning != ""
-}
-
-// nilIfBlank keeps an empty optional field out of the database as NULL rather
-// than as an empty string, so "적지 않았다"와 "빈 값을 적었다"가 섞이지 않는다.
-func nilIfBlank(v string) *string {
-	v = strings.TrimSpace(v)
-	if v == "" {
-		return nil
-	}
-	return &v
 }
 
 // splitAndTrim cuts a separated list, dropping padding and empty items. 태그
@@ -469,6 +455,43 @@ type chartDay struct {
 	Title      string
 }
 
+// buildChart lays out the last chartDays days ending on today.
+//
+// 공부하지 않은 날은 DB에 행이 없다. 차트에 그 날을 빈칸으로 남기려면 날짜를
+// 하루씩 세어 채워야 한다. 막대 높이는 여기서 %로 계산해 템플릿은 그리기만 한다.
+func buildChart(daily []store.DailyStat, today time.Time) []chartDay {
+	statOf := make(map[string]store.DailyStat, len(daily))
+	busiestDay := 1 // 가장 많이 푼 날이 막대 100%의 기준이다 (0으로 나누지 않도록 1부터)
+	for _, stat := range daily {
+		statOf[stat.Date] = stat
+		if stat.Total > busiestDay {
+			busiestDay = stat.Total
+		}
+	}
+	days := make([]chartDay, 0, chartDays)
+	for daysAgo := chartDays - 1; daysAgo >= 0; daysAgo-- {
+		date := today.AddDate(0, 0, -daysAgo).Format(time.DateOnly)
+		stat := statOf[date]
+		days = append(days, chartDay{
+			Date:       date,
+			Total:      stat.Total,
+			CorrectPct: percent(stat.Correct, busiestDay),
+			WrongPct:   percent(stat.Total-stat.Correct, busiestDay),
+			Title:      date + ": " + strconv.Itoa(stat.Total) + "회 (정답 " + strconv.Itoa(stat.Correct) + ")",
+		})
+	}
+	return days
+}
+
+// accuracy is the all-time correct percentage. 아직 한 번도 풀지 않았으면
+// 정답률이라는 것이 없으므로, 템플릿이 0%와 구별하도록 -1로 알린다.
+func accuracy(summary store.Summary) int {
+	if summary.TotalReviews == 0 {
+		return -1
+	}
+	return percent(summary.CorrectReviews, summary.TotalReviews)
+}
+
 func (w *Web) statsPage(c *gin.Context) {
 	userID := auth.UserID(c)
 	ctx := c.Request.Context()
@@ -485,42 +508,10 @@ func (w *Web) statsPage(c *gin.Context) {
 		return
 	}
 
-	// 공부하지 않은 날은 DB에 행이 없다. 차트에 그 날을 빈칸으로 남기려면 날짜를
-	// 하루씩 세어 채워야 한다. 막대 높이는 서버에서 %로 계산해 템플릿은 그리기만
-	// 한다.
-	statOf := map[string]store.DailyStat{}
-	busiestDay := 1 // 가장 많이 푼 날이 막대 100%의 기준이다 (0으로 나누지 않도록 1부터)
-	for _, stat := range daily {
-		statOf[stat.Date] = stat
-		if stat.Total > busiestDay {
-			busiestDay = stat.Total
-		}
-	}
-	days := make([]chartDay, 0, chartDays)
-	today := time.Now().In(loc)
-	for daysAgo := chartDays - 1; daysAgo >= 0; daysAgo-- {
-		date := today.AddDate(0, 0, -daysAgo).Format("2006-01-02")
-		stat := statOf[date]
-		days = append(days, chartDay{
-			Date:       date,
-			Total:      stat.Total,
-			CorrectPct: percent(stat.Correct, busiestDay),
-			WrongPct:   percent(stat.Total-stat.Correct, busiestDay),
-			Title:      date + ": " + strconv.Itoa(stat.Total) + "회 (정답 " + strconv.Itoa(stat.Correct) + ")",
-		})
-	}
-
-	// 아직 한 번도 풀지 않았으면 정답률이라는 것이 없다. 템플릿이 0%와 구별하도록
-	// -1로 표시한다.
-	accuracy := -1
-	if summary.TotalReviews > 0 {
-		accuracy = percent(summary.CorrectReviews, summary.TotalReviews)
-	}
-
 	w.render(c, http.StatusOK, "stats", "통계", gin.H{
 		"Summary":  summary,
-		"Accuracy": accuracy,
-		"Days":     days,
+		"Accuracy": accuracy(summary),
+		"Days":     buildChart(daily, time.Now().In(loc)),
 	})
 }
 

@@ -24,26 +24,18 @@ var funcMap = template.FuncMap{
 	"icon":         icon,
 	"asset":        asset,
 	"hasPrefix":    strings.HasPrefix,
-	"orEmpty":      orEmpty,
+	"orEmpty":      store.OrEmpty,
 	"percent":      percent,
 	"ratioPercent": ratioPercent,
 	"add":          func(a, b int) int { return a + b },
 	"koDate":       koDate,
 	"ruleLabel":    ruleLabelJSON,
 	"ruleRaw":      func(raw json.RawMessage) string { return string(raw) },
+	"cardTypes":    func() []string { return store.CardTypes },
 	"typeLabel":    typeLabel,
 }
 
 // end::func-map[]
-
-// orEmpty prints an optional (nullable) field: 값이 없으면 빈칸이다. 템플릿에서
-// nil 포인터를 그대로 쓰면 "<nil>"이 찍히기 때문에 반드시 거쳐야 한다.
-func orEmpty(s *string) string {
-	if s == nil {
-		return ""
-	}
-	return *s
-}
 
 // tag::percent[]
 // percent returns round(part/whole*100), guarding the empty case.
@@ -66,16 +58,19 @@ func koDate(t time.Time) string {
 	return fmt.Sprintf("%d. %d. %d.", t.Year(), int(t.Month()), t.Day())
 }
 
+// cardTypeLabels names each store.CardType in Korean. 종류를 새로 만들면 목록은
+// store에, 이름표는 여기에 한 줄씩만 늘면 된다: 카드 폼의 라디오 버튼도 학습
+// 화면의 배지도 이 둘을 돌려 만든다.
+var cardTypeLabels = map[string]string{
+	store.CardTypeWord:     "단어",
+	store.CardTypeSentence: "문장",
+	store.CardTypeIdiom:    "숙어",
+	store.CardTypeConcept:  "개념",
+}
+
 func typeLabel(t string) string {
-	switch t {
-	case "word":
-		return "단어"
-	case "sentence":
-		return "문장"
-	case "idiom":
-		return "숙어"
-	case "concept":
-		return "개념"
+	if label, ok := cardTypeLabels[t]; ok {
+		return label
 	}
 	return t
 }

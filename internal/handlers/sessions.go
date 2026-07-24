@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"math/rand"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -32,10 +33,12 @@ func (h *Handlers) CreateSession(c *gin.Context) {
 		body.Limit = 50
 	}
 	if body.Direction == "" {
-		body.Direction = "text_to_meaning"
+		body.Direction = store.DefaultDirection
 	}
-	if body.Direction != "text_to_meaning" && body.Direction != "meaning_to_text" {
-		badRequest(c, "direction must be text_to_meaning or meaning_to_text")
+	// API는 폼·쿠키와 달리 모르는 방향을 조용히 고치지 않는다. 프로그램이 보내는
+	// 값이라 오타라면 알려 주는 편이 낫다.
+	if !store.IsDirection(body.Direction) {
+		badRequest(c, "direction must be "+strings.Join(store.Directions, " or "))
 		return
 	}
 	userID := auth.UserID(c)
@@ -46,7 +49,7 @@ func (h *Handlers) CreateSession(c *gin.Context) {
 	var err error
 
 	switch body.Mode {
-	case "deck":
+	case store.ModeDeck:
 		if body.DeckID == nil {
 			badRequest(c, "deckId is required for deck mode")
 			return
@@ -55,13 +58,13 @@ func (h *Handlers) CreateSession(c *gin.Context) {
 		if err == nil {
 			rand.Shuffle(len(cards), func(i, j int) { cards[i], cards[j] = cards[j], cards[i] })
 		}
-	case "due":
+	case store.ModeDue:
 		dueBefore := time.Now()
 		if body.DueBefore != nil {
 			dueBefore = *body.DueBefore
 		}
 		cards, err = h.Store.DueCards(ctx, userID, dueBefore, body.Limit)
-	case "smart":
+	case store.ModeSmart:
 		if body.Rule == nil {
 			badRequest(c, "rule is required for smart mode")
 			return
