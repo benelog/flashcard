@@ -1,5 +1,5 @@
 // 원고를 VitePress 소스(.generated/)로 펼친다.
-// - toc의 각 장: .adoc이면 downdoc 파이프라인으로 md 변환, .md면 그대로 복사
+// - toc의 각 장: .adoc이면 include 해석 → downdoc 파이프라인으로 md 변환, .md면 그대로 복사
 // - index.md: book.config의 cover 데이터에서 생성
 // - public: 책의 public/ 디렉터리를 심링크로 연결
 import { mkdir, readFile, rm, symlink, writeFile } from 'node:fs/promises'
@@ -7,6 +7,7 @@ import { existsSync, lstatSync } from 'node:fs'
 import { dirname, join, relative } from 'node:path'
 import { convertAdoc } from './adoc.mjs'
 import { homeCoverMarkdown } from './cover.mjs'
+import { resolveIncludes } from './include.mjs'
 import { flattenChapters } from './toc.mjs'
 
 export const GEN_DIR = '.generated'
@@ -25,12 +26,19 @@ export function chapterSources(root, book) {
   })
 }
 
+// generateChapter writes one chapter and reports the files it quoted with
+// include:: (book dev watches them alongside the manuscript).
 export async function generateChapter(root, { route, src }) {
   const out = join(root, GEN_DIR, route + '.md')
   await mkdir(dirname(out), { recursive: true })
   const raw = await readFile(src, 'utf8')
-  const md = src.endsWith('.adoc') ? convertAdoc(raw, relative(root, src)) : raw
-  await writeFile(out, md)
+  if (!src.endsWith('.adoc')) {
+    await writeFile(out, raw)
+    return []
+  }
+  const { text, lineNumbers, deps } = resolveIncludes(raw, src, root)
+  await writeFile(out, convertAdoc(text, relative(root, src), { lineNumbers }))
+  return deps
 }
 
 async function linkPublic(root) {
@@ -43,13 +51,17 @@ async function linkPublic(root) {
   await symlink('../public', link, 'dir')
 }
 
+// generateAll rebuilds every chapter and returns the union of the files the
+// manuscripts quote with include::.
 export async function generateAll(root, book, { clean = false } = {}) {
   const gen = join(root, GEN_DIR)
   if (clean) await rm(gen, { recursive: true, force: true })
   await mkdir(gen, { recursive: true })
+  const quoted = new Set()
   for (const chapter of chapterSources(root, book)) {
-    await generateChapter(root, chapter)
+    for (const dep of await generateChapter(root, chapter)) quoted.add(dep)
   }
   await writeFile(join(gen, 'index.md'), homeCoverMarkdown(book))
   await linkPublic(root)
+  return [...quoted]
 }

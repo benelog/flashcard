@@ -12,6 +12,7 @@ AsciiDoc 원고를 이북 뷰어 웹사이트와 PDF 한 권으로 배포하는 
 bin/book.mjs        CLI: dev | build | preview | pdf | og
 lib/config.mjs      defineBookConfig(book): book.config → VitePress 설정
 lib/generate.mjs    원고(.adoc) → .generated/*.md + 홈(index.md) 생성
+lib/include.mjs     include:: 지시자 해석(저장소 코드를 베끼지 않고 인용)
 lib/adoc.mjs        downdoc 변환 파이프라인(보호 → 변환 → 복원 → 검증)
 lib/cover.mjs       표지 단일 소스(홈 랜딩·PDF 표지·PDF 차례)
 lib/pdf.mjs         빌드 결과를 장 순서대로 인쇄해 한 권으로 병합(아웃라인·쪽 번호)
@@ -123,6 +124,25 @@ templates/          새 저장소용 참고 파일(GitHub Actions 워크플로, 
 - 백틱이 든 인라인 코드는 마크다운식 이중 백틱으로 감싼다.
 - 인라인 코드의 중괄호(`{{.Title}}`)는 일반 백틱에 그대로. 따옴표·앰퍼샌드·코드 속 별표는 파이프라인이 자동 보호한다.
 - 금지: `+…+` 패스스루, 문서 속성 정의(`:이름:`), downdoc 내장 속성 참조(`{sp}` 등), 제어 문자.
+
+## 코드 인용 (include)
+
+기술서의 코드 예제는 저장소의 실제 코드를 베껴 오는 대신 인용한다.
+downdoc은 include를 버리므로(README의 "include directives are dropped") `lib/include.mjs`가 변환 앞단에서 직접 펼친다.
+
+```
+[source,go]
+----
+include::../../internal/srs/srs.go[tag=grade]
+----
+```
+
+- 경로는 원고 파일 기준 상대 경로. `include::`는 코드 블록(`----`) 안에서만 쓴다.
+- 인용할 코드에는 그 언어의 주석으로 마커를 단다. `// tag::grade[]` … `// end::grade[]` (셸·YAML은 `#`, HTML은 `<!-- -->`).
+- 마커 줄과 발췌 앞뒤 빈 줄은 결과에서 빠진다. `[]`만 쓰면 파일 전체를 인용한다.
+- 옵션은 `tag=이름`과 `indent=0`(공통 들여쓰기 제거) 둘뿐이다. `lines=`는 코드가 바뀌면 어긋나므로 지원하지 않는다.
+- 인용한 파일이 없거나 태그를 찾지 못하면 `book build`가 **원고의 파일:줄**과 함께 실패한다. 코드만 고치고 원고를 잊는 사고를 여기서 잡는다.
+- `book dev`는 인용된 코드 파일도 감시해, 코드를 고치면 책을 다시 만든다.
 
 ## 마크다운 원고 이행
 

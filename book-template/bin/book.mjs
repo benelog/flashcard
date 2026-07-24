@@ -9,7 +9,7 @@
 import { spawn } from 'node:child_process'
 import { existsSync } from 'node:fs'
 import { createRequire } from 'node:module'
-import { dirname, join } from 'node:path'
+import { dirname, join, relative } from 'node:path'
 import { pathToFileURL } from 'node:url'
 
 const root = process.cwd()
@@ -42,29 +42,39 @@ const { generateAll, generateChapter, chapterSources } = await import('../lib/ge
 switch (cmd) {
   case 'dev': {
     let book = await loadBook()
-    await generateAll(root, book, { clean: true })
+    // 원고가 include::로 인용하는 코드 파일까지 감시해야, 코드를 고치면 책도 함께
+    // 갱신된다.
+    let quoted = await generateAll(root, book, { clean: true })
 
     // 원고와 book.config.mjs를 감시한다. .generated의 갱신은 VitePress HMR이 집는다.
     const { default: chokidar } = await import('chokidar')
     const watchTargets = () => [
       join(root, 'book.config.mjs'),
       ...chapterSources(root, book).map((c) => c.src),
+      ...quoted,
     ]
     const watcher = chokidar.watch(watchTargets(), { ignoreInitial: true })
+    const regenerateAll = async (reason) => {
+      quoted = await generateAll(root, book)
+      watcher.add(watchTargets())
+      console.log(reason)
+    }
     watcher.on('change', async (path) => {
       try {
         if (path.endsWith('book.config.mjs')) {
           book = await loadBook()
-          await generateAll(root, book)
-          watcher.add(watchTargets())
-          console.log('book.config.mjs 변경: 전체 재생성')
-        } else {
-          const chapter = chapterSources(root, book).find((c) => c.src === path)
-          if (chapter) {
-            await generateChapter(root, chapter)
-            console.log(`재생성: ${chapter.route}`)
-          }
+          await regenerateAll('book.config.mjs 변경: 전체 재생성')
+          return
         }
+        const chapter = chapterSources(root, book).find((c) => c.src === path)
+        if (chapter) {
+          quoted = [...new Set([...quoted, ...(await generateChapter(root, chapter))])]
+          watcher.add(watchTargets())
+          console.log(`재생성: ${chapter.route}`)
+          return
+        }
+        // 원고가 인용하는 코드 파일: 어느 장이 인용했는지 따지지 않고 전부 다시 만든다.
+        await regenerateAll(`인용한 코드 변경: ${relative(root, path)}`)
       } catch (e) {
         console.error(String(e?.message ?? e))
       }

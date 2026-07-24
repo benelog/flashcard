@@ -97,12 +97,15 @@ function protectLine(line, at, errors) {
 }
 
 // 전처리: 규약 검증 + 강조·코드 스팬 보호
-function protect(source, file) {
+//
+// lineNumbers는 각 줄이 원고 몇 번째 줄에서 왔는지다. include::로 펼친 원고는
+// 줄 수가 늘어나므로, 이것이 있어야 오류를 원고의 줄 번호로 짚어 줄 수 있다.
+function protect(source, file, lineNumbers) {
   const errors = []
   const out = []
   let verbatim = false
   source.split('\n').forEach((line, i) => {
-    const at = `${file}:${i + 1}`
+    const at = `${file}:${lineNumbers?.[i] ?? i + 1}`
     if (VERBATIM_DELIM.test(line.trimEnd())) {
       verbatim = !verbatim
       out.push(line)
@@ -178,8 +181,8 @@ function sanityCheck(source, md, file) {
   }
 }
 
-export function convertAdoc(source, file = '(unknown)') {
-  const md = restore(downdoc(protect(source, file)))
+export function convertAdoc(source, file = '(unknown)', { lineNumbers } = {}) {
+  const md = restore(downdoc(protect(source, file, lineNumbers)))
   sanityCheck(source, md, file)
   return md.endsWith('\n') ? md : md + '\n'
 }
