@@ -52,19 +52,6 @@ func scanCard(r rowScanner) (model.Card, error) {
 	return c, nil
 }
 
-func collectCards(rows *sql.Rows) ([]model.Card, error) {
-	defer rows.Close()
-	cards := []model.Card{}
-	for rows.Next() {
-		c, err := scanCard(rows)
-		if err != nil {
-			return nil, err
-		}
-		cards = append(cards, c)
-	}
-	return cards, rows.Err()
-}
-
 func (s *Store) ListCards(ctx context.Context, userID, deckID uuid.UUID) ([]model.Card, error) {
 	rows, err := s.db.QueryContext(ctx,
 		cardSelect+` where user_id = ? and deck_id = ? order by created_at desc`,
@@ -72,7 +59,7 @@ func (s *Store) ListCards(ctx context.Context, userID, deckID uuid.UUID) ([]mode
 	if err != nil {
 		return nil, err
 	}
-	return collectCards(rows)
+	return collect(rows, scanCard)
 }
 
 func (s *Store) GetCard(ctx context.Context, userID, cardID uuid.UUID) (model.Card, error) {
@@ -210,7 +197,7 @@ func (s *Store) DueCards(ctx context.Context, userID uuid.UUID, dueBefore time.T
 	if err != nil {
 		return nil, err
 	}
-	return collectCards(rows)
+	return collect(rows, scanCard)
 }
 
 func (s *Store) DueCount(ctx context.Context, userID uuid.UUID, dueBefore time.Time) (int, error) {

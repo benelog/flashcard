@@ -85,13 +85,16 @@ flashcard/
 │   └── server/     # 로컬 개발 서버
 ├── internal/
 │   ├── auth/       # JWT 검증·로컬 인증
+│   ├── cardcsv/    # 카드 CSV 읽기·쓰기
 │   ├── config/     # 환경 변수 로딩
 │   ├── db/         # 마이그레이션 SQL
-│   ├── handlers/   # HTTP 핸들러
+│   ├── handlers/   # JSON API 핸들러
 │   ├── litestore/  # SQLite 스토어 (로컬 모드)
+│   ├── model/      # 앱의 공용어: 행 타입과 저장소 계약
+│   ├── pgstore/    # PostgreSQL 스토어 (배포)
 │   ├── smartrules/ # 스마트 덱 규칙
 │   ├── srs/        # 간격 반복 알고리즘
-│   ├── store/      # PostgreSQL 스토어
+│   ├── study/      # 학습할 카드 고르기
 │   └── web/        # 서버 렌더링 화면 (템플릿·정적 자산)
 └── pkg/
     └── app/        # Gin 엔진 조립

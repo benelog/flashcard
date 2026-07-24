@@ -493,3 +493,42 @@ func TestStats(t *testing.T) {
 		t.Fatalf("deck mastery = %+v, want 2 cards with 1 mature", sum.Decks)
 	}
 }
+
+// timeLayout은 모든 값의 폭이 같아 "사전순 = 시간순"이라는 전제 위에 서 있다
+// (litestore.go 머리 주석). 이 전제가 깨지면 due_at <= ? 비교가 조용히 틀리므로
+// 표로 고정해 둔다. 왕복(저장 후 되읽기)도 함께 확인한다.
+func TestFmtTimeOrderMatchesTimeOrder(t *testing.T) {
+	moments := []time.Time{
+		time.Date(1999, 12, 31, 23, 59, 59, 999000000, time.UTC),
+		time.Date(2026, 1, 2, 0, 0, 0, 0, time.UTC),
+		time.Date(2026, 7, 25, 12, 30, 45, 123000000, time.UTC),
+		time.Date(2026, 7, 25, 4, 5, 6, 0, time.FixedZone("KST", 9*3600)), // UTC로는 7/24
+	}
+	for _, a := range moments {
+		for _, b := range moments {
+			if (fmtTime(a) < fmtTime(b)) != a.Before(b) {
+				t.Errorf("string order of %v vs %v disagrees with time order", a, b)
+			}
+		}
+	}
+	for _, m := range moments {
+		back, err := parseTime(fmtTime(m))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !back.Equal(m) {
+			t.Errorf("round trip %v -> %v", m, back)
+		}
+	}
+}
+
+// tags 열은 항상 JSON 배열이어야 한다. nil이 "null"로 저장되면 scanCard의
+// Unmarshal이 nil 슬라이스를 만들어 API 응답의 tags가 []가 아니라 null이 된다.
+func TestTagsJSON(t *testing.T) {
+	if got := tagsJSON(nil); got != "[]" {
+		t.Errorf("tagsJSON(nil) = %q, want []", got)
+	}
+	if got := tagsJSON([]string{"a", "b"}); got != `["a","b"]` {
+		t.Errorf(`tagsJSON([a b]) = %q, want ["a","b"]`, got)
+	}
+}

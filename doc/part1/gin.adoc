@@ -362,7 +362,8 @@ if raw := c.Query("dueBefore"); raw != "" {
 "없으면 기본값, 있으면 검증"은 선택적 쿼리 파라미터를 다루는 전형적인 패턴이다.
 
 JSON이 아닌 응답도 가능하다.
-internal/handlers/cards.go의 CSV 내보내기 핸들러 `ExportDeck`은 `c.Header`로 Content-Type을 지정한 뒤, `gin.Context`가 감싸고 있는 응답 스트림 `c.Writer`에 표준 라이브러리의 `csv.Writer`를 그대로 연결해 쓴다.
+internal/handlers/cards.go의 CSV 내보내기 핸들러 `ExportDeck`은 파일 만들기를 internal/cardcsv에 맡기면서, `gin.Context`가 감싸고 있는 응답 스트림 `c.Writer`를 그대로 넘긴다.
+받은 쪽은 Content-Type 헤더를 지정한 뒤 표준 라이브러리의 `csv.Writer`를 그 스트림에 연결해 쓴다.
 프레임워크를 쓰더라도 표준 인터페이스로 내려가는 통로가 열려 있다는 점은 Gin의 장점이다.
 
 == 요청 바인딩과 검증

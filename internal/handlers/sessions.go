@@ -2,7 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
-	"math/rand"
+	"errors"
 	"net/http"
 	"strings"
 	"time"
@@ -12,7 +12,7 @@ import (
 
 	"github.com/benelog/flashcard/internal/auth"
 	"github.com/benelog/flashcard/internal/model"
-	"github.com/benelog/flashcard/internal/smartrules"
+	"github.com/benelog/flashcard/internal/study"
 )
 
 // CreateSession starts a study session and returns its card queue.
@@ -29,8 +29,8 @@ func (h *Handlers) CreateSession(c *gin.Context) {
 		badRequest(c, "invalid body")
 		return
 	}
-	if body.Limit <= 0 || body.Limit > 200 {
-		body.Limit = 50
+	if body.Limit <= 0 || body.Limit > study.MaxDailyGoal {
+		body.Limit = study.DefaultDailyGoal
 	}
 	if body.Direction == "" {
 		body.Direction = model.DefaultDirection
@@ -41,56 +41,51 @@ func (h *Handlers) CreateSession(c *gin.Context) {
 		badRequest(c, "direction must be "+strings.Join(model.Directions, " or "))
 		return
 	}
+	dueBefore := time.Now()
+	if body.DueBefore != nil {
+		dueBefore = *body.DueBefore
+	}
+
 	userID := auth.UserID(c)
 	ctx := c.Request.Context()
 
-	var cards []model.Card
-	var ruleJSON json.RawMessage
-	var err error
+	// 어느 카드를 낼지는 internal/study가 정한다. 화면 쪽 학습도 같은 함수를
+	// 부르므로 두 입구가 같은 카드를 같은 순서로 낸다.
+	plan, err := study.Pick(ctx, h.Store, userID, study.Request{
+		Mode:      body.Mode,
+		DeckID:    body.DeckID,
+		Rule:      body.Rule,
+		DueBefore: dueBefore,
+		Limit:     body.Limit,
+	})
+	if err != nil {
+		failStudyRequest(c, err)
+		return
+	}
 
-	switch body.Mode {
-	case model.ModeDeck:
-		if body.DeckID == nil {
-			badRequest(c, "deckId is required for deck mode")
-			return
-		}
-		cards, err = h.Store.ListCards(ctx, userID, *body.DeckID)
-		if err == nil {
-			rand.Shuffle(len(cards), func(i, j int) { cards[i], cards[j] = cards[j], cards[i] })
-		}
-	case model.ModeDue:
-		dueBefore := time.Now()
-		if body.DueBefore != nil {
-			dueBefore = *body.DueBefore
-		}
-		cards, err = h.Store.DueCards(ctx, userID, dueBefore, body.Limit)
-	case model.ModeSmart:
-		if body.Rule == nil {
-			badRequest(c, "rule is required for smart mode")
-			return
-		}
-		rule, perr := smartrules.Parse(body.Rule)
-		if perr != nil {
-			badRequest(c, perr.Error())
-			return
-		}
-		ruleJSON, _ = json.Marshal(rule)
-		cards, err = h.Store.CardsByRule(ctx, userID, rule)
-	default:
+	sess, err := h.Store.CreateSession(ctx, userID, plan.Mode, body.Direction, plan.DeckID, plan.Rule, len(plan.Cards))
+	if err != nil {
+		fail(c, err)
+		return
+	}
+	c.JSON(http.StatusCreated, gin.H{"session": sess, "cards": plan.Cards})
+}
+
+// failStudyRequest turns a study.Pick failure into this API's answer: a bad ask
+// is 400 with what was wrong, anything else is the usual 404/500.
+func failStudyRequest(c *gin.Context, err error) {
+	switch {
+	case errors.Is(err, study.ErrUnknownMode):
 		badRequest(c, "mode must be deck, due or smart")
-		return
-	}
-	if err != nil {
+	case errors.Is(err, study.ErrDeckRequired):
+		badRequest(c, "deckId is required for deck mode")
+	case errors.Is(err, study.ErrRuleRequired):
+		badRequest(c, "rule is required for smart mode")
+	case errors.Is(err, study.ErrInvalidRule):
+		badRequest(c, err.Error())
+	default:
 		fail(c, err)
-		return
 	}
-
-	sess, err := h.Store.CreateSession(ctx, userID, body.Mode, body.Direction, body.DeckID, ruleJSON, len(cards))
-	if err != nil {
-		fail(c, err)
-		return
-	}
-	c.JSON(http.StatusCreated, gin.H{"session": sess, "cards": cards})
 }
 
 func (h *Handlers) RecordReview(c *gin.Context) {

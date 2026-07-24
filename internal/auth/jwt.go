@@ -46,20 +46,40 @@ func bearerToken(c *gin.Context) string {
 	return token
 }
 
-// parseUserID validates a Supabase access token and returns its subject.
-func parseUserID(raw string, kf jwt.Keyfunc) (uuid.UUID, error) {
+// tag::parse-claims[]
+// parseClaims verifies a Supabase access token and hands back its claims.
+// 토큰을 받아들이는 조건은 이 한 곳에만 적는다. 헤더로 오는 API 요청과 쿠키로
+// 오는 페이지 요청이 같은 문을 지나야, 한쪽에만 검사를 더하고 다른 쪽을 잊는
+// 일이 생기지 않는다.
+func parseClaims(raw string, kf jwt.Keyfunc) (jwt.MapClaims, error) {
 	claims := jwt.MapClaims{}
 	if _, err := jwt.ParseWithClaims(raw, claims, kf,
 		jwt.WithValidMethods([]string{"HS256", "RS256", "ES256"}),
 		jwt.WithAudience("authenticated"),
 		jwt.WithExpirationRequired(),
 	); err != nil {
-		return uuid.Nil, err
+		return nil, err
 	}
+	return claims, nil
+}
+
+// end::parse-claims[]
+
+func userIDFrom(claims jwt.MapClaims) (uuid.UUID, error) {
 	sub, _ := claims["sub"].(string)
 	return uuid.Parse(sub)
 }
 
+// parseUserID validates a Supabase access token and returns its subject.
+func parseUserID(raw string, kf jwt.Keyfunc) (uuid.UUID, error) {
+	claims, err := parseClaims(raw, kf)
+	if err != nil {
+		return uuid.Nil, err
+	}
+	return userIDFrom(claims)
+}
+
+// tag::parse-user[]
 // ParseUser validates a Supabase access token and returns its subject and
 // email claim. Used by the web layer, which carries the token in a cookie
 // instead of the Authorization header.
@@ -68,19 +88,16 @@ func ParseUser(raw, jwksURL, secret string) (uuid.UUID, string, error) {
 	if err != nil {
 		return uuid.Nil, "", err
 	}
-	claims := jwt.MapClaims{}
-	if _, err := jwt.ParseWithClaims(raw, claims, kf,
-		jwt.WithValidMethods([]string{"HS256", "RS256", "ES256"}),
-		jwt.WithAudience("authenticated"),
-		jwt.WithExpirationRequired(),
-	); err != nil {
+	claims, err := parseClaims(raw, kf)
+	if err != nil {
 		return uuid.Nil, "", err
 	}
-	sub, _ := claims["sub"].(string)
+	id, err := userIDFrom(claims)
 	email, _ := claims["email"].(string)
-	id, err := uuid.Parse(sub)
 	return id, email, err
 }
+
+// end::parse-user[]
 
 // SetUserID stores the authenticated user id on the request context, under
 // the same key the API middleware uses, so handlers and EnsureProfile work

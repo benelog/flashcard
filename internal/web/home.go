@@ -3,9 +3,10 @@ package web
 import (
 	"encoding/json"
 	"net/http"
+	"time"
 
 	"github.com/benelog/flashcard/internal/auth"
-	"github.com/benelog/flashcard/internal/smartrules"
+	"github.com/benelog/flashcard/internal/study"
 	"github.com/gin-gonic/gin"
 )
 
@@ -24,7 +25,7 @@ func (w *Web) homePage(c *gin.Context) {
 	ctx := c.Request.Context()
 	tz, loc := clientTZ(c)
 
-	due, err := w.store.DueCount(ctx, userID, endOfToday(loc))
+	due, err := w.store.DueCount(ctx, userID, endOfToday(time.Now(), loc))
 	if err != nil {
 		w.failPage(c, err)
 		return
@@ -43,22 +44,21 @@ func (w *Web) homePage(c *gin.Context) {
 		decks = decks[:3]
 	}
 
-	// 홈 화면 추천 타일: 지금 카드가 있는 고정 규칙만 노출한다.
-	var suggestions []suggestionView
-	for _, rule := range smartrules.Suggested() {
-		n, err := w.store.CountByRule(ctx, userID, rule)
-		if err != nil {
-			w.failPage(c, err)
-			return
-		}
-		if n > 0 {
-			raw, _ := json.Marshal(rule)
-			suggestions = append(suggestions, suggestionView{
-				Title: suggestionTitle(rule, n),
-				Count: n,
-				Rule:  string(raw),
-			})
-		}
+	// 홈 화면 추천 타일: 지금 카드가 있는 고정 규칙만 노출한다. 어느 규칙이
+	// 남는지는 JSON API의 /suggestions와 같고, 이름표만 여기서 붙인다.
+	found, err := study.Suggestions(ctx, w.store, userID)
+	if err != nil {
+		w.failPage(c, err)
+		return
+	}
+	suggestions := make([]suggestionView, 0, len(found))
+	for _, s := range found {
+		raw, _ := json.Marshal(s.Rule)
+		suggestions = append(suggestions, suggestionView{
+			Title: suggestionTitle(s.Rule, s.Count),
+			Count: s.Count,
+			Rule:  string(raw),
+		})
 	}
 
 	w.render(c, http.StatusOK, "home", "Flashcard", gin.H{

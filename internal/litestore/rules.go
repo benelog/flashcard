@@ -56,22 +56,8 @@ func (s *Store) CardsByRule(ctx context.Context, userID uuid.UUID, rule smartrul
 	if err != nil {
 		return nil, err
 	}
-	ids := []uuid.UUID{}
-	for rows.Next() {
-		var id string
-		if err := rows.Scan(&id); err != nil {
-			rows.Close()
-			return nil, err
-		}
-		parsed, err := uuid.Parse(id)
-		if err != nil {
-			rows.Close()
-			return nil, err
-		}
-		ids = append(ids, parsed)
-	}
-	rows.Close()
-	if err := rows.Err(); err != nil {
+	ids, err := collect(rows, scanCardID)
+	if err != nil {
 		return nil, err
 	}
 	if len(ids) == 0 {
@@ -88,7 +74,7 @@ func (s *Store) CardsByRule(ctx context.Context, userID uuid.UUID, rule smartrul
 	if err != nil {
 		return nil, err
 	}
-	cards, err := collectCards(rows)
+	cards, err := collect(rows, scanCard)
 	if err != nil {
 		return nil, err
 	}

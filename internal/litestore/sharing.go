@@ -46,11 +46,12 @@ func (s *Store) ShareDeck(ctx context.Context, userID, deckID uuid.UUID) (model.
 	return info, errors.New("could not generate a unique share slug")
 }
 
-// isUniqueViolation reports whether err is a SQLite constraint error; in
-// ShareDeck's update the only constraint in play is the unique slug index.
+// isUniqueViolation reports whether err is a SQLite unique-constraint error,
+// the one failure ShareDeck's retry loop may absorb. 다른 제약(FK, NOT NULL)
+// 위반까지 여기서 삼키면 재시도 끝에 엉뚱한 slug 오류로 보고된다.
 func isUniqueViolation(err error) bool {
 	var se *sqlite.Error
-	return errors.As(err, &se) && se.Code()&0xff == sqlite3.SQLITE_CONSTRAINT
+	return errors.As(err, &se) && se.Code() == sqlite3.SQLITE_CONSTRAINT_UNIQUE
 }
 
 func (s *Store) UnshareDeck(ctx context.Context, userID, deckID uuid.UUID) error {
@@ -89,16 +90,7 @@ func (s *Store) ListSharedDecks(ctx context.Context, viewerID uuid.UUID) ([]mode
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
-	decks := []model.SharedDeckSummary{}
-	for rows.Next() {
-		d, err := scanSharedDeck(rows)
-		if err != nil {
-			return nil, err
-		}
-		decks = append(decks, d)
-	}
-	return decks, rows.Err()
+	return collect(rows, scanSharedDeck)
 }
 
 func (s *Store) GetSharedDeck(ctx context.Context, viewerID uuid.UUID, slug string) (model.SharedDeckSummary, error) {
@@ -116,21 +108,17 @@ func (s *Store) GetSharedDeckCards(ctx context.Context, slug string) ([]model.Sh
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
-	cards := []model.SharedCard{}
-	for rows.Next() {
-		var c model.SharedCard
-		var tags string
-		if err := rows.Scan(&c.Text, &c.Meaning, &c.CardType, &tags,
-			&c.Phonetic, &c.Example, &c.Notes); err != nil {
-			return nil, err
-		}
-		if err := json.Unmarshal([]byte(tags), &c.Tags); err != nil {
-			return nil, err
-		}
-		cards = append(cards, c)
+	return collect(rows, scanSharedCard)
+}
+
+func scanSharedCard(r rowScanner) (model.SharedCard, error) {
+	var c model.SharedCard
+	var tags string
+	if err := r.Scan(&c.Text, &c.Meaning, &c.CardType, &tags,
+		&c.Phonetic, &c.Example, &c.Notes); err != nil {
+		return c, err
 	}
-	return cards, rows.Err()
+	return c, json.Unmarshal([]byte(tags), &c.Tags)
 }
 
 // ImportSharedDeck clones a shared deck and its cards into the viewer's
@@ -156,52 +144,27 @@ func (s *Store) ImportSharedDeck(ctx context.Context, viewerID uuid.UUID, slug s
 
 	newDeckID := uuid.New()
 	now := fmtTime(time.Now())
-	if _, err := tx.ExecContext(ctx,
-		`insert into decks (id, user_id, name, description, seq, created_at, updated_at)
-		 values (?, ?, ?, ?, (select coalesce(max(seq), 0) + 1 from decks), ?, ?)`,
+	if _, err := tx.ExecContext(ctx, insertDeckSQL,
 		newDeckID.String(), viewerID.String(), name, description, now, now); err != nil {
 		return model.Deck{}, err
 	}
 
 	// Each copy needs a fresh uuid, which SQLite cannot generate, so the cards
-	// are cloned row by row in Go rather than with an insert ... select.
+	// are cloned row by row in Go (insertCard) rather than with an
+	// insert ... select.
 	rows, err := tx.QueryContext(ctx,
 		`select text, meaning, card_type, tags, phonetic, example, notes
 		 from cards where deck_id = ? order by created_at`, srcID)
 	if err != nil {
 		return model.Deck{}, err
 	}
-	type copied struct {
-		text, meaning, cardType, tags string
-		phonetic, example, notes      *string
-	}
-	src := []copied{}
-	for rows.Next() {
-		var c copied
-		if err := rows.Scan(&c.text, &c.meaning, &c.cardType, &c.tags,
-			&c.phonetic, &c.example, &c.notes); err != nil {
-			rows.Close()
-			return model.Deck{}, err
-		}
-		src = append(src, c)
-	}
-	rows.Close()
-	if err := rows.Err(); err != nil {
+	src, err := collect(rows, scanCardInput)
+	if err != nil {
 		return model.Deck{}, err
 	}
-	for _, c := range src {
-		cardID := uuid.New()
-		if _, err := tx.ExecContext(ctx,
-			`insert into cards (id, user_id, deck_id, text, meaning, card_type, tags,
-			                    phonetic, example, notes, created_at, updated_at)
-			 values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-			cardID.String(), viewerID.String(), newDeckID.String(), c.text, c.meaning,
-			c.cardType, c.tags, c.phonetic, c.example, c.notes, now, now); err != nil {
-			return model.Deck{}, err
-		}
-		if _, err := tx.ExecContext(ctx,
-			`insert into card_srs (card_id, user_id, due_at) values (?, ?, ?)`,
-			cardID.String(), viewerID.String(), now); err != nil {
+	for _, in := range src {
+		in.DeckID = newDeckID
+		if _, err := insertCard(ctx, tx, viewerID, in, now); err != nil {
 			return model.Deck{}, err
 		}
 	}
@@ -209,4 +172,16 @@ func (s *Store) ImportSharedDeck(ctx context.Context, viewerID uuid.UUID, slug s
 		return model.Deck{}, err
 	}
 	return s.GetDeck(ctx, viewerID, newDeckID)
+}
+
+// scanCardInput reads a card row back into the shape insertCard takes, for
+// cloning cards into another deck.
+func scanCardInput(r rowScanner) (model.CardInput, error) {
+	var in model.CardInput
+	var tags string
+	if err := r.Scan(&in.Text, &in.Meaning, &in.CardType, &tags,
+		&in.Phonetic, &in.Example, &in.Notes); err != nil {
+		return in, err
+	}
+	return in, json.Unmarshal([]byte(tags), &in.Tags)
 }

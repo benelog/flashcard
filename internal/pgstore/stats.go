@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 
 	"github.com/benelog/flashcard/internal/model"
 )
@@ -25,16 +26,13 @@ func (s *Store) DailyStats(ctx context.Context, userID uuid.UUID, tz string, day
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
-	stats := []model.DailyStat{}
-	for rows.Next() {
-		var d model.DailyStat
-		if err := rows.Scan(&d.Date, &d.Total, &d.Correct); err != nil {
-			return nil, err
-		}
-		stats = append(stats, d)
-	}
-	return stats, rows.Err()
+	return collect(rows, scanDailyStat)
+}
+
+func scanDailyStat(row pgx.Row) (model.DailyStat, error) {
+	var d model.DailyStat
+	err := row.Scan(&d.Date, &d.Total, &d.Correct)
+	return d, err
 }
 
 func (s *Store) StatsSummary(ctx context.Context, userID uuid.UUID, tz string, loc *time.Location) (model.Summary, error) {
@@ -54,17 +52,8 @@ func (s *Store) StatsSummary(ctx context.Context, userID uuid.UUID, tz string, l
 	if err != nil {
 		return sum, err
 	}
-	days := []time.Time{}
-	for rows.Next() {
-		var d time.Time
-		if err := rows.Scan(&d); err != nil {
-			rows.Close()
-			return sum, err
-		}
-		days = append(days, d)
-	}
-	rows.Close()
-	if err := rows.Err(); err != nil {
+	days, err := collect(rows, scanDay)
+	if err != nil {
 		return sum, err
 	}
 	sum.Streak = model.Streak(days, time.Now().In(loc))
@@ -82,14 +71,18 @@ func (s *Store) StatsSummary(ctx context.Context, userID uuid.UUID, tz string, l
 	if err != nil {
 		return sum, err
 	}
-	defer rows.Close()
-	sum.Decks = []model.DeckMastery{}
-	for rows.Next() {
-		var m model.DeckMastery
-		if err := rows.Scan(&m.DeckID, &m.Name, &m.TotalCards, &m.MatureCards); err != nil {
-			return sum, err
-		}
-		sum.Decks = append(sum.Decks, m)
-	}
-	return sum, rows.Err()
+	sum.Decks, err = collect(rows, scanDeckMastery)
+	return sum, err
+}
+
+func scanDay(row pgx.Row) (time.Time, error) {
+	var d time.Time
+	err := row.Scan(&d)
+	return d, err
+}
+
+func scanDeckMastery(row pgx.Row) (model.DeckMastery, error) {
+	var m model.DeckMastery
+	err := row.Scan(&m.DeckID, &m.Name, &m.TotalCards, &m.MatureCards)
+	return m, err
 }

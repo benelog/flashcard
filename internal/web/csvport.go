@@ -7,7 +7,6 @@ import (
 
 	"github.com/benelog/flashcard/internal/auth"
 	"github.com/benelog/flashcard/internal/cardcsv"
-	"github.com/benelog/flashcard/internal/handlers"
 	"github.com/benelog/flashcard/internal/model"
 )
 
@@ -62,7 +61,7 @@ func (w *Web) importCSV(c *gin.Context) {
 // exportCSV streams the deck as CSV, the very same file the API's /export
 // hands out.
 func (w *Web) exportCSV(c *gin.Context) {
-	if err := handlers.ExportDeckCSV(c, w.store, auth.UserID(c), c.Param("slug")); err != nil {
+	if err := cardcsv.ExportDeck(c.Request.Context(), w.store, auth.UserID(c), c.Param("slug"), c.Writer); err != nil {
 		w.failPage(c, err)
 	}
 }

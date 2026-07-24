@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 
 	"github.com/benelog/flashcard/internal/model"
 )
@@ -15,16 +16,13 @@ func (s *Store) ListSmartDecks(ctx context.Context, userID uuid.UUID) ([]model.S
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
-	decks := []model.SmartDeck{}
-	for rows.Next() {
-		var d model.SmartDeck
-		if err := rows.Scan(&d.ID, &d.Name, &d.Rule, &d.CreatedAt); err != nil {
-			return nil, err
-		}
-		decks = append(decks, d)
-	}
-	return decks, rows.Err()
+	return collect(rows, scanSmartDeck)
+}
+
+func scanSmartDeck(row pgx.Row) (model.SmartDeck, error) {
+	var d model.SmartDeck
+	err := row.Scan(&d.ID, &d.Name, &d.Rule, &d.CreatedAt)
+	return d, err
 }
 
 func (s *Store) CreateSmartDeck(ctx context.Context, userID uuid.UUID, name string, rule json.RawMessage) (model.SmartDeck, error) {

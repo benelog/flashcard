@@ -2,7 +2,7 @@ package web
 
 import (
 	"encoding/json"
-	"math/rand"
+	"errors"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -14,7 +14,7 @@ import (
 
 	"github.com/benelog/flashcard/internal/auth"
 	"github.com/benelog/flashcard/internal/model"
-	"github.com/benelog/flashcard/internal/smartrules"
+	"github.com/benelog/flashcard/internal/study"
 )
 
 // tag::study-state[]
@@ -129,65 +129,64 @@ func (w *Web) directionChooser(c *gin.Context) {
 	})
 }
 
-// studyPlan is the card list one session will run through, plus where those
-// cards came from. 모드마다 카드를 고르는 방법도, 학습을 마치고 돌아갈 곳도 다르다.
+// studyPlan is one session's card list — picked by internal/study, which the
+// JSON API uses too — dressed with the two things only a page needs: what to
+// call this session and where to go when it ends.
 type studyPlan struct {
-	Mode      string
+	study.Plan
 	Title     string
-	Cards     []model.Card
-	DeckID    *uuid.UUID      // 덱 학습일 때만
-	Rule      json.RawMessage // 스마트 학습일 때만, 정규화된 규칙
 	ReturnURL string
 }
 
 // planStudy picks the cards for the requested mode. false를 받으면 응답은 이미
 // 쓰인 상태이므로 부르는 쪽은 그대로 돌아가면 된다.
 func (w *Web) planStudy(c *gin.Context, dailyGoal int, loc *time.Location) (studyPlan, bool) {
-	userID := auth.UserID(c)
-	ctx := c.Request.Context()
-
-	plan := studyPlan{Mode: c.Query("mode"), ReturnURL: "/"}
-	if plan.Mode == "" {
-		plan.Mode = model.DefaultMode
+	req := study.Request{
+		Mode:      c.Query("mode"),
+		Rule:      json.RawMessage(c.Query("rule")),
+		DueBefore: endOfToday(time.Now(), loc),
+		Limit:     dailyGoal,
+	}
+	if req.Mode == "" {
+		req.Mode = model.DefaultMode
+	}
+	// 주소를 손으로 고쳐 넣어 덱 번호가 깨진 경우는 덱이 없는 것과 구별하지
+	// 않는다. 아래에서 study.ErrDeckRequired로 같은 404가 된다.
+	if deckID, err := uuid.Parse(c.Query("deckId")); err == nil {
+		req.DeckID = &deckID
 	}
 
-	var err error
-	switch plan.Mode {
-	case model.ModeDeck:
-		deckID, perr := uuid.Parse(c.Query("deckId"))
-		if perr != nil {
-			w.renderError(c, http.StatusNotFound, "찾을 수 없는 덱이에요.")
-			return plan, false
-		}
-		plan.DeckID = &deckID
-		plan.ReturnURL = "/decks"
-		plan.Cards, err = w.store.ListCards(ctx, userID, deckID)
-		if err == nil {
-			// 덱 순서대로 외워 버리지 않도록 섞는다.
-			rand.Shuffle(len(plan.Cards), func(i, j int) {
-				plan.Cards[i], plan.Cards[j] = plan.Cards[j], plan.Cards[i]
-			})
-		}
-	case model.ModeDue:
-		plan.Cards, err = w.store.DueCards(ctx, userID, endOfToday(loc), dailyGoal)
-	case model.ModeSmart:
-		rule, perr := smartrules.Parse([]byte(c.Query("rule")))
-		if perr != nil {
-			w.renderError(c, http.StatusNotFound, "잘못된 학습 규칙이에요.")
-			return plan, false
-		}
-		plan.Rule, _ = json.Marshal(rule)
-		plan.Cards, err = w.store.CardsByRule(ctx, userID, rule)
-	default:
-		w.renderError(c, http.StatusNotFound, "잘못된 학습 모드예요.")
-		return plan, false
-	}
+	picked, err := study.Pick(c.Request.Context(), w.store, auth.UserID(c), req)
 	if err != nil {
-		w.failPage(c, err)
-		return plan, false
+		w.failStudyRequest(c, err)
+		return studyPlan{}, false
 	}
-	plan.Title = studyTitle(c.Query("title"), plan.Mode)
+
+	plan := studyPlan{
+		Plan:      picked,
+		Title:     studyTitle(c.Query("title"), picked.Mode),
+		ReturnURL: "/",
+	}
+	if picked.Mode == model.ModeDeck {
+		plan.ReturnURL = "/decks"
+	}
 	return plan, true
+}
+
+// failStudyRequest turns a study.Pick failure into a page. 잘못 만들어진 학습
+// 링크는 전부 404다: 방문자가 고칠 수 있는 것이 없으므로 무엇이 잘못됐는지만
+// 알려 준다.
+func (w *Web) failStudyRequest(c *gin.Context, err error) {
+	switch {
+	case errors.Is(err, study.ErrDeckRequired):
+		w.renderError(c, http.StatusNotFound, "찾을 수 없는 덱이에요.")
+	case errors.Is(err, study.ErrRuleRequired), errors.Is(err, study.ErrInvalidRule):
+		w.renderError(c, http.StatusNotFound, "잘못된 학습 규칙이에요.")
+	case errors.Is(err, study.ErrUnknownMode):
+		w.renderError(c, http.StatusNotFound, "잘못된 학습 모드예요.")
+	default:
+		w.failPage(c, err)
+	}
 }
 
 // studyTitle names the study screen. 추천 타일이나 스마트 덱에서 온 링크는 자기
@@ -252,24 +251,31 @@ func (w *Web) studyBody(c *gin.Context, state studyState) studyBodyView {
 
 // stateFromForm rebuilds the study state posted by the previous fragment.
 func stateFromForm(c *gin.Context) studyState {
-	round, _ := strconv.Atoi(c.PostForm("round"))
+	return stateFromValues(postFormValues(c))
+}
+
+// stateFromValues is the parsing half of stateFromForm. 폼 값은 브라우저가
+// 실어 오는 것이라 그대로 믿지 않는다: 범위를 벗어난 숫자는 보정하고 돌아갈
+// 주소는 safeNext로 거른다. url.Values만 보므로 HTTP 없이 검증할 수 있다.
+func stateFromValues(form url.Values) studyState {
+	round, _ := strconv.Atoi(form.Get("round"))
 	if round < 1 {
 		round = 1
 	}
-	roundCards, _ := strconv.Atoi(c.PostForm("round_len"))
-	firstPassTotal, _ := strconv.Atoi(c.PostForm("fp_total"))
-	firstPassCorrect, _ := strconv.Atoi(c.PostForm("fp_correct"))
-	rate, _ := strconv.ParseFloat(c.PostForm("tts_rate"), 64)
+	roundCards, _ := strconv.Atoi(form.Get("round_len"))
+	firstPassTotal, _ := strconv.Atoi(form.Get("fp_total"))
+	firstPassCorrect, _ := strconv.Atoi(form.Get("fp_correct"))
+	rate, _ := strconv.ParseFloat(form.Get("tts_rate"), 64)
 	if rate <= 0 {
 		rate = defaultTtsRate
 	}
 	return studyState{
-		SessionID:        c.PostForm("session"),
-		Direction:        model.NormalizeDirection(c.PostForm("direction")),
-		Title:            c.PostForm("title"),
-		ReturnURL:        safeNext(c.PostForm("return_url")),
-		Queue:            splitAndTrim(c.PostForm("queue"), ","),
-		Missed:           splitAndTrim(c.PostForm("missed"), ","),
+		SessionID:        form.Get("session"),
+		Direction:        model.NormalizeDirection(form.Get("direction")),
+		Title:            form.Get("title"),
+		ReturnURL:        safeNext(form.Get("return_url")),
+		Queue:            splitAndTrim(form.Get("queue"), ","),
+		Missed:           splitAndTrim(form.Get("missed"), ","),
 		Round:            round,
 		RoundCards:       roundCards,
 		FirstPassTotal:   firstPassTotal,

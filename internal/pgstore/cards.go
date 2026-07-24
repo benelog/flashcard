@@ -8,11 +8,8 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgtype"
 
 	"github.com/benelog/flashcard/internal/model"
-
-	"github.com/benelog/flashcard/internal/smartrules"
 )
 
 const cardSelect = `
@@ -31,26 +28,13 @@ func scanCard(row pgx.Row) (model.Card, error) {
 	return c, err
 }
 
-func (s *Store) collectCards(rows pgx.Rows) ([]model.Card, error) {
-	defer rows.Close()
-	cards := []model.Card{}
-	for rows.Next() {
-		c, err := scanCard(rows)
-		if err != nil {
-			return nil, err
-		}
-		cards = append(cards, c)
-	}
-	return cards, rows.Err()
-}
-
 func (s *Store) ListCards(ctx context.Context, userID, deckID uuid.UUID) ([]model.Card, error) {
 	rows, err := s.pool.Query(ctx,
 		cardSelect+` where user_id = $1 and deck_id = $2 order by created_at desc`, userID, deckID)
 	if err != nil {
 		return nil, err
 	}
-	return s.collectCards(rows)
+	return collect(rows, scanCard)
 }
 
 func (s *Store) GetCard(ctx context.Context, userID, cardID uuid.UUID) (model.Card, error) {
@@ -68,6 +52,24 @@ func (s *Store) GetCard(ctx context.Context, userID, cardID uuid.UUID) (model.Ca
 	return c, nil
 }
 
+// insertCard adds the card and its SRS row inside tx. internal/litestore에 같은
+// 이름의 짝이 있다: 그쪽은 SQLite에 기본값 함수가 없어 id와 시각을 Go가 만들고,
+// 여기서는 열 기본값(gen_random_uuid(), now())이 만든다.
+func insertCard(ctx context.Context, tx pgx.Tx, userID uuid.UUID, in model.CardInput) (uuid.UUID, error) {
+	var cardID uuid.UUID
+	err := tx.QueryRow(ctx,
+		`insert into cards (user_id, deck_id, text, meaning, card_type, tags, phonetic, example, notes)
+		 values ($1, $2, $3, $4, $5, $6, $7, $8, $9) returning id`,
+		userID, in.DeckID, in.Text, in.Meaning, in.CardType, in.Tags, in.Phonetic, in.Example, in.Notes).
+		Scan(&cardID)
+	if err != nil {
+		return uuid.Nil, err
+	}
+	_, err = tx.Exec(ctx,
+		`insert into card_srs (card_id, user_id) values ($1, $2)`, cardID, userID)
+	return cardID, err
+}
+
 // CreateCard inserts the card and its SRS row in one transaction; the deck
 // ownership check doubles as the foreign-key guard.
 func (s *Store) CreateCard(ctx context.Context, userID uuid.UUID, in model.CardInput) (model.Card, error) {
@@ -80,17 +82,8 @@ func (s *Store) CreateCard(ctx context.Context, userID uuid.UUID, in model.CardI
 	}
 	defer tx.Rollback(ctx)
 
-	var cardID uuid.UUID
-	err = tx.QueryRow(ctx,
-		`insert into cards (user_id, deck_id, text, meaning, card_type, tags, phonetic, example, notes)
-		 values ($1, $2, $3, $4, $5, $6, $7, $8, $9) returning id`,
-		userID, in.DeckID, in.Text, in.Meaning, in.CardType, in.Tags, in.Phonetic, in.Example, in.Notes).
-		Scan(&cardID)
+	cardID, err := insertCard(ctx, tx, userID, in)
 	if err != nil {
-		return model.Card{}, err
-	}
-	if _, err := tx.Exec(ctx,
-		`insert into card_srs (card_id, user_id) values ($1, $2)`, cardID, userID); err != nil {
 		return model.Card{}, err
 	}
 	if err := tx.Commit(ctx); err != nil {
@@ -163,17 +156,9 @@ func (s *Store) BulkCreateCards(ctx context.Context, userID, deckID uuid.UUID, i
 		}
 		seen[key] = true
 		// end::dedup-key[]
-		var cardID uuid.UUID
-		err := tx.QueryRow(ctx,
-			`insert into cards (user_id, deck_id, text, meaning, card_type, tags, phonetic, example, notes)
-			 values ($1, $2, $3, $4, $5, $6, $7, $8, $9) returning id`,
-			userID, deckID, strings.TrimSpace(in.Text), in.Meaning, in.CardType, in.Tags,
-			in.Phonetic, in.Example, in.Notes).Scan(&cardID)
-		if err != nil {
-			return res, err
-		}
-		if _, err := tx.Exec(ctx,
-			`insert into card_srs (card_id, user_id) values ($1, $2)`, cardID, userID); err != nil {
+		in.DeckID = deckID
+		in.Text = strings.TrimSpace(in.Text)
+		if _, err := insertCard(ctx, tx, userID, in); err != nil {
 			return res, err
 		}
 		res.Added++
@@ -188,64 +173,12 @@ func (s *Store) DueCards(ctx context.Context, userID uuid.UUID, dueBefore time.T
 	if err != nil {
 		return nil, err
 	}
-	return s.collectCards(rows)
+	return collect(rows, scanCard)
 }
 
 func (s *Store) DueCount(ctx context.Context, userID uuid.UUID, dueBefore time.Time) (int, error) {
 	var n int
 	err := s.pool.QueryRow(ctx,
 		`select count(*) from card_srs where user_id = $1 and due_at <= $2`, userID, dueBefore).Scan(&n)
-	return n, err
-}
-
-// CardsByRule evaluates a smart rule and returns matching cards in rule order.
-func (s *Store) CardsByRule(ctx context.Context, userID uuid.UUID, rule smartrules.Rule) ([]model.Card, error) {
-	q, extra := rule.Query()
-	args := append([]any{userID}, extra...)
-	rows, err := s.pool.Query(ctx, q, args...)
-	if err != nil {
-		return nil, err
-	}
-	ids := []uuid.UUID{}
-	for rows.Next() {
-		var id uuid.UUID
-		if err := rows.Scan(&id); err != nil {
-			rows.Close()
-			return nil, err
-		}
-		ids = append(ids, id)
-	}
-	rows.Close()
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	if len(ids) == 0 {
-		return []model.Card{}, nil
-	}
-
-	// Pass ids as pgtype.UUID: the pool runs the simple protocol (Supabase's
-	// transaction pooler), where pgx has no text encoder for a []uuid.UUID
-	// slice against an unknown parameter type. pgtype.UUID is pgx's native
-	// uuid type, so it encodes itself and no ::uuid[] cast is needed.
-	pgIDs := make([]pgtype.UUID, len(ids))
-	for i, id := range ids {
-		pgIDs[i] = pgtype.UUID{Bytes: id, Valid: true}
-	}
-	rows, err = s.pool.Query(ctx, cardSelect+` where user_id = $1 and id = any($2)`, userID, pgIDs)
-	if err != nil {
-		return nil, err
-	}
-	cards, err := s.collectCards(rows)
-	if err != nil {
-		return nil, err
-	}
-	return model.SortCardsByIDOrder(cards, ids), nil
-}
-
-func (s *Store) CountByRule(ctx context.Context, userID uuid.UUID, rule smartrules.Rule) (int, error) {
-	q, extra := rule.CountQuery()
-	args := append([]any{userID}, extra...)
-	var n int
-	err := s.pool.QueryRow(ctx, q, args...).Scan(&n)
 	return n, err
 }

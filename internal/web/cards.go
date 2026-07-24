@@ -2,6 +2,7 @@ package web
 
 import (
 	"net/http"
+	"net/url"
 	"strings"
 
 	"github.com/benelog/flashcard/internal/auth"
@@ -66,28 +67,32 @@ func (w *Web) editCardPage(c *gin.Context) {
 }
 
 // cardInputFromForm normalizes the posted card fields. 두 번째 반환값은 이 폼을
-// 저장할 수 있는지로, 원문과 뜻이 모두 있어야 참이다.
-func cardInputFromForm(c *gin.Context) (model.CardInput, bool) {
+// 저장할 수 있는지로, 원문과 뜻이 모두 있어야 참이다. url.Values만 보므로 HTTP
+// 없이 검증할 수 있다.
+func cardInputFromForm(form url.Values) (model.CardInput, bool) {
 	in := model.CardInput{
-		Text:     strings.TrimSpace(c.PostForm("text")),
-		Meaning:  strings.TrimSpace(c.PostForm("meaning")),
-		CardType: model.NormalizeCardType(c.PostForm("card_type")),
-		Tags:     splitAndTrim(c.PostForm("tags"), ","),
-		Phonetic: model.NilIfBlank(c.PostForm("phonetic")),
-		Example:  model.NilIfBlank(c.PostForm("example")),
-		Notes:    model.NilIfBlank(c.PostForm("notes")),
+		Text:     strings.TrimSpace(form.Get("text")),
+		Meaning:  strings.TrimSpace(form.Get("meaning")),
+		CardType: model.NormalizeCardType(form.Get("card_type")),
+		Tags:     splitAndTrim(form.Get("tags"), ","),
+		Phonetic: model.NilIfBlank(form.Get("phonetic")),
+		Example:  model.NilIfBlank(form.Get("example")),
+		Notes:    model.NilIfBlank(form.Get("notes")),
 	}
 	return in, in.Text != "" && in.Meaning != ""
 }
+
 func (w *Web) createCard(c *gin.Context) {
-	slug := c.Param("slug")
-	in, ok := cardInputFromForm(c)
-	if !ok {
-		redirectWithFlash(c, flashError, "원문과 뜻을 모두 입력해주세요", "/decks/"+slug+"/cards/new")
-		return
-	}
+	// newCardPage와 같은 순서로 덱부터 확인한다. 폼 오류를 먼저 알리면 남의 덱
+	// 슬러그로도 응답이 갈라져 슬러그의 존재가 드러난다.
 	deckID, ok := w.deckIDFromPath(c)
 	if !ok {
+		return
+	}
+	slug := c.Param("slug")
+	in, ok := cardInputFromForm(postFormValues(c))
+	if !ok {
+		redirectWithFlash(c, flashError, "원문과 뜻을 모두 입력해주세요", "/decks/"+slug+"/cards/new")
 		return
 	}
 	in.DeckID = deckID
@@ -103,7 +108,7 @@ func (w *Web) updateCard(c *gin.Context) {
 	if !ok {
 		return
 	}
-	in, ok := cardInputFromForm(c)
+	in, ok := cardInputFromForm(postFormValues(c))
 	if !ok {
 		redirectWithFlash(c, flashError, "원문과 뜻을 모두 입력해주세요", "/cards/"+cardID.String())
 		return

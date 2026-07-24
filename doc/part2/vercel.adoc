@@ -405,7 +405,7 @@ rewrite는 리다이렉트와 달리 요청 URL을 바꾸지 않는다.
 함수 실행이 잦아지는 비용은 캐시 헤더로 줄인다.
 아래 코드는 embed된 정적 자산을 라우트로 등록하면서, 응답마다 캐시 지시를 붙이는 부분이다.
 
-`internal/web/web.go` (registerStatic 발췌):
+`internal/web/routes.go` (registerStatic 발췌):
 
 [source,go]
 ----

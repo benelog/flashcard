@@ -29,28 +29,46 @@ func (s *Store) DailyStats(ctx context.Context, userID uuid.UUID, tz string, day
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	moments, err := collect(rows, scanReviewMoment)
+	if err != nil {
+		return nil, err
+	}
+	return bucketDaily(moments, loc), nil
+}
+
+// reviewMoment is one review_logs row, reduced to what daily bucketing needs.
+type reviewMoment struct {
+	At      time.Time
+	Correct bool
+}
+
+func scanReviewMoment(r rowScanner) (reviewMoment, error) {
+	var m reviewMoment
+	var reviewedAt string
+	if err := r.Scan(&reviewedAt, &m.Correct); err != nil {
+		return m, err
+	}
+	var err error
+	m.At, err = parseTime(reviewedAt)
+	return m, err
+}
+
+// bucketDaily groups review moments into local dates. moments는 시각 순으로
+// 정렬되어 있어야 한다: 같은 날짜는 인접해 있을 때만 한 버킷으로 합친다.
+// 시계도 DB도 보지 않으므로 시간대 경계(자정 전후)를 단위 테스트로 검증한다.
+func bucketDaily(moments []reviewMoment, loc *time.Location) []model.DailyStat {
 	stats := []model.DailyStat{}
-	for rows.Next() {
-		var reviewedAt string
-		var result bool
-		if err := rows.Scan(&reviewedAt, &result); err != nil {
-			return nil, err
-		}
-		t, err := parseTime(reviewedAt)
-		if err != nil {
-			return nil, err
-		}
-		day := t.In(loc).Format("2006-01-02")
+	for _, m := range moments {
+		day := m.At.In(loc).Format(time.DateOnly)
 		if len(stats) == 0 || stats[len(stats)-1].Date != day {
 			stats = append(stats, model.DailyStat{Date: day})
 		}
 		stats[len(stats)-1].Total++
-		if result {
+		if m.Correct {
 			stats[len(stats)-1].Correct++
 		}
 	}
-	return stats, rows.Err()
+	return stats
 }
 
 func (s *Store) StatsSummary(ctx context.Context, userID uuid.UUID, tz string, loc *time.Location) (model.Summary, error) {
@@ -70,22 +88,15 @@ func (s *Store) StatsSummary(ctx context.Context, userID uuid.UUID, tz string, l
 	if err != nil {
 		return sum, err
 	}
-	days := []time.Time{}
-	for rows.Next() {
+	days, err := collect(rows, func(r rowScanner) (time.Time, error) {
 		var reviewedAt string
-		if err := rows.Scan(&reviewedAt); err != nil {
-			rows.Close()
-			return sum, err
+		if err := r.Scan(&reviewedAt); err != nil {
+			return time.Time{}, err
 		}
 		t, err := parseTime(reviewedAt)
-		if err != nil {
-			rows.Close()
-			return sum, err
-		}
-		days = append(days, t.In(loc))
-	}
-	rows.Close()
-	if err := rows.Err(); err != nil {
+		return t.In(loc), err
+	})
+	if err != nil {
 		return sum, err
 	}
 	sum.Streak = model.Streak(days, time.Now().In(loc))
@@ -103,18 +114,17 @@ func (s *Store) StatsSummary(ctx context.Context, userID uuid.UUID, tz string, l
 	if err != nil {
 		return sum, err
 	}
-	defer rows.Close()
-	sum.Decks = []model.DeckMastery{}
-	for rows.Next() {
-		var m model.DeckMastery
-		var id string
-		if err := rows.Scan(&id, &m.Name, &m.TotalCards, &m.MatureCards); err != nil {
-			return sum, err
-		}
-		if m.DeckID, err = uuid.Parse(id); err != nil {
-			return sum, err
-		}
-		sum.Decks = append(sum.Decks, m)
+	sum.Decks, err = collect(rows, scanDeckMastery)
+	return sum, err
+}
+
+func scanDeckMastery(r rowScanner) (model.DeckMastery, error) {
+	var m model.DeckMastery
+	var id string
+	if err := r.Scan(&id, &m.Name, &m.TotalCards, &m.MatureCards); err != nil {
+		return m, err
 	}
-	return sum, rows.Err()
+	var err error
+	m.DeckID, err = uuid.Parse(id)
+	return m, err
 }

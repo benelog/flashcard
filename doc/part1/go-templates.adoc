@@ -207,12 +207,12 @@ Flashcard는 서버가 켜질 때 템플릿을 한 번만 파싱해 둔다.
 그런데 모든 파일을 한 집합에 파싱하면 마지막에 파싱된 `content`가 앞의 것들을 덮어써 버린다.
 그래서 Flashcard는 레이아웃과 조각을 담은 공통 집합(base)을 만들고, 페이지 수만큼 복제(Clone)한 뒤 복제본마다 페이지 파일 하나씩을 얹어 페이지마다 독립된 집합을 만든다.
 
-`internal/web/web.go`의 파싱 코드다.
+`internal/web/render.go`의 파싱 코드다.
 서버가 켜질 때 한 번 실행되어, 페이지 이름을 키로 하는 템플릿 맵을 만들어 둔다.
 
 [source,go]
 ----
-include::../../internal/web/web.go[tag=parse-templates]
+include::../../internal/web/render.go[tag=parse-templates]
 ----
 
 base 복제본에 `home.html`을 얹으면 그 안에서 `content`는 홈 화면 본문이 되고, `w.pages["home"]`은 "레이아웃 + 조각 + 홈 본문"을 갖춘 완성 집합이 된다.
@@ -223,11 +223,11 @@ base 복제본에 `home.html`을 얹으면 그 안에서 `content`는 홈 화면
 파싱해 둔 템플릿을 실제로 그리는 함수는 `render`다.
 핸들러가 페이지 이름을 건네면, 준비해 둔 맵에서 그 페이지의 템플릿 집합을 찾아 브라우저로 보낼 HTML 응답을 써 낸다.
 
-`internal/web/web.go`:
+`internal/web/render.go`:
 
 [source,go]
 ----
-include::../../internal/web/web.go[tag=render]
+include::../../internal/web/render.go[tag=render]
 ----
 
 `ExecuteTemplate`의 두 번째 인자가 `"layout"`이다.
@@ -380,7 +380,7 @@ Flashcard는 배포 산출물이 "실행 파일 하나"로 끝나는 단순함�
 
 embed된 정적 자산(CSS, 자바스크립트, 아이콘)을 브라우저에 내보내는 코드도 표준 라이브러리 조합이다.
 
-`internal/web/web.go`:
+`internal/web/routes.go`:
 
 [source,go]
 ----
@@ -411,7 +411,7 @@ func (w *Web) registerStatic(r *gin.Engine) {
 
 레이아웃은 어느 페이지에서든 제목, 현재 경로, 로그인 여부 같은 값이 필요하므로, 모든 템플릿 실행의 뿌리 데이터를 이 공통 필드를 갖춘 `view` 구조체 하나로 통일했다.
 
-`internal/web/web.go`:
+`internal/web/render.go`:
 
 [source,go]
 ----

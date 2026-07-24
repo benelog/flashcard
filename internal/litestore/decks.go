@@ -52,16 +52,7 @@ func (s *Store) ListDecks(ctx context.Context, userID uuid.UUID) ([]model.Deck, 
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
-	decks := []model.Deck{}
-	for rows.Next() {
-		d, err := scanDeck(rows)
-		if err != nil {
-			return nil, err
-		}
-		decks = append(decks, d)
-	}
-	return decks, rows.Err()
+	return collect(rows, scanDeck)
 }
 
 func (s *Store) GetDeck(ctx context.Context, userID, deckID uuid.UUID) (model.Deck, error) {
@@ -98,14 +89,16 @@ func (s *Store) DeckIDBySlug(ctx context.Context, userID uuid.UUID, slug string)
 	return uuid.Parse(id)
 }
 
+// insertDeckSQL은 CreateDeck과 ImportSharedDeck이 함께 쓴다. max(seq)+1 stands
+// in for the Postgres identity column; the single local writer makes it
+// race-free.
+const insertDeckSQL = `insert into decks (id, user_id, name, description, seq, created_at, updated_at)
+	 values (?, ?, ?, ?, (select coalesce(max(seq), 0) + 1 from decks), ?, ?)`
+
 func (s *Store) CreateDeck(ctx context.Context, userID uuid.UUID, name string, description *string) (model.Deck, error) {
 	id := uuid.New()
 	now := fmtTime(time.Now())
-	// max(seq)+1 stands in for the Postgres identity column; the single local
-	// writer makes it race-free.
-	_, err := s.db.ExecContext(ctx,
-		`insert into decks (id, user_id, name, description, seq, created_at, updated_at)
-		 values (?, ?, ?, ?, (select coalesce(max(seq), 0) + 1 from decks), ?, ?)`,
+	_, err := s.db.ExecContext(ctx, insertDeckSQL,
 		id.String(), userID.String(), name, description, now, now)
 	if err != nil {
 		return model.Deck{}, err

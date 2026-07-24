@@ -86,29 +86,6 @@ func (r *Rule) Validate() error {
 	return nil
 }
 
-// Query returns SQL selecting card ids from cards_with_stats for this rule.
-// $1 is always the user id; extra args follow.
-func (r Rule) Query() (sql string, args []any) {
-	base := "select id from cards_with_stats where user_id = $1"
-	switch r.Type {
-	case HighError:
-		return base + " and attempts >= $2 and error_rate >= $3 order by error_rate desc, attempts desc limit $4",
-			[]any{r.MinAttempts, r.MinErrorRate, r.Limit}
-	case Stale:
-		return base + " and (last_reviewed_at is null or last_reviewed_at < now() - make_interval(days => $2)) order by last_reviewed_at asc nulls first limit $3",
-			[]any{r.NotReviewedDays, r.Limit}
-	case Tag:
-		return base + " and tags && $2 order by created_at desc limit $3",
-			[]any{r.Tags, r.Limit}
-	case Recent:
-		return base + " and created_at >= now() - make_interval(days => $2) order by created_at desc limit $3",
-			[]any{r.AddedWithinDays, r.Limit}
-	}
-	return "", nil
-}
-
-// CountQuery returns SQL counting matching cards (for suggestion tiles).
-func (r Rule) CountQuery() (sql string, args []any) {
-	q, args := r.Query()
-	return "select count(*) from (" + q + ") matched", args
-}
+// 규칙을 SQL로 옮기는 일은 여기 없다. 저장소마다 방언이 다르기 때문이다:
+// internal/pgstore/rules.go와 internal/litestore/rules.go가 각자 자기 몫을
+// 맡고, 이 패키지는 어느 DB도 모른 채 규칙의 모양과 유효성만 책임진다.

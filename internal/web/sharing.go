@@ -2,8 +2,10 @@ package web
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/benelog/flashcard/internal/auth"
+	"github.com/benelog/flashcard/internal/model"
 	"github.com/gin-gonic/gin"
 )
 
@@ -42,7 +44,20 @@ func (w *Web) sharedGalleryPage(c *gin.Context) {
 		w.failPage(c, err)
 		return
 	}
-	w.render(c, http.StatusOK, "shared", "공유 덱 둘러보기", gin.H{"Decks": decks})
+	_, loc := clientTZ(c)
+	w.render(c, http.StatusOK, "shared", "공유 덱 둘러보기", gin.H{"Decks": inClientTZ(decks, loc)})
+}
+
+// inClientTZ retells each deck's share time in the visitor's timezone.
+//
+// 저장소는 어느 구현이든 시각을 UTC로 읽어 온다. 그대로 날짜만 찍으면 한국에서
+// 자정부터 오전 아홉 시 사이에 공유한 덱이 하루 전으로 보인다. 화면의 다른
+// 시각은 모두 clientTZ를 지나는데 이 자리만 빠져 있었다.
+func inClientTZ(decks []model.SharedDeckSummary, loc *time.Location) []model.SharedDeckSummary {
+	for i := range decks {
+		decks[i].SharedAt = decks[i].SharedAt.In(loc)
+	}
+	return decks
 }
 
 func (w *Web) sharedDeckPage(c *gin.Context) {

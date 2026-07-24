@@ -3,11 +3,13 @@ package web
 import (
 	"encoding/json"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 
 	"github.com/benelog/flashcard/internal/auth"
 	"github.com/benelog/flashcard/internal/model"
+	"github.com/benelog/flashcard/internal/study"
 	"github.com/gin-gonic/gin"
 )
 
@@ -20,9 +22,11 @@ type profileSettings struct {
 }
 
 // 설정을 저장한 적 없는 사용자, 그리고 저장된 값이 범위를 벗어난 경우의 값이다.
+// 하루 학습량의 숫자는 JSON API의 limit 보정과 같아야 하므로 internal/study가
+// 정한다.
 const (
 	defaultTtsRate   = 0.9
-	defaultDailyGoal = 50
+	defaultDailyGoal = study.DefaultDailyGoal
 )
 
 func defaultSettings() profileSettings {
@@ -59,21 +63,28 @@ func (w *Web) settingsPage(c *gin.Context) {
 // 설정값이 머무를 수 있는 범위. 벗어난 값이 오면 기본값을 그대로 둔다.
 const (
 	minTtsRate, maxTtsRate     = 0.5, 1.5
-	minDailyGoal, maxDailyGoal = 5, 200
+	minDailyGoal, maxDailyGoal = 5, study.MaxDailyGoal
 )
 
-func (w *Web) saveSettings(c *gin.Context) {
-	name := strings.TrimSpace(c.PostForm("display_name"))
+// settingsFromForm reads the posted settings, keeping the defaults for any
+// value that is missing, malformed or out of range.
+func settingsFromForm(form url.Values) profileSettings {
 	settings := defaultSettings()
-	if rate, err := strconv.ParseFloat(c.PostForm("tts_rate"), 64); err == nil &&
+	if rate, err := strconv.ParseFloat(form.Get("tts_rate"), 64); err == nil &&
 		rate >= minTtsRate && rate <= maxTtsRate {
 		settings.TtsRate = rate
 	}
-	if goal, err := strconv.Atoi(c.PostForm("daily_goal")); err == nil &&
+	if goal, err := strconv.Atoi(form.Get("daily_goal")); err == nil &&
 		goal >= minDailyGoal && goal <= maxDailyGoal {
 		settings.DailyGoal = goal
 	}
-	raw, _ := json.Marshal(settings)
+	return settings
+}
+
+func (w *Web) saveSettings(c *gin.Context) {
+	form := postFormValues(c)
+	name := strings.TrimSpace(form.Get("display_name"))
+	raw, _ := json.Marshal(settingsFromForm(form))
 	if _, err := w.store.UpdateProfile(c.Request.Context(), auth.UserID(c), &name, raw); err != nil {
 		w.failPage(c, err)
 		return

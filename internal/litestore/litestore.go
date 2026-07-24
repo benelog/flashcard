@@ -13,6 +13,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/google/uuid"
 	_ "modernc.org/sqlite"
 
 	"github.com/benelog/flashcard/internal/model"
@@ -62,6 +63,22 @@ type rowScanner interface {
 	Scan(dest ...any) error
 }
 
+// collect drains a query into a slice, closing the cursor on every path.
+// internal/pgstore에 같은 이름의 짝이 있다. 행마다 다른 것은 한 줄을 읽어 값으로
+// 만드는 방법(scan)뿐이라, 그것만 인자로 받으면 루프는 한 번만 적으면 된다.
+func collect[T any](rows *sql.Rows, scan func(rowScanner) (T, error)) ([]T, error) {
+	defer rows.Close()
+	out := []T{}
+	for rows.Next() {
+		v, err := scan(rows)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, v)
+	}
+	return out, rows.Err()
+}
+
 // tag::require-row-affected[]
 // requireRowAffected wraps an Exec that must touch exactly the caller's row.
 // internal/pgstore has the same helper for the same reason: every write is scoped
@@ -82,6 +99,17 @@ func requireRowAffected(res sql.Result, err error) error {
 }
 
 // end::require-row-affected[]
+
+// scanCardID reads a single id column, for the queries that pick ids first and
+// fetch the rows in a second pass. SQLite는 uuid 타입이 없어 text로 담기므로
+// 여기서 되돌린다.
+func scanCardID(r rowScanner) (uuid.UUID, error) {
+	var id string
+	if err := r.Scan(&id); err != nil {
+		return uuid.Nil, err
+	}
+	return uuid.Parse(id)
+}
 
 func fmtTime(t time.Time) string {
 	return t.UTC().Format(timeLayout)

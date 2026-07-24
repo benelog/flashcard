@@ -9,28 +9,25 @@ import (
 
 	"github.com/benelog/flashcard/internal/auth"
 	"github.com/benelog/flashcard/internal/smartrules"
+	"github.com/benelog/flashcard/internal/study"
 )
 
 // Suggestions returns the home-screen tiles: canned smart rules that
 // currently match at least one card.
 func (h *Handlers) Suggestions(c *gin.Context) {
-	userID := auth.UserID(c)
-	ctx := c.Request.Context()
+	found, err := study.Suggestions(c.Request.Context(), h.Store, auth.UserID(c))
+	if err != nil {
+		fail(c, err)
+		return
+	}
 	type suggestion struct {
 		Type  smartrules.RuleType `json:"type"`
 		Count int                 `json:"count"`
 		Rule  smartrules.Rule     `json:"rule"`
 	}
-	out := []suggestion{}
-	for _, rule := range smartrules.Suggested() {
-		n, err := h.Store.CountByRule(ctx, userID, rule)
-		if err != nil {
-			fail(c, err)
-			return
-		}
-		if n > 0 {
-			out = append(out, suggestion{Type: rule.Type, Count: n, Rule: rule})
-		}
+	out := make([]suggestion, 0, len(found))
+	for _, s := range found {
+		out = append(out, suggestion{Type: s.Rule.Type, Count: s.Count, Rule: s.Rule})
 	}
 	c.JSON(http.StatusOK, out)
 }

@@ -34,27 +34,8 @@ func TestLimitClamped(t *testing.T) {
 	}
 }
 
-// tag::queries-build[]
-func TestQueriesBuild(t *testing.T) {
-	for _, raw := range []string{
-		`{"type":"high_error"}`,
-		`{"type":"stale"}`,
-		`{"type":"tag","tags":["verb"]}`,
-		`{"type":"recent"}`,
-	} {
-		r, err := Parse([]byte(raw))
-		if err != nil {
-			t.Fatal(err)
-		}
-		if q, _ := r.Query(); q == "" {
-			t.Fatalf("empty query for %s", raw)
-		}
-		// end::queries-build[]
-		if q, _ := r.CountQuery(); q == "" {
-			t.Fatalf("empty count query for %s", raw)
-		}
-	}
-}
+// 규칙 하나하나가 SQL로 옮겨지는지는 저장소 쪽 테스트가 본다(방언이 둘이라
+// 옮기는 코드도 둘이다). 여기서는 규칙 자체의 해석만 확인한다.
 
 // 추천 타일은 홈 화면과 JSON API가 같은 목록을 쓴다. 그 목록이 스스로 유효한
 // 규칙이어야 조회 단계까지 갈 수 있다.
@@ -66,9 +47,6 @@ func TestSuggestedRulesAreValid(t *testing.T) {
 	for _, rule := range suggested {
 		if err := rule.Validate(); err != nil {
 			t.Errorf("suggested rule %+v is invalid: %v", rule, err)
-		}
-		if q, _ := rule.Query(); q == "" {
-			t.Errorf("suggested rule %+v builds no query", rule)
 		}
 	}
 }

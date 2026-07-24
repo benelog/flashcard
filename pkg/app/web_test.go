@@ -1,6 +1,7 @@
 package app
 
 import (
+	"fmt"
 	"net/http"
 	"net/url"
 	"strings"
@@ -84,6 +85,15 @@ func TestCardFormRequiresTextAndMeaning(t *testing.T) {
 	}
 }
 
+// 없는(또는 남의) 덱에는 폼 오류보다 404가 먼저다. 빈 폼을 넣어 보고 응답이
+// 달라지는 것으로 슬러그의 존재를 알아낼 수 없어야 한다.
+func TestCardFormOnUnknownDeckIs404BeforeValidation(t *testing.T) {
+	a := newTestApp(t)
+
+	rec := a.postForm("/decks/zzzz/cards", url.Values{"text": {""}, "meaning": {""}})
+	mustStatus(t, rec, http.StatusNotFound)
+}
+
 // 남의 덱이나 없는 덱, 손으로 고친 주소는 모두 404다.
 func TestUnknownURLsAre404(t *testing.T) {
 	a := newTestApp(t)
@@ -118,10 +128,7 @@ func TestStudySessionFullRound(t *testing.T) {
 	a.makeCard(slug, "run", "달리다")
 	a.makeCard(slug, "walk", "걷다")
 
-	deck, err := a.store.GetDeckBySlug(t.Context(), a.userID, slug)
-	if err != nil {
-		t.Fatal(err)
-	}
+	deck := a.deck(slug)
 
 	// 방향을 고르지 않으면 먼저 방향 선택 화면이 나온다.
 	chooser := a.get("/study?mode=deck&deckId=" + deck.ID.String())
@@ -259,6 +266,37 @@ func TestCSVImportRejectsUnusableFile(t *testing.T) {
 	}
 }
 
+// 갤러리의 공유 날짜는 방문자의 하루를 따라야 한다. 저장소는 시각을 UTC로 읽어
+// 오므로, 옮기지 않으면 한국에서 이른 아침에 공유한 덱이 하루 전으로 보인다.
+//
+// 시간대를 UTC+14와 UTC-11로 잡은 것은 둘이 25시간 떨어져 있어 어느 순간에도
+// 서로 날짜가 다르기 때문이다. 그래서 이 테스트는 하루 중 언제 돌려도 최소한
+// 한쪽은 UTC와 다른 날짜를 요구한다.
+func TestSharedGalleryDateFollowsVisitorTimezone(t *testing.T) {
+	a := newTestApp(t)
+	slug := a.makeDeck("Verbs")
+	a.makeCard(slug, "run", "달리다")
+	mustRedirect(t, a.postForm("/decks/"+slug+"/share", nil))
+
+	seen := map[string]bool{}
+	for _, tz := range []string{"Pacific/Kiritimati", "Pacific/Midway"} {
+		t.Run(tz, func(t *testing.T) {
+			loc, err := time.LoadLocation(tz)
+			if err != nil {
+				t.Skipf("%s 시간대 정보가 없는 환경이다: %v", tz, err)
+			}
+			now := time.Now().In(loc)
+			want := fmt.Sprintf("%d. %d. %d.", now.Year(), int(now.Month()), now.Day())
+			seen[want] = true
+
+			mustContain(t, a.getInTZ("/shared", tz), want)
+		})
+	}
+	if len(seen) < 2 {
+		t.Errorf("두 시간대가 같은 날짜를 냈다: %v", seen)
+	}
+}
+
 // 공유를 켜면 갤러리에 뜨고, 다른 사람이 자기 덱으로 복사해 갈 수 있다. 공유를
 // 풀면 그 링크는 곧바로 죽는다.
 func TestShareAndImportSharedDeck(t *testing.T) {
@@ -267,10 +305,7 @@ func TestShareAndImportSharedDeck(t *testing.T) {
 	a.makeCard(slug, "run", "달리다")
 
 	mustRedirect(t, a.postForm("/decks/"+slug+"/share", nil))
-	deck, err := a.store.GetDeckBySlug(t.Context(), a.userID, slug)
-	if err != nil {
-		t.Fatal(err)
-	}
+	deck := a.deck(slug)
 	if deck.ShareSlug == nil {
 		t.Fatal("deck has no share slug after sharing")
 	}

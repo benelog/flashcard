@@ -17,24 +17,22 @@ func (s *Store) ListSmartDecks(ctx context.Context, userID uuid.UUID) ([]model.S
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
-	decks := []model.SmartDeck{}
-	for rows.Next() {
-		var d model.SmartDeck
-		var id, rule, createdAt string
-		if err := rows.Scan(&id, &d.Name, &rule, &createdAt); err != nil {
-			return nil, err
-		}
-		if d.ID, err = uuid.Parse(id); err != nil {
-			return nil, err
-		}
-		d.Rule = json.RawMessage(rule)
-		if d.CreatedAt, err = parseTime(createdAt); err != nil {
-			return nil, err
-		}
-		decks = append(decks, d)
+	return collect(rows, scanSmartDeck)
+}
+
+func scanSmartDeck(r rowScanner) (model.SmartDeck, error) {
+	var d model.SmartDeck
+	var id, rule, createdAt string
+	if err := r.Scan(&id, &d.Name, &rule, &createdAt); err != nil {
+		return d, err
 	}
-	return decks, rows.Err()
+	var err error
+	if d.ID, err = uuid.Parse(id); err != nil {
+		return d, err
+	}
+	d.Rule = json.RawMessage(rule)
+	d.CreatedAt, err = parseTime(createdAt)
+	return d, err
 }
 
 func (s *Store) CreateSmartDeck(ctx context.Context, userID uuid.UUID, name string, rule json.RawMessage) (model.SmartDeck, error) {

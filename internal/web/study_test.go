@@ -71,6 +71,65 @@ func TestStudyBodyViewProgress(t *testing.T) {
 	}
 }
 
+// hidden 필드로 실려 온 상태는 브라우저가 고칠 수 있는 값이다. 범위를 벗어난
+// 숫자의 보정과, 큐가 hidden 필드를 한 바퀴 돌아도 그대로인지(왕복)를 확인한다.
+func TestStateFromValues(t *testing.T) {
+	form := url.Values{
+		"session":    {"s-1"},
+		"direction":  {model.MeaningToText},
+		"title":      {"오늘 복습"},
+		"return_url": {"/decks"},
+		"queue":      {"a, b ,c"},
+		"missed":     {""},
+		"round":      {"2"},
+		"round_len":  {"3"},
+		"fp_total":   {"5"},
+		"fp_correct": {"4"},
+		"tts_rate":   {"1.2"},
+	}
+
+	got := stateFromValues(form)
+
+	if got.SessionID != "s-1" || got.Direction != model.MeaningToText || got.Title != "오늘 복습" {
+		t.Errorf("identity fields = %+v", got)
+	}
+	if len(got.Queue) != 3 || got.Queue[0] != "a" || got.Queue[2] != "c" {
+		t.Errorf("Queue = %v, want trimmed 3 items", got.Queue)
+	}
+	if len(got.Missed) != 0 {
+		t.Errorf("Missed = %v, want empty", got.Missed)
+	}
+	if got.Round != 2 || got.RoundCards != 3 || got.FirstPassTotal != 5 || got.FirstPassCorrect != 4 {
+		t.Errorf("counters = %+v", got)
+	}
+	if got.TtsRate != 1.2 {
+		t.Errorf("TtsRate = %v", got.TtsRate)
+	}
+}
+
+func TestStateFromValuesCorrectsHostileInput(t *testing.T) {
+	form := url.Values{
+		"round":      {"-3"},
+		"tts_rate":   {"0"},
+		"return_url": {"https://evil.example/phish"},
+	}
+
+	got := stateFromValues(form)
+
+	if got.Round != 1 {
+		t.Errorf("Round = %d, want corrected to 1", got.Round)
+	}
+	if got.TtsRate != defaultTtsRate {
+		t.Errorf("TtsRate = %v, want the default", got.TtsRate)
+	}
+	if got.ReturnURL != "/" {
+		t.Errorf("ReturnURL = %q, want other origins rejected", got.ReturnURL)
+	}
+	if got.Direction != model.DefaultDirection {
+		t.Errorf("Direction = %q, want the default", got.Direction)
+	}
+}
+
 func TestQueueJoining(t *testing.T) {
 	view := studyBodyView{State: studyState{
 		Queue:  []string{"a", "b"},

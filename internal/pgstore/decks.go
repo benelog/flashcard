@@ -36,16 +36,7 @@ func (s *Store) ListDecks(ctx context.Context, userID uuid.UUID) ([]model.Deck, 
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
-	decks := []model.Deck{}
-	for rows.Next() {
-		d, err := scanDeck(rows)
-		if err != nil {
-			return nil, err
-		}
-		decks = append(decks, d)
-	}
-	return decks, rows.Err()
+	return collect(rows, scanDeck)
 }
 
 // end::list-decks[]

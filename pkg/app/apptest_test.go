@@ -38,6 +38,14 @@ type app struct {
 
 func newTestApp(t *testing.T) *app {
 	t.Helper()
+	return newAppWith(t, func(s model.Store) model.Store { return s })
+}
+
+// newAppWith boots the app on a store the caller may wrap first — that is how
+// the failure tests make one query break while everything else keeps working.
+// a.store stays the real SQLite store, so assertions still read the truth.
+func newAppWith(t *testing.T, wrap func(model.Store) model.Store) *app {
+	t.Helper()
 	s, err := litestore.Open(filepath.Join(t.TempDir(), "test.db"))
 	if err != nil {
 		t.Fatalf("open sqlite: %v", err)
@@ -45,7 +53,7 @@ func newTestApp(t *testing.T) *app {
 	t.Cleanup(func() { s.Close() })
 
 	cfg := &config.Config{Driver: "sqlite", AuthMode: "local"}
-	return &app{t: t, engine: New(cfg, s), store: s, userID: auth.LocalUserID}
+	return &app{t: t, engine: New(cfg, wrap(s)), store: s, userID: auth.LocalUserID}
 }
 
 func (a *app) do(req *http.Request) *httptest.ResponseRecorder {
@@ -58,6 +66,15 @@ func (a *app) do(req *http.Request) *httptest.ResponseRecorder {
 func (a *app) get(path string) *httptest.ResponseRecorder {
 	a.t.Helper()
 	return a.do(httptest.NewRequest(http.MethodGet, path, nil))
+}
+
+// getInTZ requests a page as a visitor in that timezone. app.js가 첫 화면에서
+// 심어 주는 tz 쿠키를 흉내 낸다.
+func (a *app) getInTZ(path, tz string) *httptest.ResponseRecorder {
+	a.t.Helper()
+	req := httptest.NewRequest(http.MethodGet, path, nil)
+	req.AddCookie(&http.Cookie{Name: "tz", Value: tz})
+	return a.do(req)
 }
 
 // postForm submits a browser form the way the templates do.
@@ -203,15 +220,22 @@ func (a *app) makeCard(deckSlug, text, meaning string) {
 	mustRedirect(a.t, rec)
 }
 
+// deck reads the deck row straight from the store, for assertions that need
+// its ID.
+func (a *app) deck(slug string) model.Deck {
+	a.t.Helper()
+	deck, err := a.store.GetDeckBySlug(a.t.Context(), a.userID, slug)
+	if err != nil {
+		a.t.Fatalf("get deck %q: %v", slug, err)
+	}
+	return deck
+}
+
 // cards reads the deck's cards straight from the store, for assertions the
 // rendered page cannot make (ids, SRS state).
 func (a *app) cards(deckSlug string) []model.Card {
 	a.t.Helper()
-	deck, err := a.store.GetDeckBySlug(a.t.Context(), a.userID, deckSlug)
-	if err != nil {
-		a.t.Fatalf("get deck %q: %v", deckSlug, err)
-	}
-	cards, err := a.store.ListCards(a.t.Context(), a.userID, deck.ID)
+	cards, err := a.store.ListCards(a.t.Context(), a.userID, a.deck(deckSlug).ID)
 	if err != nil {
 		a.t.Fatalf("list cards: %v", err)
 	}

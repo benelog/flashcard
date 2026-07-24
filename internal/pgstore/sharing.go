@@ -73,16 +73,7 @@ func (s *Store) ListSharedDecks(ctx context.Context, viewerID uuid.UUID) ([]mode
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
-	decks := []model.SharedDeckSummary{}
-	for rows.Next() {
-		d, err := scanSharedDeck(rows)
-		if err != nil {
-			return nil, err
-		}
-		decks = append(decks, d)
-	}
-	return decks, rows.Err()
+	return collect(rows, scanSharedDeck)
 }
 
 func (s *Store) GetSharedDeck(ctx context.Context, viewerID uuid.UUID, slug string) (model.SharedDeckSummary, error) {
@@ -99,17 +90,14 @@ func (s *Store) GetSharedDeckCards(ctx context.Context, slug string) ([]model.Sh
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
-	cards := []model.SharedCard{}
-	for rows.Next() {
-		var c model.SharedCard
-		if err := rows.Scan(&c.Text, &c.Meaning, &c.CardType, &c.Tags,
-			&c.Phonetic, &c.Example, &c.Notes); err != nil {
-			return nil, err
-		}
-		cards = append(cards, c)
-	}
-	return cards, rows.Err()
+	return collect(rows, scanSharedCard)
+}
+
+func scanSharedCard(row pgx.Row) (model.SharedCard, error) {
+	var c model.SharedCard
+	err := row.Scan(&c.Text, &c.Meaning, &c.CardType, &c.Tags,
+		&c.Phonetic, &c.Example, &c.Notes)
+	return c, err
 }
 
 // ImportSharedDeck clones a shared deck and its cards into the viewer's

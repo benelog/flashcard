@@ -280,14 +280,12 @@ func (w *Web) oauthCallback(c *gin.Context) {
 
 	code := c.Query("code")
 	if w.goTrue == nil || code == "" || verifier == "" {
-		setFlash(c, "error", "로그인에 실패했어요. 다시 시도해주세요.")
-		c.Redirect(http.StatusSeeOther, "/login")
+		failLogin(c, "로그인에 실패했어요. 다시 시도해주세요.")
 		return
 	}
 	tok, err := w.goTrue.exchangeCode(c.Request.Context(), code, verifier)
 	if err != nil {
-		setFlash(c, "error", "로그인에 실패했어요. 다시 시도해주세요.")
-		c.Redirect(http.StatusSeeOther, "/login")
+		failLogin(c, "로그인에 실패했어요. 다시 시도해주세요.")
 		return
 	}
 	w.setAuthCookies(c, tok)
@@ -687,23 +685,11 @@ Flashcard처럼 발급자(Supabase)와 검증자(Go 서버)가 서로 다른 조
 === 클레임 검증과 사용자 식별
 
 서명이 유효해도 클레임 검증을 건너뛰면 안 된다.
-`internal/auth/jwt.go`의 파싱 함수로, 토큰 안의 클레임을 검사한 뒤 사용자 ID를 꺼내 돌려준다.
+`internal/auth/jwt.go`의 파싱 함수로, 토큰 안의 클레임을 검사한 뒤 그 내용을 돌려준다.
 
 [source,go]
 ----
-// parseUserID validates a Supabase access token and returns its subject.
-func parseUserID(raw string, kf jwt.Keyfunc) (uuid.UUID, error) {
-	claims := jwt.MapClaims{}
-	if _, err := jwt.ParseWithClaims(raw, claims, kf,
-		jwt.WithValidMethods([]string{"HS256", "RS256", "ES256"}),
-		jwt.WithAudience("authenticated"),
-		jwt.WithExpirationRequired(),
-	); err != nil {
-		return uuid.Nil, err
-	}
-	sub, _ := claims["sub"].(string)
-	return uuid.Parse(sub)
-}
+include::../../internal/auth/jwt.go[tag=parse-claims]
 ----
 
 옵션 세 개가 각각 한 가지 공격 경로를 막는다.
@@ -715,25 +701,19 @@ func parseUserID(raw string, kf jwt.Keyfunc) (uuid.UUID, error) {
 이 값은 Supabase `auth.users` 테이블의 UUID이고, 5장에서 설계한 `profiles.id`가 이 값을 그대로 쓴다.
 인증 시스템의 사용자와 우리 스키마의 사용자가 같은 키로 이어지는 접점이다.
 
-같은 파일에는 웹 계층을 위한 변형이 하나 더 있다.
-쿠키에서 꺼낸 토큰을 검증하면서 화면에 표시할 이메일 클레임까지 함께 돌려주는 함수로, 앞서 `withUser`가 부르던 바로 그 `ParseUser`다.
+이 함수를 부르는 곳은 둘이다.
+9장에서 본 JSON API용 `parseUserID`는 `sub`만 꺼내 사용자 ID를 돌려주고, 웹 계층용 `ParseUser`는 화면에 표시할 이메일 클레임까지 함께 돌려준다.
+앞서 `withUser`가 쿠키에서 꺼낸 토큰을 건네던 것이 뒤쪽이다.
 
 [source,go]
 ----
-// ParseUser validates a Supabase access token and returns its subject and
-// email claim. Used by the web layer, which carries the token in a cookie
-// instead of the Authorization header.
-func ParseUser(raw, jwksURL, secret string) (uuid.UUID, string, error) {
-	// ... parseUserID와 같은 옵션으로 검증한 뒤 email 클레임을 추가로 꺼낸다
-	sub, _ := claims["sub"].(string)
-	email, _ := claims["email"].(string)
-	id, err := uuid.Parse(sub)
-	return id, email, err
-}
+include::../../internal/auth/jwt.go[tag=parse-user]
 ----
 
-검증 옵션은 `parseUserID`와 완전히 같다.
 토큰이 헤더로 오든 쿠키로 오든, 통과해야 할 검사는 하나도 다르지 않다.
+검증 옵션을 두 함수에 한 벌씩 적어 두는 방법도 있었지만, 그렇게 두면 나중에 한쪽에만 검사를 더하고 다른 쪽을 잊기 쉽다.
+옵션이 `parseClaims` 한 곳에만 있으므로 두 입구의 기준이 어긋날 자리가 없다.
+이렇게 "빠뜨릴 수 없는 구조"로 만들어 두는 것이, 두 곳을 잘 맞춰 적겠다고 다짐하는 것보다 오래간다.
 
 === 필수 인증과 선택 인증
 
@@ -749,7 +729,7 @@ HTML 페이지는 쿠키로, `/api/*`의 JSON API는 Bearer 헤더로 신원을 
 JSON API는 1부에서 만든 그대로이고, PWA의 서비스 워커나 외부 스크립트처럼 화면 없이 API만 부르는 호출자를 위해 남아 있다.
 
 둘은 같은 Gin 엔진에 등록되고 같은 검증 코드를 쓴다.
-`internal/web/web.go`의 라우트 등록부에서 페이지 쪽 구성을 발췌한다.
+`internal/web/routes.go`의 라우트 등록부에서 페이지 쪽 구성을 발췌한다.
 공개 페이지와 로그인 필수 페이지가 미들웨어 사슬로 나뉘는 곳이다.
 
 [source,go]

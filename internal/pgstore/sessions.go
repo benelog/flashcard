@@ -71,15 +71,22 @@ func (s *Store) RecordReview(ctx context.Context, userID, sessionID, cardID uuid
 	}
 
 	next, dueAt := srs.Grade(state, result, now)
+	// 정답/오답에 따른 증가분은 Go에서 셈해 바인딩한다. litestore의 같은 자리와
+	// 같은 모양이고, SQL의 case when 세 벌보다 짧다.
+	correct, incorrect := 0, 1
+	if result {
+		correct, incorrect = 1, 0
+	}
 	if _, err := tx.Exec(ctx,
 		`update card_srs set
 		   ease_factor = $3, interval_days = $4, repetitions = $5, due_at = $6,
 		   last_reviewed_at = $7,
-		   correct_count = correct_count + case when $8 then 1 else 0 end,
-		   incorrect_count = incorrect_count + case when $8 then 0 else 1 end,
-		   lapses = lapses + case when $8 then 0 else 1 end
+		   correct_count = correct_count + $8,
+		   incorrect_count = incorrect_count + $9,
+		   lapses = lapses + $9
 		 where card_id = $1 and user_id = $2`,
-		cardID, userID, next.EaseFactor, next.IntervalDays, next.Repetitions, dueAt, now, result); err != nil {
+		cardID, userID, next.EaseFactor, next.IntervalDays, next.Repetitions, dueAt,
+		now, correct, incorrect); err != nil {
 		return out, err
 	}
 	out.DueAt = dueAt

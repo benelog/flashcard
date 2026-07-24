@@ -53,34 +53,37 @@ func (w *Web) oauthCallback(c *gin.Context) {
 	// secrets) as ?error= instead of ?code=; surface them in the logs.
 	if errCode := c.Query("error"); errCode != "" {
 		log.Printf("oauth callback: gotrue error %q: %s", errCode, c.Query("error_description"))
-		setFlash(c, "error", "로그인에 실패했어요. 다시 시도해주세요.")
-		c.Redirect(http.StatusSeeOther, "/login")
+		failLogin(c, "로그인에 실패했어요. 다시 시도해주세요.")
 		return
 	}
 	code := c.Query("code")
 	if w.goTrue == nil || code == "" {
 		log.Printf("oauth callback: no code in callback")
-		setFlash(c, "error", "로그인에 실패했어요. 다시 시도해주세요.")
-		c.Redirect(http.StatusSeeOther, "/login")
+		failLogin(c, "로그인에 실패했어요. 다시 시도해주세요.")
 		return
 	}
 	if verifier == "" {
 		// The 5-minute PKCE cookie is gone: the visitor lingered on the
 		// provider screen, or a newer login attempt replaced it.
 		log.Printf("oauth callback: pkce cookie missing or expired")
-		setFlash(c, "error", "로그인 확인 정보가 만료됐어요. 처음부터 다시 시도해주세요.")
-		c.Redirect(http.StatusSeeOther, "/login")
+		failLogin(c, "로그인 확인 정보가 만료됐어요. 처음부터 다시 시도해주세요.")
 		return
 	}
 	tok, err := w.goTrue.exchangeCode(c.Request.Context(), code, verifier)
 	if err != nil {
 		log.Printf("oauth callback: code exchange failed: %v", err)
-		setFlash(c, "error", "로그인에 실패했어요. 다시 시도해주세요.")
-		c.Redirect(http.StatusSeeOther, "/login")
+		failLogin(c, "로그인에 실패했어요. 다시 시도해주세요.")
 		return
 	}
 	w.setAuthCookies(c, tok)
 	c.Redirect(http.StatusSeeOther, next)
+}
+
+// failLogin sends the visitor back to the login page with a flash message.
+// 원인은 부르는 쪽이 로그에 남긴다: 방문자에게 보일 문구와 운영자가 볼 기록은
+// 다른 물건이다.
+func failLogin(c *gin.Context, message string) {
+	redirectWithFlash(c, flashError, message, "/login")
 }
 
 func (w *Web) logout(c *gin.Context) {

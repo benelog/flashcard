@@ -8,17 +8,21 @@
 
 ## 구조
 
-- UI는 Go 서버가 렌더링한다: `internal/web` (html/template + htmx + 순수 CSS, 전부 바이너리에 embed). 화면 하나가 파일 하나다(`home.go`, `decks.go`, `cards.go`, …).
+- UI는 Go 서버가 렌더링한다: `internal/web` (html/template + htmx + 순수 CSS, 전부 바이너리에 embed). 화면 하나가 파일 하나다(`home.go`, `decks.go`, `cards.go`, …). 화면들이 공통으로 쓰는 것은 셋으로 나뉜다: `web.go`(embed 자산·`Web` 타입·요청 헬퍼), `render.go`(템플릿 파싱과 그리기), `routes.go`(라우트 등록과 정적 자원).
 - 브라우저 JS는 `internal/web/static/app.js` 하나뿐(TTS·클립보드·오프라인·서비스 워커). 프런트엔드 빌드 도구(npm 등)는 앱에 없다. `doc/`(책 원고, AsciiDoc)와 `book-template/`(책 빌드 엔진, 재사용 가능한 npm 패키지)만 자체 package.json을 가진다.
 - JSON API(`/api/*`)는 `internal/handlers`에 있다. HTML과 API가 같은 Gin 엔진(`pkg/app`)에 물린다.
 - **`internal/model`이 앱의 공용어다.** 행 타입(`Card`, `Deck`, …), `ErrNotFound`, 열이 받는 값(카드 종류·학습 방향·모드)과 그 판정, DB를 모르는 순수 함수(`Streak`, 슬러그, `NilIfBlank`), 그리고 저장소 계약인 `Store` 인터페이스가 여기 있다.
   - 저장소 구현은 둘이고 둘 다 `model.Store`를 만족한다: `internal/pgstore`(pgx, 배포)와 `internal/litestore`(SQLite, 로컬). 어느 쪽도 상대를 모른다.
-  - `web`·`handlers`·`cardcsv`는 `model`만 보므로 pgx를 링크하지 않는다. 새 코드에서 이 방향을 뒤집지 않는다(구현 패키지를 화면이나 핸들러에서 직접 import하지 않는다).
+  - **두 구현은 대칭으로 둔다.** 같은 일을 하는 것은 같은 파일·같은 이름에 놓는다(`rules.go`의 `ruleQuery`, `collect`, `scan…`, `requireRowAffected`). 한쪽만 고치면 다른 쪽도 함께 고친다.
+  - `internal/smartrules`는 규칙의 모양과 유효성만 안다. 규칙을 SQL로 옮기는 일은 방언이 달라 각 저장소의 `rules.go`가 맡는다.
+  - `web`·`handlers`·`cardcsv`·`study`는 `model`만 보므로 pgx를 링크하지 않는다. 새 코드에서 이 방향을 뒤집지 않는다(구현 패키지를 화면이나 핸들러에서 직접 import하지 않는다).
+- **`internal/study`는 화면과 API가 공유하는 학습 정책이다.** 어느 카드를 어떤 순서로 낼지(`Pick`), 어떤 추천 타일을 보일지(`Suggestions`)를 여기 한 곳에서 정한다. 잘못된 요청은 sentinel 에러로만 돌려주고, 그것을 404 화면으로 옮길지 400 JSON으로 옮길지는 부르는 쪽이 정한다. 학습 규칙을 바꿀 때 `web`과 `handlers`를 각각 고치지 않도록 이 방향을 지킨다.
 - `pkg/app`만 `internal/`이 아니다. Vercel의 Go 빌더가 `api/index.go`를 모듈 바깥에서 컴파일해 `internal/`을 가져올 수 없기 때문이다. 옮기면 로컬은 통과하고 배포만 깨진다.
 
 ## 테스트
 
-- 순수 로직(`srs`, `smartrules`, `cardcsv`, `model`)은 각 패키지에서 단위 테스트한다.
+- 순수 로직(`srs`, `smartrules`, `cardcsv`, `model`)은 각 패키지에서 단위 테스트한다. DB에 붙지 않는 것은 `pgstore`도 마찬가지다(`rules_test.go`는 만들어진 SQL 문자열만 본다).
+- **저장소를 갈아 끼울 때는 `model.Store` 인터페이스를 묻은 구조체를 쓴다.** 26개를 다 구현할 필요 없이 그 테스트가 쓰는 메서드만 채우면 된다. `internal/study`의 스텁과 `pkg/app`의 `brokenStore`(한 메서드만 실패시켜 500 경로를 확인)가 그 예다.
 - 화면과 API는 `pkg/app`에서 **앱을 통째로 띄워 실제 HTTP 요청을 보내** 확인한다(임시 SQLite + 고정 사용자). 라우팅·미들웨어·템플릿·저장소가 이어져 있는지까지 한 번에 잡힌다.
 - 그래서 `go test -cover`의 `handlers`·`web` 수치는 낮게 나온다. 커버리지는 자기 패키지의 테스트가 실행한 줄만 세기 때문이지, 검사되지 않는다는 뜻이 아니다.
 
