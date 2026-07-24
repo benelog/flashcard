@@ -1,7 +1,6 @@
-// Package litestore is the SQLite implementation of model.Store for local
-// single-user mode. It reads the row types and the ErrNotFound sentinel from
-// internal/model, exactly as the pgx implementation (internal/pgstore) does;
-// only the SQL dialect differs.
+// Package litestore는 로컬 단일 사용자 모드를 위한 model.Store의 SQLite 구현이다.
+// 행 타입과 ErrNotFound는 pgx 구현(internal/pgstore)과 똑같이 internal/model에서
+// 읽어 오며, 다른 것은 SQL 방언뿐이다.
 package litestore
 
 import (
@@ -22,19 +21,19 @@ import (
 //go:embed schema.sql
 var schemaSQL string
 
-// timeLayout is the fixed-width UTC format for every timestamp column. All
-// values having the same width makes lexicographic order equal to time order,
-// so due_at comparisons stay plain string comparisons in SQL. now() never
-// appears in SQL; callers format time.Now().UTC() and bind it.
+// timeLayout은 모든 timestamp 열에 쓰는 고정 폭 UTC 형식이다. 값의 폭이 모두
+// 같아 사전순이 곧 시간순이 되므로 due_at 비교가 SQL의 단순 문자열 비교로
+// 성립한다. SQL에는 now()를 쓰지 않고, 부르는 쪽이 time.Now().UTC()를 이
+// 형식으로 만들어 바인딩한다.
 const timeLayout = "2006-01-02T15:04:05.000Z"
 
 type Store struct {
 	db *sql.DB
 }
 
-// Open opens (creating if needed) the SQLite file and applies the embedded
-// schema, which is idempotent. A single connection is enough for one local
-// user and keeps writes serialized.
+// Open은 SQLite 파일을 열고(없으면 만들고) 내장 스키마를 적용한다. 스키마는
+// 멱등이라 다시 열어도 안전하다. 로컬 사용자 하나에는 연결 하나면 충분하고,
+// 그래야 쓰기가 직렬화된다.
 func Open(path string) (*Store, error) {
 	if dir := filepath.Dir(path); dir != "." {
 		if err := os.MkdirAll(dir, 0o755); err != nil {
@@ -58,12 +57,12 @@ func (s *Store) Close() error {
 	return s.db.Close()
 }
 
-// rowScanner lets scan helpers accept both *sql.Row and *sql.Rows.
+// rowScanner는 scan 헬퍼가 *sql.Row와 *sql.Rows를 함께 받게 한다.
 type rowScanner interface {
 	Scan(dest ...any) error
 }
 
-// collect drains a query into a slice, closing the cursor on every path.
+// collect는 질의 결과를 슬라이스로 모으고, 어느 경로로 나가든 커서를 닫는다.
 // internal/pgstore에 같은 이름의 짝이 있다. 행마다 다른 것은 한 줄을 읽어 값으로
 // 만드는 방법(scan)뿐이라, 그것만 인자로 받으면 루프는 한 번만 적으면 된다.
 func collect[T any](rows *sql.Rows, scan func(rowScanner) (T, error)) ([]T, error) {
@@ -80,10 +79,10 @@ func collect[T any](rows *sql.Rows, scan func(rowScanner) (T, error)) ([]T, erro
 }
 
 // tag::require-row-affected[]
-// requireRowAffected wraps an Exec that must touch exactly the caller's row.
-// internal/pgstore has the same helper for the same reason: every write is scoped
-// by user_id, so "no row matched" means the row is missing or belongs to
-// someone else, and both are ErrNotFound to the caller.
+// requireRowAffected는 정확히 호출자의 행 하나를 건드려야 하는 Exec을 감싼다.
+// internal/pgstore에 같은 이유의 짝이 있다: 모든 쓰기가 user_id로 한정되므로
+// "맞은 행이 없다"는 행이 없거나 남의 행이라는 뜻이고, 둘 다 밖에는 구분 없이
+// ErrNotFound다.
 func requireRowAffected(res sql.Result, err error) error {
 	if err != nil {
 		return err
@@ -130,7 +129,8 @@ func parseNullTime(s sql.NullString) (*time.Time, error) {
 	return &t, nil
 }
 
-// tagsJSON encodes tags as the JSON array stored in cards.tags.
+// tagsJSON은 tags를 cards.tags에 담는 JSON 배열로 만든다. nil도 null이 아니라
+// []로 저장해야 API 응답의 tags가 null이 되지 않는다.
 func tagsJSON(tags []string) string {
 	if tags == nil {
 		tags = []string{}
@@ -139,7 +139,7 @@ func tagsJSON(tags []string) string {
 	return string(b)
 }
 
-// jsonArg converts raw JSON to a text bind value, mapping nil to NULL.
+// jsonArg는 원시 JSON을 text 바인딩 값으로 바꾸고, nil은 NULL로 보낸다.
 func jsonArg(raw json.RawMessage) any {
 	if raw == nil {
 		return nil

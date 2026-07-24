@@ -22,8 +22,8 @@ func scanProfile(row pgx.Row) (model.Profile, error) {
 	return p, err
 }
 
-// GetOrCreateProfile lazily creates the profile row on first API contact,
-// so no Supabase-side trigger on auth.users is needed.
+// GetOrCreateProfile은 첫 API 접근 때 profile 행을 지연 생성한다. 덕분에
+// Supabase 쪽에 auth.users 트리거를 둘 필요가 없다.
 func (s *Store) GetOrCreateProfile(ctx context.Context, userID uuid.UUID, displayName string) (model.Profile, error) {
 	_, err := s.pool.Exec(ctx,
 		`insert into profiles (id, display_name) values ($1, nullif($2, '')) on conflict (id) do nothing`,

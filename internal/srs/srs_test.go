@@ -44,7 +44,7 @@ func TestLapseResets(t *testing.T) {
 	if diff := s.EaseFactor - 2.38; diff > 1e-9 || diff < -1e-9 {
 		t.Fatalf("ease = %v, want 2.38", s.EaseFactor)
 	}
-	// Relearn: intervals restart at 1, 6.
+	// 재학습: 간격은 1, 6부터 다시 시작한다.
 	s, _ = Grade(s, true, now)
 	if s.IntervalDays != 1 {
 		t.Fatalf("relearn interval = %v, want 1", s.IntervalDays)

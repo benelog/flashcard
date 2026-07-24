@@ -34,10 +34,10 @@ func (w *Web) parseTemplates() {
 
 // end::parse-templates[]
 
-// view is the root object every template executes against.
+// view는 모든 템플릿이 실행 대상으로 받는 뿌리 객체다.
 type view struct {
 	Title     string
-	Path      string // request path, for the active tab in the bottom nav
+	Path      string // 요청 경로. 하단 내비의 활성 탭을 정한다
 	LoggedIn  bool
 	LocalMode bool
 	Email     string
@@ -68,7 +68,7 @@ func (w *Web) render(c *gin.Context, status int, page, title string, data any) {
 	}
 	c.Status(status)
 	c.Header("Content-Type", "text/html; charset=utf-8")
-	c.Header("Cache-Control", "no-store") // pages are per-user; never share
+	c.Header("Cache-Control", "no-store") // 페이지는 사용자별이라 캐시에 공유하면 안 된다
 	if err := tpl.ExecuteTemplate(c.Writer, "layout", w.newView(c, title, data)); err != nil {
 		_ = c.Error(err)
 	}
@@ -76,7 +76,7 @@ func (w *Web) render(c *gin.Context, status int, page, title string, data any) {
 
 // end::render[]
 
-// renderPartial writes a single fragment — the response to an htmx request.
+// renderPartial은 htmx 요청에 응답할 조각 하나만 써 낸다.
 func (w *Web) renderPartial(c *gin.Context, name string, data any) {
 	c.Header("Content-Type", "text/html; charset=utf-8")
 	if err := w.partials.ExecuteTemplate(c.Writer, name, data); err != nil {
@@ -88,8 +88,8 @@ func (w *Web) renderError(c *gin.Context, status int, message string) {
 	w.render(c, status, "error", "문제가 생겼어요", message)
 }
 
-// failPage is the page-handler counterpart of the API's fail(): 404 for
-// missing rows, 500 otherwise.
+// failPage는 API의 fail()에 대응하는 페이지 쪽 처리다. 없는 행이면 404,
+// 나머지는 500이다.
 func (w *Web) failPage(c *gin.Context, err error) {
 	if isNotFound(err) {
 		w.renderError(c, http.StatusNotFound, "찾을 수 없는 페이지예요.")

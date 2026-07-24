@@ -12,8 +12,8 @@ import (
 	"github.com/benelog/flashcard/internal/study"
 )
 
-// Suggestions returns the home-screen tiles: canned smart rules that
-// currently match at least one card.
+// Suggestions는 홈 화면 추천 타일, 즉 지금 카드가 한 장이라도 걸리는 기성
+// 스마트 규칙들을 돌려준다.
 func (h *Handlers) Suggestions(c *gin.Context) {
 	found, err := study.Suggestions(c.Request.Context(), h.Store, auth.UserID(c))
 	if err != nil {

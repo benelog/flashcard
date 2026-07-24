@@ -37,8 +37,8 @@ type studyState struct {
 
 // end::study-state[]
 
-// studyBodyView is what the study_body partial renders: exactly one of the
-// phases, mirroring the old React state machine.
+// studyBodyView는 study_body 조각이 그리는 값이다. 단계(Phase) 중 정확히
+// 하나만 그리며, 옛 React 상태 기계를 그대로 옮긴 모양이다.
 type studyBodyView struct {
 	Phase   string // studying | break | finished | empty
 	State   studyState
@@ -51,16 +51,16 @@ type studyBodyView struct {
 func (v studyBodyView) QueueJoined() string  { return strings.Join(v.State.Queue, ",") }
 func (v studyBodyView) MissedJoined() string { return strings.Join(v.State.Missed, ",") }
 
-// Accuracy is the first-pass percentage shown on the finish screen.
+// Accuracy는 완료 화면에 보여 줄 1라운드 정답률이다.
 func (v studyBodyView) Accuracy() int {
 	return percent(v.State.FirstPassCorrect, v.State.FirstPassTotal)
 }
 
-// ProgressPct fills the progress bar.
+// ProgressPct는 진행 막대를 채운다.
 func (v studyBodyView) ProgressPct() int { return percent(v.Index, v.State.RoundCards) }
 
-// studyPage starts a session. Without ?direction= it renders the direction
-// chooser first, keeping every other query parameter.
+// studyPage는 세션을 시작한다. ?direction=이 없으면 나머지 질의 문자열을
+// 유지한 채 방향 선택 화면부터 그린다.
 func (w *Web) studyPage(c *gin.Context) {
 	if c.Query("direction") == "" {
 		w.directionChooser(c)
@@ -117,7 +117,7 @@ func (w *Web) studyPage(c *gin.Context) {
 	})
 }
 
-// directionChooser asks which way to study before the session starts. 지난번에
+// directionChooser는 세션을 시작하기 전에 학습 방향을 묻는다. 지난번에
 // 고른 방향을 쿠키에서 꺼내 먼저 보여 주고, 두 링크 모두 나머지 질의 문자열
 // (mode, deckId, rule …)을 그대로 물고 간다.
 func (w *Web) directionChooser(c *gin.Context) {
@@ -129,16 +129,16 @@ func (w *Web) directionChooser(c *gin.Context) {
 	})
 }
 
-// studyPlan is one session's card list — picked by internal/study, which the
-// JSON API uses too — dressed with the two things only a page needs: what to
-// call this session and where to go when it ends.
+// studyPlan은 한 세션의 카드 목록이다. 고르는 일은 JSON API도 쓰는
+// internal/study가 하고, 화면에만 필요한 둘(세션 제목, 끝나면 돌아갈 곳)을
+// 얹는다.
 type studyPlan struct {
 	study.Plan
 	Title     string
 	ReturnURL string
 }
 
-// planStudy picks the cards for the requested mode. false를 받으면 응답은 이미
+// planStudy는 요청된 모드에 맞는 카드를 고른다. false를 받으면 응답은 이미
 // 쓰인 상태이므로 부르는 쪽은 그대로 돌아가면 된다.
 func (w *Web) planStudy(c *gin.Context, dailyGoal int, loc *time.Location) (studyPlan, bool) {
 	req := study.Request{
@@ -173,7 +173,7 @@ func (w *Web) planStudy(c *gin.Context, dailyGoal int, loc *time.Location) (stud
 	return plan, true
 }
 
-// failStudyRequest turns a study.Pick failure into a page. 잘못 만들어진 학습
+// failStudyRequest는 study.Pick의 실패를 화면으로 옮긴다. 잘못 만들어진 학습
 // 링크는 전부 404다: 방문자가 고칠 수 있는 것이 없으므로 무엇이 잘못됐는지만
 // 알려 준다.
 func (w *Web) failStudyRequest(c *gin.Context, err error) {
@@ -189,8 +189,9 @@ func (w *Web) failStudyRequest(c *gin.Context, err error) {
 	}
 }
 
-// studyTitle names the study screen. 추천 타일이나 스마트 덱에서 온 링크는 자기
-// 이름을 실어 보내므로 그것을 쓰고, 없으면 모드에 맞는 기본 제목을 붙인다.
+// studyTitle은 학습 화면의 제목을 정한다. 추천 타일이나 스마트 덱에서 온
+// 링크는 자기 이름을 실어 보내므로 그것을 쓰고, 없으면 모드에 맞는 기본 제목을
+// 붙인다.
 func studyTitle(requested, mode string) string {
 	if requested != "" {
 		return requested
@@ -213,8 +214,8 @@ func withParam(q url.Values, key, value string) string {
 	return copied.Encode()
 }
 
-// studyBody builds the fragment for the state's current phase, loading the
-// current card when studying.
+// studyBody는 상태의 현재 단계에 맞는 조각을 만들고, 학습 중이면 현재 카드를
+// 읽어 온다.
 func (w *Web) studyBody(c *gin.Context, state studyState) studyBodyView {
 	v := studyBodyView{State: state}
 	switch {
@@ -249,12 +250,12 @@ func (w *Web) studyBody(c *gin.Context, state studyState) studyBodyView {
 	return v
 }
 
-// stateFromForm rebuilds the study state posted by the previous fragment.
+// stateFromForm은 이전 조각이 실어 보낸 학습 상태를 되살린다.
 func stateFromForm(c *gin.Context) studyState {
 	return stateFromValues(postFormValues(c))
 }
 
-// stateFromValues is the parsing half of stateFromForm. 폼 값은 브라우저가
+// stateFromValues는 stateFromForm의 해석 절반이다. 폼 값은 브라우저가
 // 실어 오는 것이라 그대로 믿지 않는다: 범위를 벗어난 숫자는 보정하고 돌아갈
 // 주소는 safeNext로 거른다. url.Values만 보므로 HTTP 없이 검증할 수 있다.
 func stateFromValues(form url.Values) studyState {
@@ -330,7 +331,7 @@ func (w *Web) gradeCard(c *gin.Context) {
 
 // end::grade-tally[]
 
-// nextRound restarts with the missed cards only.
+// nextRound는 틀린 카드만으로 다시 시작한다.
 func (w *Web) nextRound(c *gin.Context) {
 	state := stateFromForm(c)
 	state.Queue = state.Missed
@@ -340,7 +341,7 @@ func (w *Web) nextRound(c *gin.Context) {
 	w.renderPartial(c, "study_body", w.studyBody(c, state))
 }
 
-// quitStudy marks the session unfinished and leaves the page.
+// quitStudy는 세션을 미완료로 기록하고 화면을 떠난다.
 func (w *Web) quitStudy(c *gin.Context) {
 	state := stateFromForm(c)
 	if sessionID, err := uuid.Parse(state.SessionID); err == nil {

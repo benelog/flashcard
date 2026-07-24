@@ -8,7 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// newContext builds a bare gin context for the cookie helpers. 이 파일의 함수들은
+// newContext는 쿠키 헬퍼 테스트용 gin 컨텍스트를 만든다. 이 파일의 함수들은
 // 저장소도 템플릿도 보지 않으므로 요청과 응답 기록기만 있으면 된다.
 func newContext(t *testing.T, req *http.Request) (*gin.Context, *httptest.ResponseRecorder) {
 	t.Helper()

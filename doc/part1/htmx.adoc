@@ -110,7 +110,7 @@ htmx.min.js는 50KB 남짓한 파일 하나다.
 서버가 빈 응답을 주면 `<li>` 전체가 빈 것으로 교체되므로, 결과적으로 그 줄이 목록에서 사라진다.
 
 서버 쪽 핸들러를 보자.
-다음은 internal/web/pages.go의 deleteCard로, 같은 주소가 htmx 요청과 일반 폼 제출을 모두 처리한다.
+다음은 internal/web/cards.go의 deleteCard로, 같은 주소가 htmx 요청과 일반 폼 제출을 모두 처리한다.
 
 [source,go]
 ----
@@ -151,7 +151,7 @@ htmx 요청의 응답은 완성된 페이지가 아니라 HTML 조각(fragment)�
 
 [source,go]
 ----
-// renderPartial writes a single fragment — the response to an htmx request.
+// renderPartial은 htmx 요청에 응답할 조각 하나만 써 낸다.
 func (w *Web) renderPartial(c *gin.Context, name string, data any) {
 	c.Header("Content-Type", "text/html; charset=utf-8")
 	if err := w.partials.ExecuteTemplate(c.Writer, name, data); err != nil {
@@ -398,7 +398,7 @@ htmx의 요청도 결국 브라우저를 통하므로 리다이렉트를 따라�
 
 그래서 htmx는 전용 응답 헤더를 정해 두었다.
 `HX-Redirect` 헤더를 받으면 htmx가 조각 교체를 멈추고 브라우저 전체를 그 주소로 이동시킨다.
-다음은 internal/web/pages.go의 deleteDeck으로, 요청이 어디서 왔는지에 따라 두 가지 이동 방식을 골라 쓴다.
+다음은 internal/web/decks.go의 deleteDeck으로, 요청이 어디서 왔는지에 따라 두 가지 이동 방식을 골라 쓴다.
 
 [source,go]
 ----

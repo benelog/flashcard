@@ -10,7 +10,7 @@ import (
 type Card struct {
 	ID        uuid.UUID `json:"id"`
 	DeckID    uuid.UUID `json:"deckId"`
-	DeckSlug  string    `json:"deckSlug"` // populated by GetCard for the edit page's deck link
+	DeckSlug  string    `json:"deckSlug"` // 편집 화면의 덱 링크용으로 GetCard가 채운다
 	Text      string    `json:"text"`
 	Meaning   string    `json:"meaning"`
 	CardType  string    `json:"cardType"`
@@ -20,7 +20,7 @@ type Card struct {
 	Notes     *string   `json:"notes"`
 	CreatedAt time.Time `json:"createdAt"`
 
-	// SRS summary from cards_with_stats.
+	// cards_with_stats 뷰가 주는 SRS 요약.
 	Attempts     int        `json:"attempts"`
 	ErrorRate    float64    `json:"errorRate"`
 	IntervalDays float64    `json:"intervalDays"`
@@ -52,16 +52,16 @@ const (
 	DefaultCardType = CardTypeWord
 )
 
-// CardTypes lists every accepted card type, in the order the UI offers them.
+// CardTypes는 허용하는 카드 종류 전부이며, UI가 보여 주는 순서를 따른다.
 var CardTypes = []string{CardTypeWord, CardTypeSentence, CardTypeIdiom, CardTypeConcept}
 
-// IsCardType reports whether t is one of the accepted types. JSON API 요청처럼
-// 잘못된 값을 400으로 되돌려 줘야 하는 곳에서 쓴다.
+// IsCardType은 t가 허용하는 종류인지 알려 준다. JSON API 요청처럼 잘못된 값을
+// 400으로 되돌려 줘야 하는 곳에서 쓴다.
 func IsCardType(t string) bool {
 	return slices.Contains(CardTypes, t)
 }
 
-// NormalizeCardType maps blank or unrecognized input to DefaultCardType. 폼과
+// NormalizeCardType은 비었거나 모르는 입력을 DefaultCardType으로 되돌린다. 폼과
 // CSV처럼 사람이 손으로 채우는 입력에서 쓴다. 오타 하나로 카드 등록 전체를
 // 실패시키는 것보다 기본 종류로 받아 두는 편이 낫기 때문이다.
 func NormalizeCardType(t string) string {
@@ -76,13 +76,13 @@ type BulkResult struct {
 	Skipped int `json:"skipped"`
 }
 
-// MaxBulkCards bounds one bulk insert. 한 번의 요청이 통째로 한 트랜잭션이라,
+// MaxBulkCards는 대량 등록 한 번의 상한이다. 한 번의 요청이 통째로 한 트랜잭션이라,
 // 무제한으로 받으면 서버리스 함수의 실행 시간 한도에 먼저 걸린다. CSV 업로드와
 // JSON API의 대량 등록이 같은 한도를 쓴다.
 const MaxBulkCards = 2000
 
-// SortCardsByIDOrder puts cards back in the order ids lists them, dropping any
-// id that no longer resolves to a card.
+// SortCardsByIDOrder는 cards를 ids가 나열한 순서로 되돌리고, 더는 카드로
+// 이어지지 않는 id는 버린다.
 //
 // 스마트 규칙이 정한 순서(오답률 높은 순 등)는 ID 목록에만 남아 있다. 카드 본문을
 // 가져오는 두 번째 조회는 그 순서를 지켜 주지 않으므로 여기서 되살린다. 저장소

@@ -10,7 +10,7 @@ import (
 	"github.com/benelog/flashcard/internal/smartrules"
 )
 
-// ruleQuery renders a smart rule as Postgres SQL selecting matching card ids.
+// ruleQuery는 스마트 규칙을 맞는 카드 id를 고르는 Postgres SQL로 옮긴다.
 // internal/litestore에 같은 이름의 짝이 있고, 둘은 서로를 모른 채 같은 규칙을
 // 각자의 방언으로 옮긴다. 규칙 자체(internal/smartrules)는 어느 DB도 모른다.
 //
@@ -38,7 +38,7 @@ func ruleQuery(r smartrules.Rule) (sql string, args []any) {
 	return "", nil
 }
 
-// CardsByRule evaluates a smart rule and returns matching cards in rule order.
+// CardsByRule은 스마트 규칙을 평가해 맞는 카드를 규칙 순서대로 돌려준다.
 func (s *Store) CardsByRule(ctx context.Context, userID uuid.UUID, rule smartrules.Rule) ([]model.Card, error) {
 	q, extra := ruleQuery(rule)
 	args := append([]any{userID}, extra...)
@@ -54,10 +54,10 @@ func (s *Store) CardsByRule(ctx context.Context, userID uuid.UUID, rule smartrul
 		return []model.Card{}, nil
 	}
 
-	// Pass ids as pgtype.UUID: the pool runs the simple protocol (Supabase's
-	// transaction pooler), where pgx has no text encoder for a []uuid.UUID
-	// slice against an unknown parameter type. pgtype.UUID is pgx's native
-	// uuid type, so it encodes itself and no ::uuid[] cast is needed.
+	// id들은 pgtype.UUID로 넘긴다. 풀이 simple protocol로 돌기 때문인데(Supabase의
+	// transaction pooler), 그 모드의 pgx는 파라미터 타입을 모르는 채로는
+	// []uuid.UUID 슬라이스를 text로 인코딩하지 못한다. pgtype.UUID는 pgx 자체의
+	// uuid 타입이라 스스로 인코딩되고 ::uuid[] 캐스트도 필요 없다.
 	pgIDs := make([]pgtype.UUID, len(ids))
 	for i, id := range ids {
 		pgIDs[i] = pgtype.UUID{Bytes: id, Valid: true}

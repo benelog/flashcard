@@ -28,7 +28,7 @@ import (
 // 확인된다. 화면(HTML)과 JSON API가 같은 저장소를 보므로 한쪽으로 넣고 다른
 // 쪽으로 읽어 보는 확인도 여기서 할 수 있다.
 
-// app is one booted application under test.
+// app은 테스트용으로 띄운 애플리케이션 하나다.
 type app struct {
 	t      *testing.T
 	engine *gin.Engine
@@ -41,9 +41,9 @@ func newTestApp(t *testing.T) *app {
 	return newAppWith(t, func(s model.Store) model.Store { return s })
 }
 
-// newAppWith boots the app on a store the caller may wrap first — that is how
-// the failure tests make one query break while everything else keeps working.
-// a.store stays the real SQLite store, so assertions still read the truth.
+// newAppWith는 부르는 쪽이 저장소를 감쌀 수 있게 열어 둔다. 실패 테스트가 질의
+// 하나만 깨뜨리고 나머지는 정상으로 두는 방법이 이것이다. a.store는 진짜 SQLite
+// 저장소로 남으므로 검증은 여전히 실제 값을 읽는다.
 func newAppWith(t *testing.T, wrap func(model.Store) model.Store) *app {
 	t.Helper()
 	s, err := litestore.Open(filepath.Join(t.TempDir(), "test.db"))
@@ -68,7 +68,7 @@ func (a *app) get(path string) *httptest.ResponseRecorder {
 	return a.do(httptest.NewRequest(http.MethodGet, path, nil))
 }
 
-// getInTZ requests a page as a visitor in that timezone. app.js가 첫 화면에서
+// getInTZ는 그 시간대의 방문자로 페이지를 요청한다. app.js가 첫 화면에서
 // 심어 주는 tz 쿠키를 흉내 낸다.
 func (a *app) getInTZ(path, tz string) *httptest.ResponseRecorder {
 	a.t.Helper()
@@ -77,7 +77,7 @@ func (a *app) getInTZ(path, tz string) *httptest.ResponseRecorder {
 	return a.do(req)
 }
 
-// postForm submits a browser form the way the templates do.
+// postForm은 템플릿의 폼과 같은 방식으로 브라우저 폼을 제출한다.
 func (a *app) postForm(path string, form url.Values) *httptest.ResponseRecorder {
 	a.t.Helper()
 	req := httptest.NewRequest(http.MethodPost, path, strings.NewReader(form.Encode()))
@@ -85,8 +85,8 @@ func (a *app) postForm(path string, form url.Values) *httptest.ResponseRecorder 
 	return a.do(req)
 }
 
-// postHTMX submits a form the way htmx does: the server answers with a fragment
-// instead of a whole page.
+// postHTMX는 htmx 방식으로 폼을 제출한다. 서버는 전체 페이지 대신 조각으로
+// 답한다.
 func (a *app) postHTMX(path string, form url.Values) *httptest.ResponseRecorder {
 	a.t.Helper()
 	req := httptest.NewRequest(http.MethodPost, path, strings.NewReader(form.Encode()))
@@ -95,7 +95,7 @@ func (a *app) postHTMX(path string, form url.Values) *httptest.ResponseRecorder 
 	return a.do(req)
 }
 
-// sendJSON calls the JSON API. body가 빈 문자열이면 본문 없이 보낸다.
+// sendJSON은 JSON API를 부른다. body가 빈 문자열이면 본문 없이 보낸다.
 func (a *app) sendJSON(method, path, body string) *httptest.ResponseRecorder {
 	a.t.Helper()
 	var reader io.Reader
@@ -107,7 +107,7 @@ func (a *app) sendJSON(method, path, body string) *httptest.ResponseRecorder {
 	return a.do(req)
 }
 
-// upload posts a single file field, as the CSV 가져오기 form does.
+// upload는 CSV 가져오기 폼처럼 파일 필드 하나를 올린다.
 func (a *app) upload(path, field, filename, content string) *httptest.ResponseRecorder {
 	a.t.Helper()
 	var body strings.Builder
@@ -136,7 +136,7 @@ func mustStatus(t *testing.T, rec *httptest.ResponseRecorder, want int) {
 	}
 }
 
-// mustRedirect checks a PRG response and returns where it points.
+// mustRedirect는 PRG 응답인지 확인하고 어디를 가리키는지 돌려준다.
 func mustRedirect(t *testing.T, rec *httptest.ResponseRecorder) string {
 	t.Helper()
 	if rec.Code != http.StatusSeeOther {
@@ -180,9 +180,9 @@ func truncate(body string) string {
 
 var hiddenInput = regexp.MustCompile(`<input type="hidden" name="([^"]+)" value="([^"]*)">`)
 
-// hiddenFields collects a rendered form's hidden inputs, which is exactly what
-// the browser posts back. 학습 화면은 진행 상태를 여기에 실어 나르므로, 이
-// 함수가 곧 "사용자가 버튼을 누르기 직전의 상태"다.
+// hiddenFields는 렌더링된 폼의 hidden 입력, 즉 브라우저가 되돌려 보낼 값
+// 그대로를 모은다. 학습 화면은 진행 상태를 여기에 실어 나르므로, 이 함수가 곧
+// "사용자가 버튼을 누르기 직전의 상태"다.
 func hiddenFields(t *testing.T, rec *httptest.ResponseRecorder) url.Values {
 	t.Helper()
 	values := url.Values{}
@@ -197,7 +197,7 @@ func hiddenFields(t *testing.T, rec *httptest.ResponseRecorder) url.Values {
 
 // ---------- 자료 만들기 ----------
 
-// makeDeck creates a deck through the web form and returns its URL slug.
+// makeDeck은 웹 폼으로 덱을 만들고 URL 슬러그를 돌려준다.
 func (a *app) makeDeck(name string) string {
 	a.t.Helper()
 	rec := a.postForm("/decks", url.Values{"name": {name}})
@@ -209,7 +209,7 @@ func (a *app) makeDeck(name string) string {
 	return slug
 }
 
-// makeCard adds one card to the deck through the web form.
+// makeCard는 웹 폼으로 덱에 카드 한 장을 넣는다.
 func (a *app) makeCard(deckSlug, text, meaning string) {
 	a.t.Helper()
 	rec := a.postForm("/decks/"+deckSlug+"/cards", url.Values{
@@ -220,8 +220,7 @@ func (a *app) makeCard(deckSlug, text, meaning string) {
 	mustRedirect(a.t, rec)
 }
 
-// deck reads the deck row straight from the store, for assertions that need
-// its ID.
+// deck은 저장소에서 덱 행을 바로 읽는다. ID가 필요한 검증용이다.
 func (a *app) deck(slug string) model.Deck {
 	a.t.Helper()
 	deck, err := a.store.GetDeckBySlug(a.t.Context(), a.userID, slug)
@@ -231,8 +230,8 @@ func (a *app) deck(slug string) model.Deck {
 	return deck
 }
 
-// cards reads the deck's cards straight from the store, for assertions the
-// rendered page cannot make (ids, SRS state).
+// cards는 저장소에서 덱의 카드를 바로 읽는다. 렌더링된 화면으로는 할 수 없는
+// 검증(id, SRS 상태)용이다.
 func (a *app) cards(deckSlug string) []model.Card {
 	a.t.Helper()
 	cards, err := a.store.ListCards(a.t.Context(), a.userID, a.deck(deckSlug).ID)

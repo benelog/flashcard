@@ -38,7 +38,7 @@ var funcMap = template.FuncMap{
 // end::func-map[]
 
 // tag::percent[]
-// percent returns round(part/whole*100), guarding the empty case.
+// percent는 part/whole을 백분율로 반올림한다. whole이 0이면 0이다.
 func percent(part, whole int) int {
 	if whole == 0 {
 		return 0
@@ -48,19 +48,19 @@ func percent(part, whole int) int {
 
 // end::percent[]
 
-// ratioPercent turns a stored 0~1 ratio (오답률 같은 값) into a percentage.
+// ratioPercent는 0~1로 저장된 비율(오답률 같은 값)을 백분율로 바꾼다.
 func ratioPercent(ratio float64) int {
 	return int(math.Round(ratio * 100))
 }
 
-// koDate formats a timestamp the way the shared-deck gallery shows it.
+// koDate는 공유 덱 갤러리에 보이는 형식으로 날짜를 만든다.
 func koDate(t time.Time) string {
 	return fmt.Sprintf("%d. %d. %d.", t.Year(), int(t.Month()), t.Day())
 }
 
-// cardTypeLabels names each model.CardType in Korean. 종류를 새로 만들면 목록은
-// store에, 이름표는 여기에 한 줄씩만 늘면 된다: 카드 폼의 라디오 버튼도 학습
-// 화면의 배지도 이 둘을 돌려 만든다.
+// cardTypeLabels는 model.CardType마다 한국어 이름표를 붙인다. 종류를 새로
+// 만들면 목록은 store에, 이름표는 여기에 한 줄씩만 늘면 된다: 카드 폼의 라디오
+// 버튼도 학습 화면의 배지도 이 둘을 돌려 만든다.
 var cardTypeLabels = map[string]string{
 	model.CardTypeWord:     "단어",
 	model.CardTypeSentence: "문장",
@@ -75,7 +75,7 @@ func typeLabel(t string) string {
 	return t
 }
 
-// ruleLabel renders a smart rule's human-readable description.
+// ruleLabel은 스마트 규칙을 사람이 읽을 문구로 만든다.
 func ruleLabel(r smartrules.Rule) string {
 	switch r.Type {
 	case smartrules.HighError:
@@ -117,7 +117,7 @@ func ruleLabelJSON(raw json.RawMessage) string {
 	return ruleLabel(r)
 }
 
-// suggestionTitle labels a home-screen recommendation tile.
+// suggestionTitle은 홈 화면 추천 타일의 제목을 만든다.
 func suggestionTitle(r smartrules.Rule, count int) string {
 	n := count
 	if r.Limit > 0 && n > r.Limit {
@@ -132,7 +132,7 @@ func suggestionTitle(r smartrules.Rule, count int) string {
 	return fmt.Sprintf("%s %d개 학습하기", ruleLabel(r), n)
 }
 
-// splitAndTrim cuts a separated list, dropping padding and empty items. 태그
+// splitAndTrim은 구분자로 나눈 뒤 공백과 빈 항목을 버린다. 태그
 // 입력("a, b,")과 학습 큐의 카드 ID 목록이 모두 이 모양이다.
 func splitAndTrim(raw, separator string) []string {
 	items := []string{}

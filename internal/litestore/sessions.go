@@ -38,9 +38,8 @@ func (s *Store) CreateSession(ctx context.Context, userID uuid.UUID, mode, direc
 	return sess, err
 }
 
-// RecordReview logs one grade and, for first-pass grades, advances the card's
-// SRS state and accuracy counters — all in a single transaction. Retry-round
-// grades (isRetry) are logged only.
+// RecordReview는 채점 하나를 기록하고, 첫 응답이면 카드의 SRS 상태와 정답
+// 집계까지 한 트랜잭션으로 전진시킨다. 재시도 라운드(isRetry)는 기록만 한다.
 func (s *Store) RecordReview(ctx context.Context, userID, sessionID, cardID uuid.UUID, result, isRetry bool) (model.ReviewOutcome, error) {
 	var out model.ReviewOutcome
 
@@ -60,7 +59,7 @@ func (s *Store) RecordReview(ctx context.Context, userID, sessionID, cardID uuid
 	}
 	defer tx.Rollback()
 
-	// No "for update" needed: the transaction holds SQLite's single writer.
+	// "for update"가 필요 없다: 트랜잭션이 SQLite의 단일 쓰기 주체를 이미 쥔다.
 	var state srs.State
 	err = tx.QueryRowContext(ctx,
 		`select ease_factor, interval_days, repetitions from card_srs

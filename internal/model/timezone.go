@@ -2,7 +2,7 @@ package model
 
 import "time"
 
-// Location resolves an IANA timezone name the visitor's browser reported.
+// Location은 방문자의 브라우저가 알려 온 IANA 시간대 이름을 해석한다.
 // 방문자가 어디 있는지는 HTML 화면은 쿠키로, JSON API는 질의 문자열로 알려
 // 오는데, 값을 해석하는 규칙은 하나여야 통계의 "오늘"이 두 곳에서 같아진다.
 // 비어 있거나 알아볼 수 없는 이름이면 UTC로 떨어진다. IANA 데이터베이스로

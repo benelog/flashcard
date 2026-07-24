@@ -15,8 +15,8 @@ import (
 type suggestionView struct {
 	Title string
 	Count int
-	// Rule is the raw rule JSON; the template's URL context escapes it into
-	// the /study?rule= link.
+	// Rule은 규칙 JSON 원문이다. 템플릿의 URL 컨텍스트가 /study?rule= 링크로
+	// 이스케이프한다.
 	Rule string
 }
 

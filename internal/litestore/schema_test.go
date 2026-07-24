@@ -20,7 +20,7 @@ import (
 
 const migrationsDir = "../db/migrations"
 
-// migrationFiles lists the up migrations in the order golang-migrate applies them.
+// migrationFiles는 up 마이그레이션을 golang-migrate가 적용하는 순서로 나열한다.
 func migrationFiles(t *testing.T) []string {
 	t.Helper()
 	names, err := filepath.Glob(filepath.Join(migrationsDir, "*.up.sql"))
@@ -45,7 +45,7 @@ func migrationSQL(t *testing.T) string {
 	return all.String()
 }
 
-// names collects the first capture group of every match, deduplicated.
+// names는 모든 매치의 첫 캡처 그룹을 중복 없이 모은다.
 func names(pattern, sql string) []string {
 	found := map[string]bool{}
 	for _, m := range regexp.MustCompile(pattern).FindAllStringSubmatch(sql, -1) {
@@ -59,7 +59,7 @@ func names(pattern, sql string) []string {
 	return out
 }
 
-// sqliteNames asks the applied SQLite schema what it actually created.
+// sqliteNames는 적용된 SQLite 스키마에 실제로 무엇이 만들어졌는지 물어본다.
 func sqliteNames(t *testing.T, kind string) []string {
 	t.Helper()
 	s, err := Open(filepath.Join(t.TempDir(), "schema.db"))
@@ -88,7 +88,7 @@ func sqliteNames(t *testing.T, kind string) []string {
 	return out
 }
 
-// sqliteColumns lists every column of every table, as "table.column".
+// sqliteColumns는 모든 테이블의 모든 열을 "table.column" 형태로 나열한다.
 func sqliteColumns(t *testing.T) map[string]bool {
 	t.Helper()
 	s, err := Open(filepath.Join(t.TempDir(), "schema.db"))

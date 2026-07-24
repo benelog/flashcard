@@ -15,7 +15,7 @@ import (
 	"github.com/benelog/flashcard/internal/study"
 )
 
-// CreateSession starts a study session and returns its card queue.
+// CreateSession은 학습 세션을 시작하고 낼 카드 목록을 돌려준다.
 func (h *Handlers) CreateSession(c *gin.Context) {
 	var body struct {
 		Mode      string          `json:"mode"`
@@ -71,8 +71,8 @@ func (h *Handlers) CreateSession(c *gin.Context) {
 	c.JSON(http.StatusCreated, gin.H{"session": sess, "cards": plan.Cards})
 }
 
-// failStudyRequest turns a study.Pick failure into this API's answer: a bad ask
-// is 400 with what was wrong, anything else is the usual 404/500.
+// failStudyRequest는 study.Pick의 실패를 이 API의 응답으로 옮긴다. 잘못된 요청은
+// 무엇이 틀렸는지 담아 400으로, 나머지는 평소처럼 404/500으로 답한다.
 func failStudyRequest(c *gin.Context, err error) {
 	switch {
 	case errors.Is(err, study.ErrUnknownMode):

@@ -49,7 +49,7 @@ func badRequest(c *gin.Context, msg string) {
 
 // end::error-helpers[]
 
-// uuidFromPath reads a UUID path parameter. false를 받으면 응답은 이미 쓰인
+// uuidFromPath는 경로의 UUID 파라미터를 읽는다. false를 받으면 응답은 이미 쓰인
 // 상태이므로 부르는 쪽은 그대로 돌아가면 된다.
 func uuidFromPath(c *gin.Context, name string) (uuid.UUID, bool) {
 	id, err := uuid.Parse(c.Param(name))
@@ -61,8 +61,8 @@ func uuidFromPath(c *gin.Context, name string) (uuid.UUID, bool) {
 }
 
 // tag::deck-id-from-path[]
-// deckIDFromPath resolves the :slug path param (Base36 deck slug) to the
-// caller's deck id; a malformed or foreign slug responds 404.
+// deckIDFromPath는 경로의 :slug(Base36 덱 슬러그)를 요청자의 덱 id로 푼다.
+// 형식이 틀리거나 남의 슬러그면 404로 응답한다.
 func (h *Handlers) deckIDFromPath(c *gin.Context) (uuid.UUID, bool) {
 	return h.deckIDBySlug(c, c.Param("slug"))
 }
@@ -70,8 +70,8 @@ func (h *Handlers) deckIDFromPath(c *gin.Context) (uuid.UUID, bool) {
 // end::deck-id-from-path[]
 
 // tag::deck-id-by-slug[]
-// deckIDBySlug looks the slug up under the caller's account, so a slug from
-// another user's deck is indistinguishable from one that does not exist.
+// deckIDBySlug는 슬러그를 요청자 계정 안에서만 찾으므로, 남의 덱 슬러그는
+// 존재하지 않는 슬러그와 구별되지 않는다.
 func (h *Handlers) deckIDBySlug(c *gin.Context, slug string) (uuid.UUID, bool) {
 	id, err := h.Store.DeckIDBySlug(c.Request.Context(), auth.UserID(c), slug)
 	if err != nil {

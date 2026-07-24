@@ -275,8 +275,9 @@ UUID를 기본으로 삼은 이유는 다음과 같다.
 
 [source,go]
 ----
-// insertCard adds the card and its SRS row inside tx; ids and timestamps are
-// generated here because SQLite has no gen_random_uuid()/now() defaults.
+// insertCard는 tx 안에서 카드와 그 SRS 행을 넣는다. internal/pgstore에 같은
+// 이름의 짝이 있다: 그쪽은 열 기본값(gen_random_uuid(), now())이 id와 시각을
+// 만들고, SQLite에는 그런 기본값이 없어 여기서 만든다.
 func insertCard(ctx context.Context, tx *sql.Tx, userID uuid.UUID, in model.CardInput, now string) (uuid.UUID, error) {
 	cardID := uuid.New()
 	_, err := tx.ExecContext(ctx,
@@ -395,10 +396,10 @@ SQLite도 PostgreSQL도 외래 키에 인덱스를 자동으로 만들지 않으
 
 [source,go]
 ----
-// timeLayout is the fixed-width UTC format for every timestamp column. All
-// values having the same width makes lexicographic order equal to time order,
-// so due_at comparisons stay plain string comparisons in SQL. now() never
-// appears in SQL; callers format time.Now().UTC() and bind it.
+// timeLayout은 모든 timestamp 열에 쓰는 고정 폭 UTC 형식이다. 값의 폭이 모두
+// 같아 사전순이 곧 시간순이 되므로 due_at 비교가 SQL의 단순 문자열 비교로
+// 성립한다. SQL에는 now()를 쓰지 않고, 부르는 쪽이 time.Now().UTC()를 이
+// 형식으로 만들어 바인딩한다.
 const timeLayout = "2006-01-02T15:04:05.000Z"
 ----
 
@@ -442,8 +443,8 @@ Flashcard의 SRS는 간격 반복 앱들이 널리 써 온 고전적 계산법�
 
 [source,go]
 ----
-// Grade returns the next SRS state and due time after a first-pass answer.
-// Retry-round answers must not be graded.
+// Grade는 첫 회차 답변 뒤의 다음 SRS 상태와 복습 예정 시각을 돌려준다.
+// 재도전 회차의 답변은 채점하면 안 된다.
 func Grade(s State, correct bool, now time.Time) (State, time.Time) {
 	if correct {
 		s.Repetitions++
@@ -490,7 +491,7 @@ tx, err := s.db.BeginTx(ctx, nil)
 // ...
 defer tx.Rollback()
 
-// No "for update" needed: the transaction holds SQLite's single writer.
+// "for update"가 필요 없다: 트랜잭션이 SQLite의 단일 쓰기 주체를 이미 쥔다.
 var state srs.State
 err = tx.QueryRowContext(ctx,
 	`select ease_factor, interval_days, repetitions from card_srs
@@ -610,8 +611,8 @@ Flashcard의 답은 "순번을 저장하되, 노출 전에 뒤섞는다"이다.
 ----
 id := uuid.New()
 now := fmtTime(time.Now())
-// max(seq)+1 stands in for the Postgres identity column; the single local
-// writer makes it race-free.
+// max(seq)+1이 Postgres의 identity 열을 대신하며, 로컬은 쓰기 주체가
+// 하나뿐이라 경쟁이 없다.
 _, err := s.db.ExecContext(ctx,
 	`insert into decks (id, user_id, name, description, seq, created_at, updated_at)
 	 values (?, ?, ?, ?, (select coalesce(max(seq), 0) + 1 from decks), ?, ?)`,

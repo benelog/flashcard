@@ -1,4 +1,4 @@
-// Package study decides which cards a study session will run through.
+// Package study는 학습 세션이 어떤 카드를 돌지 정한다.
 //
 // 화면(internal/web)과 JSON API(internal/handlers)는 같은 학습을 서로 다른 옷을
 // 입혀 내놓는다. 어느 카드가 어떤 순서로 나오는지는 두 곳에서 같아야 하므로 그
@@ -30,7 +30,7 @@ const (
 	MaxDailyGoal     = 200
 )
 
-// Request is one caller's ask. 모드마다 쓰는 필드가 다르다.
+// Request는 호출자의 요청 하나다. 모드마다 쓰는 필드가 다르다.
 type Request struct {
 	Mode      string
 	DeckID    *uuid.UUID      // model.ModeDeck
@@ -39,7 +39,7 @@ type Request struct {
 	Limit     int             // model.ModeDue
 }
 
-// Plan is the picked card list plus the values that go on the session row.
+// Plan은 고른 카드 목록과 세션 행에 적을 값들이다.
 type Plan struct {
 	Mode   string
 	Cards  []model.Card
@@ -56,8 +56,8 @@ var (
 	ErrInvalidRule  = errors.New("study: invalid rule")
 )
 
-// Pick loads the cards for req. 돌려주는 error가 위 sentinel 중 하나면 요청이
-// 잘못된 것이고, 그 밖의 error는 저장소 실패다.
+// Pick은 req에 맞는 카드를 불러온다. 돌려주는 error가 위 sentinel 중 하나면
+// 요청이 잘못된 것이고, 그 밖의 error는 저장소 실패다.
 func Pick(ctx context.Context, s model.Store, userID uuid.UUID, req Request) (Plan, error) {
 	plan := Plan{Mode: req.Mode}
 	var err error
@@ -97,16 +97,15 @@ func Pick(ctx context.Context, s model.Store, userID uuid.UUID, req Request) (Pl
 	return plan, nil
 }
 
-// Suggestion is one home-screen tile: a canned rule and how many cards it
-// matches right now.
+// Suggestion은 홈 화면 타일 하나다. 추천 규칙과 지금 그 규칙에 맞는 카드 수를 담는다.
 type Suggestion struct {
 	Rule  smartrules.Rule
 	Count int
 }
 
-// Suggestions keeps only the canned rules that have cards at the moment. 빈
-// 타일을 권하지 않기 위해서다. 홈 화면과 JSON API의 /suggestions가 같은 목록을
-// 내놓도록 세는 일은 여기 한 번만 적는다.
+// Suggestions는 지금 카드가 있는 추천 규칙만 남긴다. 빈 타일을 권하지 않기
+// 위해서다. 홈 화면과 JSON API의 /suggestions가 같은 목록을 내놓도록 세는 일은
+// 여기 한 번만 적는다.
 func Suggestions(ctx context.Context, s model.Store, userID uuid.UUID) ([]Suggestion, error) {
 	found := []Suggestion{}
 	for _, rule := range smartrules.Suggested() {

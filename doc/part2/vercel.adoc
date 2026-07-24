@@ -282,8 +282,8 @@ func Handler(w http.ResponseWriter, r *http.Request)
 
 [source,go]
 ----
-// Vercel compiles this file outside the module, so it must not import
-// internal/ packages (directly); shared code it needs lives in pkg/.
+// Vercel은 이 파일을 모듈 바깥에서 컴파일하므로 internal/ 패키지를 (직접)
+// import할 수 없다. 필요한 공용 코드는 pkg/에 둔다.
 package handler
 
 import (
@@ -321,7 +321,8 @@ var (
 	engineErr  error
 )
 
-// Engine returns the process-wide router; warm serverless instances reuse it.
+// Engine은 프로세스 전역 라우터를 돌려준다. 서버리스 인스턴스가 따뜻할 때는
+// 재사용된다.
 func Engine() (*gin.Engine, error) {
 	engineOnce.Do(func() {
 		engine, engineErr = build()
@@ -409,9 +410,9 @@ rewrite는 리다이렉트와 달리 요청 URL을 바꾸지 않는다.
 
 [source,go]
 ----
-// registerStatic serves the embedded assets. Filenames carry no hash, so a URL
-// is only immutable when the template stamped ?v=<assetVersion> on it; bare
-// URLs get a short TTL. The service worker adds stale-while-revalidate on top.
+// registerStatic은 embed된 자산을 내준다. 파일 이름에 해시가 없으므로 템플릿이
+// ?v=<assetVersion>을 찍은 URL만 immutable로 두고, 맨 URL에는 짧은 TTL을 준다.
+// 서비스 워커가 그 위에 stale-while-revalidate를 얹는다.
 func (w *Web) registerStatic(r *gin.Engine) {
 	static, err := fs.Sub(staticFS, "static")
 	if err != nil {
@@ -452,8 +453,8 @@ func (w *Web) registerStatic(r *gin.Engine) {
 
 [source,go]
 ----
-// Vercel compiles this file outside the module, so it must not import
-// internal/ packages (directly); shared code it needs lives in pkg/.
+// Vercel은 이 파일을 모듈 바깥에서 컴파일하므로 internal/ 패키지를 (직접)
+// import할 수 없다. 필요한 공용 코드는 pkg/에 둔다.
 ----
 
 이 주석이 가리키는 제약을 일상어로 옮기면, 플랫폼이 정한 컴파일 방식 탓에 이 진입점 파일이 앱 안쪽에 감춰 둔 코드를 직접 가져다 쓸 수 없다는 뜻이다.
@@ -481,7 +482,7 @@ cmd/server    ──▶  pkg/app
 `api/index.go`가 직접 만나는 패키지는 `pkg/app` 하나뿐이다.
 `pkg/app`은 모듈에 속한 정상적인 패키지이므로 `internal/` 패키지들을 마음껏 import할 수 있다.
 즉 `internal`의 보호는 그대로 유지하면서, 모듈 경계 바깥의 진입점에게는 `pkg/app`이라는 공개 창구 하나만 열어 줬다.
-주석의 "(directly)"라는 단서가 이 구도를 정확히 표현한다.
+주석의 "(직접)"이라는 단서가 이 구도를 정확히 표현한다.
 직접 import만 금지될 뿐, `pkg/app`을 경유한 간접 의존은 문제없다.
 
 === 로컬 빌드로는 잡히지 않는 실패: 별도 검사의 필요

@@ -319,15 +319,15 @@ JSON에는 중괄호, 따옴표, 콜론처럼 URL에 그대로 둘 수 없는 �
 핸들러에서 `url.QueryEscape`로 미리 인코딩해 두는 방법도 있지만, 그러면 인코딩 책임이 핸들러와 템플릿 두 곳에 흩어진다.
 Flashcard는 값을 원문 그대로 넘기고 인코딩은 템플릿의 URL 문맥 이스케이프 한 곳에 맡긴 뒤, 그 결정을 구조체 주석으로 남겨 두었다.
 
-`internal/web/pages.go`:
+`internal/web/home.go`:
 
 [source,go]
 ----
 type suggestionView struct {
 	Title string
 	Count int
-	// Rule is the raw rule JSON; the template's URL context escapes it into
-	// the /study?rule= link.
+	// Rule은 규칙 JSON 원문이다. 템플릿의 URL 컨텍스트가 /study?rule= 링크로
+	// 이스케이프한다.
 	Rule string
 }
 ----
@@ -415,10 +415,10 @@ func (w *Web) registerStatic(r *gin.Engine) {
 
 [source,go]
 ----
-// view is the root object every template executes against.
+// view는 모든 템플릿이 실행 대상으로 받는 뿌리 객체다.
 type view struct {
 	Title     string
-	Path      string // request path, for the active tab in the bottom nav
+	Path      string // 요청 경로. 하단 내비의 활성 탭을 정한다
 	LoggedIn  bool
 	LocalMode bool
 	Email     string
@@ -429,7 +429,7 @@ type view struct {
 ----
 
 앞쪽 필드들은 레이아웃이 쓰고, 페이지 본문마다 다른 데이터는 전부 `Data`에 담는다.
-타입이 `any`이므로 무엇이든 담을 수 있고, `internal/web/pages.go`의 홈 핸들러는 여기에 `gin.H`(문자열 키 맵)를 담는다.
+타입이 `any`이므로 무엇이든 담을 수 있고, `internal/web/home.go`의 홈 핸들러는 여기에 `gin.H`(문자열 키 맵)를 담는다.
 
 [source,go]
 ----
@@ -447,7 +447,7 @@ w.render(c, http.StatusOK, "home", "Flashcard", gin.H{
 === 폼 처리와 PRG 패턴
 
 화면에서 무언가를 만드는 것은 폼 제출, 즉 POST다.
-`internal/web/pages.go`의 덱 생성 핸들러를 보자.
+`internal/web/decks.go`의 덱 생성 핸들러를 보자.
 폼 필드를 읽고, 검증하고, 저장한 뒤, 완성된 화면을 그리는 대신 다른 주소로 이동시킨다.
 
 [source,go]
@@ -504,17 +504,17 @@ PRG 패턴에서 POST가 남긴 말을 리다이렉트 건너편 화면까지 �
 
 다음 코드는 안내 문구를 쿠키에 적어 남기는 `setFlash`와, 다음 요청에서 그것을 꺼내 읽고 곧바로 지우는 `takeFlash`다.
 
-`internal/web/session.go`:
+`internal/web/cookies.go`:
 
 [source,go]
 ----
-// Flash messages survive one redirect via a short-lived cookie.
+// 플래시 메시지는 짧은 수명의 쿠키로 리다이렉트 한 번을 살아남는다.
 
 func setFlash(c *gin.Context, kind, message string) {
 	setCookie(c, flashCookie, kind+"|"+message, 60)
 }
 
-// takeFlash reads and clears the pending flash message, if any.
+// takeFlash는 대기 중인 플래시 메시지를 읽고 지운다.
 func takeFlash(c *gin.Context) (kind, message string) {
 	raw := cookieValue(c, flashCookie)
 	if raw == "" {

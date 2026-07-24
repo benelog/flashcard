@@ -18,8 +18,8 @@ import (
 // 뜻하기 때문이다. 카드 한 벌을 도는 학습 세션(study_sessions), 로그인 상태,
 // 그리고 DB 연결이다.
 //
-// Cookie names. Session tokens are HttpOnly: page scripts (and any injected
-// script) can never read them — the main security win over localStorage.
+// 쿠키 이름들. 세션 토큰은 HttpOnly라 페이지 스크립트(주입된 스크립트 포함)가
+// 읽을 수 없다. localStorage 대신 쿠키를 쓰는 가장 큰 이유다.
 const (
 	accessCookie  = "fc_access"
 	refreshCookie = "fc_refresh"
@@ -31,13 +31,13 @@ const (
 )
 
 const (
-	refreshMaxAge   = 30 * 24 * 60 * 60  // matches Supabase's default refresh window
+	refreshMaxAge   = 30 * 24 * 60 * 60  // Supabase 기본 refresh 유효 기간과 맞춘다
 	dirCookieMaxAge = 180 * 24 * 60 * 60 // 지난번에 고른 학습 방향은 오래 기억해 둔다
 	emailKey        = "web.email"
 )
 
-// isHTTPS reports whether the original request came in over TLS (directly or
-// via Vercel's proxy), which decides the cookies' Secure flag.
+// isHTTPS는 원 요청이 TLS로 왔는지 알린다(직접 또는 Vercel 프록시 경유).
+// 쿠키의 Secure 플래그가 여기에 달렸다.
 func isHTTPS(c *gin.Context) bool {
 	return c.Request.TLS != nil || c.GetHeader("X-Forwarded-Proto") == "https"
 }
@@ -67,7 +67,7 @@ func cookieValue(c *gin.Context, name string) string {
 }
 
 func (w *Web) setAuthCookies(c *gin.Context, tok tokenResponse) {
-	maxAge := tok.ExpiresIn - 60 // renew before GoTrue expires it
+	maxAge := tok.ExpiresIn - 60 // GoTrue가 만료시키기 전에 갱신하도록 여유를 둔다
 	if maxAge <= 0 {
 		maxAge = 300
 	}
@@ -80,9 +80,9 @@ func (w *Web) clearAuthCookies(c *gin.Context) {
 	clearCookie(c, refreshCookie)
 }
 
-// withUser resolves the visitor from the session cookies and, when the access
-// token has expired, renews it with the refresh token — all transparently to
-// the page handlers. Anonymous visitors pass through; requireUser is the gate.
+// withUser는 세션 쿠키에서 방문자를 알아내고, access token이 만료됐으면
+// refresh token으로 페이지 핸들러 몰래 갱신한다. 익명 방문자는 통과시키며,
+// 막는 일은 requireUser가 한다.
 func (w *Web) withUser() gin.HandlerFunc {
 	if w.cfg.AuthMode == "local" {
 		return func(c *gin.Context) {
@@ -99,7 +99,7 @@ func (w *Web) withUser() gin.HandlerFunc {
 				return
 			}
 		}
-		// Access token missing or expired: try the refresh token once.
+		// access token이 없거나 만료됐다. refresh token을 한 번만 써 본다.
 		if rt := cookieValue(c, refreshCookie); rt != "" {
 			if tok, err := w.goTrue.refresh(c.Request.Context(), rt); err == nil {
 				w.setAuthCookies(c, tok)
@@ -116,8 +116,7 @@ func (w *Web) withUser() gin.HandlerFunc {
 	}
 }
 
-// requireUser redirects anonymous visitors to the login page, remembering
-// where they were headed.
+// requireUser는 익명 방문자를 가려던 곳을 기억한 채 로그인 화면으로 보낸다.
 func (w *Web) requireUser() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		if auth.OptionalUserID(c) != uuid.Nil {
@@ -136,8 +135,8 @@ func userEmail(c *gin.Context) string {
 	return ""
 }
 
-// safeNext only honors same-app paths, so a crafted ?next= link can't bounce
-// the visitor to another origin after sign-in.
+// safeNext는 앱 안의 경로만 받아들인다. 조작된 ?next= 링크가 로그인 뒤
+// 방문자를 다른 출처로 튕겨 보내지 못하게 한다.
 func safeNext(next string) string {
 	if strings.HasPrefix(next, "/") && !strings.HasPrefix(next, "//") {
 		return next
@@ -145,7 +144,7 @@ func safeNext(next string) string {
 	return "/"
 }
 
-// Flash messages survive one redirect via a short-lived cookie.
+// 플래시 메시지는 짧은 수명의 쿠키로 리다이렉트 한 번을 살아남는다.
 
 // 플래시 종류. 템플릿이 이 값을 그대로 CSS 클래스로 쓴다.
 const (
@@ -157,15 +156,15 @@ func setFlash(c *gin.Context, kind, message string) {
 	setCookie(c, flashCookie, kind+"|"+message, 60)
 }
 
-// redirectWithFlash is the PRG (Post/Redirect/Get) ending every form handler
-// shares: leave a one-shot message, then send the browser somewhere it can
-// safely reload. 303을 쓰므로 새로고침해도 폼이 다시 제출되지 않는다.
+// redirectWithFlash는 모든 폼 핸들러가 공유하는 PRG(Post/Redirect/Get)
+// 마무리다. 한 번짜리 메시지를 남기고 303으로 보내므로 새로고침해도 폼이
+// 다시 제출되지 않는다.
 func redirectWithFlash(c *gin.Context, kind, message, path string) {
 	setFlash(c, kind, message)
 	c.Redirect(http.StatusSeeOther, path)
 }
 
-// takeFlash reads and clears the pending flash message, if any.
+// takeFlash는 대기 중인 플래시 메시지를 읽고 지운다.
 func takeFlash(c *gin.Context) (kind, message string) {
 	raw := cookieValue(c, flashCookie)
 	if raw == "" {

@@ -118,8 +118,8 @@ func (h *Handlers) UpdateCard(c *gin.Context) {
 		badRequest(c, msg)
 		return
 	}
-	// UpdateCard edits content only and keeps the card in its deck, so no deck
-	// slug is needed (the card is identified by its UUID alone).
+	// 수정은 내용만 바꾸고 카드를 원래 덱에 그대로 두므로 덱 슬러그가 필요
+	// 없다. UUID만으로 카드를 특정한다.
 	card, err := h.Store.UpdateCard(c.Request.Context(), auth.UserID(c), cardID, in)
 	if err != nil {
 		fail(c, err)
@@ -140,7 +140,7 @@ func (h *Handlers) DeleteCard(c *gin.Context) {
 	c.Status(http.StatusNoContent)
 }
 
-// BulkCreateCards imports rows the client parsed from CSV.
+// BulkCreateCards는 클라이언트가 CSV에서 파싱해 보낸 행들을 들여온다.
 func (h *Handlers) BulkCreateCards(c *gin.Context) {
 	deckID, ok := h.deckIDFromPath(c)
 	if !ok {
@@ -175,9 +175,9 @@ func (h *Handlers) BulkCreateCards(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"added": res.Added, "skipped": res.Skipped, "invalid": invalid})
 }
 
-// ExportDeck streams the deck as CSV, the same format 가져오기 reads back.
-// 파일을 만드는 일은 cardcsv.ExportDeck이 하고, 덱 화면의 내보내기 버튼도 같은
-// 함수를 쓴다.
+// ExportDeck은 덱을 가져오기가 다시 읽을 수 있는 CSV로 내려보낸다. 파일을
+// 만드는 일은 cardcsv.ExportDeck이 하고, 덱 화면의 내보내기 버튼도 같은 함수를
+// 쓴다.
 func (h *Handlers) ExportDeck(c *gin.Context) {
 	if err := cardcsv.ExportDeck(c.Request.Context(), h.Store, auth.UserID(c), c.Param("slug"), c.Writer); err != nil {
 		fail(c, err)

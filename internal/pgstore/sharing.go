@@ -11,10 +11,9 @@ import (
 	"github.com/benelog/flashcard/internal/model"
 )
 
-// ShareDeck enables sharing, keeping any existing slug so links stay stable.
-// The short share slug is globally unique, so on the rare collision we retry
-// with a fresh one; coalesce means an already-shared deck reuses its slug and
-// can never collide.
+// ShareDeck은 공유를 켜되 기존 슬러그를 유지해 링크가 안 바뀌게 한다. 짧은 공유
+// 슬러그는 전역 유일이라 드물게 충돌하면 새 값으로 재시도한다. coalesce 덕에
+// 이미 공유된 덱은 제 슬러그를 다시 쓰므로 충돌할 수 없다.
 func (s *Store) ShareDeck(ctx context.Context, userID, deckID uuid.UUID) (model.ShareInfo, error) {
 	var info model.ShareInfo
 	for attempt := 0; attempt < 5; attempt++ {
@@ -37,7 +36,9 @@ func (s *Store) ShareDeck(ctx context.Context, userID, deckID uuid.UUID) (model.
 	return info, errors.New("could not generate a unique share slug")
 }
 
-// isUniqueViolation reports whether err is a Postgres unique-constraint error.
+// isUniqueViolation은 err가 Postgres의 unique 제약 위반인지 알려 준다. ShareDeck의
+// 재시도 루프가 삼켜도 되는 실패는 이것뿐이다. 다른 제약(FK, NOT NULL) 위반까지
+// 삼키면 재시도 끝에 엉뚱한 slug 오류로 보고된다.
 func isUniqueViolation(err error) bool {
 	var pgErr *pgconn.PgError
 	return errors.As(err, &pgErr) && pgErr.Code == "23505"
@@ -67,7 +68,7 @@ func scanSharedDeck(row pgx.Row) (model.SharedDeckSummary, error) {
 	return d, err
 }
 
-// ListSharedDecks returns the public gallery, newest first.
+// ListSharedDecks는 공개 갤러리를 최신순으로 돌려준다.
 func (s *Store) ListSharedDecks(ctx context.Context, viewerID uuid.UUID) ([]model.SharedDeckSummary, error) {
 	rows, err := s.pool.Query(ctx, sharedDeckSelect+` order by d.shared_at desc limit 100`, viewerID)
 	if err != nil {
@@ -100,8 +101,8 @@ func scanSharedCard(row pgx.Row) (model.SharedCard, error) {
 	return c, err
 }
 
-// ImportSharedDeck clones a shared deck and its cards into the viewer's
-// account with fresh SRS state, in one transaction.
+// ImportSharedDeck은 공유 덱과 그 카드들을 보는 이의 계정으로 한 트랜잭션 안에서
+// 복제한다. SRS 상태는 새로 시작한다.
 func (s *Store) ImportSharedDeck(ctx context.Context, viewerID uuid.UUID, slug string) (model.Deck, error) {
 	tx, err := s.pool.Begin(ctx)
 	if err != nil {

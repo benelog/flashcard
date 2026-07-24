@@ -9,10 +9,9 @@ import (
 	"github.com/benelog/flashcard/internal/model"
 )
 
-// DailyStats groups reviews by local date in the given (pre-validated) IANA
-// timezone, covering the last `days` days including today. SQLite has no
-// timezone database, so rows are fetched and bucketed in Go; local data stays
-// small enough for that.
+// DailyStats는 리뷰를 (미리 검증된) IANA 시간대의 현지 날짜로 묶어, 오늘을
+// 포함한 최근 days일을 돌려준다. SQLite에는 시간대 데이터베이스가 없어 행을
+// 가져와 Go에서 버킷팅한다. 로컬 데이터는 그래도 될 만큼 작다.
 func (s *Store) DailyStats(ctx context.Context, userID uuid.UUID, tz string, days int) ([]model.DailyStat, error) {
 	loc, err := time.LoadLocation(tz)
 	if err != nil {
@@ -36,7 +35,7 @@ func (s *Store) DailyStats(ctx context.Context, userID uuid.UUID, tz string, day
 	return bucketDaily(moments, loc), nil
 }
 
-// reviewMoment is one review_logs row, reduced to what daily bucketing needs.
+// reviewMoment는 review_logs 행 하나를 일별 버킷팅에 필요한 것만 남긴 것이다.
 type reviewMoment struct {
 	At      time.Time
 	Correct bool
@@ -53,7 +52,7 @@ func scanReviewMoment(r rowScanner) (reviewMoment, error) {
 	return m, err
 }
 
-// bucketDaily groups review moments into local dates. moments는 시각 순으로
+// bucketDaily는 리뷰 시각들을 현지 날짜로 묶는다. moments는 시각 순으로
 // 정렬되어 있어야 한다: 같은 날짜는 인접해 있을 때만 한 버킷으로 합친다.
 // 시계도 DB도 보지 않으므로 시간대 경계(자정 전후)를 단위 테스트로 검증한다.
 func bucketDaily(moments []reviewMoment, loc *time.Location) []model.DailyStat {
@@ -81,8 +80,8 @@ func (s *Store) StatsSummary(ctx context.Context, userID uuid.UUID, tz string, l
 		return sum, err
 	}
 
-	// Streak: bucket review times into local dates in Go, then count back from
-	// today, letting the streak end yesterday — same semantics as model.streak.
+	// 스트릭: 리뷰 시각을 Go에서 현지 날짜로 묶고 오늘부터 거슬러 센다. 어제
+	// 끝난 스트릭도 인정한다(model.Streak의 의미 그대로).
 	rows, err := s.db.QueryContext(ctx,
 		`select reviewed_at from review_logs where user_id = ?`, userID.String())
 	if err != nil {

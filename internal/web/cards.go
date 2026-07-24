@@ -12,9 +12,8 @@ import (
 
 // 카드 추가·수정·삭제 화면과 폼 처리.
 
-// cardFormView carries the (re)rendered card form: current values plus the
-// submit target, shared by the new-card page, the edit page and the
-// dictionary-lookup fragment.
+// cardFormView는 카드 폼에 그릴 현재 값과 제출 대상이다. 새 카드 화면,
+// 수정 화면, 사전 조회 조각이 함께 쓴다.
 type cardFormView struct {
 	Action   string
 	BackURL  string
@@ -66,7 +65,7 @@ func (w *Web) editCardPage(c *gin.Context) {
 	})
 }
 
-// cardInputFromForm normalizes the posted card fields. 두 번째 반환값은 이 폼을
+// cardInputFromForm은 제출된 카드 필드를 정규화한다. 두 번째 반환값은 이 폼을
 // 저장할 수 있는지로, 원문과 뜻이 모두 있어야 참이다. url.Values만 보므로 HTTP
 // 없이 검증할 수 있다.
 func cardInputFromForm(form url.Values) (model.CardInput, bool) {

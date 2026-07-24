@@ -15,7 +15,7 @@ import (
 
 // 설정 화면과, 프로필에 저장되는 설정 JSON의 해석.
 
-// profileSettings mirrors the JSON blob stored in profiles.settings.
+// profileSettings는 profiles.settings에 저장되는 JSON과 같은 모양이다.
 type profileSettings struct {
 	TtsRate   float64 `json:"ttsRate,omitempty"`
 	DailyGoal int     `json:"dailyGoal,omitempty"`
@@ -33,9 +33,9 @@ func defaultSettings() profileSettings {
 	return profileSettings{TtsRate: defaultTtsRate, DailyGoal: defaultDailyGoal}
 }
 
-// settingsFrom reads the profile's settings blob, falling back to the defaults
-// for anything missing or out of range. 설정 JSON은 사용자가 바꿔 온 것이 아니라
-// 우리가 쓴 것이지만, 예전 버전이 쓴 값이 남아 있을 수 있어 늘 검사한다.
+// settingsFrom은 프로필의 설정 JSON을 읽고, 없거나 범위 밖인 값은 기본값으로
+// 채운다. 설정 JSON은 사용자가 바꿔 온 것이 아니라 우리가 쓴 것이지만, 예전
+// 버전이 쓴 값이 남아 있을 수 있어 늘 검사한다.
 func settingsFrom(profile model.Profile) profileSettings {
 	settings := defaultSettings()
 	_ = json.Unmarshal(profile.Settings, &settings)
@@ -66,8 +66,8 @@ const (
 	minDailyGoal, maxDailyGoal = 5, study.MaxDailyGoal
 )
 
-// settingsFromForm reads the posted settings, keeping the defaults for any
-// value that is missing, malformed or out of range.
+// settingsFromForm은 제출된 설정을 읽는다. 없거나 깨졌거나 범위를 벗어난 값은
+// 기본값을 그대로 둔다.
 func settingsFromForm(form url.Values) profileSettings {
 	settings := defaultSettings()
 	if rate, err := strconv.ParseFloat(form.Get("tts_rate"), 64); err == nil &&

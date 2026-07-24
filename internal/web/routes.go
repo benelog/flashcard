@@ -15,11 +15,11 @@ import (
 	"github.com/benelog/flashcard/internal/auth"
 )
 
-// assetVersion fingerprints the embedded CSS/JS. The templates hang it off
-// every asset URL as ?v=…, so a deploy changes the URL itself: the service
-// worker (which serves static files stale-while-revalidate) can never pair a
-// new page with last version's stylesheet. Filenames stay stable, which keeps
-// them readable in the repo and in devtools.
+// assetVersion은 embed된 CSS/JS의 내용 해시다. 템플릿이 모든 자산 URL에
+// ?v=…로 붙이므로 배포하면 URL 자체가 바뀐다. 정적 파일을
+// stale-while-revalidate로 내주는 서비스 워커가 새 페이지에 지난 버전의
+// 스타일시트를 짝지을 수 없게 하기 위해서다. 파일 이름은 그대로라 저장소와
+// devtools에서 읽기 좋다.
 var assetVersion = sync.OnceValue(func() string {
 	h := sha256.New()
 	for _, name := range []string{"static/app.css", "static/app.js", "static/htmx.min.js"} {
@@ -32,11 +32,11 @@ var assetVersion = sync.OnceValue(func() string {
 	return hex.EncodeToString(h.Sum(nil))[:12]
 })
 
-// asset is the template func: {{asset "/static/app.css"}}.
+// asset은 템플릿 함수다: {{asset "/static/app.css"}}.
 func asset(path string) string { return path + "?v=" + assetVersion() }
 
-// Register wires every HTML route into the shared Gin engine. The JSON API
-// under /api is registered separately and stays untouched.
+// Register는 모든 HTML 라우트를 공용 Gin 엔진에 잇는다. /api 아래 JSON API는
+// 따로 등록되며 여기서 건드리지 않는다.
 func (w *Web) Register(r *gin.Engine) {
 	w.registerStatic(r)
 
@@ -98,9 +98,9 @@ func (w *Web) Register(r *gin.Engine) {
 	})
 }
 
-// registerStatic serves the embedded assets. Filenames carry no hash, so a URL
-// is only immutable when the template stamped ?v=<assetVersion> on it; bare
-// URLs get a short TTL. The service worker adds stale-while-revalidate on top.
+// registerStatic은 embed된 자산을 내준다. 파일 이름에 해시가 없으므로 템플릿이
+// ?v=<assetVersion>을 찍은 URL만 immutable로 두고, 맨 URL에는 짧은 TTL을 준다.
+// 서비스 워커가 그 위에 stale-while-revalidate를 얹는다.
 func (w *Web) registerStatic(r *gin.Engine) {
 	static, err := fs.Sub(staticFS, "static")
 	if err != nil {
@@ -128,11 +128,11 @@ func (w *Web) registerStatic(r *gin.Engine) {
 		c.Request.URL.Path = "/icons/" + strings.TrimPrefix(c.Param("filepath"), "/")
 		server.ServeHTTP(c.Writer, c.Request)
 	})
-	// The service worker must load from the root scope it controls.
+	// 서비스 워커는 자기가 제어할 루트 스코프에서 로드되어야 한다.
 	r.GET("/sw.js", cached("/sw.js"))
 	r.GET("/manifest.webmanifest", cached("/manifest.webmanifest"))
 	r.GET("/favicon.ico", cached("/favicon.ico"))
-	// The offline fallback the service worker precaches and serves when a page
-	// is requested with no network and no cached copy.
+	// 네트워크도 캐시 사본도 없을 때 서비스 워커가 내주는 오프라인 대체 화면.
+	// 서비스 워커가 미리 캐시해 둔다.
 	r.GET("/offline.html", cached("/offline.html"))
 }

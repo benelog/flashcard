@@ -92,7 +92,7 @@ func TestSharedQueriesStayInSync(t *testing.T) {
 	}
 }
 
-// parseSources parses the package's non-test Go files, in file-name order.
+// parseSources는 패키지의 테스트가 아닌 Go 파일을 파일 이름 순으로 파싱한다.
 func parseSources(t *testing.T, dir string) []*ast.File {
 	t.Helper()
 	paths, err := filepath.Glob(filepath.Join(dir, "*.go"))
@@ -117,7 +117,7 @@ func parseSources(t *testing.T, dir string) []*ast.File {
 	return files
 }
 
-// stringConsts collects the package's top-level string constants by name.
+// stringConsts는 패키지 최상위의 문자열 상수를 이름별로 모은다.
 func stringConsts(t *testing.T, dir string) map[string]string {
 	t.Helper()
 	consts := map[string]string{}
@@ -156,8 +156,8 @@ func stringConsts(t *testing.T, dir string) map[string]string {
 // 가려낸다. 에러 메시지 같은 일반 문자열이 걸리지 않도록 키워드 단위로 본다.
 var sqlLiteralPattern = regexp.MustCompile(`(?i)\b(select|insert|update|delete|where|order by)\b`)
 
-// sqlInFuncs returns each named function's SQL string literals in source
-// order, normalized.
+// sqlInFuncs는 이름을 지정한 각 함수의 SQL 문자열 리터럴을 소스 순서대로,
+// 정규화해 돌려준다.
 func sqlInFuncs(t *testing.T, dir string, names []string) map[string][]string {
 	t.Helper()
 	wanted := map[string]bool{}

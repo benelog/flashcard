@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# PostToolUse hook: auto-gofmt + go vet on the edited Go file.
-# Silent on success (zero LLM tokens); exit 2 feeds vet errors back to Claude.
+# PostToolUse 훅: 수정된 Go 파일에 gofmt를 적용하고 go vet을 돌린다.
+# 성공하면 조용히 끝난다(LLM 토큰 0). vet 오류는 exit 2로 Claude에게 되돌린다.
 set -u
 
 f=$(jq -r '.tool_input.file_path // .tool_response.filePath // empty')

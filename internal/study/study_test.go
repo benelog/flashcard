@@ -14,7 +14,7 @@ import (
 	"github.com/benelog/flashcard/internal/smartrules"
 )
 
-// stubStore satisfies model.Store by embedding the interface: 테스트가 쓰는
+// stubStore는 인터페이스를 embed해서 model.Store를 만족한다. 테스트가 쓰는
 // 메서드만 채우고 나머지는 비워 둔다. 채우지 않은 메서드를 부르면 nil 인터페이스
 // 호출로 그 자리에서 터지므로, 이 패키지가 저장소의 무엇을 건드리는지가
 // 테스트마다 그대로 드러난다. 26개짜리 인터페이스를 통째로 구현하지 않고도

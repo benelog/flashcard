@@ -26,9 +26,9 @@ type Summary struct {
 	Decks          []DeckMastery `json:"decks"`
 }
 
-// Streak counts consecutive study days ending today, or yesterday when today's
-// studying hasn't started yet: 하루가 아직 끝나지 않았다는 이유로 어제까지 쌓은
-// 기록을 0으로 만들면 안 된다.
+// Streak은 오늘로 끝나는 연속 학습일 수를 센다. 오늘 학습을 아직 시작하지
+// 않았으면 어제로 끝나는 구간을 센다. 하루가 아직 끝나지 않았다는 이유로
+// 어제까지 쌓은 기록을 0으로 만들면 안 된다.
 //
 // reviewDays는 사용자의 시간대로 읽은 학습 시각들이고, 순서도 중복도 상관없다.
 // 저장소 구현 둘이 각각 다른 방식으로 세던 것을 이 함수 하나로 모았으므로 두

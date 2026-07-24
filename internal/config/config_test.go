@@ -2,10 +2,9 @@ package config
 
 import "testing"
 
-// A trailing newline pasted into a dashboard env field must not survive into
-// config values: net/http rejects header values containing control characters,
-// so an untrimmed key breaks every GoTrue request (2026-07-11 production
-// incident, see fix-auth.md).
+// 대시보드 환경 변수 칸에 붙여 넣을 때 딸려 온 줄바꿈이 설정 값에 살아남으면 안
+// 된다. net/http는 제어 문자가 든 헤더 값을 거부하므로, 다듬지 않은 키는 GoTrue
+// 요청 전부를 깨뜨린다(2026-07-11 운영 장애, fix-auth.md 참고).
 func TestLoadTrimsWhitespace(t *testing.T) {
 	t.Setenv("DATABASE_URL", " postgres://example/db \n")
 	t.Setenv("SUPABASE_URL", "https://ref.supabase.co/\n")

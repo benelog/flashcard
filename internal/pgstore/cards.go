@@ -42,8 +42,8 @@ func (s *Store) GetCard(ctx context.Context, userID, cardID uuid.UUID) (model.Ca
 	if err != nil {
 		return c, err
 	}
-	// The edit page reaches a card by /cards/{id} without a deck in the URL, so
-	// hand it the deck slug for the back link.
+	// 편집 화면은 URL에 덱 없이 /cards/{id}로 들어오므로, 뒤로 가기 링크에 쓸
+	// 덱 슬러그를 함께 준다.
 	var seq int64
 	if err := s.pool.QueryRow(ctx, `select seq from decks where id = $1`, c.DeckID).Scan(&seq); err != nil {
 		return c, err
@@ -52,7 +52,7 @@ func (s *Store) GetCard(ctx context.Context, userID, cardID uuid.UUID) (model.Ca
 	return c, nil
 }
 
-// insertCard adds the card and its SRS row inside tx. internal/litestore에 같은
+// insertCard는 tx 안에서 카드와 그 SRS 행을 넣는다. internal/litestore에 같은
 // 이름의 짝이 있다: 그쪽은 SQLite에 기본값 함수가 없어 id와 시각을 Go가 만들고,
 // 여기서는 열 기본값(gen_random_uuid(), now())이 만든다.
 func insertCard(ctx context.Context, tx pgx.Tx, userID uuid.UUID, in model.CardInput) (uuid.UUID, error) {
@@ -70,8 +70,8 @@ func insertCard(ctx context.Context, tx pgx.Tx, userID uuid.UUID, in model.CardI
 	return cardID, err
 }
 
-// CreateCard inserts the card and its SRS row in one transaction; the deck
-// ownership check doubles as the foreign-key guard.
+// CreateCard는 카드와 그 SRS 행을 한 트랜잭션으로 넣는다. 덱 소유 확인이
+// 외래 키 검사를 겸한다.
 func (s *Store) CreateCard(ctx context.Context, userID uuid.UUID, in model.CardInput) (model.Card, error) {
 	if _, err := s.GetDeck(ctx, userID, in.DeckID); err != nil {
 		return model.Card{}, err
@@ -110,8 +110,8 @@ func (s *Store) DeleteCard(ctx context.Context, userID, cardID uuid.UUID) error 
 		`delete from cards where user_id = $1 and id = $2`, userID, cardID))
 }
 
-// BulkCreateCards inserts many cards, skipping texts that already exist
-// in the deck (or repeat within the batch), compared case- and space-insensitively.
+// BulkCreateCards는 카드 여러 장을 넣되, 덱에 이미 있거나 배치 안에서 반복되는
+// text는 대소문자·공백을 무시하고 비교해 건너뛴다.
 func (s *Store) BulkCreateCards(ctx context.Context, userID, deckID uuid.UUID, inputs []model.CardInput) (model.BulkResult, error) {
 	var res model.BulkResult
 	if _, err := s.GetDeck(ctx, userID, deckID); err != nil {

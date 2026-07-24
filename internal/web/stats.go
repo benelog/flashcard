@@ -12,7 +12,7 @@ import (
 
 // 학습 통계 화면: 일별 막대 차트와 요약 수치.
 
-// chartDays is how many days the stats bar chart shows.
+// chartDays는 통계 막대 차트가 보여 주는 날 수다.
 const chartDays = 30
 
 type chartDay struct {
@@ -23,7 +23,7 @@ type chartDay struct {
 	Title      string
 }
 
-// buildChart lays out the last chartDays days ending on today.
+// buildChart는 오늘로 끝나는 최근 chartDays일을 늘어놓는다.
 //
 // 공부하지 않은 날은 DB에 행이 없다. 차트에 그 날을 빈칸으로 남기려면 날짜를
 // 하루씩 세어 채워야 한다. 막대 높이는 여기서 %로 계산해 템플릿은 그리기만 한다.
@@ -51,8 +51,8 @@ func buildChart(daily []model.DailyStat, today time.Time) []chartDay {
 	return days
 }
 
-// accuracy is the all-time correct percentage. 아직 한 번도 풀지 않았으면
-// 정답률이라는 것이 없으므로, 템플릿이 0%와 구별하도록 -1로 알린다.
+// accuracy는 전체 기간 정답률(%)이다. 아직 한 번도 풀지 않았으면 정답률이라는
+// 것이 없으므로, 템플릿이 0%와 구별하도록 -1로 알린다.
 func accuracy(summary model.Summary) int {
 	if summary.TotalReviews == 0 {
 		return -1

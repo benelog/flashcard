@@ -1,6 +1,6 @@
-// Package smartrules defines the rule types behind virtual "smart decks".
-// A rule is stored as JSON and turned into a query against cards_with_stats
-// at study time, so smart decks never go stale.
+// Package smartrules는 가상의 "스마트 덱"을 이루는 규칙 타입을 정의한다.
+// 규칙은 JSON으로 저장했다가 학습 시점에 cards_with_stats 조회로 바꾸므로
+// 스마트 덱은 낡지 않는다.
 package smartrules
 
 import (
@@ -30,9 +30,8 @@ type Rule struct {
 
 // end::rule[]
 
-// Suggested lists the canned rules the app recommends without being asked:
-// 홈 화면의 추천 타일과 JSON API의 /suggestions가 같은 묶음을 내놓도록 목록을
-// 여기 하나만 둔다. 부르는 쪽이 Limit 등을 손봐도 서로 영향이 없게 매번 새로
+// Suggested는 앱이 먼저 나서서 추천하는 규칙 묶음이다. 홈 화면의 추천 타일과
+// JSON API의 /suggestions가 같은 묶음을 내놓도록 목록을 여기 하나만 둔다. 부르는 쪽이 Limit 등을 손봐도 서로 영향이 없게 매번 새로
 // 만들어 돌려준다.
 func Suggested() []Rule {
 	return []Rule{

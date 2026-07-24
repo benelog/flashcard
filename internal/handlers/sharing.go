@@ -54,8 +54,7 @@ func (h *Handlers) ListSharedDecks(c *gin.Context) {
 	c.JSON(http.StatusOK, decks)
 }
 
-// GetSharedDeck returns the shared deck's summary plus its full card content
-// for preview.
+// GetSharedDeck은 공유 덱의 요약과 미리보기용 카드 전체 내용을 함께 돌려준다.
 func (h *Handlers) GetSharedDeck(c *gin.Context) {
 	slug, ok := pathSlug(c)
 	if !ok {

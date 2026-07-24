@@ -1,7 +1,7 @@
 // tag::head[]
 
-// Package srs implements a binary-grade variant of SM-2. The UI only offers
-// 맞음/틀림, mapped to SM-2 quality 5 and 2 respectively.
+// Package srs는 SM-2의 이진 채점 변형을 구현한다. UI는 맞음/틀림만 내놓고,
+// 각각 SM-2 품질 5와 2에 대응한다.
 package srs
 
 import (
@@ -12,7 +12,7 @@ import (
 const (
 	MinEase     = 1.3
 	InitialEase = 2.5
-	// SM-2 ease deltas for q=5 and q=2.
+	// q=5와 q=2에 해당하는 SM-2의 ease 증감.
 	easeGainCorrect   = 0.1
 	easeLossIncorrect = 0.32
 )
@@ -33,8 +33,8 @@ func NewState() State {
 // end::state[]
 
 // tag::grade[]
-// Grade returns the next SRS state and due time after a first-pass answer.
-// Retry-round answers must not be graded.
+// Grade는 첫 회차 답변 뒤의 다음 SRS 상태와 복습 예정 시각을 돌려준다.
+// 재도전 회차의 답변은 채점하면 안 된다.
 func Grade(s State, correct bool, now time.Time) (State, time.Time) {
 	if correct {
 		s.Repetitions++

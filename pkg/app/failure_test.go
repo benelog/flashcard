@@ -22,7 +22,7 @@ import (
 
 var errStoreDown = errors.New("connection reset by peer: table cards is on fire")
 
-// brokenStore is the real store with chosen methods broken. model.Store를
+// brokenStore는 진짜 저장소에서 고른 메서드만 깨뜨린 것이다. model.Store를
 // 묻어 두었으므로 지정하지 않은 메서드 스물몇 개는 그대로 진짜 저장소로 간다.
 type brokenStore struct {
 	model.Store

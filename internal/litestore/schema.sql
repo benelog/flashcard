@@ -1,16 +1,15 @@
--- SQLite port of internal/db/migrations/*.up.sql for local single-user mode,
--- collapsed into one idempotent script (create ... if not exists).
+-- 로컬 단일 사용자 모드를 위한 internal/db/migrations/*.up.sql의 SQLite 포팅본.
+-- 멱등 스크립트 하나로 합쳐 두었다(create ... if not exists).
 --
 -- Ported through: 000004_deck_seq
 -- 새 마이그레이션을 여기 옮긴 뒤 위 줄도 함께 고친다. schema_test.go가 이 표식과
 -- 마이그레이션 디렉터리를 대조해, 옮기는 것을 잊으면 테스트로 알려 준다.
 --
--- Dialect mapping: uuid -> text (generated in Go), timestamptz -> text in the
--- fixed-width UTC layout (see timeLayout), jsonb -> text (JSON), text[] ->
--- text (JSON array), enum -> text + check. Defaults that need gen_random_uuid()
--- or now() are supplied by Go instead. deck.seq replaces the identity column
--- with max(seq)+1 at insert. Postgres-only concerns (RLS, role grants, the
--- GIN tags index) are dropped.
+-- 방언 대응: uuid -> text(Go에서 생성), timestamptz -> 고정 폭 UTC 형식의
+-- text(timeLayout 참고), jsonb -> text(JSON), text[] -> text(JSON 배열),
+-- enum -> text + check. gen_random_uuid()나 now()가 필요한 기본값은 Go가 대신
+-- 채운다. deck.seq는 identity 열 대신 insert 시 max(seq)+1로 만든다.
+-- Postgres에만 있는 것(RLS, role grant, GIN tags 인덱스)은 뺐다.
 
 create table if not exists profiles (
   id text primary key,

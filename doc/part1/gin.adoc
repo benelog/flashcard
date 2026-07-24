@@ -37,7 +37,8 @@ var (
 	engineErr  error
 )
 
-// Engine returns the process-wide router; warm serverless instances reuse it.
+// Engine은 프로세스 전역 라우터를 돌려준다. 서버리스 인스턴스가 따뜻할 때는
+// 재사용된다.
 func Engine() (*gin.Engine, error) {
 	engineOnce.Do(func() {
 		engine, engineErr = build()
@@ -58,9 +59,8 @@ func build() (*gin.Engine, error) {
 	return New(cfg, pgstore.New(pool)), nil
 }
 
-// New assembles the router on top of any Store implementation. cfg.AuthMode
-// picks the middleware: Supabase token validation in production, the fixed
-// local user in local mode.
+// New는 아무 Store 구현 위에 라우터를 조립한다. 미들웨어는 cfg.AuthMode가
+// 고른다. 운영은 Supabase 토큰 검증, 로컬 모드는 고정 사용자다.
 func New(cfg *config.Config, s model.Store) *gin.Engine {
 	h := handlers.New(s)
 
@@ -69,8 +69,8 @@ func New(cfg *config.Config, s model.Store) *gin.Engine {
 	r.Use(gin.Recovery())
 	// ... 미들웨어와 API 라우트 등록 (뒤 절에서 발췌)
 
-	// HTML pages: server-rendered templates + htmx, cookie sessions. The API
-	// above stays token-based for programmatic clients.
+	// HTML 화면: 서버 렌더링 템플릿 + htmx, 쿠키 세션. 위의 API는 프로그램
+	// 호출자를 위해 토큰 기반으로 남는다.
 	web.New(cfg, s).Register(r)
 
 	return r
@@ -179,10 +179,10 @@ Vercel 쪽 진입점은 api/index.go다.
 
 [source,go]
 ----
-// Package handler is the Vercel serverless entrypoint.
+// Package handler는 Vercel 서버리스 진입점이다.
 // ...
-// Vercel compiles this file outside the module, so it must not import
-// internal/ packages (directly); shared code it needs lives in pkg/.
+// Vercel은 이 파일을 모듈 바깥에서 컴파일하므로 internal/ 패키지를 (직접)
+// import할 수 없다. 필요한 공용 코드는 pkg/에 둔다.
 package handler
 
 func Handler(w http.ResponseWriter, r *http.Request) {
@@ -246,7 +246,7 @@ api := r.Group("/api", required, h.EnsureProfile())
 	// ... 프로필 라우트 생략
 	api.GET("/decks", h.ListDecks)
 	api.POST("/decks", h.CreateDeck)
-	// Decks are addressed by their short Base36 slug, not the UUID.
+	// 덱은 UUID가 아니라 짧은 Base36 슬러그로 가리킨다.
 	api.GET("/decks/:slug", h.GetDeck)
 	api.PATCH("/decks/:slug", h.UpdateDeck)
 	api.DELETE("/decks/:slug", h.DeleteDeck)
@@ -537,7 +537,7 @@ internal/auth/jwt.go의 핵심부를 보자.
 ----
 const userIDKey = "auth.userID"
 
-// Middleware validates the Supabase access token and stores the user id.
+// Middleware는 Supabase 액세스 토큰을 검증하고 사용자 ID를 컨텍스트에 싣는다.
 func Middleware(jwksURL, secret string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		raw := bearerToken(c)
@@ -634,8 +634,8 @@ internal/handlers는 요청 파싱·검증·상태 코드를, internal/pgstore�
 ----
 // internal/model/store.go
 
-// Store is the persistence contract. *pgstore.Store (pgx, 배포 환경)와
-// *litestore.Store (SQLite, 로컬 모드)가 둘 다 이것을 만족한다.
+// Store는 저장소 계약이다. *pgstore.Store(pgx, 배포 환경)와
+// *litestore.Store(SQLite, 로컬 모드)가 둘 다 이것을 만족한다.
 type Store interface {
 	GetOrCreateProfile(ctx context.Context, userID uuid.UUID, displayName string) (Profile, error)
 	// ...

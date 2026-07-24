@@ -14,9 +14,8 @@ import (
 	"time"
 )
 
-// goTrue is a minimal client for Supabase Auth's REST API. The whole OAuth
-// dance runs server to server, so the browser never sees a token: it only
-// carries HttpOnly cookies.
+// goTrue는 Supabase Auth REST API의 최소 클라이언트다. OAuth 흐름이 전부 서버
+// 사이에서 오가므로 브라우저는 토큰을 보지 못하고 HttpOnly 쿠키만 나른다.
 type goTrue struct {
 	baseURL string // https://<ref>.supabase.co
 	anonKey string
@@ -31,14 +30,14 @@ func newGoTrue(baseURL, anonKey string) *goTrue {
 	}
 }
 
-// tokenResponse is the relevant subset of GoTrue's /token response.
+// tokenResponse는 GoTrue /token 응답에서 쓰는 부분만 담는다.
 type tokenResponse struct {
 	AccessToken  string `json:"access_token"`
 	RefreshToken string `json:"refresh_token"`
 	ExpiresIn    int    `json:"expires_in"`
 }
 
-// newPKCEVerifier returns a random PKCE code verifier (RFC 7636).
+// newPKCEVerifier는 무작위 PKCE code verifier를 만든다(RFC 7636).
 func newPKCEVerifier() string {
 	b := make([]byte, 32)
 	if _, err := rand.Read(b); err != nil {
@@ -53,8 +52,8 @@ func pkceChallenge(verifier string) string {
 }
 
 // tag::authorize-url[]
-// authorizeURL is where the login button points: GoTrue redirects on to the
-// provider (Google/GitHub) and eventually back to redirectTo with ?code=.
+// authorizeURL은 로그인 버튼이 가리키는 곳이다. GoTrue가 제공자(Google/GitHub)로
+// 넘겼다가 ?code=를 붙여 redirectTo로 되돌린다.
 func (g *goTrue) authorizeURL(provider, redirectTo, challenge string) string {
 	q := url.Values{
 		"provider":              {provider},
@@ -98,7 +97,7 @@ func (g *goTrue) token(ctx context.Context, grantType string, body any) (tokenRe
 	return tok, nil
 }
 
-// exchangeCode trades the callback's authorization code for a session.
+// exchangeCode는 콜백의 authorization code를 세션으로 바꾼다.
 func (g *goTrue) exchangeCode(ctx context.Context, code, verifier string) (tokenResponse, error) {
 	return g.token(ctx, "pkce", map[string]string{
 		"auth_code":     code,
@@ -112,7 +111,7 @@ func (g *goTrue) refresh(ctx context.Context, refreshToken string) (tokenRespons
 	})
 }
 
-// logout revokes the session server-side; cookie clearing is the caller's job.
+// logout은 서버 쪽 세션을 무효화한다. 쿠키를 지우는 일은 부르는 쪽 몫이다.
 func (g *goTrue) logout(ctx context.Context, accessToken string) error {
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost,
 		g.baseURL+"/auth/v1/logout", nil)

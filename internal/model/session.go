@@ -34,16 +34,16 @@ const (
 	DefaultDirection = TextToMeaning
 )
 
-// Directions lists every accepted direction, in the order the UI offers them.
+// Directions는 허용하는 학습 방향 전부이며, UI가 보여 주는 순서를 따른다.
 var Directions = []string{TextToMeaning, MeaningToText}
 
-// IsDirection reports whether d is one of the accepted directions. JSON API
-// 요청처럼 잘못된 값을 400으로 되돌려 줘야 하는 곳에서 쓴다.
+// IsDirection은 d가 허용하는 방향인지 알려 준다. JSON API 요청처럼 잘못된 값을
+// 400으로 되돌려 줘야 하는 곳에서 쓴다.
 func IsDirection(d string) bool {
 	return slices.Contains(Directions, d)
 }
 
-// NormalizeDirection maps blank or unrecognized input to DefaultDirection.
+// NormalizeDirection은 비었거나 모르는 입력을 DefaultDirection으로 되돌린다.
 // 쿠키와 폼처럼 브라우저가 실어 오는 값에서 쓴다. 되돌려 보낼 화면이 없는
 // 자리이므로, 알아볼 수 없는 값이면 기본 방향으로 학습을 이어 가는 편이 낫다.
 func NormalizeDirection(d string) string {

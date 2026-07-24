@@ -10,7 +10,7 @@ import (
 	"github.com/benelog/flashcard/internal/model"
 )
 
-// importCSV handles the deck page's file-upload form. 실패는 모두 덱 화면으로
+// importCSV는 덱 화면의 파일 업로드 폼을 처리한다. 실패는 모두 덱 화면으로
 // 되돌아가며 플래시 메시지로 알린다.
 func (w *Web) importCSV(c *gin.Context) {
 	slug := c.Param("slug")
@@ -58,8 +58,7 @@ func (w *Web) importCSV(c *gin.Context) {
 	redirectWithFlash(c, flashInfo, message, deckURL)
 }
 
-// exportCSV streams the deck as CSV, the very same file the API's /export
-// hands out.
+// exportCSV는 덱을 CSV로 내려보낸다. API의 /export가 주는 것과 같은 파일이다.
 func (w *Web) exportCSV(c *gin.Context) {
 	if err := cardcsv.ExportDeck(c.Request.Context(), w.store, auth.UserID(c), c.Param("slug"), c.Writer); err != nil {
 		w.failPage(c, err)

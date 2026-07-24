@@ -23,13 +23,12 @@
 
 [source,go]
 ----
-// LocalUserID is the fixed identity every request runs as in local mode.
+// LocalUserID는 로컬 모드의 모든 요청이 쓰는 고정 사용자다.
 var LocalUserID = uuid.MustParse("00000000-0000-0000-0000-000000000001")
 
-// LocalMiddleware replaces token validation in local single-user mode: it
-// signs every request in as LocalUserID, so no Authorization header (and no
-// Supabase) is needed. It stands in for both the required and the optional
-// middleware.
+// LocalMiddleware는 로컬 단일 사용자 모드에서 토큰 검증을 대신한다. 모든 요청을
+// LocalUserID로 로그인시키므로 Authorization 헤더도 Supabase도 필요 없다.
+// required·optional 두 자리를 다 맡는다.
 func LocalMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		c.Set(userIDKey, LocalUserID)
@@ -228,8 +227,8 @@ Supabase 문서와 튜토리얼 대부분은 브라우저에서 supabase-js를 �
 
 [source,go]
 ----
-// startOAuth kicks off the server-side PKCE flow: remember the verifier and
-// destination in short-lived cookies, then hand the visitor to GoTrue.
+// startOAuth는 서버 측 PKCE 흐름을 시작한다. verifier와 돌아갈 주소를 짧은
+// 수명의 쿠키에 남기고 방문자를 GoTrue로 보낸다.
 func (w *Web) startOAuth(c *gin.Context) {
 	provider := c.Param("provider")
 	if provider != "google" && provider != "github" {
@@ -270,8 +269,8 @@ include::../../internal/web/gotrue.go[tag=authorize-url]
 
 [source,go]
 ----
-// oauthCallback finishes the flow: trade the code for tokens and store them
-// in HttpOnly cookies. The browser never sees an access token.
+// oauthCallback은 흐름을 마무리한다. code를 토큰으로 바꿔 HttpOnly 쿠키에
+// 담으므로 브라우저는 access token을 보지 못한다.
 func (w *Web) oauthCallback(c *gin.Context) {
 	next := safeNext(cookieValue(c, nextCookie))
 	verifier := cookieValue(c, pkceCookie)
@@ -318,7 +317,7 @@ OAuth에서 인가 코드를 가로채도 토큰으로 바꿀 수 없게 만드�
 
 [source,go]
 ----
-// newPKCEVerifier returns a random PKCE code verifier (RFC 7636).
+// newPKCEVerifier는 무작위 PKCE code verifier를 만든다(RFC 7636).
 func newPKCEVerifier() string {
 	b := make([]byte, 32)
 	if _, err := rand.Read(b); err != nil {
@@ -341,7 +340,7 @@ verifier는 암호학적 난수 32바이트이고, challenge는 그 SHA-256 해�
 
 [source,go]
 ----
-// exchangeCode trades the callback's authorization code for a session.
+// exchangeCode는 콜백의 authorization code를 세션으로 바꾼다.
 func (g *goTrue) exchangeCode(ctx context.Context, code, verifier string) (tokenResponse, error) {
 	return g.token(ctx, "pkce", map[string]string{
 		"auth_code":     code,
@@ -359,12 +358,12 @@ verifier는 우리 서버가 발급해 방문자의 HttpOnly 쿠키에만 있었
 Flashcard는 쿠키를 쓰고, 그중에서도 스크립트가 읽을 수 없는 HttpOnly 쿠키를 쓴다.
 앞의 쿠키 상자에서 정의한 성질에 더해, 이 절에서는 `HttpOnly`·`Secure`·`SameSite` 세 속성만 다룬다.
 
-`internal/web/session.go`의 첫머리에 쿠키 이름들이 모여 있고, 상수 위 주석이 이 절의 요지를 요약한다.
+`internal/web/cookies.go`의 첫머리에 쿠키 이름들이 모여 있고, 상수 위 주석이 이 절의 요지를 요약한다.
 
 [source,go]
 ----
-// Cookie names. Session tokens are HttpOnly: page scripts (and any injected
-// script) can never read them — the main security win over localStorage.
+// 쿠키 이름들. 세션 토큰은 HttpOnly라 페이지 스크립트(주입된 스크립트 포함)가
+// 읽을 수 없다. localStorage 대신 쿠키를 쓰는 가장 큰 이유다.
 const (
 	accessCookie  = "fc_access"
 	refreshCookie = "fc_refresh"
@@ -421,7 +420,7 @@ Lax는 다른 사이트에서 출발한 POST 요청에 쿠키를 싣지 않으�
 [source,go]
 ----
 func (w *Web) setAuthCookies(c *gin.Context, tok tokenResponse) {
-	maxAge := tok.ExpiresIn - 60 // renew before GoTrue expires it
+	maxAge := tok.ExpiresIn - 60 // GoTrue가 만료시키기 전에 갱신하도록 여유를 둔다
 	if maxAge <= 0 {
 		maxAge = 300
 	}
@@ -445,14 +444,14 @@ localStorage는 같은 사이트의 모든 스크립트가 읽을 수 있어서,
 
 액세스 토큰의 수명은 1시간이다.
 그렇다고 사용자를 한 시간마다 로그인 화면으로 쫓아낼 수는 없다.
-만료를 알아채고 리프레시 토큰으로 새 토큰을 받아 오는 일은 `internal/web/session.go`의 `withUser` 미들웨어가 페이지 핸들러 모르게 처리한다.
+만료를 알아채고 리프레시 토큰으로 새 토큰을 받아 오는 일은 `internal/web/cookies.go`의 `withUser` 미들웨어가 페이지 핸들러 모르게 처리한다.
 모든 페이지 요청이 이 미들웨어를 지나며 방문자의 신원을 확인받는다.
 
 [source,go]
 ----
-// withUser resolves the visitor from the session cookies and, when the access
-// token has expired, renews it with the refresh token — all transparently to
-// the page handlers. Anonymous visitors pass through; requireUser is the gate.
+// withUser는 세션 쿠키에서 방문자를 알아내고, access token이 만료됐으면
+// refresh token으로 페이지 핸들러 몰래 갱신한다. 익명 방문자는 통과시키며,
+// 막는 일은 requireUser가 한다.
 func (w *Web) withUser() gin.HandlerFunc {
 	if w.cfg.AuthMode == "local" {
 		return func(c *gin.Context) {
@@ -469,7 +468,7 @@ func (w *Web) withUser() gin.HandlerFunc {
 				return
 			}
 		}
-		// Access token missing or expired: try the refresh token once.
+		// access token이 없거나 만료됐다. refresh token을 한 번만 써 본다.
 		if rt := cookieValue(c, refreshCookie); rt != "" {
 			if tok, err := w.goTrue.refresh(c.Request.Context(), rt); err == nil {
 				w.setAuthCookies(c, tok)
@@ -497,8 +496,7 @@ func (w *Web) withUser() gin.HandlerFunc {
 
 [source,go]
 ----
-// requireUser redirects anonymous visitors to the login page, remembering
-// where they were headed.
+// requireUser는 익명 방문자를 가려던 곳을 기억한 채 로그인 화면으로 보낸다.
 func (w *Web) requireUser() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		if auth.OptionalUserID(c) != uuid.Nil {
@@ -518,8 +516,8 @@ func (w *Web) requireUser() gin.HandlerFunc {
 
 [source,go]
 ----
-// safeNext only honors same-app paths, so a crafted ?next= link can't bounce
-// the visitor to another origin after sign-in.
+// safeNext는 앱 안의 경로만 받아들인다. 조작된 ?next= 링크가 로그인 뒤
+// 방문자를 다른 출처로 튕겨 보내지 못하게 한다.
 func safeNext(next string) string {
 	if strings.HasPrefix(next, "/") && !strings.HasPrefix(next, "//") {
 		return next
@@ -544,8 +542,7 @@ func safeNext(next string) string {
 func (w *Web) logout(c *gin.Context) {
 	if w.goTrue != nil {
 		if at := cookieValue(c, accessCookie); at != "" {
-			// Best-effort revocation; clearing cookies signs the browser out
-			// regardless.
+			// 실패해도 무시한다. 쿠키만 지워도 브라우저는 로그아웃된다.
 			_ = w.goTrue.logout(c.Request.Context(), at)
 		}
 	}

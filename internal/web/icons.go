@@ -2,8 +2,8 @@ package web
 
 import "html/template"
 
-// icons holds the inline SVG bodies (24×24 stroke drawings) used across the
-// pages, so no icon font or JS icon library is needed.
+// icons는 화면 곳곳에서 쓰는 인라인 SVG 본문(24×24 스트로크)이다. 아이콘
+// 폰트나 JS 아이콘 라이브러리를 들이지 않기 위한 것이다.
 var icons = map[string]string{
 	"home":       `<path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/>`,
 	"layers":     `<path d="M12 3l9 5-9 5-9-5z"/><path d="M3 13l9 5 9-5"/>`,

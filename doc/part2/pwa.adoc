@@ -394,7 +394,7 @@ return cached || network;
 
 [source,go]
 ----
-c.Header("Cache-Control", "no-store") // pages are per-user; never share
+c.Header("Cache-Control", "no-store") // 페이지는 사용자별이라 캐시에 공유하면 안 된다
 ----
 
 그런데 이 헤더는 브라우저의 HTTP 캐시와 중간 프록시에게 하는 말이지, 서비스 워커에게 하는 말이 아니다.
@@ -529,11 +529,11 @@ Go 서버가 시작할 때 embed된 CSS와 자바스크립트의 내용을 한 �
 
 [source,go]
 ----
-// assetVersion fingerprints the embedded CSS/JS. The templates hang it off
-// every asset URL as ?v=…, so a deploy changes the URL itself: the service
-// worker (which serves static files stale-while-revalidate) can never pair a
-// new page with last version's stylesheet. Filenames stay stable, which keeps
-// them readable in the repo and in devtools.
+// assetVersion은 embed된 CSS/JS의 내용 해시다. 템플릿이 모든 자산 URL에
+// ?v=…로 붙이므로 배포하면 URL 자체가 바뀐다. 정적 파일을
+// stale-while-revalidate로 내주는 서비스 워커가 새 페이지에 지난 버전의
+// 스타일시트를 짝지을 수 없게 하기 위해서다. 파일 이름은 그대로라 저장소와
+// devtools에서 읽기 좋다.
 var assetVersion = sync.OnceValue(func() string {
 	h := sha256.New()
 	for _, name := range []string{"static/app.css", "static/app.js", "static/htmx.min.js"} {
@@ -546,7 +546,7 @@ var assetVersion = sync.OnceValue(func() string {
 	return hex.EncodeToString(h.Sum(nil))[:12]
 })
 
-// asset is the template func: {{asset "/static/app.css"}}.
+// asset은 템플릿 함수다: {{asset "/static/app.css"}}.
 func asset(path string) string { return path + "?v=" + assetVersion() }
 ----
 

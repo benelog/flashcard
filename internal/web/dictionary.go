@@ -36,8 +36,8 @@ type apiEntry struct {
 	} `json:"meanings"`
 }
 
-// summarizeEntries condenses the API response: first phonetic, up to two
-// "(품사) 뜻" lines, and the first example.
+// summarizeEntries는 API 응답을 간추린다. 첫 발음 기호, "(품사) 뜻" 줄 최대
+// 둘, 첫 예문만 남긴다.
 func summarizeEntries(entries []apiEntry) dictEntry {
 	var out dictEntry
 	if len(entries) == 0 {
@@ -93,9 +93,8 @@ func lookupWord(word string) (dictEntry, error) {
 	return summarizeEntries(entries), nil
 }
 
-// dictionaryLookup fills the card form from the dictionary. The htmx button
-// posts the whole form; the response swaps back only the fields the user
-// hasn't typed yet (hx-swap-oob) plus a status line.
+// dictionaryLookup은 사전으로 카드 폼을 채운다. htmx 버튼이 폼 전체를 보내고,
+// 응답은 사용자가 아직 입력하지 않은 필드와 상태 줄만 되바꾼다(hx-swap-oob).
 func (w *Web) dictionaryLookup(c *gin.Context) {
 	form := cardFormView{
 		Text:     strings.TrimSpace(c.PostForm("text")),

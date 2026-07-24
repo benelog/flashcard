@@ -10,8 +10,8 @@ import (
 	"github.com/benelog/flashcard/internal/smartrules"
 )
 
-// Store is the persistence contract. *pgstore.Store (pgx, 배포 환경)와
-// *litestore.Store (SQLite, 로컬 모드)가 둘 다 이것을 만족한다.
+// Store는 저장소 계약이다. *pgstore.Store(pgx, 배포 환경)와
+// *litestore.Store(SQLite, 로컬 모드)가 둘 다 이것을 만족한다.
 //
 // 계약이 구현 쪽이 아니라 여기 있는 이유는 소비자가 둘이기 때문이다. HTML을
 // 그리는 internal/web과 JSON API인 internal/handlers가 같은 저장소를 보는데,

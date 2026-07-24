@@ -1,13 +1,13 @@
-// Package app builds the Gin engine shared by the local dev server
-// (cmd/server) and the Vercel serverless entrypoint (api/index.go).
+// Package app은 로컬 서버(cmd/server)와 Vercel 서버리스 진입점(api/index.go)이
+// 함께 쓰는 Gin 엔진을 만든다.
 //
 // 이 패키지만 internal/ 이 아니라 pkg/ 에 있다. Vercel의 Go 빌더가 api/index.go를
 // 모듈 바깥에서 컴파일해 internal/ 을 가져올 수 없기 때문이다. internal/app으로
 // 옮기면 로컬 빌드와 테스트는 그대로 통과하고 배포만 깨지므로, 위치를 바꾸기
 // 전에 api/index.go의 주석을 함께 읽는다.
 //
-// This package must never import internal/litestore: Engine serves Vercel,
-// and the serverless binary must not link SQLite.
+// 이 패키지는 internal/litestore를 import하면 안 된다. Engine은 Vercel에서
+// 돌고, 서버리스 바이너리에 SQLite가 링크되면 안 되기 때문이다.
 package app
 
 import (
@@ -34,7 +34,8 @@ var (
 	engineErr  error
 )
 
-// Engine returns the process-wide router; warm serverless instances reuse it.
+// Engine은 프로세스 전역 라우터를 돌려준다. 서버리스 인스턴스가 따뜻할 때는
+// 재사용된다.
 func Engine() (*gin.Engine, error) {
 	engineOnce.Do(func() {
 		engine, engineErr = build()
@@ -57,9 +58,8 @@ func build() (*gin.Engine, error) {
 	return New(cfg, pgstore.New(pool)), nil
 }
 
-// New assembles the router on top of any Store implementation. cfg.AuthMode
-// picks the middleware: Supabase token validation in production, the fixed
-// local user in local mode.
+// New는 아무 Store 구현 위에 라우터를 조립한다. 미들웨어는 cfg.AuthMode가
+// 고른다. 운영은 Supabase 토큰 검증, 로컬 모드는 고정 사용자다.
 func New(cfg *config.Config, s model.Store) *gin.Engine {
 	h := handlers.New(s)
 
@@ -86,10 +86,10 @@ func New(cfg *config.Config, s model.Store) *gin.Engine {
 
 	r.GET("/api/healthz", h.Healthz)
 
-	// Public: browsing shared decks needs no login. Optional auth only lets a
-	// signed-in caller see the "is mine" flag on their own shared decks.
-	// Responses vary by Authorization, so keep shared caches from reusing a
-	// signed-in caller's personalized body for anonymous visitors.
+	// 공개 구간: 공유 덱 구경은 로그인이 필요 없다. 선택적 인증은 로그인한
+	// 사용자에게 자기 공유 덱의 "내 것" 표시를 보여 주기 위한 것뿐이다.
+	// 응답이 Authorization에 따라 달라지므로, 공유 캐시가 로그인 사용자의
+	// 개인화된 본문을 익명 방문자에게 재사용하지 않도록 no-store를 붙인다.
 	pub := r.Group("/api", optional, func(c *gin.Context) {
 		c.Header("Cache-Control", "no-store")
 	})
@@ -105,7 +105,7 @@ func New(cfg *config.Config, s model.Store) *gin.Engine {
 
 		api.GET("/decks", h.ListDecks)
 		api.POST("/decks", h.CreateDeck)
-		// Decks are addressed by their short Base36 slug, not the UUID.
+		// 덱은 UUID가 아니라 짧은 Base36 슬러그로 가리킨다.
 		api.GET("/decks/:slug", h.GetDeck)
 		api.PATCH("/decks/:slug", h.UpdateDeck)
 		api.DELETE("/decks/:slug", h.DeleteDeck)
@@ -136,8 +136,8 @@ func New(cfg *config.Config, s model.Store) *gin.Engine {
 		api.GET("/stats/summary", h.StatsSummary)
 	}
 
-	// HTML pages: server-rendered templates + htmx, cookie sessions. The API
-	// above stays token-based for programmatic clients.
+	// HTML 화면: 서버 렌더링 템플릿 + htmx, 쿠키 세션. 위의 API는 프로그램
+	// 호출자를 위해 토큰 기반으로 남는다.
 	web.New(cfg, s).Register(r)
 
 	return r

@@ -11,11 +11,13 @@ import (
 	"github.com/benelog/flashcard/internal/smartrules"
 )
 
-// ruleQuery renders a smart rule as SQLite SQL selecting matching card ids.
-// smartrules.Rule.Query is Postgres-only (make_interval, tags &&, explicit
-// nulls first), so the SQLite dialect lives here: day cutoffs are computed in
-// Go from now, and the tags overlap becomes a json_each probe into the JSON
-// tags array. The first ? is always the user id.
+// ruleQuery는 스마트 규칙을 맞는 카드 id를 고르는 SQLite SQL로 옮긴다.
+// internal/pgstore에 같은 이름의 짝이 있고, 둘은 서로를 모른 채 같은 규칙을
+// 각자의 방언으로 옮긴다. Postgres가 DB에 맡기는 셋(make_interval, 배열 겹침
+// 연산자 &&, 명시적 nulls first)이 SQLite에는 없어, 날짜 컷오프는 now를 받아
+// Go에서 계산하고 태그 겹침은 JSON tags 배열을 json_each로 펼쳐 찾는다.
+//
+// 첫 ?는 언제나 사용자 id이고, 돌려주는 args가 그 뒤로 이어진다.
 func ruleQuery(r smartrules.Rule, now time.Time) (sql string, args []any) {
 	base := "select id from cards_with_stats where user_id = ?"
 	switch r.Type {
@@ -24,8 +26,8 @@ func ruleQuery(r smartrules.Rule, now time.Time) (sql string, args []any) {
 			[]any{r.MinAttempts, r.MinErrorRate, r.Limit}
 	case smartrules.Stale:
 		cutoff := fmtTime(now.AddDate(0, 0, -r.NotReviewedDays))
-		// SQLite already sorts nulls first in asc order, matching Postgres's
-		// explicit nulls first.
+		// SQLite는 asc에서 null을 이미 앞에 두므로 Postgres의 명시적
+		// nulls first와 순서가 같다.
 		return base + " and (last_reviewed_at is null or last_reviewed_at < ?) order by last_reviewed_at asc limit ?",
 			[]any{cutoff, r.Limit}
 	case smartrules.Tag:
@@ -48,7 +50,7 @@ func placeholders(n int) string {
 	return strings.TrimSuffix(strings.Repeat("?, ", n), ", ")
 }
 
-// CardsByRule evaluates a smart rule and returns matching cards in rule order.
+// CardsByRule은 스마트 규칙을 평가해 맞는 카드를 규칙 순서대로 돌려준다.
 func (s *Store) CardsByRule(ctx context.Context, userID uuid.UUID, rule smartrules.Rule) ([]model.Card, error) {
 	q, extra := ruleQuery(rule, time.Now())
 	args := append([]any{userID.String()}, extra...)

@@ -11,9 +11,8 @@ import (
 	"github.com/benelog/flashcard/internal/model"
 )
 
-// clientLocation reads the tz query param, resolved by model.Location — the
-// same rule the HTML pages apply to their tz cookie, so the two entrances
-// agree on the visitor's "today".
+// clientLocation은 tz 쿼리 파라미터를 model.Location으로 푼다. HTML 화면이 tz
+// 쿠키에 적용하는 규칙과 같아서 두 입구가 방문자의 '오늘'을 같게 본다.
 func clientLocation(c *gin.Context) (string, *time.Location) {
 	return model.Location(c.Query("tz"))
 }

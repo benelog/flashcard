@@ -1,5 +1,5 @@
-// Local dev server: go run ./cmd/server (reads .env vars from the shell).
-// Without DATABASE_URL it runs in local mode on a SQLite file, no env needed.
+// 로컬 개발 서버다: go run ./cmd/server (환경 변수는 셸에서 읽는다).
+// DATABASE_URL이 없으면 환경 변수 없이 SQLite 파일로 로컬 모드로 뜬다.
 package main
 
 import (

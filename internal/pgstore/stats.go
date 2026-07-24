@@ -10,8 +10,8 @@ import (
 	"github.com/benelog/flashcard/internal/model"
 )
 
-// DailyStats groups reviews by local date in the given (pre-validated) IANA
-// timezone, covering the last `days` days including today.
+// DailyStats는 리뷰를 (미리 검증된) IANA 시간대의 현지 날짜로 묶어, 오늘을
+// 포함한 최근 days일을 돌려준다.
 func (s *Store) DailyStats(ctx context.Context, userID uuid.UUID, tz string, days int) ([]model.DailyStat, error) {
 	rows, err := s.pool.Query(ctx,
 		`select to_char(reviewed_at at time zone $2, 'YYYY-MM-DD') as day,

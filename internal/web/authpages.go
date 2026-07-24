@@ -11,8 +11,8 @@ import (
 	"github.com/benelog/flashcard/internal/auth"
 )
 
-// loginPage shows the OAuth buttons. Signed-in visitors (and local mode,
-// which has no login) go straight through.
+// loginPage는 OAuth 버튼을 보여 준다. 이미 로그인한 방문자와 로그인이 없는
+// local 모드는 바로 통과시킨다.
 func (w *Web) loginPage(c *gin.Context) {
 	next := safeNext(c.Query("next"))
 	if w.cfg.AuthMode == "local" || auth.OptionalUserID(c) != uuid.Nil {
@@ -22,8 +22,8 @@ func (w *Web) loginPage(c *gin.Context) {
 	w.render(c, http.StatusOK, "login", "로그인", gin.H{"Next": next})
 }
 
-// startOAuth kicks off the server-side PKCE flow: remember the verifier and
-// destination in short-lived cookies, then hand the visitor to GoTrue.
+// startOAuth는 서버 측 PKCE 흐름을 시작한다. verifier와 돌아갈 주소를 짧은
+// 수명의 쿠키에 남기고 방문자를 GoTrue로 보낸다.
 func (w *Web) startOAuth(c *gin.Context) {
 	provider := c.Param("provider")
 	if provider != "google" && provider != "github" {
@@ -41,16 +41,16 @@ func (w *Web) startOAuth(c *gin.Context) {
 	c.Redirect(http.StatusSeeOther, w.goTrue.authorizeURL(provider, redirectTo, pkceChallenge(verifier)))
 }
 
-// oauthCallback finishes the flow: trade the code for tokens and store them
-// in HttpOnly cookies. The browser never sees an access token.
+// oauthCallback은 흐름을 마무리한다. code를 토큰으로 바꿔 HttpOnly 쿠키에
+// 담으므로 브라우저는 access token을 보지 못한다.
 func (w *Web) oauthCallback(c *gin.Context) {
 	next := safeNext(cookieValue(c, nextCookie))
 	verifier := cookieValue(c, pkceCookie)
 	clearCookie(c, pkceCookie)
 	clearCookie(c, nextCookie)
 
-	// GoTrue reports its own failures (provider errors, misconfigured
-	// secrets) as ?error= instead of ?code=; surface them in the logs.
+	// GoTrue는 자기 쪽 실패(제공자 오류, 잘못된 시크릿)를 ?code= 대신
+	// ?error=로 알린다. 로그에 남긴다.
 	if errCode := c.Query("error"); errCode != "" {
 		log.Printf("oauth callback: gotrue error %q: %s", errCode, c.Query("error_description"))
 		failLogin(c, "로그인에 실패했어요. 다시 시도해주세요.")
@@ -63,8 +63,8 @@ func (w *Web) oauthCallback(c *gin.Context) {
 		return
 	}
 	if verifier == "" {
-		// The 5-minute PKCE cookie is gone: the visitor lingered on the
-		// provider screen, or a newer login attempt replaced it.
+		// 5분짜리 PKCE 쿠키가 사라졌다. 제공자 화면에 오래 머물렀거나
+		// 새 로그인 시도가 덮어쓴 경우다.
 		log.Printf("oauth callback: pkce cookie missing or expired")
 		failLogin(c, "로그인 확인 정보가 만료됐어요. 처음부터 다시 시도해주세요.")
 		return
@@ -79,7 +79,7 @@ func (w *Web) oauthCallback(c *gin.Context) {
 	c.Redirect(http.StatusSeeOther, next)
 }
 
-// failLogin sends the visitor back to the login page with a flash message.
+// failLogin은 플래시 메시지와 함께 로그인 화면으로 되돌린다.
 // 원인은 부르는 쪽이 로그에 남긴다: 방문자에게 보일 문구와 운영자가 볼 기록은
 // 다른 물건이다.
 func failLogin(c *gin.Context, message string) {
@@ -89,8 +89,7 @@ func failLogin(c *gin.Context, message string) {
 func (w *Web) logout(c *gin.Context) {
 	if w.goTrue != nil {
 		if at := cookieValue(c, accessCookie); at != "" {
-			// Best-effort revocation; clearing cookies signs the browser out
-			// regardless.
+			// 실패해도 무시한다. 쿠키만 지워도 브라우저는 로그아웃된다.
 			_ = w.goTrue.logout(c.Request.Context(), at)
 		}
 	}
@@ -100,7 +99,7 @@ func (w *Web) logout(c *gin.Context) {
 	c.Redirect(http.StatusSeeOther, "/login?signed_out=1")
 }
 
-// origin rebuilds the request's external base URL, proxy-aware.
+// origin은 프록시를 감안해 요청의 외부 기준 URL을 되살린다.
 func origin(c *gin.Context) string {
 	scheme := "http"
 	if isHTTPS(c) {
@@ -109,7 +108,7 @@ func origin(c *gin.Context) string {
 	return scheme + "://" + c.Request.Host
 }
 
-// redirectBack sends a plain form post back where it came from (PRG pattern).
+// redirectBack은 폼 제출을 온 곳으로 되돌린다(PRG 패턴).
 func redirectBack(c *gin.Context, fallback string) {
 	ref := c.Request.Referer()
 	if ref == "" {

@@ -24,8 +24,8 @@ func TestDeckSlugRoundTrip(t *testing.T) {
 }
 
 // tag::bijective[]
-// A broad round trip guards against an arithmetic slip in the permutation or
-// its inverse, and confirms slugs are always 4 chars and never collide.
+// 넓은 범위의 왕복 검사는 순열이나 그 역의 산술 실수를 잡고, slug가 항상
+// 4글자이며 충돌하지 않음을 확인한다.
 func TestDeckSlugBijective(t *testing.T) {
 	seen := make(map[string]int64)
 	for seq := int64(1); seq < 20000; seq++ {
@@ -45,14 +45,14 @@ func TestDeckSlugBijective(t *testing.T) {
 
 // end::bijective[]
 
-// Slugs must not read as a sequence: adjacent seq values encode to unrelated slugs.
+// slug가 순번으로 읽히면 안 된다. 이웃한 seq는 서로 무관한 slug가 된다.
 func TestDeckSlugNotSequential(t *testing.T) {
 	if a, b := EncodeDeckSlug(1), EncodeDeckSlug(2); a == "0001" || b == "0002" {
 		t.Errorf("slugs look sequential: 1 -> %q, 2 -> %q", a, b)
 	}
 }
 
-// Base36 slugs are case-insensitive: an uppercased slug resolves to the same deck.
+// Base36 slug는 대소문자를 가리지 않는다. 대문자로 바꾼 slug도 같은 덱을 찾는다.
 func TestDeckSlugCaseInsensitive(t *testing.T) {
 	for _, seq := range []int64{1, 42, 1_000_000} {
 		slug := EncodeDeckSlug(seq)
@@ -73,8 +73,8 @@ func TestEncodeDeckSlugOutOfRange(t *testing.T) {
 
 // tag::invalid-input[]
 func TestDecodeDeckSlugInvalid(t *testing.T) {
-	// Wrong length, non-Base36 byte, multibyte input, and the zero slug (which
-	// maps back to seq 0) must all be rejected.
+	// 길이가 틀린 것, Base36 밖의 바이트, 멀티바이트 입력, 그리고 seq 0으로
+	// 되돌아가는 영 slug는 모두 거부해야 한다.
 	for _, s := range []string{"", "abc", "abcde", "abc!", "한글", "0000"} {
 		if _, err := DecodeDeckSlug(s); err == nil {
 			t.Errorf("DecodeDeckSlug(%q) expected error", s)

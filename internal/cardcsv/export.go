@@ -11,7 +11,7 @@ import (
 	"github.com/benelog/flashcard/internal/model"
 )
 
-// ExportDeck streams one deck's cards as a CSV download. 덱 화면의 내보내기
+// ExportDeck은 한 덱의 카드를 CSV 다운로드로 흘려보낸다. 덱 화면의 내보내기
 // 버튼(HTML)과 JSON API의 /export가 같은 파일을 받도록 두 곳이 이 함수를 함께
 // 쓴다.
 //

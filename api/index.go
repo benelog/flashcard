@@ -1,9 +1,9 @@
-// Package handler is the Vercel serverless entrypoint. vercel.json rewrites
-// every request here (HTML pages, static assets and the JSON API alike); the
-// original path is preserved, so the Gin router dispatches normally.
+// Package handler는 Vercel 서버리스 진입점이다. vercel.json이 모든 요청(HTML
+// 화면, 정적 자원, JSON API 전부)을 여기로 다시 쓴다. 원래 경로가 보존되므로
+// Gin 라우터가 평소처럼 분기한다.
 //
-// Vercel compiles this file outside the module, so it must not import
-// internal/ packages (directly); shared code it needs lives in pkg/.
+// Vercel은 이 파일을 모듈 바깥에서 컴파일하므로 internal/ 패키지를 (직접)
+// import할 수 없다. 필요한 공용 코드는 pkg/에 둔다.
 package handler
 
 import (

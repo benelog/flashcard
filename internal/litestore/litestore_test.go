@@ -50,8 +50,8 @@ func mustCard(t *testing.T, s *Store, userID, deckID uuid.UUID, text string, tag
 	return card
 }
 
-// Open must be idempotent: reopening an existing file reapplies the schema
-// without error.
+// Open은 멱등이어야 한다: 이미 있는 파일을 다시 열어도 스키마 재적용이 오류
+// 없이 지나간다.
 func TestOpenIdempotent(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "test.db")
 	for i := 0; i < 2; i++ {
@@ -167,11 +167,11 @@ func TestBulkCreateCardsSkipsDuplicates(t *testing.T) {
 	mustCard(t, s, userID, deck.ID, "run", nil)
 
 	inputs := []model.CardInput{
-		{Text: "run", Meaning: "m", CardType: "word"},   // already in the deck
-		{Text: " RUN ", Meaning: "m", CardType: "word"}, // case/space-insensitive duplicate
-		{Text: "walk", Meaning: "m", CardType: "word"},  // new
-		{Text: "walk", Meaning: "m", CardType: "word"},  // repeats within the batch
-		{Text: "jump", Meaning: "m", CardType: "word"},  // new
+		{Text: "run", Meaning: "m", CardType: "word"},   // 덱에 이미 있다
+		{Text: " RUN ", Meaning: "m", CardType: "word"}, // 대소문자·공백만 다른 중복
+		{Text: "walk", Meaning: "m", CardType: "word"},  // 새 카드
+		{Text: "walk", Meaning: "m", CardType: "word"},  // 배치 안에서 반복
+		{Text: "jump", Meaning: "m", CardType: "word"},  // 새 카드
 	}
 	res, err := s.BulkCreateCards(ctx, userID, deck.ID, inputs)
 	if err != nil {
@@ -204,7 +204,7 @@ func TestReviewSessionFlow(t *testing.T) {
 		t.Fatalf("CreateSession = %+v", sess)
 	}
 
-	// First-pass correct answer: repetitions 1 -> interval 1 day.
+	// 첫 응답 정답: repetitions 1 -> 간격 1일.
 	out, err := s.RecordReview(ctx, userID, sess.ID, card.ID, true, false)
 	if err != nil {
 		t.Fatal(err)
@@ -216,7 +216,7 @@ func TestReviewSessionFlow(t *testing.T) {
 		t.Fatalf("first review DueAt = %v, want ~1 day out", out.DueAt)
 	}
 
-	// Retry-round answers are logged but never graded.
+	// 재시도 라운드의 응답은 기록만 되고 채점되지 않는다.
 	if out, err = s.RecordReview(ctx, userID, sess.ID, card.ID, false, true); err != nil {
 		t.Fatal(err)
 	}
@@ -240,7 +240,7 @@ func TestReviewSessionFlow(t *testing.T) {
 		t.Fatalf("review_logs rows = %d, want 2 (grade + retry)", logged)
 	}
 
-	// The card moved a day out: not due now, due tomorrow.
+	// 카드가 하루 뒤로 밀렸다: 지금은 만기가 아니고 내일 만기다.
 	if n, _ := s.DueCount(ctx, userID, time.Now()); n != 0 {
 		t.Fatalf("DueCount after review = %d, want 0", n)
 	}
@@ -251,7 +251,7 @@ func TestReviewSessionFlow(t *testing.T) {
 		t.Fatalf("DueCards tomorrow = %d cards, want 1", len(cards))
 	}
 
-	// A wrong first-pass answer resets the interval and counts a lapse.
+	// 첫 응답 오답은 간격을 초기화하고 lapse를 하나 센다.
 	if out, err = s.RecordReview(ctx, userID, sess.ID, card.ID, false, false); err != nil {
 		t.Fatal(err)
 	}
@@ -284,8 +284,8 @@ func TestSmartRules(t *testing.T) {
 	beta := mustCard(t, s, userID, deck.ID, "beta", []string{"noun"})
 	gamma := mustCard(t, s, userID, deck.ID, "gamma", nil)
 
-	// Deterministic fixtures: alpha struggles and was added 2 days ago, beta
-	// went stale 10 days ago, gamma was reviewed just now but added a month ago.
+	// 결정적 픽스처: alpha는 자주 틀리고 2일 전에 추가됐다. beta는 10일 전 리뷰
+	// 뒤 방치됐고, gamma는 방금 리뷰했지만 한 달 전에 추가됐다.
 	now := time.Now()
 	fix := []struct {
 		q    string
@@ -314,7 +314,7 @@ func TestSmartRules(t *testing.T) {
 	tests := []struct {
 		name string
 		rule smartrules.Rule
-		want []string // expected card texts in rule order
+		want []string // 규칙 순서대로 기대하는 카드 text
 	}{
 		{"high_error",
 			smartrules.Rule{Type: smartrules.HighError, MinAttempts: 3, MinErrorRate: 0.4, Limit: 20},
@@ -447,13 +447,13 @@ func TestStats(t *testing.T) {
 	}{
 		{a.ID, true, false},
 		{b.ID, false, false},
-		{b.ID, true, true}, // retry: logged, not graded
+		{b.ID, true, true}, // 재시도: 기록만 되고 채점되지 않는다
 	} {
 		if _, err := s.RecordReview(ctx, userID, sess.ID, r.card, r.result, r.isRetry); err != nil {
 			t.Fatal(err)
 		}
 	}
-	// A review yesterday extends the streak to 2.
+	// 어제의 리뷰가 스트릭을 2로 늘린다.
 	if _, err := s.db.Exec(
 		`insert into review_logs (user_id, card_id, session_id, result, is_retry, reviewed_at)
 		 values (?, ?, ?, 1, 0, ?)`,
@@ -461,7 +461,7 @@ func TestStats(t *testing.T) {
 		fmtTime(time.Now().AddDate(0, 0, -1))); err != nil {
 		t.Fatal(err)
 	}
-	// One mature card (interval >= 21 days).
+	// 성숙 카드 하나(간격 >= 21일).
 	if _, err := s.db.Exec(
 		`update card_srs set interval_days = 30 where card_id = ?`, a.ID.String()); err != nil {
 		t.Fatal(err)

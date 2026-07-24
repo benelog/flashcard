@@ -101,9 +101,9 @@ localhost는 "내 컴퓨터 자신"을 가리키는 주소다.
 		return cfg, nil
 	}
 
-	// No DATABASE_URL: run in local single-user mode on a SQLite file. On
-	// Vercel that would silently write to the function's throwaway filesystem,
-	// so a missing DATABASE_URL there is always a misconfiguration.
+	// DATABASE_URL이 없으면 SQLite 파일로 1인 로컬 모드를 돈다. Vercel에서는
+	// 함수의 일회용 파일시스템에 조용히 쓰게 되므로, 거기서 DATABASE_URL이
+	// 없는 것은 언제나 설정 실수다.
 	if os.Getenv("VERCEL") != "" {
 		return nil, fmt.Errorf("DATABASE_URL is required on Vercel")
 	}
@@ -129,7 +129,7 @@ localhost는 "내 컴퓨터 자신"을 가리키는 주소다.
 
 [source,go]
 ----
-// LocalUserID is the fixed identity every request runs as in local mode.
+// LocalUserID는 로컬 모드의 모든 요청이 쓰는 고정 사용자다.
 var LocalUserID = uuid.MustParse("00000000-0000-0000-0000-000000000001")
 
 // ...
@@ -146,7 +146,7 @@ func LocalMiddleware() gin.HandlerFunc {
 로컬 모드라고 다른 앱이 도는 것이 아니라, 배포 환경과 같은 코드가 다른 문지기를 세우고 도는 것이다.
 
 화면 쪽에도 같은 분기가 하나 있다.
-HTML 페이지의 방문자 식별을 맡는 `internal/web/session.go`의 `withUser` 미들웨어는, 인증 모드가 로컬이면 쿠키를 살피는 대신 모든 방문자를 고정 사용자로 세운다.
+HTML 페이지의 방문자 식별을 맡는 `internal/web/cookies.go`의 `withUser` 미들웨어는, 인증 모드가 로컬이면 쿠키를 살피는 대신 모든 방문자를 고정 사용자로 세운다.
 
 [source,go]
 ----

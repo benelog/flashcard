@@ -27,8 +27,8 @@ func (s *Store) scanProfile(ctx context.Context, userID uuid.UUID) (model.Profil
 	return p, err
 }
 
-// GetOrCreateProfile lazily creates the profile row on first API contact; in
-// local mode this is what brings the fixed local user into existence.
+// GetOrCreateProfile은 첫 API 접근 때 profile 행을 지연 생성한다. 로컬 모드의
+// 고정 사용자는 이렇게 만들어진다.
 func (s *Store) GetOrCreateProfile(ctx context.Context, userID uuid.UUID, displayName string) (model.Profile, error) {
 	_, err := s.db.ExecContext(ctx,
 		`insert into profiles (id, display_name, created_at) values (?, nullif(?, ''), ?)

@@ -45,7 +45,7 @@ func (s *Store) GetDeck(ctx context.Context, userID, deckID uuid.UUID) (model.De
 	return scanDeck(s.pool.QueryRow(ctx, deckSelect+` where d.user_id = $1 and d.id = $2`, userID, deckID))
 }
 
-// GetDeckBySlug loads a deck by its public Base36 URL slug.
+// GetDeckBySlug는 공개 Base36 URL 슬러그로 덱을 읽는다.
 func (s *Store) GetDeckBySlug(ctx context.Context, userID uuid.UUID, slug string) (model.Deck, error) {
 	seq, err := model.DecodeDeckSlug(slug)
 	if err != nil {
@@ -55,8 +55,8 @@ func (s *Store) GetDeckBySlug(ctx context.Context, userID uuid.UUID, slug string
 }
 
 // tag::deck-id-by-slug[]
-// DeckIDBySlug resolves a deck slug to the internal deck id, doubling as the
-// caller's ownership/existence check.
+// DeckIDBySlug는 덱 슬러그를 내부 덱 id로 바꾸며, 호출자의 소유·존재 확인을
+// 겸한다.
 func (s *Store) DeckIDBySlug(ctx context.Context, userID uuid.UUID, slug string) (uuid.UUID, error) {
 	seq, err := model.DecodeDeckSlug(slug)
 	if err != nil {

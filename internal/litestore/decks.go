@@ -60,7 +60,7 @@ func (s *Store) GetDeck(ctx context.Context, userID, deckID uuid.UUID) (model.De
 		deckSelect+` where d.user_id = ? and d.id = ?`, userID.String(), deckID.String()))
 }
 
-// GetDeckBySlug loads a deck by its public Base36 URL slug.
+// GetDeckBySlug는 공개 Base36 URL 슬러그로 덱을 읽는다.
 func (s *Store) GetDeckBySlug(ctx context.Context, userID uuid.UUID, slug string) (model.Deck, error) {
 	seq, err := model.DecodeDeckSlug(slug)
 	if err != nil {
@@ -70,8 +70,8 @@ func (s *Store) GetDeckBySlug(ctx context.Context, userID uuid.UUID, slug string
 		deckSelect+` where d.user_id = ? and d.seq = ?`, userID.String(), seq))
 }
 
-// DeckIDBySlug resolves a deck slug to the internal deck id, doubling as the
-// caller's ownership/existence check.
+// DeckIDBySlug는 덱 슬러그를 내부 덱 id로 바꾸며, 호출자의 소유·존재 확인을
+// 겸한다.
 func (s *Store) DeckIDBySlug(ctx context.Context, userID uuid.UUID, slug string) (uuid.UUID, error) {
 	seq, err := model.DecodeDeckSlug(slug)
 	if err != nil {
@@ -89,9 +89,8 @@ func (s *Store) DeckIDBySlug(ctx context.Context, userID uuid.UUID, slug string)
 	return uuid.Parse(id)
 }
 
-// insertDeckSQL은 CreateDeck과 ImportSharedDeck이 함께 쓴다. max(seq)+1 stands
-// in for the Postgres identity column; the single local writer makes it
-// race-free.
+// insertDeckSQL은 CreateDeck과 ImportSharedDeck이 함께 쓴다. max(seq)+1이
+// Postgres의 identity 열을 대신하며, 로컬은 쓰기 주체가 하나뿐이라 경쟁이 없다.
 const insertDeckSQL = `insert into decks (id, user_id, name, description, seq, created_at, updated_at)
 	 values (?, ?, ?, ?, (select coalesce(max(seq), 0) + 1 from decks), ?, ?)`
 

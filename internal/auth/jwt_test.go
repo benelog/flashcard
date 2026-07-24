@@ -18,7 +18,7 @@ const testSecret = "test-secret-please-ignore"
 
 var testUserID = uuid.MustParse("11111111-2222-3333-4444-555555555555")
 
-// signed builds a token from the given claims. 기본값은 통과해야 하는 토큰이고,
+// signed는 주어진 claim으로 토큰을 만든다. 기본값은 통과해야 하는 토큰이고,
 // 각 테스트는 어긋뜨릴 항목만 바꾼다.
 func signed(t *testing.T, edit func(jwt.MapClaims)) string {
 	t.Helper()

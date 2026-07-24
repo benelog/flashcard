@@ -9,7 +9,7 @@ import (
 // 도는지 확인하는 데 쓴다.
 var seoul = time.FixedZone("KST", 9*60*60)
 
-// daysAgo lists study times counted back from now, one per element.
+// daysAgo는 now에서 거꾸로 센 학습 시각을 원소마다 하나씩 만든다.
 func daysAgo(now time.Time, offsets ...int) []time.Time {
 	times := make([]time.Time, 0, len(offsets))
 	for _, d := range offsets {

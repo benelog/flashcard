@@ -8,8 +8,8 @@ import (
 	"github.com/benelog/flashcard/internal/model"
 )
 
-// TestTemplatesParse ensures every embedded template parses and the study
-// fragment — the most intricate one — renders in each phase.
+// TestTemplatesParse는 embed된 템플릿이 전부 파싱되는지, 가장 복잡한 학습
+// 조각이 단계마다 그려지는지 확인한다.
 func TestTemplatesParse(t *testing.T) {
 	w := New(&config.Config{AuthMode: "local"}, nil)
 

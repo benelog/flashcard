@@ -40,8 +40,8 @@ type Web struct {
 	cfg    *config.Config
 	goTrue *goTrue
 	pages  map[string]*template.Template
-	// partials holds the shared fragments (study body, form fields, …) that
-	// htmx endpoints render standalone.
+	// partials는 htmx 끝점이 단독으로 그리는 공용 조각(학습 본문, 폼 필드 …)
+	// 이다.
 	partials *template.Template
 }
 
@@ -54,13 +54,13 @@ func New(cfg *config.Config, s model.Store) *Web {
 	return w
 }
 
-// isHTMX reports whether htmx sent this request. htmx로 온 요청에는 페이지
+// isHTMX는 이 요청을 htmx가 보냈는지 알린다. htmx로 온 요청에는 페이지
 // 한 장이 아니라 바꿔 끼울 조각만 돌려준다.
 func isHTMX(c *gin.Context) bool {
 	return c.GetHeader("HX-Request") != ""
 }
 
-// deckIDFromPath resolves the :slug path parameter to the visitor's deck id.
+// deckIDFromPath는 :slug 경로 매개변수를 방문자의 덱 id로 푼다.
 // 남의 덱이나 없는 덱은 여기서 404로 끝나므로, 부르는 쪽은 소유권을 다시 확인하지
 // 않아도 된다. false를 받으면 응답은 이미 쓰인 상태다.
 func (w *Web) deckIDFromPath(c *gin.Context) (uuid.UUID, bool) {
@@ -72,8 +72,8 @@ func (w *Web) deckIDFromPath(c *gin.Context) (uuid.UUID, bool) {
 	return deckID, true
 }
 
-// uuidFromPath reads a UUID path parameter, answering 404 with notFound when it
-// is malformed. 주소를 손으로 고쳐 넣은 경우라 "없는 것"과 구별할 이유가 없다.
+// uuidFromPath는 UUID 경로 매개변수를 읽고, 형식이 틀리면 notFound 문구로
+// 404를 답한다. 주소를 손으로 고쳐 넣은 경우라 "없는 것"과 구별할 이유가 없다.
 func (w *Web) uuidFromPath(c *gin.Context, name, notFound string) (uuid.UUID, bool) {
 	id, err := uuid.Parse(c.Param(name))
 	if err != nil {
@@ -83,22 +83,22 @@ func (w *Web) uuidFromPath(c *gin.Context, name, notFound string) (uuid.UUID, bo
 	return id, true
 }
 
-// clientTZ returns the visitor's IANA timezone, reported by app.js in a
-// cookie. Before the first page load (or with JS off) it falls back to UTC.
+// clientTZ는 app.js가 쿠키로 알려 준 방문자의 IANA 시간대를 돌려준다.
+// 첫 페이지를 열기 전이거나 JS가 꺼져 있으면 UTC다.
 func clientTZ(c *gin.Context) (string, *time.Location) {
 	return model.Location(cookieValue(c, tzCookie))
 }
 
-// endOfToday bounds the due-card queue: the last moment of now's day in the
-// visitor's timezone. now를 인자로 받아 날짜 경계 계산을 시계 없이 검증한다.
+// endOfToday는 복습 큐의 만기 상한으로, 방문자 시간대에서 now가 속한 날의
+// 마지막 순간이다. now를 인자로 받아 날짜 경계 계산을 시계 없이 검증한다.
 func endOfToday(now time.Time, loc *time.Location) time.Time {
 	now = now.In(loc)
 	return time.Date(now.Year(), now.Month(), now.Day(), 23, 59, 59, 0, loc)
 }
 
-// postFormValues parses the request body and hands back its form values, so
-// the field-by-field readers next to each handler stay pure functions over
-// url.Values. multipart와 urlencoded 모두 지원한다(ErrNotMultipart는 정상 경로).
+// postFormValues는 요청 본문을 해석해 폼 값을 돌려준다. 핸들러 옆의 필드
+// 해석 함수들이 url.Values만 보는 순수 함수로 남게 하기 위해서다.
+// multipart와 urlencoded 모두 지원한다(ErrNotMultipart는 정상 경로).
 func postFormValues(c *gin.Context) url.Values {
 	_ = c.Request.ParseMultipartForm(32 << 20)
 	return c.Request.PostForm

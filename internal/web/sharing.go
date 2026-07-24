@@ -14,8 +14,8 @@ import (
 func (w *Web) shareDeck(c *gin.Context)   { w.setDeckShared(c, true) }
 func (w *Web) unshareDeck(c *gin.Context) { w.setDeckShared(c, false) }
 
-// setDeckShared turns the deck's public link on or off and returns to the deck
-// page either way.
+// setDeckShared는 덱의 공개 링크를 켜거나 끄고, 어느 쪽이든 덱 화면으로
+// 되돌린다.
 func (w *Web) setDeckShared(c *gin.Context, shared bool) {
 	deckID, ok := w.deckIDFromPath(c)
 	if !ok {
@@ -48,7 +48,7 @@ func (w *Web) sharedGalleryPage(c *gin.Context) {
 	w.render(c, http.StatusOK, "shared", "공유 덱 둘러보기", gin.H{"Decks": inClientTZ(decks, loc)})
 }
 
-// inClientTZ retells each deck's share time in the visitor's timezone.
+// inClientTZ는 각 덱의 공유 시각을 방문자 시간대로 옮긴다.
 //
 // 저장소는 어느 구현이든 시각을 UTC로 읽어 온다. 그대로 날짜만 찍으면 한국에서
 // 자정부터 오전 아홉 시 사이에 공유한 덱이 하루 전으로 보인다. 화면의 다른
