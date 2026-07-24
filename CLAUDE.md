@@ -8,9 +8,19 @@
 
 ## 구조
 
-- UI는 Go 서버가 렌더링한다: `internal/web` (html/template + htmx + 순수 CSS, 전부 바이너리에 embed).
+- UI는 Go 서버가 렌더링한다: `internal/web` (html/template + htmx + 순수 CSS, 전부 바이너리에 embed). 화면 하나가 파일 하나다(`home.go`, `decks.go`, `cards.go`, …).
 - 브라우저 JS는 `internal/web/static/app.js` 하나뿐(TTS·클립보드·오프라인·서비스 워커). 프런트엔드 빌드 도구(npm 등)는 앱에 없다. `doc/`(책 원고, AsciiDoc)와 `book-template/`(책 빌드 엔진, 재사용 가능한 npm 패키지)만 자체 package.json을 가진다.
-- JSON API(`/api/*`)는 `internal/handlers`에 그대로 있다. HTML과 API가 같은 Gin 엔진(`pkg/app`)에 물린다.
+- JSON API(`/api/*`)는 `internal/handlers`에 있다. HTML과 API가 같은 Gin 엔진(`pkg/app`)에 물린다.
+- **`internal/model`이 앱의 공용어다.** 행 타입(`Card`, `Deck`, …), `ErrNotFound`, 열이 받는 값(카드 종류·학습 방향·모드)과 그 판정, DB를 모르는 순수 함수(`Streak`, 슬러그, `NilIfBlank`), 그리고 저장소 계약인 `Store` 인터페이스가 여기 있다.
+  - 저장소 구현은 둘이고 둘 다 `model.Store`를 만족한다: `internal/pgstore`(pgx, 배포)와 `internal/litestore`(SQLite, 로컬). 어느 쪽도 상대를 모른다.
+  - `web`·`handlers`·`cardcsv`는 `model`만 보므로 pgx를 링크하지 않는다. 새 코드에서 이 방향을 뒤집지 않는다(구현 패키지를 화면이나 핸들러에서 직접 import하지 않는다).
+- `pkg/app`만 `internal/`이 아니다. Vercel의 Go 빌더가 `api/index.go`를 모듈 바깥에서 컴파일해 `internal/`을 가져올 수 없기 때문이다. 옮기면 로컬은 통과하고 배포만 깨진다.
+
+## 테스트
+
+- 순수 로직(`srs`, `smartrules`, `cardcsv`, `model`)은 각 패키지에서 단위 테스트한다.
+- 화면과 API는 `pkg/app`에서 **앱을 통째로 띄워 실제 HTTP 요청을 보내** 확인한다(임시 SQLite + 고정 사용자). 라우팅·미들웨어·템플릿·저장소가 이어져 있는지까지 한 번에 잡힌다.
+- 그래서 `go test -cover`의 `handlers`·`web` 수치는 낮게 나온다. 커버리지는 자기 패키지의 테스트가 실행한 줄만 세기 때문이지, 검사되지 않는다는 뜻이 아니다.
 
 ## 책이 인용하는 코드
 
@@ -48,6 +58,7 @@ DB는 환경마다 완전히 분리되어 있다.
 - local에서 dev DB에 미리 적용해 보려면 `./migrate_dev.sh`. 운영 DB에는 수동으로 적용하지 않는다.
 - 마이그레이션과 Vercel 배포는 서로를 기다리지 않는다. 컬럼 삭제·이름 변경은 배포 순서에 상관없이 안전하도록 세 단계(추가 → 코드 전환 → 제거)로 나눈다.
 - SQLite(`internal/litestore/schema.sql`)는 위 마이그레이션을 손으로 옮긴 포팅본이다. Postgres 마이그레이션을 추가하면 **같은 커밋에서 이 파일도 함께 고쳐야** 두 환경이 어긋나지 않는다.
+  - 잊으면 `internal/litestore/schema_test.go`가 잡는다(새 테이블·새 뷰·새 열, 그리고 파일 첫머리의 `Ported through:` 표식을 대조한다). 옮긴 뒤 그 표식도 최신 마이그레이션 이름으로 고친다.
 
 ## PWA와 캐시
 

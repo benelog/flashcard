@@ -30,7 +30,7 @@ Supabase Table Editor에 `profiles, decks, cards, card_srs, study_sessions, revi
 > 대시보드 메뉴 이름은 자주 바뀝니다. 책 부록 B("배포 준비: Supabase·Google·GitHub·Vercel 설정")에 화면 캡처와 함께 정리해 두었으니,
 > 아래 경로가 화면과 다르면 부록 B를 참고하세요. 여기서는 무엇을 어디에 등록하는지를 기준으로 적습니다.
 
-로그인은 세 관문을 지납니다. 세 곳의 설정이 모두 있어야 로그인이 완성됩니다(원리는 책 17장, 실제 장애 기록은 [fix-auth.md](./fix-auth.md)).
+로그인은 세 관문을 지납니다. 세 곳의 설정이 모두 있어야 로그인이 완성됩니다(원리는 책 17장, 실제 장애 기록은 [notes/2026-07-login-outage.md](./notes/2026-07-login-outage.md)).
 ① 앱 → Supabase가 프로바이더를 켜 두어야 하고, ② Supabase → OAuth 프로바이더가 Supabase 콜백을 승인해야 하며, ③ OAuth 프로바이더 → 앱이 Supabase의 Redirect URLs에 있어야 합니다.
 
 **Google** — https://console.cloud.google.com
@@ -57,7 +57,7 @@ Supabase Table Editor에 `profiles, decks, cards, card_srs, study_sessions, revi
 
 화면에는 **Site URL** 칸과 **Redirect URLs** 칸이 있습니다("Additional Redirect URLs"는 옛 이름입니다).
 Site URL은 "허용 목록에 맞는 게 없을 때의 기본 리다이렉트"이자 폴백입니다. Redirect URLs에 없는 주소로 돌아오면 GoTrue가 **에러 없이 Site URL로 대신 보냅니다**.
-그래서 이 값이 개발용 `localhost`로 남아 있으면, 배포에서 로그인한 사용자가 로그인 끝에 `localhost`로 튕깁니다(실제 사례는 fix-auth.md).
+그래서 이 값이 개발용 `localhost`로 남아 있으면, 배포에서 로그인한 사용자가 로그인 끝에 `localhost`로 튕깁니다(실제 사례는 notes/2026-07-login-outage.md).
 
 운영 프로젝트:
 - Site URL: `https://<앱>.vercel.app` (배포 후 실제 URL로. 커스텀 도메인이 있으면 그 주소로)
@@ -145,7 +145,7 @@ GitHub Actions 러너는 IPv4라, Supabase의 IPv6 전용 direct 호스트(`db.<
 - **로그인 후 다시 로그인 페이지로, 또는 로그인 끝에 `localhost`로 튕김**: Supabase URL Configuration의 Redirect URLs에 배포 URL의 `/auth/callback`이 없어 GoTrue가 Site URL로 폴백한 경우입니다. Redirect URLs와 Site URL을 함께 확인하세요. 또는 PKCE 쿠키(`fc_pkce`, 300초) 만료입니다(로그인 화면에서 5분 이상 지체하면 실패).
 - **`provider is not enabled`(400)로 로그인 실패**: 그 Supabase 프로젝트에서 해당 프로바이더가 꺼져 있습니다. Sign In / Providers에서 Enable하세요. 개발 프로젝트를 새로 만들면 프로바이더 설정이 프로젝트마다 따로라 흔히 빠집니다.
 - **Google/GitHub 화면에서 `redirect_uri_mismatch`**: OAuth 클라이언트에 그 Supabase 프로젝트의 콜백(`https://<project-ref>.supabase.co/auth/v1/callback`)이 등록되지 않았습니다. 앱 주소가 아니라 Supabase 주소를 등록해야 합니다.
-- **로그인이 실패하고 Vercel Logs에 `net/http: invalid header field value`**: 환경 변수 값에 개행·제어 문자가 섞인 경우입니다(긴 키를 복사할 때 흔합니다). 대시보드에서 값을 한 줄로 다시 입력하세요. 실제 사고 기록은 [fix-auth.md](./fix-auth.md) 참고.
+- **로그인이 실패하고 Vercel Logs에 `net/http: invalid header field value`**: 환경 변수 값에 개행·제어 문자가 섞인 경우입니다(긴 키를 복사할 때 흔합니다). 대시보드에서 값을 한 줄로 다시 입력하세요. 실제 사고 기록은 [notes/2026-07-login-outage.md](./notes/2026-07-login-outage.md) 참고.
 - **서버가 500 "jwks unavailable"**: `SUPABASE_URL` 오타(JWKS URL은 여기서 유도). 구형 프로젝트(HS256)라면 대신 `SUPABASE_JWT_SECRET`(Settings → API → JWT Secret)을 설정해도 됩니다.
 - **첫 요청이 느림**: 서버리스 콜드스타트 + JWKS 첫 조회. 이후 요청은 빠릅니다.
 - **DB 연결 오류 "prepared statement"**: `DATABASE_URL`이 direct(5432)로 되어 있는 경우 transaction pooler(6543)로 교체.
