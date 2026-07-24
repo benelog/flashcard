@@ -26,9 +26,17 @@ var errStoreDown = errors.New("connection reset by peer: table cards is on fire"
 // 묻어 두었으므로 지정하지 않은 메서드 스물몇 개는 그대로 진짜 저장소로 간다.
 type brokenStore struct {
 	model.Store
-	listDecks bool
-	dueCount  bool
-	listCards bool
+	listDecks  bool
+	dueCount   bool
+	listCards  bool
+	getProfile bool
+}
+
+func (b brokenStore) GetOrCreateProfile(ctx context.Context, userID uuid.UUID, displayName string) (model.Profile, error) {
+	if b.getProfile {
+		return model.Profile{}, errStoreDown
+	}
+	return b.Store.GetOrCreateProfile(ctx, userID, displayName)
 }
 
 func (b brokenStore) ListDecks(ctx context.Context, userID uuid.UUID) ([]model.Deck, error) {
@@ -60,6 +68,9 @@ func TestPagesShowAnErrorScreenWhenTheStoreFails(t *testing.T) {
 	}{
 		{"덱 목록", brokenStore{listDecks: true}, "/decks"},
 		{"홈 화면", brokenStore{dueCount: true}, "/"},
+		// 프로필 보장(auth.EnsureProfile)은 화면과 API가 공유하는 미들웨어라,
+		// 화면 쪽 실패가 JSON으로 새지 않는지 따로 본다.
+		{"프로필 보장", brokenStore{getProfile: true}, "/decks"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -81,16 +92,28 @@ func TestPagesShowAnErrorScreenWhenTheStoreFails(t *testing.T) {
 }
 
 func TestAPIReturnsJSONWhenTheStoreFails(t *testing.T) {
-	a := newAppWith(t, func(s model.Store) model.Store {
-		return brokenStore{Store: s, listDecks: true}
-	})
+	tests := []struct {
+		name   string
+		broken brokenStore
+	}{
+		{"덱 목록", brokenStore{listDecks: true}},
+		{"프로필 보장", brokenStore{getProfile: true}},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			a := newAppWith(t, func(s model.Store) model.Store {
+				tt.broken.Store = s
+				return tt.broken
+			})
 
-	rec := a.sendJSON(http.MethodGet, "/api/decks", "")
+			rec := a.sendJSON(http.MethodGet, "/api/decks", "")
 
-	mustStatus(t, rec, http.StatusInternalServerError)
-	mustContain(t, rec, `"error"`)
-	mustNotContain(t, rec, "<html")
-	mustNotContain(t, rec, "table cards is on fire")
+			mustStatus(t, rec, http.StatusInternalServerError)
+			mustContain(t, rec, `"error"`)
+			mustNotContain(t, rec, "<html")
+			mustNotContain(t, rec, "table cards is on fire")
+		})
+	}
 }
 
 // 학습은 저장소 실패와 "잘못된 학습 링크"를 구별해야 한다. 후자는 404 화면이고

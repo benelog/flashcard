@@ -4,7 +4,6 @@ import (
 	"errors"
 	"log"
 	"net/http"
-	"sync"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -28,23 +27,10 @@ func (h *Handlers) Healthz(c *gin.Context) {
 
 // end::healthz[]
 
-// EnsureProfile lazily creates the caller's profile row so that any first
-// write (deck create, import, …) satisfies the profiles(id) foreign keys.
-// Runs once per user per warm instance.
+// EnsureProfile은 auth의 공용 미들웨어에 이 API의 실패 응답(JSON)을 끼운 것이다.
+// 화면 쪽은 internal/web이 오류 화면을 끼워 따로 만든다.
 func (h *Handlers) EnsureProfile() gin.HandlerFunc {
-	var seen sync.Map
-	return func(c *gin.Context) {
-		userID := auth.UserID(c)
-		if _, ok := seen.Load(userID); !ok {
-			if _, err := h.Store.GetOrCreateProfile(c.Request.Context(), userID, ""); err != nil {
-				fail(c, err)
-				c.Abort()
-				return
-			}
-			seen.Store(userID, struct{}{})
-		}
-		c.Next()
-	}
+	return auth.EnsureProfile(h.Store, fail)
 }
 
 // tag::error-helpers[]

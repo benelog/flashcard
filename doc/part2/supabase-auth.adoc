@@ -734,7 +734,7 @@ JSON API는 1부에서 만든 그대로이고, PWA의 서비스 워커나 외부
 
 [source,go]
 ----
-// Public pages: shared-deck browsing and the login flow.
+// 공개 페이지: 공유 덱 구경과 로그인 흐름.
 pub := r.Group("/", w.withUser())
 {
 	pub.GET("/login", w.loginPage)
@@ -744,8 +744,8 @@ pub := r.Group("/", w.withUser())
 	// ...
 }
 
-// Signed-in pages and their form/htmx endpoints.
-app := r.Group("/", w.withUser(), w.requireUser(), h.EnsureProfile())
+// 로그인해야 보는 페이지와 그 폼·htmx 끝점.
+app := r.Group("/", w.withUser(), w.requireUser(), auth.EnsureProfile(w.store, w.failPage))
 {
 	app.GET("/", w.homePage)
 	// ...
@@ -753,15 +753,16 @@ app := r.Group("/", w.withUser(), w.requireUser(), h.EnsureProfile())
 ----
 
 공개 그룹은 `withUser`만 지나서 익명도 통과하고, 로그인 그룹은 `requireUser`가 문을 지킨다.
-로그인 그룹 끝의 `EnsureProfile`은 첫 요청에서 사용자의 프로필 행을 만들어 주는 핸들러 계층 미들웨어로, JSON API와 웹 페이지가 함께 쓴다.
+로그인 그룹 끝의 `EnsureProfile`은 첫 요청에서 사용자의 프로필 행을 만들어 주는 미들웨어로, 9장의 JSON API와 이 웹 페이지 그룹이 함께 쓴다.
+같은 미들웨어라도 실패의 모양은 달라야 하므로, API는 JSON 오류 응답을, 화면은 오류 화면(`failPage`)을 끼워 만든다.
 
 이 공유가 성립하는 열쇠가 `internal/auth/jwt.go`의 작은 함수 하나다.
 
 [source,go]
 ----
-// SetUserID stores the authenticated user id on the request context, under
-// the same key the API middleware uses, so handlers and EnsureProfile work
-// identically for cookie-authenticated web requests.
+// SetUserID는 인증된 사용자 ID를 요청 컨텍스트에 싣는다. API 미들웨어와 같은
+// 키를 쓰므로, 쿠키로 인증한 웹 요청에서도 핸들러와 EnsureProfile이 똑같이
+// 동작한다.
 func SetUserID(c *gin.Context, id uuid.UUID) {
 	c.Set(userIDKey, id)
 }

@@ -47,7 +47,7 @@ func bearerToken(c *gin.Context) string {
 }
 
 // tag::parse-claims[]
-// parseClaims verifies a Supabase access token and hands back its claims.
+// parseClaims는 Supabase 액세스 토큰을 검증하고 클레임을 돌려준다.
 // 토큰을 받아들이는 조건은 이 한 곳에만 적는다. 헤더로 오는 API 요청과 쿠키로
 // 오는 페이지 요청이 같은 문을 지나야, 한쪽에만 검사를 더하고 다른 쪽을 잊는
 // 일이 생기지 않는다.
@@ -70,7 +70,7 @@ func userIDFrom(claims jwt.MapClaims) (uuid.UUID, error) {
 	return uuid.Parse(sub)
 }
 
-// parseUserID validates a Supabase access token and returns its subject.
+// parseUserID는 토큰을 검증하고 subject(사용자 ID)만 돌려준다.
 func parseUserID(raw string, kf jwt.Keyfunc) (uuid.UUID, error) {
 	claims, err := parseClaims(raw, kf)
 	if err != nil {
@@ -80,9 +80,8 @@ func parseUserID(raw string, kf jwt.Keyfunc) (uuid.UUID, error) {
 }
 
 // tag::parse-user[]
-// ParseUser validates a Supabase access token and returns its subject and
-// email claim. Used by the web layer, which carries the token in a cookie
-// instead of the Authorization header.
+// ParseUser는 토큰을 검증해 사용자 ID와 email 클레임을 돌려준다. 토큰을
+// Authorization 헤더 대신 쿠키에 싣고 다니는 웹 계층이 쓴다.
 func ParseUser(raw, jwksURL, secret string) (uuid.UUID, string, error) {
 	kf, err := keyfuncFor(jwksURL, secret)
 	if err != nil {
@@ -99,14 +98,14 @@ func ParseUser(raw, jwksURL, secret string) (uuid.UUID, string, error) {
 
 // end::parse-user[]
 
-// SetUserID stores the authenticated user id on the request context, under
-// the same key the API middleware uses, so handlers and EnsureProfile work
-// identically for cookie-authenticated web requests.
+// SetUserID는 인증된 사용자 ID를 요청 컨텍스트에 싣는다. API 미들웨어와 같은
+// 키를 쓰므로, 쿠키로 인증한 웹 요청에서도 핸들러와 EnsureProfile이 똑같이
+// 동작한다.
 func SetUserID(c *gin.Context, id uuid.UUID) {
 	c.Set(userIDKey, id)
 }
 
-// Middleware validates the Supabase access token and stores the user id.
+// Middleware는 Supabase 액세스 토큰을 검증하고 사용자 ID를 컨텍스트에 싣는다.
 func Middleware(jwksURL, secret string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		raw := bearerToken(c)
@@ -129,9 +128,9 @@ func Middleware(jwksURL, secret string) gin.HandlerFunc {
 	}
 }
 
-// OptionalMiddleware attaches the user id when a valid token is present but
-// never rejects the request, so public endpoints can still personalize their
-// response (e.g. an "is mine" flag) for signed-in callers.
+// OptionalMiddleware는 유효한 토큰이 있으면 사용자 ID를 싣고, 없어도 요청을
+// 거절하지 않는다. 공개 끝점이 로그인한 호출자에게만 "내 것" 표시 같은
+// 개인화를 더할 수 있게 하기 위해서다.
 func OptionalMiddleware(jwksURL, secret string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		if raw := bearerToken(c); raw != "" {
@@ -149,7 +148,7 @@ func UserID(c *gin.Context) uuid.UUID {
 	return c.MustGet(userIDKey).(uuid.UUID)
 }
 
-// OptionalUserID returns the caller's id, or uuid.Nil when unauthenticated.
+// OptionalUserID는 호출자의 ID를, 미인증이면 uuid.Nil을 돌려준다.
 func OptionalUserID(c *gin.Context) uuid.UUID {
 	if v, ok := c.Get(userIDKey); ok {
 		return v.(uuid.UUID)

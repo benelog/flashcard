@@ -599,32 +599,22 @@ Gin의 미들웨어처럼 "인자를 하나만 받는 함수"라는 규격을 �
 === 도메인 로직도 미들웨어가 될 수 있다
 
 미들웨어가 인증·로깅처럼 모든 요청에 공통으로 걸치는 일(횡단 관심사) 전용은 아니다.
-internal/handlers/handlers.go의 `EnsureProfile`은 도메인 요구를 미들웨어로 푼 예다.
+internal/auth/profile.go의 `EnsureProfile`은 도메인 요구를 미들웨어로 푼 예다.
 요청한 사용자의 프로필 행이 DB에 없으면 만들어 두고, 한 번 확인한 사용자는 다시 조회하지 않는 코드다.
 
 [source,go]
 ----
-func (h *Handlers) EnsureProfile() gin.HandlerFunc {
-	var seen sync.Map
-	return func(c *gin.Context) {
-		userID := auth.UserID(c)
-		if _, ok := seen.Load(userID); !ok {
-			if _, err := h.Store.GetOrCreateProfile(c.Request.Context(), userID, ""); err != nil {
-				fail(c, err)
-				c.Abort()
-				return
-			}
-			seen.Store(userID, struct{}{})
-		}
-		c.Next()
-	}
-}
+include::../../internal/auth/profile.go[tag=ensure-profile]
 ----
 
 덱과 카드 테이블은 profiles 테이블을 외래 키로 참조하므로, 첫 쓰기 전에 프로필 행이 존재해야 한다.
 이를 각 핸들러에서 챙기는 대신, 인증 그룹 전체에 미들웨어로 걸어 "인증된 사용자는 반드시 프로필이 있다"는 불변식(invariant, 언제나 참이라고 보장되는 조건)을 만든 것이다.
 앞 절의 인증 미들웨어가 클로저에 설정값을 기억시켰다면, 이번에는 그 기억 공간에 `sync.Map`을 넣어 두어 이미 확인한 사용자를 적어 둔다.
 그 덕에 웜 인스턴스가 살아 있는 동안 사용자 한 명당 DB를 한 번만 확인하는 캐시가 된다.
+
+이 미들웨어는 JSON API와 웹 화면이 함께 쓴다(화면 쪽 등록은 17장에서 본다).
+공유하는 두 쪽의 실패 응답 모양이 다르므로, 실패를 어떻게 알릴지는 `fail` 인자로 받는다.
+라우터 조립에 등장한 `h.EnsureProfile()`은 여기에 JSON 오류 응답을 끼운 얇은 메서드다.
 
 == 계층 분리: handlers와 store
 

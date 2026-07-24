@@ -12,7 +12,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/benelog/flashcard/internal/handlers"
+	"github.com/benelog/flashcard/internal/auth"
 )
 
 // assetVersion fingerprints the embedded CSS/JS. The templates hang it off
@@ -40,9 +40,7 @@ func asset(path string) string { return path + "?v=" + assetVersion() }
 func (w *Web) Register(r *gin.Engine) {
 	w.registerStatic(r)
 
-	h := handlers.New(w.store)
-
-	// Public pages: shared-deck browsing and the login flow.
+	// 공개 페이지: 공유 덱 구경과 로그인 흐름.
 	pub := r.Group("/", w.withUser())
 	{
 		pub.GET("/login", w.loginPage)
@@ -53,8 +51,9 @@ func (w *Web) Register(r *gin.Engine) {
 		pub.GET("/shared/:slug", w.sharedDeckPage)
 	}
 
-	// Signed-in pages and their form/htmx endpoints.
-	app := r.Group("/", w.withUser(), w.requireUser(), h.EnsureProfile())
+	// 로그인해야 보는 페이지와 그 폼·htmx 끝점. 프로필 보장이 실패하면 JSON이
+	// 아니라 오류 화면(failPage)으로 답한다.
+	app := r.Group("/", w.withUser(), w.requireUser(), auth.EnsureProfile(w.store, w.failPage))
 	{
 		app.GET("/", w.homePage)
 
