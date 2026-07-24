@@ -8,7 +8,8 @@
 
 ## 구조
 
-- UI는 Go 서버가 렌더링한다: `internal/web` (html/template + htmx + 순수 CSS, 전부 바이너리에 embed). 화면 하나가 파일 하나다(`home.go`, `decks.go`, `cards.go`, …). 화면들이 공통으로 쓰는 것은 셋으로 나뉜다: `web.go`(embed 자산·`Web` 타입·요청 헬퍼), `render.go`(템플릿 파싱과 그리기), `routes.go`(라우트 등록과 정적 자원).
+- UI는 Go 서버가 렌더링한다: `internal/web` (html/template + htmx + 순수 CSS, 전부 바이너리에 embed). 화면 하나가 파일 하나다(`home.go`, `decks.go`, `cards.go`, …). 화면들이 공통으로 쓰는 것은 역할별 일곱 파일로 나뉜다: `web.go`(embed 자산·`Web` 타입·요청 헬퍼), `render.go`(템플릿 파싱과 그리기), `routes.go`(라우트 등록과 정적 자원), `funcs.go`(템플릿 함수), `cookies.go`(쿠키·세션 미들웨어), `gotrue.go`(Supabase Auth 클라이언트), `icons.go`(인라인 SVG).
+- `web`과 `handlers`는 서로 import하지 않는다. 둘 다 쓰는 요청 미들웨어(프로필 보장 `EnsureProfile`)는 `internal/auth`에 두고, 실패를 오류 화면으로 그릴지 JSON으로 답할지만 각자 끼운다.
 - 브라우저 JS는 `internal/web/static/app.js` 하나뿐(TTS·클립보드·오프라인·서비스 워커). 프런트엔드 빌드 도구(npm 등)는 앱에 없다. `doc/`(책 원고, AsciiDoc)와 `book-template/`(책 빌드 엔진, 재사용 가능한 npm 패키지)만 자체 package.json을 가진다.
 - JSON API(`/api/*`)는 `internal/handlers`에 있다. HTML과 API가 같은 Gin 엔진(`pkg/app`)에 물린다.
 - **`internal/model`이 앱의 공용어다.** 행 타입(`Card`, `Deck`, …), `ErrNotFound`, 열이 받는 값(카드 종류·학습 방향·모드)과 그 판정, DB를 모르는 순수 함수(`Streak`, 슬러그, `NilIfBlank`), 그리고 저장소 계약인 `Store` 인터페이스가 여기 있다.

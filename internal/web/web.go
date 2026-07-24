@@ -1,14 +1,17 @@
-// Package web renders the HTML pages of Flashcard. It sits on the same
-// model.Store the JSON API uses; templates live in templates/ and are
-// embedded into the binary, so one Go binary (or one Vercel function) serves
-// pages, fragments and static assets alike.
+// Package web은 Flashcard의 HTML 화면을 그린다. JSON API와 같은 model.Store
+// 위에 서고, 템플릿과 정적 자원은 전부 바이너리에 embed되므로 바이너리 하나
+// (또는 Vercel 함수 하나)가 페이지·조각·정적 자원을 다 낸다.
 //
-// 화면 하나가 파일 하나다(home.go, decks.go, cards.go, …). 그 화면들이 공통으로
-// 쓰는 것은 셋으로 나눠 두었다.
+// 화면 하나가 파일 하나다(home.go, decks.go, cards.go, …). 화면들이 공통으로
+// 쓰는 것은 역할별 일곱 파일로 나뉜다.
 //
-//	web.go     이 파일. 바이너리에 싣는 자산, Web 타입, 요청에서 값을 꺼내는 헬퍼.
-//	render.go  템플릿 파싱과 화면 그리기(페이지 한 장, 조각 하나, 오류 화면).
-//	routes.go  어떤 주소가 어느 화면으로 가는지, 그리고 정적 자원 서빙.
+//	web.go      이 파일. embed 자산, Web 타입, 요청에서 값을 꺼내는 헬퍼.
+//	render.go   템플릿 파싱과 그리기(페이지, 조각, 오류 화면).
+//	routes.go   라우트 등록과 정적 자원 서빙.
+//	funcs.go    템플릿 함수(funcMap)와 화면에 붙는 이름표.
+//	cookies.go  쿠키 전부: 로그인 세션, 학습 방향, 플래시, 시간대.
+//	gotrue.go   Supabase Auth REST 클라이언트.
+//	icons.go    인라인 SVG 아이콘.
 package web
 
 import (
