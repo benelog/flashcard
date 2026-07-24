@@ -1,72 +1,22 @@
-package store
+package pgstore
 
 import (
 	"context"
-	"crypto/rand"
 	"errors"
-	"math/big"
-	"strings"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
+
+	"github.com/benelog/flashcard/internal/model"
 )
-
-type ShareInfo struct {
-	ShareSlug string    `json:"shareSlug"`
-	SharedAt  time.Time `json:"sharedAt"`
-}
-
-type SharedDeckSummary struct {
-	ShareSlug   string    `json:"shareSlug"`
-	Name        string    `json:"name"`
-	Description *string   `json:"description"`
-	CardCount   int       `json:"cardCount"`
-	OwnerName   *string   `json:"ownerName"`
-	SharedAt    time.Time `json:"sharedAt"`
-	IsMine      bool      `json:"isMine"`
-}
-
-// SharedCard is the card payload exposed to non-owners: content only, no ids
-// or SRS state.
-type SharedCard struct {
-	Text     string   `json:"text"`
-	Meaning  string   `json:"meaning"`
-	CardType string   `json:"cardType"`
-	Tags     []string `json:"tags"`
-	Phonetic *string  `json:"phonetic"`
-	Example  *string  `json:"example"`
-	Notes    *string  `json:"notes"`
-}
-
-// A share slug is not a secret — the /shared gallery lists every shared deck
-// publicly — so it needs no entropy for secrecy; it only has to be globally
-// unique. It's a random 5-char Base36 token (same case-insensitive alphabet as
-// the deck slug); the rare collision is retried against the unique index in
-// ShareDeck.
-const shareSlugLen = 5
-
-var shareSlugSpace = new(big.Int).Exp(big.NewInt(36), big.NewInt(shareSlugLen), nil)
-
-func NewShareSlug() string {
-	n, err := rand.Int(rand.Reader, shareSlugSpace)
-	if err != nil {
-		panic("crypto/rand failed: " + err.Error())
-	}
-	s := n.Text(36) // lowercase Base36
-	if len(s) < shareSlugLen {
-		s = strings.Repeat("0", shareSlugLen-len(s)) + s
-	}
-	return s
-}
 
 // ShareDeck enables sharing, keeping any existing slug so links stay stable.
 // The short share slug is globally unique, so on the rare collision we retry
 // with a fresh one; coalesce means an already-shared deck reuses its slug and
 // can never collide.
-func (s *Store) ShareDeck(ctx context.Context, userID, deckID uuid.UUID) (ShareInfo, error) {
-	var info ShareInfo
+func (s *Store) ShareDeck(ctx context.Context, userID, deckID uuid.UUID) (model.ShareInfo, error) {
+	var info model.ShareInfo
 	for attempt := 0; attempt < 5; attempt++ {
 		err := s.pool.QueryRow(ctx,
 			`update decks set
@@ -74,10 +24,10 @@ func (s *Store) ShareDeck(ctx context.Context, userID, deckID uuid.UUID) (ShareI
 			   shared_at = coalesce(shared_at, now())
 			 where user_id = $1 and id = $2
 			 returning share_slug, shared_at`,
-			userID, deckID, NewShareSlug()).
+			userID, deckID, model.NewShareSlug()).
 			Scan(&info.ShareSlug, &info.SharedAt)
 		if errors.Is(err, pgx.ErrNoRows) {
-			return info, ErrNotFound
+			return info, model.ErrNotFound
 		}
 		if isUniqueViolation(err) {
 			continue
@@ -107,24 +57,24 @@ const sharedDeckSelect = `
 	join profiles p on p.id = d.user_id
 	where d.share_slug is not null`
 
-func scanSharedDeck(row pgx.Row) (SharedDeckSummary, error) {
-	var d SharedDeckSummary
+func scanSharedDeck(row pgx.Row) (model.SharedDeckSummary, error) {
+	var d model.SharedDeckSummary
 	err := row.Scan(&d.ShareSlug, &d.Name, &d.Description, &d.CardCount,
 		&d.OwnerName, &d.SharedAt, &d.IsMine)
 	if errors.Is(err, pgx.ErrNoRows) {
-		return d, ErrNotFound
+		return d, model.ErrNotFound
 	}
 	return d, err
 }
 
 // ListSharedDecks returns the public gallery, newest first.
-func (s *Store) ListSharedDecks(ctx context.Context, viewerID uuid.UUID) ([]SharedDeckSummary, error) {
+func (s *Store) ListSharedDecks(ctx context.Context, viewerID uuid.UUID) ([]model.SharedDeckSummary, error) {
 	rows, err := s.pool.Query(ctx, sharedDeckSelect+` order by d.shared_at desc limit 100`, viewerID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	decks := []SharedDeckSummary{}
+	decks := []model.SharedDeckSummary{}
 	for rows.Next() {
 		d, err := scanSharedDeck(rows)
 		if err != nil {
@@ -135,11 +85,11 @@ func (s *Store) ListSharedDecks(ctx context.Context, viewerID uuid.UUID) ([]Shar
 	return decks, rows.Err()
 }
 
-func (s *Store) GetSharedDeck(ctx context.Context, viewerID uuid.UUID, slug string) (SharedDeckSummary, error) {
+func (s *Store) GetSharedDeck(ctx context.Context, viewerID uuid.UUID, slug string) (model.SharedDeckSummary, error) {
 	return scanSharedDeck(s.pool.QueryRow(ctx, sharedDeckSelect+` and d.share_slug = $2`, viewerID, slug))
 }
 
-func (s *Store) GetSharedDeckCards(ctx context.Context, slug string) ([]SharedCard, error) {
+func (s *Store) GetSharedDeckCards(ctx context.Context, slug string) ([]model.SharedCard, error) {
 	rows, err := s.pool.Query(ctx,
 		`select c.text, c.meaning, c.card_type, c.tags, c.phonetic, c.example, c.notes
 		 from cards c
@@ -150,9 +100,9 @@ func (s *Store) GetSharedDeckCards(ctx context.Context, slug string) ([]SharedCa
 		return nil, err
 	}
 	defer rows.Close()
-	cards := []SharedCard{}
+	cards := []model.SharedCard{}
 	for rows.Next() {
-		var c SharedCard
+		var c model.SharedCard
 		if err := rows.Scan(&c.Text, &c.Meaning, &c.CardType, &c.Tags,
 			&c.Phonetic, &c.Example, &c.Notes); err != nil {
 			return nil, err
@@ -164,10 +114,10 @@ func (s *Store) GetSharedDeckCards(ctx context.Context, slug string) ([]SharedCa
 
 // ImportSharedDeck clones a shared deck and its cards into the viewer's
 // account with fresh SRS state, in one transaction.
-func (s *Store) ImportSharedDeck(ctx context.Context, viewerID uuid.UUID, slug string) (Deck, error) {
+func (s *Store) ImportSharedDeck(ctx context.Context, viewerID uuid.UUID, slug string) (model.Deck, error) {
 	tx, err := s.pool.Begin(ctx)
 	if err != nil {
-		return Deck{}, err
+		return model.Deck{}, err
 	}
 	defer tx.Rollback(ctx)
 
@@ -178,10 +128,10 @@ func (s *Store) ImportSharedDeck(ctx context.Context, viewerID uuid.UUID, slug s
 		`select id, name, description from decks where share_slug = $1`, slug).
 		Scan(&srcID, &name, &description)
 	if errors.Is(err, pgx.ErrNoRows) {
-		return Deck{}, ErrNotFound
+		return model.Deck{}, model.ErrNotFound
 	}
 	if err != nil {
-		return Deck{}, err
+		return model.Deck{}, err
 	}
 
 	var newDeckID uuid.UUID
@@ -189,7 +139,7 @@ func (s *Store) ImportSharedDeck(ctx context.Context, viewerID uuid.UUID, slug s
 		`insert into decks (user_id, name, description) values ($1, $2, $3) returning id`,
 		viewerID, name, description).Scan(&newDeckID)
 	if err != nil {
-		return Deck{}, err
+		return model.Deck{}, err
 	}
 
 	if _, err := tx.Exec(ctx,
@@ -202,10 +152,10 @@ func (s *Store) ImportSharedDeck(ctx context.Context, viewerID uuid.UUID, slug s
 		 )
 		 insert into card_srs (card_id, user_id) select id, $1 from copied`,
 		viewerID, newDeckID, srcID); err != nil {
-		return Deck{}, err
+		return model.Deck{}, err
 	}
 	if err := tx.Commit(ctx); err != nil {
-		return Deck{}, err
+		return model.Deck{}, err
 	}
 	return s.GetDeck(ctx, viewerID, newDeckID)
 }

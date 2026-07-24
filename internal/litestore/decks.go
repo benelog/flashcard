@@ -8,7 +8,7 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/benelog/flashcard/internal/store"
+	"github.com/benelog/flashcard/internal/model"
 )
 
 const deckSelect = `
@@ -17,15 +17,15 @@ const deckSelect = `
 	       d.share_slug, d.shared_at, d.created_at, d.updated_at, d.seq
 	from decks d`
 
-func scanDeck(r rowScanner) (store.Deck, error) {
-	var d store.Deck
+func scanDeck(r rowScanner) (model.Deck, error) {
+	var d model.Deck
 	var id, createdAt, updatedAt string
 	var sharedAt sql.NullString
 	var seq int64
 	err := r.Scan(&id, &d.Name, &d.Description, &d.CardCount,
 		&d.ShareSlug, &sharedAt, &createdAt, &updatedAt, &seq)
 	if errors.Is(err, sql.ErrNoRows) {
-		return d, store.ErrNotFound
+		return d, model.ErrNotFound
 	}
 	if err != nil {
 		return d, err
@@ -42,18 +42,18 @@ func scanDeck(r rowScanner) (store.Deck, error) {
 	if d.UpdatedAt, err = parseTime(updatedAt); err != nil {
 		return d, err
 	}
-	d.Slug = store.EncodeDeckSlug(seq)
+	d.Slug = model.EncodeDeckSlug(seq)
 	return d, nil
 }
 
-func (s *Store) ListDecks(ctx context.Context, userID uuid.UUID) ([]store.Deck, error) {
+func (s *Store) ListDecks(ctx context.Context, userID uuid.UUID) ([]model.Deck, error) {
 	rows, err := s.db.QueryContext(ctx,
 		deckSelect+` where d.user_id = ? order by d.created_at desc`, userID.String())
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	decks := []store.Deck{}
+	decks := []model.Deck{}
 	for rows.Next() {
 		d, err := scanDeck(rows)
 		if err != nil {
@@ -64,16 +64,16 @@ func (s *Store) ListDecks(ctx context.Context, userID uuid.UUID) ([]store.Deck, 
 	return decks, rows.Err()
 }
 
-func (s *Store) GetDeck(ctx context.Context, userID, deckID uuid.UUID) (store.Deck, error) {
+func (s *Store) GetDeck(ctx context.Context, userID, deckID uuid.UUID) (model.Deck, error) {
 	return scanDeck(s.db.QueryRowContext(ctx,
 		deckSelect+` where d.user_id = ? and d.id = ?`, userID.String(), deckID.String()))
 }
 
 // GetDeckBySlug loads a deck by its public Base36 URL slug.
-func (s *Store) GetDeckBySlug(ctx context.Context, userID uuid.UUID, slug string) (store.Deck, error) {
-	seq, err := store.DecodeDeckSlug(slug)
+func (s *Store) GetDeckBySlug(ctx context.Context, userID uuid.UUID, slug string) (model.Deck, error) {
+	seq, err := model.DecodeDeckSlug(slug)
 	if err != nil {
-		return store.Deck{}, store.ErrNotFound
+		return model.Deck{}, model.ErrNotFound
 	}
 	return scanDeck(s.db.QueryRowContext(ctx,
 		deckSelect+` where d.user_id = ? and d.seq = ?`, userID.String(), seq))
@@ -82,15 +82,15 @@ func (s *Store) GetDeckBySlug(ctx context.Context, userID uuid.UUID, slug string
 // DeckIDBySlug resolves a deck slug to the internal deck id, doubling as the
 // caller's ownership/existence check.
 func (s *Store) DeckIDBySlug(ctx context.Context, userID uuid.UUID, slug string) (uuid.UUID, error) {
-	seq, err := store.DecodeDeckSlug(slug)
+	seq, err := model.DecodeDeckSlug(slug)
 	if err != nil {
-		return uuid.Nil, store.ErrNotFound
+		return uuid.Nil, model.ErrNotFound
 	}
 	var id string
 	err = s.db.QueryRowContext(ctx,
 		`select id from decks where user_id = ? and seq = ?`, userID.String(), seq).Scan(&id)
 	if errors.Is(err, sql.ErrNoRows) {
-		return uuid.Nil, store.ErrNotFound
+		return uuid.Nil, model.ErrNotFound
 	}
 	if err != nil {
 		return uuid.Nil, err
@@ -98,7 +98,7 @@ func (s *Store) DeckIDBySlug(ctx context.Context, userID uuid.UUID, slug string)
 	return uuid.Parse(id)
 }
 
-func (s *Store) CreateDeck(ctx context.Context, userID uuid.UUID, name string, description *string) (store.Deck, error) {
+func (s *Store) CreateDeck(ctx context.Context, userID uuid.UUID, name string, description *string) (model.Deck, error) {
 	id := uuid.New()
 	now := fmtTime(time.Now())
 	// max(seq)+1 stands in for the Postgres identity column; the single local
@@ -108,12 +108,12 @@ func (s *Store) CreateDeck(ctx context.Context, userID uuid.UUID, name string, d
 		 values (?, ?, ?, ?, (select coalesce(max(seq), 0) + 1 from decks), ?, ?)`,
 		id.String(), userID.String(), name, description, now, now)
 	if err != nil {
-		return store.Deck{}, err
+		return model.Deck{}, err
 	}
 	return s.GetDeck(ctx, userID, id)
 }
 
-func (s *Store) UpdateDeck(ctx context.Context, userID, deckID uuid.UUID, name *string, description *string) (store.Deck, error) {
+func (s *Store) UpdateDeck(ctx context.Context, userID, deckID uuid.UUID, name *string, description *string) (model.Deck, error) {
 	err := requireRowAffected(s.db.ExecContext(ctx,
 		`update decks set
 		   name = coalesce(?, name),
@@ -122,7 +122,7 @@ func (s *Store) UpdateDeck(ctx context.Context, userID, deckID uuid.UUID, name *
 		 where user_id = ? and id = ?`,
 		name, description, fmtTime(time.Now()), userID.String(), deckID.String()))
 	if err != nil {
-		return store.Deck{}, err
+		return model.Deck{}, err
 	}
 	return s.GetDeck(ctx, userID, deckID)
 }

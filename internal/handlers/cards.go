@@ -10,7 +10,7 @@ import (
 
 	"github.com/benelog/flashcard/internal/auth"
 	"github.com/benelog/flashcard/internal/cardcsv"
-	"github.com/benelog/flashcard/internal/store"
+	"github.com/benelog/flashcard/internal/model"
 )
 
 // tag::card-body[]
@@ -28,25 +28,25 @@ type cardBody struct {
 // end::card-body[]
 
 // tag::to-input[]
-func (b *cardBody) toInput() (store.CardInput, string) {
+func (b *cardBody) toInput() (model.CardInput, string) {
 	b.Text = strings.TrimSpace(b.Text)
 	b.Meaning = strings.TrimSpace(b.Meaning)
 	if b.Text == "" || b.Meaning == "" {
-		return store.CardInput{}, "text and meaning are required"
+		return model.CardInput{}, "text and meaning are required"
 	}
 	if b.CardType == "" {
-		b.CardType = store.DefaultCardType
+		b.CardType = model.DefaultCardType
 	}
 	// API는 폼·CSV와 달리 모르는 종류를 조용히 고치지 않는다. 프로그램이 보내는
 	// 값이라 오타라면 알려 주는 편이 낫다.
-	if !store.IsCardType(b.CardType) {
-		return store.CardInput{}, "cardType must be " + strings.Join(store.CardTypes, ", ")
+	if !model.IsCardType(b.CardType) {
+		return model.CardInput{}, "cardType must be " + strings.Join(model.CardTypes, ", ")
 	}
 	// end::to-input[]
 	if b.Tags == nil {
 		b.Tags = []string{}
 	}
-	return store.CardInput{
+	return model.CardInput{
 		Text: b.Text, Meaning: b.Meaning,
 		CardType: b.CardType, Tags: b.Tags,
 		Phonetic: b.Phonetic, Example: b.Example, Notes: b.Notes,
@@ -154,11 +154,11 @@ func (h *Handlers) BulkCreateCards(c *gin.Context) {
 		badRequest(c, "invalid body")
 		return
 	}
-	if len(body.Cards) == 0 || len(body.Cards) > store.MaxBulkCards {
-		badRequest(c, fmt.Sprintf("cards must contain 1-%d rows", store.MaxBulkCards))
+	if len(body.Cards) == 0 || len(body.Cards) > model.MaxBulkCards {
+		badRequest(c, fmt.Sprintf("cards must contain 1-%d rows", model.MaxBulkCards))
 		return
 	}
-	inputs := make([]store.CardInput, 0, len(body.Cards))
+	inputs := make([]model.CardInput, 0, len(body.Cards))
 	invalid := 0
 	for _, cb := range body.Cards {
 		in, msg := cb.toInput()
@@ -190,7 +190,7 @@ func (h *Handlers) ExportDeck(c *gin.Context) {
 // 돌려주는 error는 "덱을 찾거나 카드를 읽지 못했다"는 뜻뿐이라, 부르는 쪽이
 // 자기 방식(JSON 응답 또는 HTML 오류 화면)으로 알리면 된다. 파일을 흘려보내던
 // 중의 실패는 응답이 이미 나가 버려 되돌릴 수 없으므로 여기서 기록만 남긴다.
-func ExportDeckCSV(c *gin.Context, s Store, userID uuid.UUID, slug string) error {
+func ExportDeckCSV(c *gin.Context, s model.Store, userID uuid.UUID, slug string) error {
 	ctx := c.Request.Context()
 	deck, err := s.GetDeckBySlug(ctx, userID, slug)
 	if err != nil {

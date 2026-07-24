@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/benelog/flashcard/internal/config"
-	"github.com/benelog/flashcard/internal/store"
+	"github.com/benelog/flashcard/internal/model"
 )
 
 // TestTemplatesParse ensures every embedded template parses and the study
@@ -24,7 +24,7 @@ func TestTemplatesParse(t *testing.T) {
 	}
 
 	phonetic := "/tɛst/"
-	card := &store.Card{Text: "test", Meaning: "시험", CardType: store.CardTypeWord, Phonetic: &phonetic}
+	card := &model.Card{Text: "test", Meaning: "시험", CardType: model.CardTypeWord, Phonetic: &phonetic}
 	state := studyState{
 		SessionID: "s", Direction: "text_to_meaning", Title: "덱 학습",
 		ReturnURL: "/", Queue: []string{"a", "b"}, Round: 1, RoundCards: 2,

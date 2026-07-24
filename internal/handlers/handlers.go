@@ -1,71 +1,23 @@
 package handlers
 
 import (
-	"context"
-	"encoding/json"
 	"errors"
 	"log"
 	"net/http"
 	"sync"
-	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 
 	"github.com/benelog/flashcard/internal/auth"
-	"github.com/benelog/flashcard/internal/smartrules"
-	"github.com/benelog/flashcard/internal/store"
+	"github.com/benelog/flashcard/internal/model"
 )
 
-// Store is the persistence contract the handlers consume. *store.Store (pgx,
-// production) and *litestore.Store (SQLite, local mode) both satisfy it; the
-// row types and the ErrNotFound sentinel stay shared from internal/store.
-type Store interface {
-	GetOrCreateProfile(ctx context.Context, userID uuid.UUID, displayName string) (store.Profile, error)
-	UpdateProfile(ctx context.Context, userID uuid.UUID, displayName *string, settings json.RawMessage) (store.Profile, error)
-
-	ListDecks(ctx context.Context, userID uuid.UUID) ([]store.Deck, error)
-	GetDeckBySlug(ctx context.Context, userID uuid.UUID, slug string) (store.Deck, error)
-	DeckIDBySlug(ctx context.Context, userID uuid.UUID, slug string) (uuid.UUID, error)
-	CreateDeck(ctx context.Context, userID uuid.UUID, name string, description *string) (store.Deck, error)
-	UpdateDeck(ctx context.Context, userID, deckID uuid.UUID, name, description *string) (store.Deck, error)
-	DeleteDeck(ctx context.Context, userID, deckID uuid.UUID) error
-
-	ListCards(ctx context.Context, userID, deckID uuid.UUID) ([]store.Card, error)
-	GetCard(ctx context.Context, userID, cardID uuid.UUID) (store.Card, error)
-	CreateCard(ctx context.Context, userID uuid.UUID, in store.CardInput) (store.Card, error)
-	UpdateCard(ctx context.Context, userID, cardID uuid.UUID, in store.CardInput) (store.Card, error)
-	DeleteCard(ctx context.Context, userID, cardID uuid.UUID) error
-	BulkCreateCards(ctx context.Context, userID, deckID uuid.UUID, inputs []store.CardInput) (store.BulkResult, error)
-	DueCards(ctx context.Context, userID uuid.UUID, dueBefore time.Time, limit int) ([]store.Card, error)
-	DueCount(ctx context.Context, userID uuid.UUID, dueBefore time.Time) (int, error)
-	CardsByRule(ctx context.Context, userID uuid.UUID, rule smartrules.Rule) ([]store.Card, error)
-	CountByRule(ctx context.Context, userID uuid.UUID, rule smartrules.Rule) (int, error)
-
-	CreateSession(ctx context.Context, userID uuid.UUID, mode, direction string, deckID *uuid.UUID, rule json.RawMessage, totalCards int) (store.Session, error)
-	RecordReview(ctx context.Context, userID, sessionID, cardID uuid.UUID, result, isRetry bool) (store.ReviewOutcome, error)
-	FinishSession(ctx context.Context, userID, sessionID uuid.UUID, completed bool) error
-
-	ShareDeck(ctx context.Context, userID, deckID uuid.UUID) (store.ShareInfo, error)
-	UnshareDeck(ctx context.Context, userID, deckID uuid.UUID) error
-	ListSharedDecks(ctx context.Context, viewerID uuid.UUID) ([]store.SharedDeckSummary, error)
-	GetSharedDeck(ctx context.Context, viewerID uuid.UUID, slug string) (store.SharedDeckSummary, error)
-	GetSharedDeckCards(ctx context.Context, slug string) ([]store.SharedCard, error)
-	ImportSharedDeck(ctx context.Context, viewerID uuid.UUID, slug string) (store.Deck, error)
-
-	ListSmartDecks(ctx context.Context, userID uuid.UUID) ([]store.SmartDeck, error)
-	CreateSmartDeck(ctx context.Context, userID uuid.UUID, name string, rule json.RawMessage) (store.SmartDeck, error)
-	DeleteSmartDeck(ctx context.Context, userID, id uuid.UUID) error
-
-	DailyStats(ctx context.Context, userID uuid.UUID, tz string, days int) ([]store.DailyStat, error)
-	StatsSummary(ctx context.Context, userID uuid.UUID, tz string, loc *time.Location) (store.Summary, error)
-}
-
 type Handlers struct {
-	Store Store
+	Store model.Store
 }
 
-func New(s Store) *Handlers {
+func New(s model.Store) *Handlers {
 	return &Handlers{Store: s}
 }
 
@@ -97,7 +49,7 @@ func (h *Handlers) EnsureProfile() gin.HandlerFunc {
 
 // tag::error-helpers[]
 func fail(c *gin.Context, err error) {
-	if errors.Is(err, store.ErrNotFound) {
+	if errors.Is(err, model.ErrNotFound) {
 		c.JSON(http.StatusNotFound, gin.H{"error": "not found"})
 		return
 	}

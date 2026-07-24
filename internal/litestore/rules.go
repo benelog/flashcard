@@ -7,8 +7,8 @@ import (
 
 	"github.com/google/uuid"
 
+	"github.com/benelog/flashcard/internal/model"
 	"github.com/benelog/flashcard/internal/smartrules"
-	"github.com/benelog/flashcard/internal/store"
 )
 
 // ruleQuery renders a smart rule as SQLite SQL selecting matching card ids.
@@ -49,7 +49,7 @@ func placeholders(n int) string {
 }
 
 // CardsByRule evaluates a smart rule and returns matching cards in rule order.
-func (s *Store) CardsByRule(ctx context.Context, userID uuid.UUID, rule smartrules.Rule) ([]store.Card, error) {
+func (s *Store) CardsByRule(ctx context.Context, userID uuid.UUID, rule smartrules.Rule) ([]model.Card, error) {
 	q, extra := ruleQuery(rule, time.Now())
 	args := append([]any{userID.String()}, extra...)
 	rows, err := s.db.QueryContext(ctx, q, args...)
@@ -75,7 +75,7 @@ func (s *Store) CardsByRule(ctx context.Context, userID uuid.UUID, rule smartrul
 		return nil, err
 	}
 	if len(ids) == 0 {
-		return []store.Card{}, nil
+		return []model.Card{}, nil
 	}
 
 	args = make([]any, 0, len(ids)+1)
@@ -92,7 +92,7 @@ func (s *Store) CardsByRule(ctx context.Context, userID uuid.UUID, rule smartrul
 	if err != nil {
 		return nil, err
 	}
-	return store.SortCardsByIDOrder(cards, ids), nil
+	return model.SortCardsByIDOrder(cards, ids), nil
 }
 
 func (s *Store) CountByRule(ctx context.Context, userID uuid.UUID, rule smartrules.Rule) (int, error) {

@@ -5,7 +5,7 @@
 
 중심 예제는 간격 반복(Spaced Repetition) 알고리즘을 구현한 internal/srs 패키지다.
 암기 카드 앱의 심장에 해당하는 이 코드로 구조체와 제로값을 익힌다.
-이어서 스마트 덱 규칙을 다루는 internal/smartrules와 DB 접근 계층인 internal/store로 넘어가, 에러 처리 관례와 포인터, 슬라이스와 맵, 문자열 처리, JSON 직렬화까지 확인한다.
+이어서 스마트 덱 규칙을 다루는 internal/smartrules와 DB 접근 계층인 internal/pgstore와 그 둘이 주고받는 타입을 모아 둔 internal/model로 넘어가, 에러 처리 관례와 포인터, 슬라이스와 맵, 문자열 처리, JSON 직렬화까지 확인한다.
 이 장을 읽고 나면 이 저장소의 어느 Go 파일을 열어도 문장 단위로 따라갈 수 있을 것이다.
 
 == 간격 반복 알고리즘 읽기
@@ -152,23 +152,23 @@ include::../../internal/smartrules/rules.go[tag=parse]
 ====
 
 센티널 에러의 선언은 한 줄이면 된다.
-internal/store/store.go에서 발췌했다.
+internal/model/model.go에서 발췌했다.
 
 [source,go]
 ----
-include::../../internal/store/store.go[tag=not-found]
+include::../../internal/model/model.go[tag=not-found]
 ----
 
-`ErrNotFound`는 "요청한 행이 없다"를 뜻하는 store 패키지 공용 에러 값이다.
-internal/store/decks.go에서는 DB 드라이버의 에러를 이 값으로 번역한다.
+`ErrNotFound`는 "요청한 행이 없다"를 뜻하는 model 패키지 공용 에러 값이다.
+internal/pgstore/decks.go에서는 DB 드라이버의 에러를 이 값으로 번역한다.
 
 [source,go]
 ----
-include::../../internal/store/decks.go[tag=scan-not-found]
+include::../../internal/pgstore/decks.go[tag=scan-not-found]
 ----
 
-pgx 드라이버가 돌려준 `pgx.ErrNoRows`를 `errors.Is`로 알아본 뒤 `ErrNotFound`로 바꿔 돌려주므로, store 패키지를 쓰는 쪽은 드라이버가 무엇인지 몰라도 된다.
-HTTP 핸들러는 `store.ErrNotFound`를 받으면 404로 응답하는데, 이 연결은 9장에서 확인한다.
+pgx 드라이버가 돌려준 `pgx.ErrNoRows`를 `errors.Is`로 알아본 뒤 `ErrNotFound`로 바꿔 돌려주므로, 스토어를 쓰는 쪽은 드라이버가 무엇인지 몰라도 된다.
+HTTP 핸들러는 `model.ErrNotFound`를 받으면 404로 응답하는데, 이 연결은 9장에서 확인한다.
 
 == 포인터
 
@@ -237,11 +237,11 @@ include::../../internal/smartrules/rules.go[tag=validate-tag]
 === 값의 부재를 나타내는 포인터
 
 포인터의 또 다른 용도는 "값이 없음"의 표현이다.
-internal/store/decks.go에서 덱 하나의 정보를 담는 `Deck` 구조체를 보자.
+internal/pgstore/decks.go에서 덱 하나의 정보를 담는 `Deck` 구조체를 보자.
 
 [source,go]
 ----
-include::../../internal/store/decks.go[tag=deck]
+include::../../internal/model/deck.go[tag=deck]
 ----
 
 `Description`이 `string`이 아니라 `*string`인 것은, 4장에서 본 NULL(값 자체가 없음)을 Go 쪽에서 어떻게 받을 것인가의 문제다.
@@ -272,12 +272,12 @@ Go에서 일상적으로 쓰는 컬렉션 타입은 슬라이스(Slice)와 맵(M
 처음부터 끝까지 훑어야 하는 목록에는 슬라이스를, 열쇠 하나로 곧장 찾아야 하는 조회에는 맵을 쓴다.
 ====
 
-슬라이스의 전형적인 사용 패턴은 internal/store/decks.go의 `ListDecks`에서 볼 수 있다.
+슬라이스의 전형적인 사용 패턴은 internal/pgstore/decks.go의 `ListDecks`에서 볼 수 있다.
 한 사용자의 덱 목록을 DB에서 한 행씩 읽어 슬라이스에 담아 돌려주는 함수다.
 
 [source,go]
 ----
-include::../../internal/store/decks.go[tag=list-decks]
+include::../../internal/pgstore/decks.go[tag=list-decks]
 ----
 
 `decks := []Deck{}`로 빈 슬라이스를 만들고, `append`로 원소를 덧붙인다.
@@ -289,15 +289,15 @@ include::../../internal/store/decks.go[tag=list-decks]
 `defer rows.Close()`의 `defer`는 함수가 어떤 경로로 반환되든 마지막에 실행할 정리 작업을 예약하는 키워드로, 중간의 `return nil, err`로 빠져나가도 DB에서 결과를 한 줄씩 꺼내 오는 통로(`rows`)가 확실히 닫힌다.
 
 맵은 키-값 저장소다.
-internal/store/cards.go에서 CSV 대량 등록 시 중복 카드를 걸러내는 데 쓴다.
+internal/pgstore/cards.go에서 CSV 대량 등록 시 중복 카드를 걸러내는 데 쓴다.
 
 [source,go]
 ----
-include::../../internal/store/cards.go[tag=seen-head]
+include::../../internal/pgstore/cards.go[tag=seen-head]
 	// ...
-include::../../internal/store/cards.go[tag=seen-fill]
+include::../../internal/pgstore/cards.go[tag=seen-fill]
 		// ...
-include::../../internal/store/cards.go[tag=seen-mark]
+include::../../internal/pgstore/cards.go[tag=seen-mark]
 ----
 
 `map[string]bool`은 문자열 키마다 불리언 값을 붙여 두는 맵이다.
@@ -308,7 +308,7 @@ include::../../internal/store/cards.go[tag=seen-mark]
 
 [source,go]
 ----
-include::../../internal/store/cards.go[tag=sort-by-id-order]
+include::../../internal/model/card.go[tag=sort-by-id-order]
 ----
 
 `make`는 크기를 지정해 슬라이스나 맵을 만드는 내장 함수다.
@@ -338,11 +338,11 @@ include::../../internal/smartrules/rules.go[tag=rule]
 
 첫 번째는 중복 카드 판정이다.
 CSV로 카드를 대량 등록할 때 "hello"와 " Hello "를 다른 카드로 취급하면 같은 단어가 두 장 생긴다.
-internal/store/cards.go의 `BulkCreateCards`는 카드 텍스트를 비교용 열쇠로 정규화해 이 문제를 막는다.
+internal/pgstore/cards.go의 `BulkCreateCards`는 카드 텍스트를 비교용 열쇠로 정규화해 이 문제를 막는다.
 
 [source,go]
 ----
-include::../../internal/store/cards.go[tag=dedup-key]
+include::../../internal/pgstore/cards.go[tag=dedup-key]
 		// ...
 	}
 ----
@@ -363,7 +363,7 @@ include::../../internal/cardcsv/cardcsv.go[tag=write-rows]
 `strings.Join(card.Tags, tagSeparator)`는 태그 슬라이스를 `|` 문자로 이어 `verb|basic`처럼 하나의 문자열로 만든다.
 CSV의 칸 구분자인 쉼표와 겹치지 않는 문자를 구분자로 골라 상수에 이름을 붙여 두었다.
 `store.OrEmpty`는 값이 없을 수 있는 필드(`*string`)를 빈칸으로 바꾸는 함수인데, 포인터를 다룬 앞 절의 `nil` 이야기가 여기서 쓰인다.
-화면에 그릴 때도 CSV로 내보낼 때도 빈 값을 같은 규칙으로 다뤄야 하므로, 이 함수는 `internal/store` 패키지에 한 벌만 두고 여러 곳에서 불러 쓴다.
+화면에 그릴 때도 CSV로 내보낼 때도 빈 값을 같은 규칙으로 다뤄야 하므로, 이 함수는 `internal/model` 패키지에 한 벌만 두고 여러 곳에서 불러 쓴다.
 자르기(Split), 다듬기(TrimSpace), 잇기(Join), 대소문자 통일(ToLower)까지, 문자열에 하고 싶은 일은 대부분 `strings` 패키지에 이미 함수로 준비되어 있다.
 
 == JSON 직렬화

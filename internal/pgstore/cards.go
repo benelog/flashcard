@@ -1,9 +1,8 @@
-package store
+package pgstore
 
 import (
 	"context"
 	"errors"
-	"slices"
 	"strings"
 	"time"
 
@@ -11,92 +10,30 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 
+	"github.com/benelog/flashcard/internal/model"
+
 	"github.com/benelog/flashcard/internal/smartrules"
 )
-
-type Card struct {
-	ID        uuid.UUID `json:"id"`
-	DeckID    uuid.UUID `json:"deckId"`
-	DeckSlug  string    `json:"deckSlug"` // populated by GetCard for the edit page's deck link
-	Text      string    `json:"text"`
-	Meaning   string    `json:"meaning"`
-	CardType  string    `json:"cardType"`
-	Tags      []string  `json:"tags"`
-	Phonetic  *string   `json:"phonetic"`
-	Example   *string   `json:"example"`
-	Notes     *string   `json:"notes"`
-	CreatedAt time.Time `json:"createdAt"`
-
-	// SRS summary from cards_with_stats.
-	Attempts     int        `json:"attempts"`
-	ErrorRate    float64    `json:"errorRate"`
-	IntervalDays float64    `json:"intervalDays"`
-	DueAt        time.Time  `json:"dueAt"`
-	LastReviewed *time.Time `json:"lastReviewedAt"`
-}
-
-type CardInput struct {
-	DeckID   uuid.UUID `json:"deckId"`
-	Text     string    `json:"text"`
-	Meaning  string    `json:"meaning"`
-	CardType string    `json:"cardType"`
-	Tags     []string  `json:"tags"`
-	Phonetic *string   `json:"phonetic"`
-	Example  *string   `json:"example"`
-	Notes    *string   `json:"notes"`
-}
-
-// 카드 종류. DB의 cards.card_type 열이 받는 값과 같다. 카드가 들어오는 길은
-// JSON API, 웹 폼, CSV 가져오기 셋인데, 어느 길로 들어오든 여기 있는 값 하나로
-// 정해지도록 판정을 이 파일에 모았다.
-const (
-	CardTypeWord     = "word"
-	CardTypeSentence = "sentence"
-	CardTypeIdiom    = "idiom"
-	CardTypeConcept  = "concept"
-
-	// DefaultCardType은 종류를 고르지 않았을 때의 값이다.
-	DefaultCardType = CardTypeWord
-)
-
-// CardTypes lists every accepted card type, in the order the UI offers them.
-var CardTypes = []string{CardTypeWord, CardTypeSentence, CardTypeIdiom, CardTypeConcept}
-
-// IsCardType reports whether t is one of the accepted types. JSON API 요청처럼
-// 잘못된 값을 400으로 되돌려 줘야 하는 곳에서 쓴다.
-func IsCardType(t string) bool {
-	return slices.Contains(CardTypes, t)
-}
-
-// NormalizeCardType maps blank or unrecognized input to DefaultCardType. 폼과
-// CSV처럼 사람이 손으로 채우는 입력에서 쓴다. 오타 하나로 카드 등록 전체를
-// 실패시키는 것보다 기본 종류로 받아 두는 편이 낫기 때문이다.
-func NormalizeCardType(t string) string {
-	if IsCardType(t) {
-		return t
-	}
-	return DefaultCardType
-}
 
 const cardSelect = `
 	select id, deck_id, text, meaning, card_type, tags, phonetic, example,
 	       notes, created_at, attempts, error_rate, interval_days, due_at, last_reviewed_at
 	from cards_with_stats`
 
-func scanCard(row pgx.Row) (Card, error) {
-	var c Card
+func scanCard(row pgx.Row) (model.Card, error) {
+	var c model.Card
 	err := row.Scan(&c.ID, &c.DeckID, &c.Text, &c.Meaning, &c.CardType, &c.Tags,
 		&c.Phonetic, &c.Example, &c.Notes, &c.CreatedAt,
 		&c.Attempts, &c.ErrorRate, &c.IntervalDays, &c.DueAt, &c.LastReviewed)
 	if errors.Is(err, pgx.ErrNoRows) {
-		return c, ErrNotFound
+		return c, model.ErrNotFound
 	}
 	return c, err
 }
 
-func (s *Store) collectCards(rows pgx.Rows) ([]Card, error) {
+func (s *Store) collectCards(rows pgx.Rows) ([]model.Card, error) {
 	defer rows.Close()
-	cards := []Card{}
+	cards := []model.Card{}
 	for rows.Next() {
 		c, err := scanCard(rows)
 		if err != nil {
@@ -107,7 +44,7 @@ func (s *Store) collectCards(rows pgx.Rows) ([]Card, error) {
 	return cards, rows.Err()
 }
 
-func (s *Store) ListCards(ctx context.Context, userID, deckID uuid.UUID) ([]Card, error) {
+func (s *Store) ListCards(ctx context.Context, userID, deckID uuid.UUID) ([]model.Card, error) {
 	rows, err := s.pool.Query(ctx,
 		cardSelect+` where user_id = $1 and deck_id = $2 order by created_at desc`, userID, deckID)
 	if err != nil {
@@ -116,7 +53,7 @@ func (s *Store) ListCards(ctx context.Context, userID, deckID uuid.UUID) ([]Card
 	return s.collectCards(rows)
 }
 
-func (s *Store) GetCard(ctx context.Context, userID, cardID uuid.UUID) (Card, error) {
+func (s *Store) GetCard(ctx context.Context, userID, cardID uuid.UUID) (model.Card, error) {
 	c, err := scanCard(s.pool.QueryRow(ctx, cardSelect+` where user_id = $1 and id = $2`, userID, cardID))
 	if err != nil {
 		return c, err
@@ -127,19 +64,19 @@ func (s *Store) GetCard(ctx context.Context, userID, cardID uuid.UUID) (Card, er
 	if err := s.pool.QueryRow(ctx, `select seq from decks where id = $1`, c.DeckID).Scan(&seq); err != nil {
 		return c, err
 	}
-	c.DeckSlug = EncodeDeckSlug(seq)
+	c.DeckSlug = model.EncodeDeckSlug(seq)
 	return c, nil
 }
 
 // CreateCard inserts the card and its SRS row in one transaction; the deck
 // ownership check doubles as the foreign-key guard.
-func (s *Store) CreateCard(ctx context.Context, userID uuid.UUID, in CardInput) (Card, error) {
+func (s *Store) CreateCard(ctx context.Context, userID uuid.UUID, in model.CardInput) (model.Card, error) {
 	if _, err := s.GetDeck(ctx, userID, in.DeckID); err != nil {
-		return Card{}, err
+		return model.Card{}, err
 	}
 	tx, err := s.pool.Begin(ctx)
 	if err != nil {
-		return Card{}, err
+		return model.Card{}, err
 	}
 	defer tx.Rollback(ctx)
 
@@ -150,19 +87,19 @@ func (s *Store) CreateCard(ctx context.Context, userID uuid.UUID, in CardInput) 
 		userID, in.DeckID, in.Text, in.Meaning, in.CardType, in.Tags, in.Phonetic, in.Example, in.Notes).
 		Scan(&cardID)
 	if err != nil {
-		return Card{}, err
+		return model.Card{}, err
 	}
 	if _, err := tx.Exec(ctx,
 		`insert into card_srs (card_id, user_id) values ($1, $2)`, cardID, userID); err != nil {
-		return Card{}, err
+		return model.Card{}, err
 	}
 	if err := tx.Commit(ctx); err != nil {
-		return Card{}, err
+		return model.Card{}, err
 	}
 	return s.GetCard(ctx, userID, cardID)
 }
 
-func (s *Store) UpdateCard(ctx context.Context, userID, cardID uuid.UUID, in CardInput) (Card, error) {
+func (s *Store) UpdateCard(ctx context.Context, userID, cardID uuid.UUID, in model.CardInput) (model.Card, error) {
 	err := requireRowAffected(s.pool.Exec(ctx,
 		`update cards set
 		   text = $3, meaning = $4, card_type = $5, tags = $6,
@@ -170,7 +107,7 @@ func (s *Store) UpdateCard(ctx context.Context, userID, cardID uuid.UUID, in Car
 		 where user_id = $1 and id = $2`,
 		userID, cardID, in.Text, in.Meaning, in.CardType, in.Tags, in.Phonetic, in.Example, in.Notes))
 	if err != nil {
-		return Card{}, err
+		return model.Card{}, err
 	}
 	return s.GetCard(ctx, userID, cardID)
 }
@@ -180,20 +117,10 @@ func (s *Store) DeleteCard(ctx context.Context, userID, cardID uuid.UUID) error 
 		`delete from cards where user_id = $1 and id = $2`, userID, cardID))
 }
 
-type BulkResult struct {
-	Added   int `json:"added"`
-	Skipped int `json:"skipped"`
-}
-
-// MaxBulkCards bounds one bulk insert. 한 번의 요청이 통째로 한 트랜잭션이라,
-// 무제한으로 받으면 서버리스 함수의 실행 시간 한도에 먼저 걸린다. CSV 업로드와
-// JSON API의 대량 등록이 같은 한도를 쓴다.
-const MaxBulkCards = 2000
-
 // BulkCreateCards inserts many cards, skipping texts that already exist
 // in the deck (or repeat within the batch), compared case- and space-insensitively.
-func (s *Store) BulkCreateCards(ctx context.Context, userID, deckID uuid.UUID, inputs []CardInput) (BulkResult, error) {
-	var res BulkResult
+func (s *Store) BulkCreateCards(ctx context.Context, userID, deckID uuid.UUID, inputs []model.CardInput) (model.BulkResult, error) {
+	var res model.BulkResult
 	if _, err := s.GetDeck(ctx, userID, deckID); err != nil {
 		return res, err
 	}
@@ -254,7 +181,7 @@ func (s *Store) BulkCreateCards(ctx context.Context, userID, deckID uuid.UUID, i
 	return res, tx.Commit(ctx)
 }
 
-func (s *Store) DueCards(ctx context.Context, userID uuid.UUID, dueBefore time.Time, limit int) ([]Card, error) {
+func (s *Store) DueCards(ctx context.Context, userID uuid.UUID, dueBefore time.Time, limit int) ([]model.Card, error) {
 	rows, err := s.pool.Query(ctx,
 		cardSelect+` where user_id = $1 and due_at <= $2 order by due_at asc limit $3`,
 		userID, dueBefore, limit)
@@ -272,7 +199,7 @@ func (s *Store) DueCount(ctx context.Context, userID uuid.UUID, dueBefore time.T
 }
 
 // CardsByRule evaluates a smart rule and returns matching cards in rule order.
-func (s *Store) CardsByRule(ctx context.Context, userID uuid.UUID, rule smartrules.Rule) ([]Card, error) {
+func (s *Store) CardsByRule(ctx context.Context, userID uuid.UUID, rule smartrules.Rule) ([]model.Card, error) {
 	q, extra := rule.Query()
 	args := append([]any{userID}, extra...)
 	rows, err := s.pool.Query(ctx, q, args...)
@@ -293,7 +220,7 @@ func (s *Store) CardsByRule(ctx context.Context, userID uuid.UUID, rule smartrul
 		return nil, err
 	}
 	if len(ids) == 0 {
-		return []Card{}, nil
+		return []model.Card{}, nil
 	}
 
 	// Pass ids as pgtype.UUID: the pool runs the simple protocol (Supabase's
@@ -312,31 +239,8 @@ func (s *Store) CardsByRule(ctx context.Context, userID uuid.UUID, rule smartrul
 	if err != nil {
 		return nil, err
 	}
-	return SortCardsByIDOrder(cards, ids), nil
+	return model.SortCardsByIDOrder(cards, ids), nil
 }
-
-// SortCardsByIDOrder puts cards back in the order ids lists them, dropping any
-// id that no longer resolves to a card.
-//
-// 스마트 규칙이 정한 순서(오답률 높은 순 등)는 ID 목록에만 남아 있다. 카드 본문을
-// 가져오는 두 번째 조회는 그 순서를 지켜 주지 않으므로 여기서 되살린다. SQLite
-// 구현(internal/litestore)도 같은 사정이라 이 함수를 함께 쓴다.
-// tag::sort-by-id-order[]
-func SortCardsByIDOrder(cards []Card, ids []uuid.UUID) []Card {
-	cardOf := make(map[uuid.UUID]Card, len(cards))
-	for _, card := range cards {
-		cardOf[card.ID] = card
-	}
-	ordered := make([]Card, 0, len(cards))
-	for _, id := range ids {
-		if card, ok := cardOf[id]; ok {
-			ordered = append(ordered, card)
-		}
-	}
-	return ordered
-}
-
-// end::sort-by-id-order[]
 
 func (s *Store) CountByRule(ctx context.Context, userID uuid.UUID, rule smartrules.Rule) (int, error) {
 	q, extra := rule.CountQuery()

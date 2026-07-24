@@ -1,6 +1,11 @@
 // Package app builds the Gin engine shared by the local dev server
 // (cmd/server) and the Vercel serverless entrypoint (api/index.go).
 //
+// 이 패키지만 internal/ 이 아니라 pkg/ 에 있다. Vercel의 Go 빌더가 api/index.go를
+// 모듈 바깥에서 컴파일해 internal/ 을 가져올 수 없기 때문이다. internal/app으로
+// 옮기면 로컬 빌드와 테스트는 그대로 통과하고 배포만 깨지므로, 위치를 바꾸기
+// 전에 api/index.go의 주석을 함께 읽는다.
+//
 // This package must never import internal/litestore: Engine serves Vercel,
 // and the serverless binary must not link SQLite.
 package app
@@ -18,7 +23,8 @@ import (
 	"github.com/benelog/flashcard/internal/config"
 	"github.com/benelog/flashcard/internal/db"
 	"github.com/benelog/flashcard/internal/handlers"
-	"github.com/benelog/flashcard/internal/store"
+	"github.com/benelog/flashcard/internal/model"
+	"github.com/benelog/flashcard/internal/pgstore"
 	"github.com/benelog/flashcard/internal/web"
 )
 
@@ -48,13 +54,13 @@ func build() (*gin.Engine, error) {
 	if err != nil {
 		return nil, err
 	}
-	return New(cfg, store.New(pool)), nil
+	return New(cfg, pgstore.New(pool)), nil
 }
 
 // New assembles the router on top of any Store implementation. cfg.AuthMode
 // picks the middleware: Supabase token validation in production, the fixed
 // local user in local mode.
-func New(cfg *config.Config, s handlers.Store) *gin.Engine {
+func New(cfg *config.Config, s model.Store) *gin.Engine {
 	h := handlers.New(s)
 
 	gin.SetMode(gin.ReleaseMode)

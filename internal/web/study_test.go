@@ -4,7 +4,7 @@ import (
 	"net/url"
 	"testing"
 
-	"github.com/benelog/flashcard/internal/store"
+	"github.com/benelog/flashcard/internal/model"
 )
 
 func TestStudyTitle(t *testing.T) {
@@ -14,10 +14,10 @@ func TestStudyTitle(t *testing.T) {
 		mode      string
 		want      string
 	}{
-		{"링크가 실어 온 이름을 우선", "오답률 높은 카드", store.ModeSmart, "오답률 높은 카드"},
-		{"오늘 복습", "", store.ModeDue, "오늘 복습"},
-		{"스마트 학습", "", store.ModeSmart, "스마트 학습"},
-		{"덱 학습", "", store.ModeDeck, "덱 학습"},
+		{"링크가 실어 온 이름을 우선", "오답률 높은 카드", model.ModeSmart, "오답률 높은 카드"},
+		{"오늘 복습", "", model.ModeDue, "오늘 복습"},
+		{"스마트 학습", "", model.ModeSmart, "스마트 학습"},
+		{"덱 학습", "", model.ModeDeck, "덱 학습"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -33,11 +33,11 @@ func TestStudyTitle(t *testing.T) {
 func TestWithParamKeepsOtherValues(t *testing.T) {
 	base := url.Values{"mode": {"smart"}, "rule": {`{"type":"stale"}`}}
 
-	got, err := url.ParseQuery(withParam(base, "direction", store.MeaningToText))
+	got, err := url.ParseQuery(withParam(base, "direction", model.MeaningToText))
 	if err != nil {
 		t.Fatal(err)
 	}
-	if got.Get("direction") != store.MeaningToText {
+	if got.Get("direction") != model.MeaningToText {
 		t.Errorf("direction = %q", got.Get("direction"))
 	}
 	if got.Get("mode") != "smart" || got.Get("rule") != `{"type":"stale"}` {

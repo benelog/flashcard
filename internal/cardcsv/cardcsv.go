@@ -11,7 +11,7 @@ import (
 	"io"
 	"strings"
 
-	"github.com/benelog/flashcard/internal/store"
+	"github.com/benelog/flashcard/internal/model"
 )
 
 // Columns is the header row. 각 열의 뜻은 카드 편집 화면의 입력 칸과 같다.
@@ -26,7 +26,7 @@ const tagSeparator = "|"
 var utf8BOM = []byte{0xEF, 0xBB, 0xBF}
 
 // Write streams cards as a downloadable CSV.
-func Write(w io.Writer, cards []store.Card) error {
+func Write(w io.Writer, cards []model.Card) error {
 	if _, err := w.Write(utf8BOM); err != nil {
 		return err
 	}
@@ -41,8 +41,8 @@ func Write(w io.Writer, cards []store.Card) error {
 			card.Meaning,
 			card.CardType,
 			strings.Join(card.Tags, tagSeparator),
-			store.OrEmpty(card.Phonetic),
-			store.OrEmpty(card.Example),
+			model.OrEmpty(card.Phonetic),
+			model.OrEmpty(card.Example),
 		}); err != nil {
 			return err
 		}
@@ -55,7 +55,7 @@ func Write(w io.Writer, cards []store.Card) error {
 // Parse reads an uploaded deck CSV and reports how many rows it had to drop.
 // 열 순서는 헤더 행이 정하므로 손으로 만든 파일도 받을 수 있고, 예전 내보내기가
 // 쓰던 front/back 헤더도 알아본다.
-func Parse(r io.Reader) (cards []store.CardInput, dropped int, err error) {
+func Parse(r io.Reader) (cards []model.CardInput, dropped int, err error) {
 	reader := csv.NewReader(r)
 	reader.FieldsPerRecord = -1 // 행마다 열 수가 달라도 허용
 	reader.LazyQuotes = true
@@ -96,13 +96,13 @@ func Parse(r io.Reader) (cards []store.CardInput, dropped int, err error) {
 			dropped++
 			continue
 		}
-		cards = append(cards, store.CardInput{
+		cards = append(cards, model.CardInput{
 			Text:     text,
 			Meaning:  meaning,
-			CardType: store.NormalizeCardType(strings.ToLower(firstValue(row, "type"))),
+			CardType: model.NormalizeCardType(strings.ToLower(firstValue(row, "type"))),
 			Tags:     SplitTags(firstValue(row, "tags")),
-			Phonetic: store.NilIfBlank(firstValue(row, "phonetic")),
-			Example:  store.NilIfBlank(firstValue(row, "example")),
+			Phonetic: model.NilIfBlank(firstValue(row, "phonetic")),
+			Example:  model.NilIfBlank(firstValue(row, "example")),
 		})
 	}
 	return cards, dropped, nil

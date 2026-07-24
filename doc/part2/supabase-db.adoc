@@ -82,10 +82,10 @@ Vercel은 자기 위에서 도는 프로세스에 `VERCEL`이라는 환경 변�
 [source,go]
 ----
 type Store interface {
-	GetOrCreateProfile(ctx context.Context, userID uuid.UUID, displayName string) (store.Profile, error)
+	GetOrCreateProfile(ctx context.Context, userID uuid.UUID, displayName string) (model.Profile, error)
 
-	ListDecks(ctx context.Context, userID uuid.UUID) ([]store.Deck, error)
-	CreateDeck(ctx context.Context, userID uuid.UUID, name string, description *string) (store.Deck, error)
+	ListDecks(ctx context.Context, userID uuid.UUID) ([]model.Deck, error)
+	CreateDeck(ctx context.Context, userID uuid.UUID, name string, description *string) (model.Deck, error)
 	// ... (덱·카드·세션·공유·스마트 덱·통계에 걸쳐 모두 32개 메서드)
 
 	DailyStats(ctx context.Context, userID uuid.UUID, tz string, days int) ([]store.DailyStat, error)
@@ -93,8 +93,8 @@ type Store interface {
 ----
 
 핸들러는 이 목록에 있는 메서드만 부르고, 그 뒤에 무엇이 있는지 모른다.
-이 계약을 만족하는 구현이 둘 있는데, pgx로 PostgreSQL에 붙는 `internal/store`와 1부에서 만든 SQLite 구현 `internal/litestore`다.
-두 구현은 SQL 방언만 다를 뿐 행 타입과 `ErrNotFound` 같은 오류 값은 `internal/store`의 것을 함께 쓰므로, 핸들러 입장에서는 어느 쪽이 꽂혀도 응답이 같다.
+이 계약을 만족하는 구현이 둘 있는데, pgx로 PostgreSQL에 붙는 `internal/pgstore`와 1부에서 만든 SQLite 구현 `internal/litestore`다.
+두 구현은 SQL 방언만 다를 뿐 행 타입과 `ErrNotFound` 같은 오류 값은 `internal/model`의 것을 함께 쓰므로, 핸들러 입장에서는 어느 쪽이 꽂혀도 응답이 같다.
 
 어느 구현을 꽂을지는 진입점이 정한다.
 `cmd/server/main.go`에서 발췌한 다음 코드는 설정의 드라이버 값에 따라 SQLite 스토어 또는 PostgreSQL 엔진을 조립한다.
@@ -194,7 +194,7 @@ UUID는 16바이트로 bigint의 두 배 크기이고, 값이 무작위라서 �
 PostgreSQL 커뮤니티가 입을 모아 "항상 timestamptz를 써라"라고 권고하는 이유다.
 5장의 SQLite에는 시간 타입 자체가 없어 고정 폭 UTC 문자열로 저장하고 문자열 비교가 곧 시간 비교가 되게 맞췄는데, 그 수공업이 여기서는 타입 하나로 끝난다.
 
-실전에서는 `internal/store/stats.go`의 일별 통계 쿼리가 복습 시각을 UTC로 쌓아 두고, 조회할 때 `reviewed_at at time zone $2`처럼 사용자의 IANA 시간대(예: `Asia/Seoul`)로 변환해 "그 사용자의 하루" 단위로 집계한다.
+실전에서는 `internal/pgstore/stats.go`의 일별 통계 쿼리가 복습 시각을 UTC로 쌓아 두고, 조회할 때 `reviewed_at at time zone $2`처럼 사용자의 IANA 시간대(예: `Asia/Seoul`)로 변환해 "그 사용자의 하루" 단위로 집계한다.
 서울의 자정과 뉴욕의 자정이 서로 다른 UTC 시각이어도 저장은 하나의 기준으로 하고 해석만 사용자별로 바꾸면 되며, 학습 streak(연속 학습일) 계산도 같은 방식이다.
 
 === 배열과 GIN 인덱스

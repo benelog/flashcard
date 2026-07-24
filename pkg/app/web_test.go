@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/benelog/flashcard/internal/store"
+	"github.com/benelog/flashcard/internal/model"
 )
 
 // 로그인한 사용자가 여는 화면은 전부 200이어야 한다. 템플릿이 참조하는 값 하나가
@@ -45,14 +45,14 @@ func TestDeckAndCardLifecycle(t *testing.T) {
 	rec := a.postForm("/cards/"+card.ID.String(), url.Values{
 		"text":      {"run"},
 		"meaning":   {"뛰다"},
-		"card_type": {store.CardTypeSentence},
+		"card_type": {model.CardTypeSentence},
 		"tags":      {"동사, 기초"},
 	})
 	if to := mustRedirect(t, rec); to != "/decks/"+slug {
 		t.Errorf("update redirected to %q, want /decks/%s", to, slug)
 	}
 	updated := a.cards(slug)[0]
-	if updated.Meaning != "뛰다" || updated.CardType != store.CardTypeSentence {
+	if updated.Meaning != "뛰다" || updated.CardType != model.CardTypeSentence {
 		t.Errorf("card = %+v, want 뛰다/sentence", updated)
 	}
 	if len(updated.Tags) != 2 || updated.Tags[0] != "동사" {

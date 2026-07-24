@@ -10,7 +10,7 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/benelog/flashcard/internal/store"
+	"github.com/benelog/flashcard/internal/model"
 )
 
 const cardSelect = `
@@ -18,15 +18,15 @@ const cardSelect = `
 	       notes, created_at, attempts, error_rate, interval_days, due_at, last_reviewed_at
 	from cards_with_stats`
 
-func scanCard(r rowScanner) (store.Card, error) {
-	var c store.Card
+func scanCard(r rowScanner) (model.Card, error) {
+	var c model.Card
 	var id, deckID, tags, createdAt, dueAt string
 	var lastReviewed sql.NullString
 	err := r.Scan(&id, &deckID, &c.Text, &c.Meaning, &c.CardType, &tags,
 		&c.Phonetic, &c.Example, &c.Notes, &createdAt,
 		&c.Attempts, &c.ErrorRate, &c.IntervalDays, &dueAt, &lastReviewed)
 	if errors.Is(err, sql.ErrNoRows) {
-		return c, store.ErrNotFound
+		return c, model.ErrNotFound
 	}
 	if err != nil {
 		return c, err
@@ -52,9 +52,9 @@ func scanCard(r rowScanner) (store.Card, error) {
 	return c, nil
 }
 
-func collectCards(rows *sql.Rows) ([]store.Card, error) {
+func collectCards(rows *sql.Rows) ([]model.Card, error) {
 	defer rows.Close()
-	cards := []store.Card{}
+	cards := []model.Card{}
 	for rows.Next() {
 		c, err := scanCard(rows)
 		if err != nil {
@@ -65,7 +65,7 @@ func collectCards(rows *sql.Rows) ([]store.Card, error) {
 	return cards, rows.Err()
 }
 
-func (s *Store) ListCards(ctx context.Context, userID, deckID uuid.UUID) ([]store.Card, error) {
+func (s *Store) ListCards(ctx context.Context, userID, deckID uuid.UUID) ([]model.Card, error) {
 	rows, err := s.db.QueryContext(ctx,
 		cardSelect+` where user_id = ? and deck_id = ? order by created_at desc`,
 		userID.String(), deckID.String())
@@ -75,7 +75,7 @@ func (s *Store) ListCards(ctx context.Context, userID, deckID uuid.UUID) ([]stor
 	return collectCards(rows)
 }
 
-func (s *Store) GetCard(ctx context.Context, userID, cardID uuid.UUID) (store.Card, error) {
+func (s *Store) GetCard(ctx context.Context, userID, cardID uuid.UUID) (model.Card, error) {
 	c, err := scanCard(s.db.QueryRowContext(ctx,
 		cardSelect+` where user_id = ? and id = ?`, userID.String(), cardID.String()))
 	if err != nil {
@@ -88,13 +88,13 @@ func (s *Store) GetCard(ctx context.Context, userID, cardID uuid.UUID) (store.Ca
 		`select seq from decks where id = ?`, c.DeckID.String()).Scan(&seq); err != nil {
 		return c, err
 	}
-	c.DeckSlug = store.EncodeDeckSlug(seq)
+	c.DeckSlug = model.EncodeDeckSlug(seq)
 	return c, nil
 }
 
 // insertCard adds the card and its SRS row inside tx; ids and timestamps are
 // generated here because SQLite has no gen_random_uuid()/now() defaults.
-func insertCard(ctx context.Context, tx *sql.Tx, userID uuid.UUID, in store.CardInput, now string) (uuid.UUID, error) {
+func insertCard(ctx context.Context, tx *sql.Tx, userID uuid.UUID, in model.CardInput, now string) (uuid.UUID, error) {
 	cardID := uuid.New()
 	_, err := tx.ExecContext(ctx,
 		`insert into cards (id, user_id, deck_id, text, meaning, card_type, tags,
@@ -113,27 +113,27 @@ func insertCard(ctx context.Context, tx *sql.Tx, userID uuid.UUID, in store.Card
 
 // CreateCard inserts the card and its SRS row in one transaction; the deck
 // ownership check doubles as the foreign-key guard.
-func (s *Store) CreateCard(ctx context.Context, userID uuid.UUID, in store.CardInput) (store.Card, error) {
+func (s *Store) CreateCard(ctx context.Context, userID uuid.UUID, in model.CardInput) (model.Card, error) {
 	if _, err := s.GetDeck(ctx, userID, in.DeckID); err != nil {
-		return store.Card{}, err
+		return model.Card{}, err
 	}
 	tx, err := s.db.BeginTx(ctx, nil)
 	if err != nil {
-		return store.Card{}, err
+		return model.Card{}, err
 	}
 	defer tx.Rollback()
 
 	cardID, err := insertCard(ctx, tx, userID, in, fmtTime(time.Now()))
 	if err != nil {
-		return store.Card{}, err
+		return model.Card{}, err
 	}
 	if err := tx.Commit(); err != nil {
-		return store.Card{}, err
+		return model.Card{}, err
 	}
 	return s.GetCard(ctx, userID, cardID)
 }
 
-func (s *Store) UpdateCard(ctx context.Context, userID, cardID uuid.UUID, in store.CardInput) (store.Card, error) {
+func (s *Store) UpdateCard(ctx context.Context, userID, cardID uuid.UUID, in model.CardInput) (model.Card, error) {
 	err := requireRowAffected(s.db.ExecContext(ctx,
 		`update cards set
 		   text = ?, meaning = ?, card_type = ?, tags = ?,
@@ -143,7 +143,7 @@ func (s *Store) UpdateCard(ctx context.Context, userID, cardID uuid.UUID, in sto
 		in.Phonetic, in.Example, in.Notes, fmtTime(time.Now()),
 		userID.String(), cardID.String()))
 	if err != nil {
-		return store.Card{}, err
+		return model.Card{}, err
 	}
 	return s.GetCard(ctx, userID, cardID)
 }
@@ -155,8 +155,8 @@ func (s *Store) DeleteCard(ctx context.Context, userID, cardID uuid.UUID) error 
 
 // BulkCreateCards inserts many cards, skipping texts that already exist
 // in the deck (or repeat within the batch), compared case- and space-insensitively.
-func (s *Store) BulkCreateCards(ctx context.Context, userID, deckID uuid.UUID, inputs []store.CardInput) (store.BulkResult, error) {
-	var res store.BulkResult
+func (s *Store) BulkCreateCards(ctx context.Context, userID, deckID uuid.UUID, inputs []model.CardInput) (model.BulkResult, error) {
+	var res model.BulkResult
 	if _, err := s.GetDeck(ctx, userID, deckID); err != nil {
 		return res, err
 	}
@@ -203,7 +203,7 @@ func (s *Store) BulkCreateCards(ctx context.Context, userID, deckID uuid.UUID, i
 	return res, tx.Commit()
 }
 
-func (s *Store) DueCards(ctx context.Context, userID uuid.UUID, dueBefore time.Time, limit int) ([]store.Card, error) {
+func (s *Store) DueCards(ctx context.Context, userID uuid.UUID, dueBefore time.Time, limit int) ([]model.Card, error) {
 	rows, err := s.db.QueryContext(ctx,
 		cardSelect+` where user_id = ? and due_at <= ? order by due_at asc limit ?`,
 		userID.String(), fmtTime(dueBefore), limit)

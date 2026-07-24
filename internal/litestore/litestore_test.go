@@ -9,8 +9,8 @@ import (
 
 	"github.com/google/uuid"
 
+	"github.com/benelog/flashcard/internal/model"
 	"github.com/benelog/flashcard/internal/smartrules"
-	"github.com/benelog/flashcard/internal/store"
 )
 
 // tag::fixture[]
@@ -30,7 +30,7 @@ func testStore(t *testing.T) (*Store, uuid.UUID) {
 
 // end::fixture[]
 
-func mustDeck(t *testing.T, s *Store, userID uuid.UUID, name string) store.Deck {
+func mustDeck(t *testing.T, s *Store, userID uuid.UUID, name string) model.Deck {
 	t.Helper()
 	deck, err := s.CreateDeck(context.Background(), userID, name, nil)
 	if err != nil {
@@ -39,9 +39,9 @@ func mustDeck(t *testing.T, s *Store, userID uuid.UUID, name string) store.Deck 
 	return deck
 }
 
-func mustCard(t *testing.T, s *Store, userID, deckID uuid.UUID, text string, tags []string) store.Card {
+func mustCard(t *testing.T, s *Store, userID, deckID uuid.UUID, text string, tags []string) model.Card {
 	t.Helper()
-	card, err := s.CreateCard(context.Background(), userID, store.CardInput{
+	card, err := s.CreateCard(context.Background(), userID, model.CardInput{
 		DeckID: deckID, Text: text, Meaning: "meaning of " + text, CardType: "word", Tags: tags,
 	})
 	if err != nil {
@@ -87,10 +87,10 @@ func TestDeckCRUDAndSlug(t *testing.T) {
 	if err != nil || id != deck.ID {
 		t.Fatalf("DeckIDBySlug(%q) = %v, %v; want %v", deck.Slug, id, err, deck.ID)
 	}
-	if _, err := s.DeckIDBySlug(ctx, userID, "zzzz"); !errors.Is(err, store.ErrNotFound) {
+	if _, err := s.DeckIDBySlug(ctx, userID, "zzzz"); !errors.Is(err, model.ErrNotFound) {
 		t.Fatalf("DeckIDBySlug(unknown) err = %v, want ErrNotFound", err)
 	}
-	if _, err := s.DeckIDBySlug(ctx, userID, "!!"); !errors.Is(err, store.ErrNotFound) {
+	if _, err := s.DeckIDBySlug(ctx, userID, "!!"); !errors.Is(err, model.ErrNotFound) {
 		t.Fatalf("DeckIDBySlug(malformed) err = %v, want ErrNotFound", err)
 	}
 
@@ -111,10 +111,10 @@ func TestDeckCRUDAndSlug(t *testing.T) {
 	if err := s.DeleteDeck(ctx, userID, deck.ID); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := s.GetDeck(ctx, userID, deck.ID); !errors.Is(err, store.ErrNotFound) {
+	if _, err := s.GetDeck(ctx, userID, deck.ID); !errors.Is(err, model.ErrNotFound) {
 		t.Fatalf("GetDeck after delete err = %v, want ErrNotFound", err)
 	}
-	if err := s.DeleteDeck(ctx, userID, deck.ID); !errors.Is(err, store.ErrNotFound) {
+	if err := s.DeleteDeck(ctx, userID, deck.ID); !errors.Is(err, model.ErrNotFound) {
 		t.Fatalf("DeleteDeck twice err = %v, want ErrNotFound", err)
 	}
 }
@@ -135,7 +135,7 @@ func TestCardCRUD(t *testing.T) {
 		t.Fatalf("card.DueAt = %v, want due immediately", card.DueAt)
 	}
 
-	in := store.CardInput{
+	in := model.CardInput{
 		DeckID: deck.ID, Text: "run", Meaning: "달리다",
 		CardType: "sentence", Tags: []string{"verb", "motion"},
 	}
@@ -155,7 +155,7 @@ func TestCardCRUD(t *testing.T) {
 	if err := s.DeleteCard(ctx, userID, card.ID); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := s.GetCard(ctx, userID, card.ID); !errors.Is(err, store.ErrNotFound) {
+	if _, err := s.GetCard(ctx, userID, card.ID); !errors.Is(err, model.ErrNotFound) {
 		t.Fatalf("GetCard after delete err = %v, want ErrNotFound", err)
 	}
 }
@@ -166,7 +166,7 @@ func TestBulkCreateCardsSkipsDuplicates(t *testing.T) {
 	deck := mustDeck(t, s, userID, "Bulk")
 	mustCard(t, s, userID, deck.ID, "run", nil)
 
-	inputs := []store.CardInput{
+	inputs := []model.CardInput{
 		{Text: "run", Meaning: "m", CardType: "word"},   // already in the deck
 		{Text: " RUN ", Meaning: "m", CardType: "word"}, // case/space-insensitive duplicate
 		{Text: "walk", Meaning: "m", CardType: "word"},  // new
@@ -263,14 +263,14 @@ func TestReviewSessionFlow(t *testing.T) {
 		t.Fatalf("card after lapse = attempts %d, errorRate %v; want 2, 0.5", got.Attempts, got.ErrorRate)
 	}
 
-	if _, err := s.RecordReview(ctx, uuid.New(), sess.ID, card.ID, true, false); !errors.Is(err, store.ErrNotFound) {
+	if _, err := s.RecordReview(ctx, uuid.New(), sess.ID, card.ID, true, false); !errors.Is(err, model.ErrNotFound) {
 		t.Fatalf("RecordReview as stranger err = %v, want ErrNotFound", err)
 	}
 
 	if err := s.FinishSession(ctx, userID, sess.ID, true); err != nil {
 		t.Fatal(err)
 	}
-	if err := s.FinishSession(ctx, userID, uuid.New(), true); !errors.Is(err, store.ErrNotFound) {
+	if err := s.FinishSession(ctx, userID, uuid.New(), true); !errors.Is(err, model.ErrNotFound) {
 		t.Fatalf("FinishSession unknown err = %v, want ErrNotFound", err)
 	}
 }
@@ -421,10 +421,10 @@ func TestSharedDeckFlow(t *testing.T) {
 	if err := s.UnshareDeck(ctx, owner, deck.ID); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := s.GetSharedDeck(ctx, viewer, info.ShareSlug); !errors.Is(err, store.ErrNotFound) {
+	if _, err := s.GetSharedDeck(ctx, viewer, info.ShareSlug); !errors.Is(err, model.ErrNotFound) {
 		t.Fatalf("GetSharedDeck after unshare err = %v, want ErrNotFound", err)
 	}
-	if _, err := s.ImportSharedDeck(ctx, viewer, info.ShareSlug); !errors.Is(err, store.ErrNotFound) {
+	if _, err := s.ImportSharedDeck(ctx, viewer, info.ShareSlug); !errors.Is(err, model.ErrNotFound) {
 		t.Fatalf("ImportSharedDeck after unshare err = %v, want ErrNotFound", err)
 	}
 }

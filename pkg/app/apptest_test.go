@@ -19,7 +19,7 @@ import (
 	"github.com/benelog/flashcard/internal/auth"
 	"github.com/benelog/flashcard/internal/config"
 	"github.com/benelog/flashcard/internal/litestore"
-	"github.com/benelog/flashcard/internal/store"
+	"github.com/benelog/flashcard/internal/model"
 )
 
 // 여기 있는 테스트는 핸들러를 하나씩 부르는 대신 앱을 통째로 띄워 진짜 요청을
@@ -198,14 +198,14 @@ func (a *app) makeCard(deckSlug, text, meaning string) {
 	rec := a.postForm("/decks/"+deckSlug+"/cards", url.Values{
 		"text":      {text},
 		"meaning":   {meaning},
-		"card_type": {store.CardTypeWord},
+		"card_type": {model.CardTypeWord},
 	})
 	mustRedirect(a.t, rec)
 }
 
 // cards reads the deck's cards straight from the store, for assertions the
 // rendered page cannot make (ids, SRS state).
-func (a *app) cards(deckSlug string) []store.Card {
+func (a *app) cards(deckSlug string) []model.Card {
 	a.t.Helper()
 	deck, err := a.store.GetDeckBySlug(a.t.Context(), a.userID, deckSlug)
 	if err != nil {

@@ -7,7 +7,7 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/benelog/flashcard/internal/store"
+	"github.com/benelog/flashcard/internal/model"
 )
 
 func TestHealthz(t *testing.T) {
@@ -22,17 +22,17 @@ func TestAPIDeckCRUD(t *testing.T) {
 
 	created := a.sendJSON(http.MethodPost, "/api/decks", `{"name":"Verbs","description":"불규칙"}`)
 	mustStatus(t, created, http.StatusCreated)
-	deck := decodeJSON[store.Deck](t, created)
+	deck := decodeJSON[model.Deck](t, created)
 	if deck.Slug == "" || deck.Name != "Verbs" {
 		t.Fatalf("created deck = %+v", deck)
 	}
 
-	got := decodeJSON[store.Deck](t, a.sendJSON(http.MethodGet, "/api/decks/"+deck.Slug, ""))
+	got := decodeJSON[model.Deck](t, a.sendJSON(http.MethodGet, "/api/decks/"+deck.Slug, ""))
 	if got.ID != deck.ID {
 		t.Errorf("GET deck = %v, want %v", got.ID, deck.ID)
 	}
 
-	renamed := decodeJSON[store.Deck](t,
+	renamed := decodeJSON[model.Deck](t,
 		a.sendJSON(http.MethodPatch, "/api/decks/"+deck.Slug, `{"name":"Irregular verbs"}`))
 	if renamed.Name != "Irregular verbs" {
 		t.Errorf("PATCH name = %q", renamed.Name)
@@ -42,7 +42,7 @@ func TestAPIDeckCRUD(t *testing.T) {
 		t.Errorf("PATCH dropped the description: %v", renamed.Description)
 	}
 
-	list := decodeJSON[[]store.Deck](t, a.sendJSON(http.MethodGet, "/api/decks", ""))
+	list := decodeJSON[[]model.Deck](t, a.sendJSON(http.MethodGet, "/api/decks", ""))
 	if len(list) != 1 {
 		t.Fatalf("GET decks = %d decks, want 1", len(list))
 	}
@@ -74,24 +74,24 @@ func TestAPIDeckValidation(t *testing.T) {
 
 func TestAPICardCRUD(t *testing.T) {
 	a := newTestApp(t)
-	deck := decodeJSON[store.Deck](t, a.sendJSON(http.MethodPost, "/api/decks", `{"name":"Verbs"}`))
+	deck := decodeJSON[model.Deck](t, a.sendJSON(http.MethodPost, "/api/decks", `{"name":"Verbs"}`))
 
 	created := a.sendJSON(http.MethodPost, "/api/cards",
 		`{"deckSlug":"`+deck.Slug+`","text":" run ","meaning":"달리다","cardType":"word","tags":["동사"]}`)
 	mustStatus(t, created, http.StatusCreated)
-	card := decodeJSON[store.Card](t, created)
+	card := decodeJSON[model.Card](t, created)
 	// 앞뒤 공백은 저장 전에 걷어낸다.
 	if card.Text != "run" {
 		t.Errorf("card.Text = %q, want %q", card.Text, "run")
 	}
 
-	updated := decodeJSON[store.Card](t, a.sendJSON(http.MethodPatch, "/api/cards/"+card.ID.String(),
+	updated := decodeJSON[model.Card](t, a.sendJSON(http.MethodPatch, "/api/cards/"+card.ID.String(),
 		`{"text":"run","meaning":"뛰다","cardType":"sentence"}`))
-	if updated.Meaning != "뛰다" || updated.CardType != store.CardTypeSentence {
+	if updated.Meaning != "뛰다" || updated.CardType != model.CardTypeSentence {
 		t.Errorf("updated card = %+v", updated)
 	}
 
-	cards := decodeJSON[[]store.Card](t, a.sendJSON(http.MethodGet, "/api/decks/"+deck.Slug+"/cards", ""))
+	cards := decodeJSON[[]model.Card](t, a.sendJSON(http.MethodGet, "/api/decks/"+deck.Slug+"/cards", ""))
 	if len(cards) != 1 {
 		t.Fatalf("deck has %d cards, want 1", len(cards))
 	}
@@ -103,7 +103,7 @@ func TestAPICardCRUD(t *testing.T) {
 // API는 폼·CSV와 달리 모르는 카드 종류를 조용히 고치지 않고 400으로 알린다.
 func TestAPICardValidation(t *testing.T) {
 	a := newTestApp(t)
-	deck := decodeJSON[store.Deck](t, a.sendJSON(http.MethodPost, "/api/decks", `{"name":"Verbs"}`))
+	deck := decodeJSON[model.Deck](t, a.sendJSON(http.MethodPost, "/api/decks", `{"name":"Verbs"}`))
 
 	tests := []struct {
 		name string
@@ -123,14 +123,14 @@ func TestAPICardValidation(t *testing.T) {
 	created := a.sendJSON(http.MethodPost, "/api/cards",
 		`{"deckSlug":"`+deck.Slug+`","text":"walk","meaning":"걷다"}`)
 	mustStatus(t, created, http.StatusCreated)
-	if got := decodeJSON[store.Card](t, created); got.CardType != store.DefaultCardType {
-		t.Errorf("cardType = %q, want the default %q", got.CardType, store.DefaultCardType)
+	if got := decodeJSON[model.Card](t, created); got.CardType != model.DefaultCardType {
+		t.Errorf("cardType = %q, want the default %q", got.CardType, model.DefaultCardType)
 	}
 }
 
 func TestAPIBulkCreateSkipsDuplicates(t *testing.T) {
 	a := newTestApp(t)
-	deck := decodeJSON[store.Deck](t, a.sendJSON(http.MethodPost, "/api/decks", `{"name":"Verbs"}`))
+	deck := decodeJSON[model.Deck](t, a.sendJSON(http.MethodPost, "/api/decks", `{"name":"Verbs"}`))
 
 	rec := a.sendJSON(http.MethodPost, "/api/decks/"+deck.Slug+"/cards/bulk", `{"cards":[
 		{"text":"run","meaning":"달리다"},
@@ -152,7 +152,7 @@ func TestAPIBulkCreateSkipsDuplicates(t *testing.T) {
 
 func TestAPIBulkRejectsEmptyBatch(t *testing.T) {
 	a := newTestApp(t)
-	deck := decodeJSON[store.Deck](t, a.sendJSON(http.MethodPost, "/api/decks", `{"name":"Verbs"}`))
+	deck := decodeJSON[model.Deck](t, a.sendJSON(http.MethodPost, "/api/decks", `{"name":"Verbs"}`))
 	mustStatus(t, a.sendJSON(http.MethodPost, "/api/decks/"+deck.Slug+"/cards/bulk", `{"cards":[]}`),
 		http.StatusBadRequest)
 }
@@ -161,8 +161,8 @@ func TestAPIBulkRejectsEmptyBatch(t *testing.T) {
 // 이 API의 핵심이다.
 func TestAPIStudySession(t *testing.T) {
 	a := newTestApp(t)
-	deck := decodeJSON[store.Deck](t, a.sendJSON(http.MethodPost, "/api/decks", `{"name":"Verbs"}`))
-	card := decodeJSON[store.Card](t, a.sendJSON(http.MethodPost, "/api/cards",
+	deck := decodeJSON[model.Deck](t, a.sendJSON(http.MethodPost, "/api/decks", `{"name":"Verbs"}`))
+	card := decodeJSON[model.Card](t, a.sendJSON(http.MethodPost, "/api/cards",
 		`{"deckSlug":"`+deck.Slug+`","text":"run","meaning":"달리다"}`))
 
 	due := decodeJSON[struct {
@@ -175,8 +175,8 @@ func TestAPIStudySession(t *testing.T) {
 	opened := a.sendJSON(http.MethodPost, "/api/sessions", `{"mode":"due","direction":"text_to_meaning"}`)
 	mustStatus(t, opened, http.StatusCreated)
 	session := decodeJSON[struct {
-		Session store.Session `json:"session"`
-		Cards   []store.Card  `json:"cards"`
+		Session model.Session `json:"session"`
+		Cards   []model.Card  `json:"cards"`
 	}](t, opened)
 	if len(session.Cards) != 1 {
 		t.Fatalf("session has %d cards, want 1", len(session.Cards))
@@ -185,7 +185,7 @@ func TestAPIStudySession(t *testing.T) {
 	graded := a.sendJSON(http.MethodPost, "/api/sessions/"+session.Session.ID.String()+"/reviews",
 		`{"cardId":"`+card.ID.String()+`","result":true}`)
 	mustStatus(t, graded, http.StatusOK)
-	if out := decodeJSON[store.ReviewOutcome](t, graded); out.IntervalDays != 1 {
+	if out := decodeJSON[model.ReviewOutcome](t, graded); out.IntervalDays != 1 {
 		t.Errorf("interval = %v, want 1 day after the first correct answer", out.IntervalDays)
 	}
 
@@ -231,7 +231,7 @@ func TestAPISmartDecksAndSuggestions(t *testing.T) {
 	created := a.sendJSON(http.MethodPost, "/api/smart-decks",
 		`{"name":"오답 모음","rule":{"type":"high_error","limit":9999}}`)
 	mustStatus(t, created, http.StatusCreated)
-	smart := decodeJSON[store.SmartDeck](t, created)
+	smart := decodeJSON[model.SmartDeck](t, created)
 
 	// 저장되는 규칙은 정규화된 것이라야 한다: limit이 허용 범위로 잘린다.
 	var rule struct {
@@ -256,16 +256,16 @@ func TestAPISmartDecksAndSuggestions(t *testing.T) {
 func TestAPIProfileAndStats(t *testing.T) {
 	a := newTestApp(t)
 
-	updated := decodeJSON[store.Profile](t,
+	updated := decodeJSON[model.Profile](t,
 		a.sendJSON(http.MethodPatch, "/api/me", `{"displayName":"벤","settings":{"dailyGoal":30}}`))
 	if updated.DisplayName == nil || *updated.DisplayName != "벤" {
 		t.Errorf("displayName = %v", updated.DisplayName)
 	}
-	if got := decodeJSON[store.Profile](t, a.sendJSON(http.MethodGet, "/api/me", "")); string(got.Settings) == "" {
+	if got := decodeJSON[model.Profile](t, a.sendJSON(http.MethodGet, "/api/me", "")); string(got.Settings) == "" {
 		t.Error("settings came back empty")
 	}
 
-	summary := decodeJSON[store.Summary](t, a.sendJSON(http.MethodGet, "/api/stats/summary?tz=Asia/Seoul", ""))
+	summary := decodeJSON[model.Summary](t, a.sendJSON(http.MethodGet, "/api/stats/summary?tz=Asia/Seoul", ""))
 	if summary.TotalReviews != 0 || summary.Streak != 0 {
 		t.Errorf("fresh summary = %+v, want zeros", summary)
 	}
@@ -275,16 +275,16 @@ func TestAPIProfileAndStats(t *testing.T) {
 // 공유 갤러리는 로그인 없이도 열리는 공개 API다.
 func TestAPISharedDecks(t *testing.T) {
 	a := newTestApp(t)
-	deck := decodeJSON[store.Deck](t, a.sendJSON(http.MethodPost, "/api/decks", `{"name":"Verbs"}`))
+	deck := decodeJSON[model.Deck](t, a.sendJSON(http.MethodPost, "/api/decks", `{"name":"Verbs"}`))
 	a.sendJSON(http.MethodPost, "/api/cards", `{"deckSlug":"`+deck.Slug+`","text":"run","meaning":"달리다"}`)
 
-	shared := decodeJSON[store.ShareInfo](t,
+	shared := decodeJSON[model.ShareInfo](t,
 		a.sendJSON(http.MethodPost, "/api/decks/"+deck.Slug+"/share", ""))
 	if shared.ShareSlug == "" {
 		t.Fatal("share slug is empty")
 	}
 
-	gallery := decodeJSON[[]store.SharedDeckSummary](t, a.sendJSON(http.MethodGet, "/api/shared-decks", ""))
+	gallery := decodeJSON[[]model.SharedDeckSummary](t, a.sendJSON(http.MethodGet, "/api/shared-decks", ""))
 	if len(gallery) != 1 || gallery[0].CardCount != 1 {
 		t.Fatalf("gallery = %+v, want one deck with one card", gallery)
 	}
@@ -295,7 +295,7 @@ func TestAPISharedDecks(t *testing.T) {
 
 	imported := a.sendJSON(http.MethodPost, "/api/shared-decks/"+shared.ShareSlug+"/import", "")
 	mustStatus(t, imported, http.StatusCreated)
-	if copied := decodeJSON[store.Deck](t, imported); copied.ID == deck.ID {
+	if copied := decodeJSON[model.Deck](t, imported); copied.ID == deck.ID {
 		t.Error("import returned the original deck instead of a copy")
 	}
 
@@ -310,7 +310,7 @@ func TestWebAndAPIShareOneStore(t *testing.T) {
 	slug := a.makeDeck("Verbs")
 	a.makeCard(slug, "run", "달리다")
 
-	cards := decodeJSON[[]store.Card](t, a.sendJSON(http.MethodGet, "/api/decks/"+slug+"/cards", ""))
+	cards := decodeJSON[[]model.Card](t, a.sendJSON(http.MethodGet, "/api/decks/"+slug+"/cards", ""))
 	if len(cards) != 1 || cards[0].Text != "run" {
 		t.Fatalf("API sees %+v, want the card the form created", cards)
 	}

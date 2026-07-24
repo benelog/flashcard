@@ -8,7 +8,7 @@ import (
 	"github.com/benelog/flashcard/internal/auth"
 	"github.com/benelog/flashcard/internal/cardcsv"
 	"github.com/benelog/flashcard/internal/handlers"
-	"github.com/benelog/flashcard/internal/store"
+	"github.com/benelog/flashcard/internal/model"
 )
 
 // importCSV handles the deck page's file-upload form. 실패는 모두 덱 화면으로
@@ -37,9 +37,9 @@ func (w *Web) importCSV(c *gin.Context) {
 		redirectWithFlash(c, flashError, message, deckURL)
 		return
 	}
-	if len(cards) > store.MaxBulkCards {
+	if len(cards) > model.MaxBulkCards {
 		redirectWithFlash(c, flashError,
-			fmt.Sprintf("한 번에 %d장까지만 가져올 수 있어요", store.MaxBulkCards), deckURL)
+			fmt.Sprintf("한 번에 %d장까지만 가져올 수 있어요", model.MaxBulkCards), deckURL)
 		return
 	}
 

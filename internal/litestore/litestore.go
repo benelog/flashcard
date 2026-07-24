@@ -1,6 +1,7 @@
-// Package litestore is the SQLite implementation of handlers.Store for local
-// single-user mode. It reuses the row types and the ErrNotFound sentinel from
-// internal/store; only the SQL dialect differs.
+// Package litestore is the SQLite implementation of model.Store for local
+// single-user mode. It reads the row types and the ErrNotFound sentinel from
+// internal/model, exactly as the pgx implementation (internal/pgstore) does;
+// only the SQL dialect differs.
 package litestore
 
 import (
@@ -14,7 +15,7 @@ import (
 
 	_ "modernc.org/sqlite"
 
-	"github.com/benelog/flashcard/internal/store"
+	"github.com/benelog/flashcard/internal/model"
 )
 
 //go:embed schema.sql
@@ -63,7 +64,7 @@ type rowScanner interface {
 
 // tag::require-row-affected[]
 // requireRowAffected wraps an Exec that must touch exactly the caller's row.
-// The pgx store has the same helper for the same reason: every write is scoped
+// internal/pgstore has the same helper for the same reason: every write is scoped
 // by user_id, so "no row matched" means the row is missing or belongs to
 // someone else, and both are ErrNotFound to the caller.
 func requireRowAffected(res sql.Result, err error) error {
@@ -75,7 +76,7 @@ func requireRowAffected(res sql.Result, err error) error {
 		return err
 	}
 	if n == 0 {
-		return store.ErrNotFound
+		return model.ErrNotFound
 	}
 	return nil
 }

@@ -9,12 +9,12 @@ import (
 
 	"github.com/google/uuid"
 
+	"github.com/benelog/flashcard/internal/model"
 	"github.com/benelog/flashcard/internal/srs"
-	"github.com/benelog/flashcard/internal/store"
 )
 
-func (s *Store) CreateSession(ctx context.Context, userID uuid.UUID, mode, direction string, deckID *uuid.UUID, rule json.RawMessage, totalCards int) (store.Session, error) {
-	sess := store.Session{
+func (s *Store) CreateSession(ctx context.Context, userID uuid.UUID, mode, direction string, deckID *uuid.UUID, rule json.RawMessage, totalCards int) (model.Session, error) {
+	sess := model.Session{
 		ID:         uuid.New(),
 		Mode:       mode,
 		Direction:  direction,
@@ -32,7 +32,7 @@ func (s *Store) CreateSession(ctx context.Context, userID uuid.UUID, mode, direc
 		 values (?, ?, ?, ?, ?, ?, ?, ?)`,
 		sess.ID.String(), userID.String(), mode, direction, deckIDArg, jsonArg(rule), totalCards, now)
 	if err != nil {
-		return store.Session{}, err
+		return model.Session{}, err
 	}
 	sess.StartedAt, err = parseTime(now)
 	return sess, err
@@ -41,14 +41,14 @@ func (s *Store) CreateSession(ctx context.Context, userID uuid.UUID, mode, direc
 // RecordReview logs one grade and, for first-pass grades, advances the card's
 // SRS state and accuracy counters — all in a single transaction. Retry-round
 // grades (isRetry) are logged only.
-func (s *Store) RecordReview(ctx context.Context, userID, sessionID, cardID uuid.UUID, result, isRetry bool) (store.ReviewOutcome, error) {
-	var out store.ReviewOutcome
+func (s *Store) RecordReview(ctx context.Context, userID, sessionID, cardID uuid.UUID, result, isRetry bool) (model.ReviewOutcome, error) {
+	var out model.ReviewOutcome
 
 	var owner string
 	err := s.db.QueryRowContext(ctx,
 		`select user_id from study_sessions where id = ?`, sessionID.String()).Scan(&owner)
 	if errors.Is(err, sql.ErrNoRows) || (err == nil && owner != userID.String()) {
-		return out, store.ErrNotFound
+		return out, model.ErrNotFound
 	}
 	if err != nil {
 		return out, err
@@ -67,7 +67,7 @@ func (s *Store) RecordReview(ctx context.Context, userID, sessionID, cardID uuid
 		 where card_id = ? and user_id = ?`, cardID.String(), userID.String()).
 		Scan(&state.EaseFactor, &state.IntervalDays, &state.Repetitions)
 	if errors.Is(err, sql.ErrNoRows) {
-		return out, store.ErrNotFound
+		return out, model.ErrNotFound
 	}
 	if err != nil {
 		return out, err

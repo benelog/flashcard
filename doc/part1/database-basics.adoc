@@ -267,7 +267,7 @@ insert into card_srs (card_id, user_id, due_at) values (?, ?, ?)
 ====
 
 자리표시자 기호는 드라이버마다 다르다.
-SQLite는 `?`를 쓰고 운영용 `internal/store/`가 쓰는 PostgreSQL 드라이버(pgx, 18장)는 `$1`, `$2`처럼 번호를 붙이지만, 값을 문장 밖에서 따로 전달한다는 원리는 같다.
+SQLite는 `?`를 쓰고 운영용 `internal/pgstore/`가 쓰는 PostgreSQL 드라이버(pgx, 18장)는 `$1`, `$2`처럼 번호를 붙이지만, 값을 문장 밖에서 따로 전달한다는 원리는 같다.
 
 .[용어 풀이] 드라이버(Driver)
 [NOTE]
@@ -383,7 +383,7 @@ Go 문법은 6·7장에서 배우니 지금은 "몇 행이 지워졌는지 세�
 include::../../internal/litestore/litestore.go[tag=require-row-affected]
 ----
 
-지워진 행이 0이면 애초에 그런 덱이 없었다는 뜻이므로, store 계층은 "그런 것이 없다"를 뜻하는 에러 값(`store.ErrNotFound`, 7장에서 다룬다)을 돌려준다.
+지워진 행이 0이면 애초에 그런 덱이 없었다는 뜻이므로, store 계층은 "그런 것이 없다"를 뜻하는 에러 값(`model.ErrNotFound`, 7장에서 다룬다)을 돌려준다.
 그 에러를 받은 쪽은 웹에서 "그런 것이 없다"를 뜻하는 표준 응답 번호인 404로 답한다.
 SQL의 실행 결과가 Go의 에러 처리와 HTTP 상태 코드로 이어지는 연결 고리다.
 

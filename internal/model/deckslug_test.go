@@ -1,5 +1,5 @@
 // tag::same-package[]
-package store
+package model
 
 import (
 	"strings"

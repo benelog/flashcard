@@ -13,8 +13,8 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/benelog/flashcard/internal/auth"
+	"github.com/benelog/flashcard/internal/model"
 	"github.com/benelog/flashcard/internal/smartrules"
-	"github.com/benelog/flashcard/internal/store"
 )
 
 // tag::study-state[]
@@ -42,7 +42,7 @@ type studyState struct {
 type studyBodyView struct {
 	Phase   string // studying | break | finished | empty
 	State   studyState
-	Card    *store.Card
+	Card    *model.Card
 	Index   int // 이번 라운드에서 몇 번째 카드인지 (0부터)
 	TextTTS string
 	BackTTS string
@@ -66,7 +66,7 @@ func (w *Web) studyPage(c *gin.Context) {
 		w.directionChooser(c)
 		return
 	}
-	direction := store.NormalizeDirection(c.Query("direction"))
+	direction := model.NormalizeDirection(c.Query("direction"))
 	setCookie(c, dirCookie, direction, dirCookieMaxAge)
 
 	userID := auth.UserID(c)
@@ -108,7 +108,7 @@ func (w *Web) studyPage(c *gin.Context) {
 	body := w.studyBody(c, state)
 	// 스마트 학습이면 "이 조건을 스마트 덱으로 저장" 버튼에 쓸 규칙을 넘긴다.
 	saveRule := ""
-	if plan.Mode == store.ModeSmart && len(plan.Cards) > 0 && c.Query("saved") == "" {
+	if plan.Mode == model.ModeSmart && len(plan.Cards) > 0 && c.Query("saved") == "" {
 		saveRule = string(plan.Rule)
 	}
 	w.render(c, http.StatusOK, "study", plan.Title, gin.H{
@@ -123,9 +123,9 @@ func (w *Web) studyPage(c *gin.Context) {
 func (w *Web) directionChooser(c *gin.Context) {
 	base := c.Request.URL.Query()
 	w.render(c, http.StatusOK, "study_direction", "학습", gin.H{
-		"Last":      store.NormalizeDirection(cookieValue(c, dirCookie)),
-		"TextFirst": "/study?" + withParam(base, "direction", store.TextToMeaning),
-		"TextLast":  "/study?" + withParam(base, "direction", store.MeaningToText),
+		"Last":      model.NormalizeDirection(cookieValue(c, dirCookie)),
+		"TextFirst": "/study?" + withParam(base, "direction", model.TextToMeaning),
+		"TextLast":  "/study?" + withParam(base, "direction", model.MeaningToText),
 	})
 }
 
@@ -134,7 +134,7 @@ func (w *Web) directionChooser(c *gin.Context) {
 type studyPlan struct {
 	Mode      string
 	Title     string
-	Cards     []store.Card
+	Cards     []model.Card
 	DeckID    *uuid.UUID      // 덱 학습일 때만
 	Rule      json.RawMessage // 스마트 학습일 때만, 정규화된 규칙
 	ReturnURL string
@@ -148,12 +148,12 @@ func (w *Web) planStudy(c *gin.Context, dailyGoal int, loc *time.Location) (stud
 
 	plan := studyPlan{Mode: c.Query("mode"), ReturnURL: "/"}
 	if plan.Mode == "" {
-		plan.Mode = store.DefaultMode
+		plan.Mode = model.DefaultMode
 	}
 
 	var err error
 	switch plan.Mode {
-	case store.ModeDeck:
+	case model.ModeDeck:
 		deckID, perr := uuid.Parse(c.Query("deckId"))
 		if perr != nil {
 			w.renderError(c, http.StatusNotFound, "찾을 수 없는 덱이에요.")
@@ -168,9 +168,9 @@ func (w *Web) planStudy(c *gin.Context, dailyGoal int, loc *time.Location) (stud
 				plan.Cards[i], plan.Cards[j] = plan.Cards[j], plan.Cards[i]
 			})
 		}
-	case store.ModeDue:
+	case model.ModeDue:
 		plan.Cards, err = w.store.DueCards(ctx, userID, endOfToday(loc), dailyGoal)
-	case store.ModeSmart:
+	case model.ModeSmart:
 		rule, perr := smartrules.Parse([]byte(c.Query("rule")))
 		if perr != nil {
 			w.renderError(c, http.StatusNotFound, "잘못된 학습 규칙이에요.")
@@ -197,9 +197,9 @@ func studyTitle(requested, mode string) string {
 		return requested
 	}
 	switch mode {
-	case store.ModeDue:
+	case model.ModeDue:
 		return "오늘 복습"
-	case store.ModeSmart:
+	case model.ModeSmart:
 		return "스마트 학습"
 	}
 	return "덱 학습"
@@ -265,7 +265,7 @@ func stateFromForm(c *gin.Context) studyState {
 	}
 	return studyState{
 		SessionID:        c.PostForm("session"),
-		Direction:        store.NormalizeDirection(c.PostForm("direction")),
+		Direction:        model.NormalizeDirection(c.PostForm("direction")),
 		Title:            c.PostForm("title"),
 		ReturnURL:        safeNext(c.PostForm("return_url")),
 		Queue:            splitAndTrim(c.PostForm("queue"), ","),

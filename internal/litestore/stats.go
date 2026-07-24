@@ -6,14 +6,14 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/benelog/flashcard/internal/store"
+	"github.com/benelog/flashcard/internal/model"
 )
 
 // DailyStats groups reviews by local date in the given (pre-validated) IANA
 // timezone, covering the last `days` days including today. SQLite has no
 // timezone database, so rows are fetched and bucketed in Go; local data stays
 // small enough for that.
-func (s *Store) DailyStats(ctx context.Context, userID uuid.UUID, tz string, days int) ([]store.DailyStat, error) {
+func (s *Store) DailyStats(ctx context.Context, userID uuid.UUID, tz string, days int) ([]model.DailyStat, error) {
 	loc, err := time.LoadLocation(tz)
 	if err != nil {
 		loc = time.UTC
@@ -30,7 +30,7 @@ func (s *Store) DailyStats(ctx context.Context, userID uuid.UUID, tz string, day
 		return nil, err
 	}
 	defer rows.Close()
-	stats := []store.DailyStat{}
+	stats := []model.DailyStat{}
 	for rows.Next() {
 		var reviewedAt string
 		var result bool
@@ -43,7 +43,7 @@ func (s *Store) DailyStats(ctx context.Context, userID uuid.UUID, tz string, day
 		}
 		day := t.In(loc).Format("2006-01-02")
 		if len(stats) == 0 || stats[len(stats)-1].Date != day {
-			stats = append(stats, store.DailyStat{Date: day})
+			stats = append(stats, model.DailyStat{Date: day})
 		}
 		stats[len(stats)-1].Total++
 		if result {
@@ -53,8 +53,8 @@ func (s *Store) DailyStats(ctx context.Context, userID uuid.UUID, tz string, day
 	return stats, rows.Err()
 }
 
-func (s *Store) StatsSummary(ctx context.Context, userID uuid.UUID, tz string, loc *time.Location) (store.Summary, error) {
-	var sum store.Summary
+func (s *Store) StatsSummary(ctx context.Context, userID uuid.UUID, tz string, loc *time.Location) (model.Summary, error) {
+	var sum model.Summary
 	err := s.db.QueryRowContext(ctx,
 		`select count(*), coalesce(sum(result), 0)
 		 from review_logs where user_id = ? and is_retry = 0`, userID.String()).
@@ -64,7 +64,7 @@ func (s *Store) StatsSummary(ctx context.Context, userID uuid.UUID, tz string, l
 	}
 
 	// Streak: bucket review times into local dates in Go, then count back from
-	// today, letting the streak end yesterday — same semantics as store.streak.
+	// today, letting the streak end yesterday — same semantics as model.streak.
 	rows, err := s.db.QueryContext(ctx,
 		`select reviewed_at from review_logs where user_id = ?`, userID.String())
 	if err != nil {
@@ -88,7 +88,7 @@ func (s *Store) StatsSummary(ctx context.Context, userID uuid.UUID, tz string, l
 	if err := rows.Err(); err != nil {
 		return sum, err
 	}
-	sum.Streak = store.Streak(days, time.Now().In(loc))
+	sum.Streak = model.Streak(days, time.Now().In(loc))
 
 	rows, err = s.db.QueryContext(ctx,
 		`select d.id, d.name,
@@ -104,9 +104,9 @@ func (s *Store) StatsSummary(ctx context.Context, userID uuid.UUID, tz string, l
 		return sum, err
 	}
 	defer rows.Close()
-	sum.Decks = []store.DeckMastery{}
+	sum.Decks = []model.DeckMastery{}
 	for rows.Next() {
-		var m store.DeckMastery
+		var m model.DeckMastery
 		var id string
 		if err := rows.Scan(&id, &m.Name, &m.TotalCards, &m.MatureCards); err != nil {
 			return sum, err

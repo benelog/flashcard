@@ -55,13 +55,13 @@ func build() (*gin.Engine, error) {
 	}
 	pool, err := db.Pool(context.Background(), cfg.DatabaseURL)
 	// ... 에러 처리 생략
-	return New(cfg, store.New(pool)), nil
+	return New(cfg, pgstore.New(pool)), nil
 }
 
 // New assembles the router on top of any Store implementation. cfg.AuthMode
 // picks the middleware: Supabase token validation in production, the fixed
 // local user in local mode.
-func New(cfg *config.Config, s handlers.Store) *gin.Engine {
+func New(cfg *config.Config, s model.Store) *gin.Engine {
 	h := handlers.New(s)
 
 	gin.SetMode(gin.ReleaseMode)
@@ -81,7 +81,7 @@ func New(cfg *config.Config, s handlers.Store) *gin.Engine {
 
 첫째, 조립과 준비가 두 함수로 나뉘어 있다.
 `New`는 설정과 스토어를 받아 미들웨어와 라우트를 얹은 라우터를 만드는 순수한 조립 함수이고, `Engine`은 설정 로드와 DB 커넥션 풀 생성까지 마친 완성품을 돌려주는 포장이다.
-`New`가 구체적인 DB 타입이 아니라 `handlers.Store` 인터페이스를 받는 덕에 어떤 저장소 구현이든 꽂을 수 있는데, 이 설계의 효용은 이 장 끝의 계층 분리 절에서 다시 다룬다.
+`New`가 구체적인 DB 타입이 아니라 `model.Store` 인터페이스를 받는 덕에 어떤 저장소 구현이든 꽂을 수 있는데, 이 설계의 효용은 이 장 끝의 계층 분리 절에서 다시 다룬다.
 
 .[용어 풀이] 인터페이스(Interface)
 [NOTE]
@@ -89,7 +89,7 @@ func New(cfg *config.Config, s handlers.Store) *gin.Engine {
 "이런 함수들을 갖추고 있으면 이 자리에 꽂을 수 있다"고 정해 둔 규격이다.
 콘센트 규격에 맞는 플러그라면 어느 회사 제품이든 꽂히는 것과 같아서, 꽂는 쪽은 상대가 무엇인지 몰라도 되고 꽂히는 쪽은 규격만 지키면 된다.
 1장에서 데이터베이스 접근을 "하나의 창구 뒤로 모은다"고 한 그 창구가 바로 이것이다.
-`handlers.Store`라는 규격을 SQLite 구현과 PostgreSQL 구현이 나란히 만족하기 때문에, 18장에서 데이터베이스를 갈아 끼우는 일이 코드 수정이 아니라 설정 변경이 된다.
+`model.Store`라는 규격을 SQLite 구현과 PostgreSQL 구현이 나란히 만족하기 때문에, 18장에서 데이터베이스를 갈아 끼우는 일이 코드 수정이 아니라 설정 변경이 된다.
 ====
 
 둘째, `Engine`은 `sync.Once`로 엔진을 프로세스(process)당 한 번만 만든다.
@@ -429,7 +429,7 @@ include::../../internal/handlers/cards.go[tag=to-input]
 }
 ----
 
-`toInput`은 HTTP 입력 타입 `cardBody`를 검증하면서 스토어 계층의 입력 타입 `store.CardInput`으로 변환한다.
+`toInput`은 HTTP 입력 타입 `cardBody`를 검증하면서 스토어 계층의 입력 타입 `model.CardInput`으로 변환한다.
 두 번째 반환값은 검증 실패 사유이고, 빈 문자열이면 통과다.
 정규화(공백 제거), 기본값 채우기(`cardType` 미지정 시 word), 허용값 검사가 이 한 함수에 모여 있어서, 카드를 받는 세 핸들러가 검증 규칙을 공유한다.
 
@@ -454,7 +454,7 @@ include::../../internal/handlers/handlers.go[tag=error-helpers]
 
 `badRequest`는 클라이언트 잘못(400)을, `fail`은 서버 측 처리 결과를 담당한다.
 `fail`이 하는 일이 이 앱의 에러 처리 정책의 거의 전부다.
-스토어 계층이 돌려준 에러가 `store.ErrNotFound`면 404로, 그 밖의 모든 에러는 로그에만 상세를 남기고 클라이언트에는 "internal error"라는 무정보 메시지로 500을 준다.
+스토어 계층이 돌려준 에러가 `model.ErrNotFound`면 404로, 그 밖의 모든 에러는 로그에만 상세를 남기고 클라이언트에는 "internal error"라는 무정보 메시지로 500을 준다.
 DB 에러 문자열을 그대로 노출하면 내부 구조가 새어 나가므로, 상세는 서버 로그에만 남기는 것이 안전하다.
 예컨대 테이블 이름이나 SQL 조각이 담긴 에러 문장이 화면에 그대로 뜨면 공격자에게 좋은 힌트가 된다.
 
@@ -629,42 +629,49 @@ func (h *Handlers) EnsureProfile() gin.HandlerFunc {
 
 === 두 계층의 골격
 
-Flashcard 백엔드는 HTTP 관심사와 데이터 접근을 두 패키지로 나눈다.
-internal/handlers는 요청 파싱·검증·상태 코드를, internal/store는 SQL과 도메인 타입을 담당한다.
+Flashcard 백엔드는 HTTP 관심사와 데이터 접근을 다른 패키지로 나눈다.
+internal/handlers는 요청 파싱·검증·상태 코드를, internal/pgstore는 SQL을 담당한다.
+
+여기에 세 번째 패키지가 하나 더 있다.
+두 계층 사이를 오가는 카드와 덱 같은 행 타입, 그리고 "없음"을 알리는 에러 값은 어느 쪽의 소유도 아니어서 internal/model에 따로 둔다.
+저장소 구현이 둘(PostgreSQL용과 SQLite용)이기 때문인데, 행 타입을 한쪽 구현에 두면 다른 구현이 그 패키지를 이름값과 상관없이 의존하게 된다.
 
 각 계층의 골격은 단순하다.
-internal/handlers/handlers.go와 internal/store/store.go에서 발췌한다.
-두 계층이 각각 무엇을 품고 어떻게 만들어지는지 보여 주는 선언부다.
+세 패키지의 선언부를 차례로 발췌한다.
+
+[source,go]
+----
+// internal/model/store.go
+
+// Store is the persistence contract. *pgstore.Store (pgx, 배포 환경)와
+// *litestore.Store (SQLite, 로컬 모드)가 둘 다 이것을 만족한다.
+type Store interface {
+	GetOrCreateProfile(ctx context.Context, userID uuid.UUID, displayName string) (Profile, error)
+	// ...
+	ListDecks(ctx context.Context, userID uuid.UUID) ([]Deck, error)
+	GetDeckBySlug(ctx context.Context, userID uuid.UUID, slug string) (Deck, error)
+	// ... 카드·세션·공유·통계 메서드 생략 (모두 합해 32개)
+}
+
+// internal/model/model.go
+var ErrNotFound = errors.New("not found")
+----
 
 [source,go]
 ----
 // internal/handlers/handlers.go
-
-// Store is the persistence contract the handlers consume. *store.Store (pgx,
-// production) and *litestore.Store (SQLite, local mode) both satisfy it; the
-// row types and the ErrNotFound sentinel stay shared from internal/store.
-type Store interface {
-	GetOrCreateProfile(ctx context.Context, userID uuid.UUID, displayName string) (store.Profile, error)
-	// ...
-	ListDecks(ctx context.Context, userID uuid.UUID) ([]store.Deck, error)
-	GetDeckBySlug(ctx context.Context, userID uuid.UUID, slug string) (store.Deck, error)
-	// ... 카드·세션·공유·통계 메서드 생략 (모두 합해 32개)
-}
-
 type Handlers struct {
-	Store Store
+	Store model.Store
 }
 
-func New(s Store) *Handlers {
+func New(s model.Store) *Handlers {
 	return &Handlers{Store: s}
 }
 ----
 
 [source,go]
 ----
-// internal/store/store.go
-var ErrNotFound = errors.New("not found")
-
+// internal/pgstore/store.go
 type Store struct {
 	pool *pgxpool.Pool
 }
@@ -674,8 +681,8 @@ func New(pool *pgxpool.Pool) *Store {
 }
 ----
 
-`Handlers`는 `Store` 인터페이스를 품고, 그 인터페이스를 만족하는 PostgreSQL 구현 `store.Store`가 pgx 커넥션 풀을 품는다.
-조립은 pkg/app/app.go가 `store.New(pool)`로 만든 스토어를 `handlers.New`에 건네는 한 줄이 전부다.
+`Handlers`는 `model.Store` 인터페이스를 품고, 그 인터페이스를 만족하는 PostgreSQL 구현 `pgstore.Store`가 pgx 커넥션 풀을 품는다.
+조립은 pkg/app/app.go가 `pgstore.New(pool)`로 만든 스토어를 `handlers.New`에 건네는 한 줄이 전부다.
 프레임워크 없이 생성자 함수로 엮는 수동 의존성 주입(dependency injection)이다.
 조립할 부품이 커넥션 풀·스토어·핸들러 정도인 이 규모에서는 도구의 도움 없이 이 한 줄로 충분하다.
 핸들러가 구체 타입이 아니라 인터페이스에 의존하는 덕에, 같은 계약을 만족하는 SQLite 구현(internal/litestore)이 로컬 모드에서 그 자리에 그대로 꽂힌다.
@@ -698,12 +705,12 @@ pgx의 `ErrNoRows` 같은 드라이버 세부가 핸들러까지 새어 나오�
 === 경계에서 무엇이 오가는가
 
 같은 기능을 두 계층이 어떻게 나눠 맡는지 덱 슬러그 해석으로 확인해 보자.
-internal/store/decks.go의 스토어 쪽 코드다.
+internal/pgstore/decks.go의 스토어 쪽 코드다.
 주소에 쓰인 짧은 슬러그를 받아 그 사용자의 덱 ID를 찾아 주는 함수다.
 
 [source,go]
 ----
-include::../../internal/store/decks.go[tag=deck-id-by-slug]
+include::../../internal/pgstore/decks.go[tag=deck-id-by-slug]
 ----
 
 핸들러 쪽 대응부는 internal/handlers/handlers.go의 도우미다.
@@ -728,16 +735,16 @@ include::../../internal/handlers/handlers.go[tag=deck-id-by-slug]
 잘못된 슬러그와 남의 덱을 모두 404로 처리하는 정책처럼 두 계층에 걸치는 결정도, `ErrNotFound`라는 하나의 계약으로 표현된다.
 
 둘째, 테스트가 쉬워진다.
-스토어 함수는 `gin.Context`를 요구하지 않으므로 HTTP 없이 DB만 있으면 검증할 수 있고, 슬러그 인코딩 같은 순수 로직은 internal/store/deckslug_test.go처럼 DB조차 없이 단위 테스트할 수 있으며, 핸들러가 얇아진 덕에 HTTP 계층의 테스트 부담 자체가 줄어든다.
+스토어 함수는 `gin.Context`를 요구하지 않으므로 HTTP 없이 DB만 있으면 검증할 수 있고, 슬러그 인코딩 같은 순수 로직은 internal/model/deckslug_test.go처럼 DB조차 없이 단위 테스트할 수 있으며, 핸들러가 얇아진 덕에 HTTP 계층의 테스트 부담 자체가 줄어든다.
 
 셋째, AI 에이전트와의 협업 단위가 명확해진다.
 "덱 목록 응답에 카드 수를 추가해 줘" 같은 요청이 어느 파일의 어느 계층을 고치는 일인지 구조에서 바로 드러나므로, 에이전트가 생성한 변경을 사람이 검토하는 범위도 좁아진다.
 
 다만 이 앱의 분리는 실용주의적 절충이라는 점도 밝혀 둔다.
-internal/store/decks.go의 `Deck` 구조체에는 `json:"id"` 같은 태그가 붙어 있어, 스토어의 도메인 타입이 API 응답 타입을 겸한다.
+internal/pgstore/decks.go의 `Deck` 구조체에는 `json:"id"` 같은 태그가 붙어 있어, 스토어의 도메인 타입이 API 응답 타입을 겸한다.
 교과서적으로는 응답 전용 DTO(Data Transfer Object)를 따로 두어야 하지만, 두 형태가 거의 같은 이 앱에서는 변환 코드만 늘어난다.
 `Store` 인터페이스도 처음부터 있었던 것이 아니다.
-초기에는 `Handlers`가 `*store.Store` 구체 타입에 직접 의존했고, 로컬 모드용 SQLite 스토어라는 두 번째 구현이 필요해졌을 때 인터페이스를 추출했다.
+초기에는 `Handlers`가 `*pgstore.Store` 구체 타입에 직접 의존했고, 로컬 모드용 SQLite 스토어라는 두 번째 구현이 필요해졌을 때 인터페이스를 추출했다.
 그 덕에 스토어를 모의 객체(mock)로 바꿔 끼우는 핸들러 단위 테스트의 길도 함께 열렸다.
 처음부터 계층을 겹겹이 쌓기보다, API 응답과 내부 모델이 서로 달라지거나 두 번째 구현처럼 필요가 증명될 때 분리하는 편이 작은 프로젝트에는 맞다.
 

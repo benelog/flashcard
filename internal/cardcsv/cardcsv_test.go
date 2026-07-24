@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/benelog/flashcard/internal/store"
+	"github.com/benelog/flashcard/internal/model"
 )
 
 func TestParse(t *testing.T) {
@@ -36,8 +36,8 @@ func TestParse(t *testing.T) {
 		t.Errorf("phonetic = %v", first.Phonetic)
 	}
 	// 모르는 type은 기본 종류로 정규화된다.
-	if cards[2].CardType != store.DefaultCardType {
-		t.Errorf("cardType = %q, want %q", cards[2].CardType, store.DefaultCardType)
+	if cards[2].CardType != model.DefaultCardType {
+		t.Errorf("cardType = %q, want %q", cards[2].CardType, model.DefaultCardType)
 	}
 }
 
@@ -70,16 +70,16 @@ func TestParseNoUsableHeader(t *testing.T) {
 // 자기 덱을 백업했다가 복원하지 못한다.
 func TestWriteThenParseRoundTrip(t *testing.T) {
 	phonetic, example := "/ˈæpl/", "An apple a day."
-	exported := []store.Card{
+	exported := []model.Card{
 		{
 			Text:     "apple",
 			Meaning:  "사과",
-			CardType: store.CardTypeWord,
+			CardType: model.CardTypeWord,
 			Tags:     []string{"과일", "기초"},
 			Phonetic: &phonetic,
 			Example:  &example,
 		},
-		{Text: "hit the sack", Meaning: "자러 가다", CardType: store.CardTypeIdiom},
+		{Text: "hit the sack", Meaning: "자러 가다", CardType: model.CardTypeIdiom},
 	}
 
 	var file bytes.Buffer

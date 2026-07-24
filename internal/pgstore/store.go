@@ -1,16 +1,15 @@
-package store
+// Package pgstore is the pgx implementation of model.Store, the one the
+// deployed app runs on. 로컬 모드의 SQLite 구현(internal/litestore)과 나란히
+// 같은 계약을 만족하며, 행 타입과 ErrNotFound는 둘 다 internal/model에서
+// 읽어 온다. 여기 있는 것은 PostgreSQL 방언과 pgx 배선뿐이다.
+package pgstore
 
 import (
-	"errors"
-
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
+
+	"github.com/benelog/flashcard/internal/model"
 )
-
-// tag::not-found[]
-var ErrNotFound = errors.New("not found")
-
-// end::not-found[]
 
 type Store struct {
 	pool *pgxpool.Pool
@@ -32,7 +31,7 @@ func requireRowAffected(tag pgconn.CommandTag, err error) error {
 		return err
 	}
 	if tag.RowsAffected() == 0 {
-		return ErrNotFound
+		return model.ErrNotFound
 	}
 	return nil
 }

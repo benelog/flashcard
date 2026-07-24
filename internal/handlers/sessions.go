@@ -11,8 +11,8 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/benelog/flashcard/internal/auth"
+	"github.com/benelog/flashcard/internal/model"
 	"github.com/benelog/flashcard/internal/smartrules"
-	"github.com/benelog/flashcard/internal/store"
 )
 
 // CreateSession starts a study session and returns its card queue.
@@ -33,23 +33,23 @@ func (h *Handlers) CreateSession(c *gin.Context) {
 		body.Limit = 50
 	}
 	if body.Direction == "" {
-		body.Direction = store.DefaultDirection
+		body.Direction = model.DefaultDirection
 	}
 	// API는 폼·쿠키와 달리 모르는 방향을 조용히 고치지 않는다. 프로그램이 보내는
 	// 값이라 오타라면 알려 주는 편이 낫다.
-	if !store.IsDirection(body.Direction) {
-		badRequest(c, "direction must be "+strings.Join(store.Directions, " or "))
+	if !model.IsDirection(body.Direction) {
+		badRequest(c, "direction must be "+strings.Join(model.Directions, " or "))
 		return
 	}
 	userID := auth.UserID(c)
 	ctx := c.Request.Context()
 
-	var cards []store.Card
+	var cards []model.Card
 	var ruleJSON json.RawMessage
 	var err error
 
 	switch body.Mode {
-	case store.ModeDeck:
+	case model.ModeDeck:
 		if body.DeckID == nil {
 			badRequest(c, "deckId is required for deck mode")
 			return
@@ -58,13 +58,13 @@ func (h *Handlers) CreateSession(c *gin.Context) {
 		if err == nil {
 			rand.Shuffle(len(cards), func(i, j int) { cards[i], cards[j] = cards[j], cards[i] })
 		}
-	case store.ModeDue:
+	case model.ModeDue:
 		dueBefore := time.Now()
 		if body.DueBefore != nil {
 			dueBefore = *body.DueBefore
 		}
 		cards, err = h.Store.DueCards(ctx, userID, dueBefore, body.Limit)
-	case store.ModeSmart:
+	case model.ModeSmart:
 		if body.Rule == nil {
 			badRequest(c, "rule is required for smart mode")
 			return

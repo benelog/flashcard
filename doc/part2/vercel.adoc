@@ -461,7 +461,7 @@ func (w *Web) registerStatic(r *gin.Engine) {
 
 6장에서 다뤘듯 Go에는 `internal` 디렉터리 관례가 있다.
 `internal/` 아래의 패키지는 그 부모 디렉터리를 루트로 하는 서브트리 안에서만 import할 수 있고, 바깥에서 import하면 컴파일러가 거부한다.
-Flashcard도 이 관례를 따라 설정(`internal/config`), 데이터 접근(`internal/store`), 핸들러(`internal/handlers`) 등 앱의 내부 구현을 전부 `internal/`에 두었다.
+Flashcard도 이 관례를 따라 설정(`internal/config`), 데이터 접근(`internal/pgstore`), 핸들러(`internal/handlers`) 등 앱의 내부 구현을 전부 `internal/`에 두었다.
 
 문제는 Vercel의 빌드 방식이다.
 Vercel은 `api/index.go`를 저장소 모듈의 일원으로 빌드하지 않고, 함수 진입점으로서 모듈 외부에서 단독 컴파일한다.

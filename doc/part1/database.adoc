@@ -277,7 +277,7 @@ UUID를 기본으로 삼은 이유는 다음과 같다.
 ----
 // insertCard adds the card and its SRS row inside tx; ids and timestamps are
 // generated here because SQLite has no gen_random_uuid()/now() defaults.
-func insertCard(ctx context.Context, tx *sql.Tx, userID uuid.UUID, in store.CardInput, now string) (uuid.UUID, error) {
+func insertCard(ctx context.Context, tx *sql.Tx, userID uuid.UUID, in model.CardInput, now string) (uuid.UUID, error) {
 	cardID := uuid.New()
 	_, err := tx.ExecContext(ctx,
 		`insert into cards (id, user_id, deck_id, text, meaning, card_type, tags,
@@ -540,7 +540,7 @@ if _, err := tx.ExecContext(ctx,
 
 둘째, 상태를 읽는 select에 잠금 문이 없다.
 주석이 말하듯 SQLite는 한 시점에 쓰기 트랜잭션을 하나만 허용하고 이 스토어는 아예 연결을 하나로 제한하므로(`internal/litestore/litestore.go`), 읽기-계산-쓰기 사이에 다른 갱신이 끼어들 수 없다.
-여러 접속이 같은 행을 동시에 고칠 수 있는 운영 PostgreSQL에서는 사정이 달라서, 같은 함수의 운영 구현(`internal/store/sessions.go`)은 `select ... for update`로 행 잠금을 건다.
+여러 접속이 같은 행을 동시에 고칠 수 있는 운영 PostgreSQL에서는 사정이 달라서, 같은 함수의 운영 구현(`internal/pgstore/sessions.go`)은 `select ... for update`로 행 잠금을 건다.
 잠금 없이 두 요청이 각자 읽은 값으로 계산해 덮어쓰면, 한쪽의 갱신이 소리 없이 사라지는 갱신 유실(lost update)이 생기기 때문이다.
 
 셋째, `is_retry`면 로그만 남기고 커밋한다.
@@ -570,7 +570,7 @@ const cardSelect = `
 	       notes, created_at, attempts, error_rate, interval_days, due_at, last_reviewed_at
 	from cards_with_stats`
 
-func (s *Store) DueCards(ctx context.Context, userID uuid.UUID, dueBefore time.Time, limit int) ([]store.Card, error) {
+func (s *Store) DueCards(ctx context.Context, userID uuid.UUID, dueBefore time.Time, limit int) ([]model.Card, error) {
 	rows, err := s.db.QueryContext(ctx,
 		cardSelect+` where user_id = ? and due_at <= ? order by due_at asc limit ?`,
 		userID.String(), fmtTime(dueBefore), limit)
@@ -624,13 +624,13 @@ _, err := s.db.ExecContext(ctx,
 "덱마다 순번 하나"라는 같은 설계가 환경의 동시성 수준에 따라 다른 채번 장치로 구현되는 대비로, 운영 쪽 장치는 18장에서 본다.
 
 이제 이 순번이 URL이 되는 과정이다.
-`internal/store/deckslug.go`에서 발췌한, 덱의 순번(`seq`)을 받아 뒤섞인 4자 코드로 바꾸는 함수다.
+`internal/model/deckslug.go`에서 발췌한, 덱의 순번(`seq`)을 받아 뒤섞인 4자 코드로 바꾸는 함수다.
 
 [source,go]
 ----
-include::../../internal/store/deckslug.go[tag=slug-constants]
+include::../../internal/model/deckslug.go[tag=slug-constants]
 
-include::../../internal/store/deckslug.go[tag=encode]
+include::../../internal/model/deckslug.go[tag=encode]
 ----
 
 이 파일은 SQL이 한 줄도 없는 순수 Go 코드라서, SQLite 스토어도 운영 스토어도 같은 함수를 그대로 쓴다.
@@ -651,7 +651,7 @@ Base62(대소문자 구분)보다 표현력은 낮지만 대소문자를 구분�
 slug 컬럼을 따로 저장하지 않고 `seq`에서 매번 계산하는 점도 특징인데, 전단사 변환이므로 저장할 필요가 없고 `seq`의 유니크 제약이 곧 slug의 유일성을 보장한다.
 
 대조군으로 공유 slug(`share_slug`)를 보면 다른 선택을 했다.
-`internal/store/sharing.go`의 `NewShareSlug`는 시퀀스 변환이 아니라 `crypto/rand`로 무작위 5자 Base36 토큰을 만들고, 앞 절의 부분 유니크 인덱스에 부딪히면 새 토큰으로 재시도한다.
+`internal/model/sharing.go`의 `NewShareSlug`는 시퀀스 변환이 아니라 `crypto/rand`로 무작위 5자 Base36 토큰을 만들고, 앞 절의 부분 유니크 인덱스에 부딪히면 새 토큰으로 재시도한다.
 개인 덱 slug는 행마다 이미 있는 `seq`에서 결정적으로 유도되니 충돌 자체가 없고, 공유 slug는 공유 시점에 새로 만드는 값이라 무작위 + 충돌 재시도가 단순하다.
 같은 앱 안에서도 생성 시점과 유일성 보장 수단에 따라 slug 전략이 달라질 수 있음을 보여 주는 사례다.
 

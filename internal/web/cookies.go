@@ -11,6 +11,13 @@ import (
 	"github.com/benelog/flashcard/internal/auth"
 )
 
+// 브라우저에 남기는 상태는 전부 쿠키다: 로그인 상태, 지난 학습 방향, 한 번만
+// 보여 줄 알림, 방문자의 시간대. 이 파일이 그 쿠키들을 읽고 쓰는 유일한 곳이다.
+//
+// 파일 이름을 session.go로 두지 않은 것은 이 저장소에서 "세션"이 이미 세 가지를
+// 뜻하기 때문이다. 카드 한 벌을 도는 학습 세션(study_sessions), 로그인 상태,
+// 그리고 DB 연결이다.
+//
 // Cookie names. Session tokens are HttpOnly: page scripts (and any injected
 // script) can never read them — the main security win over localStorage.
 const (

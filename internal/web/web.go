@@ -1,5 +1,5 @@
 // Package web renders the HTML pages of Flashcard. It sits on the same
-// handlers.Store the JSON API uses; templates live in templates/ and are
+// model.Store the JSON API uses; templates live in templates/ and are
 // embedded into the binary, so one Go binary (or one Vercel function) serves
 // pages, fragments and static assets alike.
 package web
@@ -22,6 +22,7 @@ import (
 	"github.com/benelog/flashcard/internal/auth"
 	"github.com/benelog/flashcard/internal/config"
 	"github.com/benelog/flashcard/internal/handlers"
+	"github.com/benelog/flashcard/internal/model"
 )
 
 //go:embed templates
@@ -51,7 +52,7 @@ var assetVersion = sync.OnceValue(func() string {
 func asset(path string) string { return path + "?v=" + assetVersion() }
 
 type Web struct {
-	store  handlers.Store
+	store  model.Store
 	cfg    *config.Config
 	goTrue *goTrue
 	pages  map[string]*template.Template
@@ -60,7 +61,7 @@ type Web struct {
 	partials *template.Template
 }
 
-func New(cfg *config.Config, s handlers.Store) *Web {
+func New(cfg *config.Config, s model.Store) *Web {
 	w := &Web{store: s, cfg: cfg}
 	if cfg.AuthMode != "local" {
 		w.goTrue = newGoTrue(cfg.SupabaseURL, cfg.SupabaseAnonKey)
