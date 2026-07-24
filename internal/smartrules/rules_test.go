@@ -55,3 +55,29 @@ func TestQueriesBuild(t *testing.T) {
 		}
 	}
 }
+
+// 추천 타일은 홈 화면과 JSON API가 같은 목록을 쓴다. 그 목록이 스스로 유효한
+// 규칙이어야 조회 단계까지 갈 수 있다.
+func TestSuggestedRulesAreValid(t *testing.T) {
+	suggested := Suggested()
+	if len(suggested) == 0 {
+		t.Fatal("Suggested() is empty")
+	}
+	for _, rule := range suggested {
+		if err := rule.Validate(); err != nil {
+			t.Errorf("suggested rule %+v is invalid: %v", rule, err)
+		}
+		if q, _ := rule.Query(); q == "" {
+			t.Errorf("suggested rule %+v builds no query", rule)
+		}
+	}
+}
+
+// 부르는 쪽이 규칙을 손봐도 다음 호출에 새어 나가면 안 된다.
+func TestSuggestedIsNotShared(t *testing.T) {
+	Suggested()[0].Limit = 1
+
+	if got := Suggested()[0].Limit; got == 1 {
+		t.Error("Suggested() handed out a shared slice")
+	}
+}
