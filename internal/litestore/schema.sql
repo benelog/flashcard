@@ -1,6 +1,10 @@
 -- SQLite port of internal/db/migrations/*.up.sql for local single-user mode,
 -- collapsed into one idempotent script (create ... if not exists).
 --
+-- Ported through: 000004_deck_seq
+-- 새 마이그레이션을 여기 옮긴 뒤 위 줄도 함께 고친다. schema_test.go가 이 표식과
+-- 마이그레이션 디렉터리를 대조해, 옮기는 것을 잊으면 테스트로 알려 준다.
+--
 -- Dialect mapping: uuid -> text (generated in Go), timestamptz -> text in the
 -- fixed-width UTC layout (see timeLayout), jsonb -> text (JSON), text[] ->
 -- text (JSON array), enum -> text + check. Defaults that need gen_random_uuid()
