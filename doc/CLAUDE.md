@@ -191,16 +191,16 @@ include::../../internal/srs/srs.go[tag=grade]
 
 | 파일 | 소유 용어 |
 |---|---|
-| `part1/requirements.adoc` | API, CSV, 호스팅, 무료 티어, PostgreSQL, 프런트엔드와 백엔드, 상주 서버, PWA, 서버리스, 콜드스타트, 바이너리 |
-| `part1/tech-choices.adoc` | 기술 스택, 데이터베이스, 서버, 컴파일/인터프리터 언어, 런타임, 정적/동적 타입, 프레임워크와 라이브러리, 의존성, 관계형 데이터베이스, SPA |
+| `part1/requirements.adoc` | API, CSV, 호스팅, 무료 티어, PostgreSQL, 프런트엔드와 백엔드, PWA |
+| `part1/tech-choices.adoc` | 기술 스택, 데이터베이스, 서버, 서버리스, 상주 서버, 바이너리, 컴파일/인터프리터 언어, 런타임, 정적/동적 타입, JSON, 프레임워크와 라이브러리, 의존성, 관계형 데이터베이스, SPA |
 | `part1/instructing.adoc` | 아키텍처 |
 | `part1/claude-code.adoc` | LLM, AI 코딩 에이전트와 도구 호출 루프, 컨텍스트와 토큰, 세션, 프롬프트, 프로젝트 지침(CLAUDE.md), 디렉터리와 프로젝트 루트, 스킬 |
 | `part1/first-run.adoc` | 터미널, WSL, 패키지 매니저, sudo, PATH와 셸 설정 파일, 클론, localhost와 포트 |
-| `part2/html-hello.adoc` | HTML 태그와 요소, 시맨틱 마크업, 화면 낭독기, class와 id, 요소의 가족 관계, 폼 |
+| `part2/html-hello.adoc` | HTML 태그와 요소, 주석, 시맨틱 마크업, 화면 낭독기, class와 id, 요소의 가족 관계, 폼 |
 | `part2/css-hello.adoc` | CSS 선택자, rem, CSS 변수(커스텀 프로퍼티), 박스 모델, 플렉스박스와 그리드, 미디어 쿼리 |
 | `part2/go-hello.adoc` | 임포트, 표준 라이브러리, 타입 추론, 제로값, 예외, 다중 반환값과 에러 처리, 공개와 비공개 |
 | `part2/go-types.adoc` | 구조체, 메서드와 리시버, 포인터, 슬라이스와 맵, 인터페이스, 제네릭 |
-| `part2/database-basics.adoc` | 테이블·행·열, 정규화와 비정규화, 기본 키와 외래 키, SQL, 스키마, UUID, 제약, NULL, JSON, SQL 인젝션, 드라이버, 조인, 인증과 인가, 인덱스, 실행 계획 |
+| `part2/database-basics.adoc` | 테이블·행·열, 정규화와 비정규화, 기본 키와 외래 키, SQL, 스키마, UUID, 제약, NULL, SQL 인젝션, 드라이버, 조인, 인증과 인가, 인덱스, 실행 계획 |
 | `part3/database.adoc` | 엔티티, 잠금, 뷰, 트랜잭션, 원자적, slug |
 | `part3/code-map.adoc` | 모듈과 패키지 |
 | `part3/go.adoc` | 생성자, 순수 함수, 에러 래핑과 센티널 에러, 구조체 태그, 직렬화와 역직렬화 |
@@ -214,7 +214,7 @@ include::../../internal/srs/srs.go[tag=grade]
 | `part4/git.adoc` | 버전 관리, 커밋, 브랜치, 병합과 풀 리퀘스트, 저장소, 원격 저장소와 push·pull, 스테이징, diff, 기본 브랜치 |
 | `part4/quality-gates.adoc` | 품질 게이트, 셸과 셸 스크립트, 훅(Claude Code), 표준 입출력과 표준 에러, 종료 코드, 서브에이전트, 프런트매터 |
 | `part4/github-actions.adoc` | 지속적 통합(CI), 워크플로·잡·스텝, YAML, 러너, 브랜치 보호 규칙 |
-| `part4/vercel.adoc` | 인스턴스, 컨테이너와 Dockerfile, 웹소켓, 엣지, HTTPS, CDN, 빌드와 배포, CRUD, 캐치올, 리라이트, 리전, 프리뷰 배포 |
+| `part4/vercel.adoc` | 콜드스타트, 인스턴스, 컨테이너와 Dockerfile, 웹소켓, 엣지, HTTPS, CDN, 빌드와 배포, CRUD, 캐치올, 리라이트, 리전, 프리뷰 배포 |
 | `part4/supabase-auth.adoc` | OAuth, 관리형 서비스, 프로바이더, 액세스 토큰과 리프레시 토큰, 리다이렉트와 콜백, 쿠키, PKCE, CSRF, 무상태, Client ID와 Client Secret |
 | `part4/token-verification.adoc` | JWT, 클레임, 대칭 키와 비대칭 키, JWKS와 서명 검증 |
 | `part4/supabase-db.adoc` | 환경 변수, 연결 문자열, GIN 인덱스, 커넥션 풀러, 프리페어드 스테이트먼트, 콜로케이션, RLS |
