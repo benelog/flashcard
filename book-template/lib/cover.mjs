@@ -20,9 +20,9 @@ export function homeCoverMarkdown(book) {
     ? `\n    <div class="fc-book-diagram" aria-hidden="true">\n      ${c.diagram
         .map(
           (l) =>
-            `<div class="fc-layer"><span class="fc-layer-name">${l.name}</span><span class="fc-layer-tech">${l.tech}</span></div>`,
+            `<div class="fc-layer"><span class="fc-plane"></span><span class="fc-layer-label"><span class="fc-layer-name">${l.name}</span><span class="fc-layer-tech">${l.tech}</span></span></div>`,
         )
-        .join('\n      <i class="fc-layer-link"></i>\n      ')}\n    </div>`
+        .join('\n      ')}\n    </div>`
     : ''
   const pitch = c.pitch?.length
     ? `\n    <ul class="fc-book-pitch">\n${c.pitch.map((p) => `      <li>${p}</li>`).join('\n')}\n    </ul>`
@@ -40,7 +40,6 @@ sidebar: false
 
 <div class="fc-home">
   <a class="fc-book" href="${start}" aria-label="읽기 시작">
-    <div class="fc-book-kicker"><span>${c.kicker}</span><b>${c.volume}</b></div>
     <h1>${c.titleHtml}</h1>
     <p class="fc-book-subtitle">${c.subtitleHtml}</p>${diagram}${pitch}
     <div class="fc-book-footer"><p class="fc-book-author">${book.author} 지음</p></div>
@@ -60,9 +59,9 @@ export function pdfCoverHtml(book) {
     ? `\n    <div class="diagram">\n      ${c.diagram
         .map(
           (l) =>
-            `<div class="layer"><span class="name">${l.name}</span><span class="tech">${l.tech}</span></div>`,
+            `<div class="layer"><span class="plane"></span><span class="label"><span class="name">${l.name}</span><span class="tech">${l.tech}</span></span></div>`,
         )
-        .join('\n      <div class="link"></div>\n      ')}\n    </div>`
+        .join('\n      ')}\n    </div>`
     : ''
   const pitch = c.pitch?.length
     ? `\n    <ul class="pitch">\n${c.pitch.map((p) => `      <li>${p}</li>`).join('\n')}\n    </ul>`
@@ -78,17 +77,31 @@ export function pdfCoverHtml(book) {
       display: flex; flex-direction: column;
     }
     .spine { position: absolute; inset: 0 auto 0 0; width: 4mm; background: #16a6a1; }
-    .kicker { display: flex; align-items: center; justify-content: space-between; margin-bottom: 9mm; padding-bottom: 4mm; border-bottom: 0.8mm solid #151a22; font-size: 9pt; font-weight: 700; color: #38404c; }
-    .kicker b { display: grid; place-items: center; width: 10mm; height: 10mm; background: #151a22; color: #fff; font-size: 9pt; }
-    h1 { font-size: 36pt; line-height: 1.2; font-weight: 700; margin: 0; word-break: keep-all; }
-    h1 strong { display: inline-block; padding: 0 3mm 1.5mm; background: #f2cf35; font-size: 41pt; line-height: 1; font-weight: 700; }
-    .subtitle { margin: 7mm 0 0; font-family: 'Noto Serif KR', serif; font-size: 14pt; font-weight: 600; color: #454d58; line-height: 1.75; word-break: keep-all; }
-    .diagram { flex: none; width: 128mm; margin: 12mm 0 0; }
-    .layer { display: flex; align-items: center; justify-content: space-between; box-sizing: border-box; height: 15mm; padding: 0 7mm; border: 0.7mm solid #151a22; background: #fff; box-shadow: 2.5mm 2.5mm 0 #d8e9e7; }
-    .layer .name { font-size: 12pt; font-weight: 700; }
+    h1 { font-size: 38pt; line-height: 1.24; font-weight: 700; margin: 3mm 0 0; word-break: keep-all; }
+    h1 strong { display: inline-block; padding: 0 3mm 1.5mm; background: #f2cf35; font-size: 43pt; line-height: 1; font-weight: 700; }
+    .subtitle { margin: 8mm 0 0; font-family: 'Noto Serif KR', serif; font-size: 14pt; font-weight: 600; color: #454d58; line-height: 1.75; word-break: keep-all; }
+    /* 세 층을 비스듬히 쌓인 판(아이소메트릭 스택)으로 그린다.
+       사각형을 rotate(45deg)로 마름모로 세운 뒤 scaleY(0.5)로 눕히고,
+       box-shadow는 회전을 함께 타므로 (2mm,2mm)가 곧장 아래로 떨어져 판의 두께가 된다. */
+    .diagram { flex: none; margin: 15mm 0 0 2mm; }
+    .layer { position: relative; display: flex; align-items: center; gap: 9mm; height: 28mm; }
+    .layer + .layer { margin-top: -10mm; }
+    .layer:nth-child(1) { z-index: 3; }
+    .layer:nth-child(2) { z-index: 2; }
+    .layer:nth-child(3) { z-index: 1; }
+    .plane { position: relative; flex: none; width: 52mm; height: 100%; }
+    .plane::before {
+      content: ''; position: absolute; left: 50%; top: 50%; width: 36mm; height: 36mm;
+      box-sizing: border-box; border: 0.7mm solid #151a22; background: #fff;
+      box-shadow: 2mm 2mm 0 #151a22;
+      transform: translate(-50%, -50%) scaleY(0.5) rotate(45deg);
+    }
+    .layer:nth-child(2) .plane::before { background: #cfe8e5; }
+    .layer:nth-child(3) .plane::before { background: #16a6a1; }
+    .label { display: flex; flex-direction: column; gap: 1mm; }
+    .layer .name { font-size: 13pt; font-weight: 700; }
     .layer .tech { font-size: 10pt; font-weight: 700; letter-spacing: 0.3mm; color: #0e7d78; }
-    .link { width: 0.7mm; height: 5mm; margin: 0 auto; background: #151a22; }
-    .pitch { margin: 9mm 0 0; padding: 0; list-style: none; font-size: 10.5pt; line-height: 1.9; font-weight: 600; color: #48505b; word-break: keep-all; }
+    .pitch { margin: 10mm 0 0; padding: 0; list-style: none; font-size: 10.5pt; line-height: 1.9; font-weight: 600; color: #48505b; word-break: keep-all; }
     .pitch li::before { content: ''; display: inline-block; width: 2mm; height: 2mm; margin: 0 3mm 0.4mm 0; background: #16a6a1; }
     .bottom { display: flex; align-items: flex-end; justify-content: flex-end; margin-top: auto; padding-top: 5mm; border-top: 0.3mm solid #aeb3b7; }
     .author { font-size: 14pt; font-weight: 600; margin: 0 0 2mm; text-align: right; }
@@ -96,7 +109,6 @@ export function pdfCoverHtml(book) {
   </style></head><body>
   <div class="cover">
     <div class="spine"></div>
-    <div class="kicker"><span>${c.kicker}</span><b>${c.volume}</b></div>
     <h1>${c.titleHtml}</h1>
     <p class="subtitle">${book.subtitle}</p>${diagram}${pitch}
     <div class="bottom">

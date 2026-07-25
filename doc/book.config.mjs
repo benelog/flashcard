@@ -16,8 +16,6 @@ export default {
   // 북마크·형광펜 localStorage 키 접두사. ef-는 앱 이름 변경 전의 잔재를 이행한다.
   storage: { prefix: 'fc', legacyPrefixes: ['ef'] },
   cover: {
-    kicker: 'AI와 함께 만드는 실전 개발서',
-    volume: '01',
     titleHtml: '<strong>이해</strong>하며<br>만드는<br>나만의 웹 앱',
     subtitleHtml: 'AI에게 지시해 쉬운 프로그래밍 언어로 만들고,<br>개념을 익혀 오랫동안 안정적으로 운영한다',
     diagram: [

@@ -1,5 +1,5 @@
 // SNS 공유 미리보기용 Open Graph 이미지(1200×630)를 만든다.
-// 빌드된 홈의 책 표지에서 시리즈 라벨·제목·부제 영역을 잘라 public/og-image.png로 저장한다.
+// 빌드된 홈의 책 표지에서 제목·부제 영역을 잘라 public/og-image.png로 저장한다.
 // 저장 후 다시 빌드해야 dist에 포함된다. 표지 디자인이나 제목이 바뀌면 재생성한다.
 import { join } from 'node:path'
 import puppeteer from 'puppeteer-core'
