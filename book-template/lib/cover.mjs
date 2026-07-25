@@ -12,6 +12,34 @@ function actionHref(book, link) {
   return link
 }
 
+// 계층 판 윗면에 그려 넣는 그림. cover.diagram[].motif로 고른다(없으면 빈 면).
+// screen: 간소화한 앱 화면(상단 바·카드·버튼), code: if/for 코드 줄, table: DB 테이블 격자.
+function motifHtml(motif) {
+  if (motif === 'screen')
+    return (
+      '<span class="m-screen"><span class="m-topbar"></span>' +
+      '<span class="m-card"><span class="m-word"></span><span class="m-ans"></span></span>' +
+      '<span class="m-btn"></span></span>'
+    )
+  if (motif === 'code')
+    return (
+      '<span class="m-code">' +
+      '<span class="m-cl"><em class="m-kw">for</em><span class="m-b m-b1"></span></span>' +
+      '<span class="m-cl m-ind"><span class="m-b m-b2"></span></span>' +
+      '<span class="m-cl m-ind"><em class="m-kw">if</em><span class="m-b m-b3"></span></span>' +
+      '<span class="m-cl m-ind2"><span class="m-b m-b4"></span></span>' +
+      '</span>'
+    )
+  if (motif === 'table')
+    return (
+      '<span class="m-table">' +
+      '<span class="m-th"></span>'.repeat(3) +
+      '<span class="m-td"></span>'.repeat(9) +
+      '</span>'
+    )
+  return ''
+}
+
 // 홈(index.md) — 책 표지 랜딩 페이지
 export function homeCoverMarkdown(book) {
   const c = book.cover
@@ -20,7 +48,7 @@ export function homeCoverMarkdown(book) {
     ? `\n    <div class="fc-book-diagram" aria-hidden="true">\n      ${c.diagram
         .map(
           (l) =>
-            `<div class="fc-layer"><span class="fc-plane"><i class="fc-side fc-side-l"></i><i class="fc-side fc-side-r"></i></span><span class="fc-layer-label"><span class="fc-layer-name">${l.name}</span><span class="fc-layer-tech">${l.tech}</span></span></div>`,
+            `<div class="fc-layer"><span class="fc-plane"><i class="fc-side fc-side-l"></i><i class="fc-side fc-side-r"></i><i class="fc-top">${motifHtml(l.motif)}</i></span><span class="fc-layer-label"><span class="fc-layer-name">${l.name}</span><span class="fc-layer-tech">${l.tech}</span></span></div>`,
         )
         .join('\n      ')}\n    </div>`
     : ''
@@ -59,7 +87,7 @@ export function pdfCoverHtml(book) {
     ? `\n    <div class="diagram">\n      ${c.diagram
         .map(
           (l) =>
-            `<div class="layer"><span class="plane"><i class="side side-l"></i><i class="side side-r"></i></span><span class="label"><span class="name">${l.name}</span><span class="tech">${l.tech}</span></span></div>`,
+            `<div class="layer"><span class="plane"><i class="side side-l"></i><i class="side side-r"></i><i class="top">${motifHtml(l.motif)}</i></span><span class="label"><span class="name">${l.name}</span><span class="tech">${l.tech}</span></span></div>`,
         )
         .join('\n      ')}\n    </div>`
     : ''
@@ -73,53 +101,77 @@ export function pdfCoverHtml(book) {
     .cover {
       position: relative; box-sizing: border-box; width: 210mm; height: 296mm;
       padding: 20mm 19mm 17mm 24mm; overflow: hidden;
-      background: #0d1117; color: #f5f5f5; font-family: 'Noto Sans KR', sans-serif;
+      background: #ffffff; color: #171717; font-family: 'Noto Sans KR', sans-serif;
       display: flex; flex-direction: column;
     }
     .spine { position: absolute; inset: 0 auto 0 0; width: 4mm; background: #2563eb; }
     h1 { font-size: 38pt; line-height: 1.24; font-weight: 700; margin: 3mm 0 0; word-break: keep-all; }
-    h1 strong { display: inline-block; padding: 0 3mm 1.5mm; background: #f59e0b; color: #0d1117; font-size: 43pt; line-height: 1; font-weight: 700; }
-    .subtitle { margin: 8mm 0 0; font-family: 'Noto Serif KR', serif; font-size: 14pt; font-weight: 600; color: #a3a3a3; line-height: 1.75; word-break: keep-all; }
+    h1 strong { display: inline-block; padding: 0 3mm 1.5mm; background: #f59e0b; color: #171717; font-size: 43pt; line-height: 1; font-weight: 700; }
+    .subtitle { margin: 7mm 0 0; font-family: 'Noto Serif KR', serif; font-size: 14pt; font-weight: 600; color: #525252; line-height: 1.75; word-break: keep-all; }
     /* 세 층을 두께가 있는 판(아이소메트릭 슬래브)으로 쌓는다. 판마다 세 면을 그린다.
        윗면은 사각형을 rotate(45deg)로 세워 scaleY(0.5)로 눕힌 마름모,
        좌우 옆면은 마름모 아래 변에 맞춰 skewY(±26.565deg)로 기울인 직사각형이다
-       (마름모 변의 기울기가 정확히 0.5 = tan 26.565°). */
-    .diagram { flex: none; margin: 15mm 0 0 2mm; }
-    .layer { position: relative; display: flex; align-items: center; gap: 9mm; height: 31mm; }
-    .layer + .layer { margin-top: -12mm; }
+       (마름모 변의 기울기가 정확히 0.5 = tan 26.565°).
+       윗면은 실제 요소(.top)라 안에 각 층의 그림(motif)을 담고, 그림도 함께 눕는다. */
+    .diagram { flex: none; margin: 10mm 0 0 2mm; }
+    .layer { position: relative; display: flex; align-items: center; gap: 8mm; height: 39mm; }
+    .layer + .layer { margin-top: -5mm; }
     .layer:nth-child(1) { z-index: 3; }
     .layer:nth-child(2) { z-index: 2; }
     .layer:nth-child(3) { z-index: 1; }
-    .plane { position: relative; flex: none; width: 53mm; height: 100%;
-      --s: 36mm;                       /* 윗면 정사각형 한 변 */
+    .plane { position: relative; flex: none; width: 67mm; height: 100%;
+      filter: drop-shadow(0 3mm 4mm rgba(30, 64, 175, 0.16));
+      --s: 46mm;                       /* 윗면 정사각형 한 변 */
       --d2: calc(var(--s) * 0.7071);   /* 마름모 반너비 */
       --q: calc(var(--s) * 0.35355);   /* 마름모 반높이 */
-      --t: 4.5mm;                      /* 판 두께 */
+      --t: 6mm;                        /* 판 두께 */
     }
-    .plane::before {
-      content: ''; position: absolute; z-index: 1; left: 50%; top: calc(50% - var(--t) / 2);
-      width: var(--s); height: var(--s);
+    .top {
+      position: absolute; z-index: 1; left: 50%; top: calc(50% - var(--t) / 2);
+      width: var(--s); height: var(--s); box-sizing: border-box; padding: 5mm;
+      background: #fff; border: 0.5mm solid #d9e5f5;
+      display: flex; flex-direction: column; justify-content: center;
       transform: translate(-50%, -50%) scaleY(0.5) rotate(45deg);
     }
     .side { position: absolute; width: var(--d2); height: var(--t); }
     .side-l { left: calc(50% - var(--d2)); top: calc(50% - var(--t) / 2); transform-origin: 0 0; transform: skewY(26.565deg); }
     .side-r { left: 50%; top: calc(50% - var(--t) / 2 + var(--q)); transform-origin: 0 0; transform: skewY(-26.565deg); }
-    .layer:nth-child(1) .plane::before { background: #eff6ff; }
+    /* 층이 내려갈수록 옆면 파랑이 한 단씩 짙어진다 */
     .layer:nth-child(1) .side-l { background: #bfdbfe; }
     .layer:nth-child(1) .side-r { background: #93c5fd; }
-    .layer:nth-child(2) .plane::before { background: #60a5fa; }
     .layer:nth-child(2) .side-l { background: #3b82f6; }
     .layer:nth-child(2) .side-r { background: #2563eb; }
-    .layer:nth-child(3) .plane::before { background: #2563eb; }
     .layer:nth-child(3) .side-l { background: #1d4ed8; }
     .layer:nth-child(3) .side-r { background: #1e40af; }
+    /* 윗면 그림: 간소화한 앱 화면 */
+    .m-screen { display: flex; flex-direction: column; justify-content: center; gap: 3mm; width: 100%; }
+    .m-topbar { height: 3mm; width: 55%; border-radius: 1mm; background: #e2e8f0; }
+    .m-card { display: flex; flex-direction: column; gap: 2.5mm; padding: 4mm 3.5mm; border: 0.8mm solid #bfdbfe; border-radius: 3mm; background: #eff6ff; }
+    .m-word { height: 3.2mm; width: 58%; border-radius: 1mm; background: #171717; }
+    .m-ans { height: 2.4mm; width: 80%; border-radius: 1mm; background: #93c5fd; }
+    .m-btn { height: 4.5mm; width: 100%; border-radius: 2mm; background: #2563eb; }
+    /* 윗면 그림: if/for 코드 줄 */
+    .m-code { display: flex; flex-direction: column; gap: 3mm; width: 100%; }
+    .m-cl { display: flex; align-items: center; gap: 2mm; }
+    .m-ind { padding-left: 6mm; }
+    .m-ind2 { padding-left: 12mm; }
+    .m-kw { font-family: ui-monospace, 'Cascadia Code', 'Source Code Pro', Menlo, Consolas, monospace; font-style: normal; font-weight: 700; font-size: 8.5pt; line-height: 1; color: #2563eb; }
+    .m-b { height: 2.8mm; border-radius: 1mm; background: #cbd5e1; }
+    .m-b1 { width: 42%; }
+    .m-b2 { width: 55%; }
+    .m-b3 { width: 30%; }
+    .m-b4 { width: 46%; background: #93c5fd; }
+    /* 윗면 그림: DB 테이블 격자 */
+    .m-table { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.8mm; width: 100%; border: 0.8mm solid #bfdbfe; border-radius: 2.5mm; overflow: hidden; background: #bfdbfe; }
+    .m-th { height: 5.5mm; background: #2563eb; }
+    .m-td { height: 5.5mm; background: #fff; }
     .label { display: flex; flex-direction: column; gap: 1mm; }
-    .layer .name { font-size: 13pt; font-weight: 700; color: #f5f5f5; }
-    .layer .tech { font-family: ui-monospace, 'Cascadia Code', 'Source Code Pro', Menlo, Consolas, monospace; font-size: 9.5pt; font-weight: 600; letter-spacing: 0.2mm; color: #93c5fd; }
-    .pitch { margin: 10mm 0 0; padding: 0; list-style: none; font-size: 10.5pt; line-height: 1.9; font-weight: 600; color: #a3a3a3; word-break: keep-all; }
+    .layer .name { font-size: 13pt; font-weight: 700; color: #171717; }
+    .layer .tech { font-family: ui-monospace, 'Cascadia Code', 'Source Code Pro', Menlo, Consolas, monospace; font-size: 9.5pt; font-weight: 600; letter-spacing: 0.2mm; color: #2563eb; }
+    .pitch { margin: 9mm 0 0; padding: 0; list-style: none; font-size: 10.5pt; line-height: 1.9; font-weight: 600; color: #525252; word-break: keep-all; }
     .pitch li::before { content: ''; display: inline-block; width: 2mm; height: 2mm; margin: 0 3mm 0.4mm 0; background: #2563eb; }
-    .bottom { display: flex; align-items: flex-end; justify-content: flex-end; margin-top: auto; padding-top: 5mm; border-top: 0.3mm solid #30363d; }
-    .author { font-size: 14pt; font-weight: 600; color: #f5f5f5; margin: 0 0 2mm; text-align: right; }
+    .bottom { display: flex; align-items: flex-end; justify-content: flex-end; margin-top: auto; padding-top: 5mm; border-top: 0.3mm solid #e5e5e5; }
+    .author { font-size: 14pt; font-weight: 600; color: #171717; margin: 0 0 2mm; text-align: right; }
     .site { font-family: ui-monospace, 'Cascadia Code', 'Source Code Pro', Menlo, Consolas, monospace; font-size: 8.5pt; color: #737373; margin: 0; text-align: right; }
   </style></head><body>
   <div class="cover">

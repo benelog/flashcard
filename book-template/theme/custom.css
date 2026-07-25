@@ -670,15 +670,15 @@
   aspect-ratio: 7 / 10;
   padding: 30px 32px 26px;
   box-sizing: border-box;
-  border: 1px solid #2a313c;
+  border: 1px solid #dfe3e8;
   border-radius: 2px 7px 7px 2px;
-  background: #0d1117;
-  color: #f5f5f5;
+  background: #ffffff;
+  color: #171717;
   overflow: hidden;
   text-decoration: none !important;
   box-shadow:
     inset 7px 0 #2563eb,
-    0 18px 36px -14px rgba(13, 17, 23, 0.55);
+    0 18px 36px -14px rgba(23, 37, 84, 0.35);
   transition: translate 0.25s, box-shadow 0.25s;
 }
 
@@ -686,7 +686,7 @@
   translate: 0 -6px;
   box-shadow:
     inset 7px 0 #2563eb,
-    0 28px 48px -14px rgba(13, 17, 23, 0.65);
+    0 28px 48px -14px rgba(23, 37, 84, 0.45);
 }
 
 .fc-book h1 {
@@ -695,7 +695,7 @@
   font-size: 34px;
   line-height: 1.22;
   font-weight: 700;
-  color: #f5f5f5;
+  color: #171717;
   word-break: keep-all;
 }
 
@@ -708,27 +708,29 @@
   display: inline-block;
   padding: 0 7px 2px;
   background: #f59e0b;
-  color: #0d1117;
+  color: #171717;
   font-size: 38px;
   line-height: 1;
 }
 
 .fc-book-subtitle {
-  margin: 12px 0 0;
+  margin: 10px 0 0;
   font-family: var(--fc-font-serif);
   font-size: 13.5px;
   line-height: 1.7;
   font-weight: 600;
-  color: #a3a3a3;
+  color: #525252;
   word-break: keep-all;
 }
 
 /* 앱을 이루는 세 층(화면·서버·데이터)을 두께가 있는 판(아이소메트릭 슬래브)으로 쌓는다.
    판마다 세 면을 그린다. 윗면은 사각형을 rotate(45deg)로 세워 scaleY(0.5)로 눕힌 마름모,
    좌우 옆면은 마름모 아래 변에 맞춰 skewY(±26.565deg)로 기울인 직사각형이다
-   (마름모 변의 기울기가 정확히 0.5 = tan 26.565°). */
+   (마름모 변의 기울기가 정확히 0.5 = tan 26.565°).
+   윗면은 실제 요소(.fc-top)라 안에 각 층의 그림(motif)을 담고, 그림도 함께 눕는다.
+   그림이 가려지지 않도록 판끼리는 거의 겹치지 않게 쌓는다. */
 .fc-book-diagram {
-  margin: 16px 0 0 4px;
+  margin: 10px 0 0 2px;
   flex: none;
 }
 
@@ -736,15 +738,15 @@
   position: relative;
   display: flex;
   align-items: center;
-  gap: 20px;
-  height: 88px;
+  gap: 14px;
+  height: 90px;
 }
 
 .fc-layer + .fc-layer {
-  margin-top: -34px;
+  margin-top: -10px;
 }
 
-/* 위 판이 아래 판을 덮어야 쌓인 모양이 된다 */
+/* 위 판의 아랫귀가 아래 판을 덮어야 쌓인 모양이 된다 */
 .fc-layer:nth-child(1) { z-index: 3; }
 .fc-layer:nth-child(2) { z-index: 2; }
 .fc-layer:nth-child(3) { z-index: 1; }
@@ -752,22 +754,29 @@
 .fc-plane {
   position: relative;
   flex: none;
-  width: 150px;
+  width: 156px;
   height: 100%;
-  --s: 104px;                      /* 윗면 정사각형 한 변 */
+  filter: drop-shadow(0 11px 15px rgba(30, 64, 175, 0.16));
+  --s: 108px;                      /* 윗면 정사각형 한 변 */
   --d2: calc(var(--s) * 0.7071);   /* 마름모 반너비 */
   --q: calc(var(--s) * 0.35355);   /* 마름모 반높이 */
-  --t: 14px;                       /* 판 두께 */
+  --t: 13px;                       /* 판 두께 */
 }
 
-.fc-plane::before {
-  content: '';
+.fc-top {
   position: absolute;
   z-index: 1;
   left: 50%;
   top: calc(50% - var(--t) / 2);
   width: var(--s);
   height: var(--s);
+  box-sizing: border-box;
+  padding: 12px;
+  background: #fff;
+  border: 1.5px solid #d9e5f5;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
   transform: translate(-50%, -50%) scaleY(0.5) rotate(45deg);
 }
 
@@ -791,16 +800,124 @@
   transform: skewY(-26.565deg);
 }
 
-/* 층마다 파랑 계열 한 단씩 어두워지고, 판 안에서도 윗면 → 좌측면 → 우측면 순으로 어둡다 */
-.fc-layer:nth-child(1) .fc-plane::before { background: #eff6ff; }
+/* 층이 내려갈수록 옆면 파랑이 한 단씩 짙어진다 */
 .fc-layer:nth-child(1) .fc-side-l { background: #bfdbfe; }
 .fc-layer:nth-child(1) .fc-side-r { background: #93c5fd; }
-.fc-layer:nth-child(2) .fc-plane::before { background: #60a5fa; }
 .fc-layer:nth-child(2) .fc-side-l { background: #3b82f6; }
 .fc-layer:nth-child(2) .fc-side-r { background: #2563eb; }
-.fc-layer:nth-child(3) .fc-plane::before { background: #2563eb; }
 .fc-layer:nth-child(3) .fc-side-l { background: #1d4ed8; }
 .fc-layer:nth-child(3) .fc-side-r { background: #1e40af; }
+
+/* 윗면 그림: 간소화한 앱 화면(상단 바·플래시카드·버튼) */
+.m-screen {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 7px;
+  width: 100%;
+}
+
+.m-topbar {
+  height: 7px;
+  width: 55%;
+  border-radius: 2px;
+  background: #e2e8f0;
+}
+
+.m-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 9px;
+  border: 2px solid #bfdbfe;
+  border-radius: 8px;
+  background: #eff6ff;
+}
+
+.m-word {
+  height: 8px;
+  width: 58%;
+  border-radius: 2px;
+  background: #171717;
+}
+
+.m-ans {
+  height: 6px;
+  width: 80%;
+  border-radius: 2px;
+  background: #93c5fd;
+}
+
+.m-btn {
+  height: 11px;
+  width: 100%;
+  border-radius: 6px;
+  background: #2563eb;
+}
+
+/* 윗면 그림: if/for 코드 줄 */
+.m-code {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.m-cl {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.m-ind {
+  padding-left: 14px;
+}
+
+.m-ind2 {
+  padding-left: 28px;
+}
+
+.m-kw {
+  font-family: ui-monospace, 'Cascadia Code', 'Source Code Pro', Menlo, Consolas, monospace;
+  font-style: normal;
+  font-weight: 700;
+  font-size: 17px;
+  line-height: 1;
+  color: #2563eb;
+}
+
+.m-b {
+  height: 7px;
+  border-radius: 2px;
+  background: #cbd5e1;
+}
+
+.m-b1 { width: 42%; }
+.m-b2 { width: 55%; }
+.m-b3 { width: 30%; }
+.m-b4 { width: 46%; background: #93c5fd; }
+
+/* 윗면 그림: DB 테이블 격자(머리 행 + 셀) */
+.m-table {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2px;
+  width: 100%;
+  border: 2px solid #bfdbfe;
+  border-radius: 7px;
+  overflow: hidden;
+  background: #bfdbfe;
+}
+
+.m-th {
+  height: 13px;
+  background: #2563eb;
+}
+
+.m-td {
+  height: 13px;
+  background: #fff;
+}
 
 /* 행간을 죄어 이름과 기술이 한 묶음으로 읽히게 한다(본문 행간을 그대로 상속하면
    기술 라벨이 자기 층보다 다음 층 이름에 더 가까워 보인다) */
@@ -814,7 +931,7 @@
 .fc-layer-name {
   font-size: 13px;
   font-weight: 700;
-  color: #f5f5f5;
+  color: #171717;
 }
 
 .fc-layer-tech {
@@ -822,17 +939,17 @@
   font-size: 10px;
   font-weight: 600;
   letter-spacing: 0.05em;
-  color: #93c5fd;
+  color: #2563eb;
 }
 
 .fc-book-pitch {
-  margin: 12px 0 0;
+  margin: 10px 0 0;
   padding: 0;
   list-style: none;
   font-size: 10.5px;
   line-height: 1.65;
   font-weight: 600;
-  color: #a3a3a3;
+  color: #525252;
   word-break: keep-all;
 }
 
@@ -851,7 +968,7 @@
   justify-content: flex-end;
   margin: auto 0 0;
   padding-top: 10px;
-  border-top: 1px solid #30363d;
+  border-top: 1px solid #e5e5e5;
   font-size: 9px;
   font-weight: 700;
   color: #737373;
@@ -861,7 +978,7 @@
   margin: 0;
   font-size: 13px;
   font-weight: 600;
-  color: #f5f5f5;
+  color: #171717;
 }
 
 .fc-home-desc {
@@ -934,23 +1051,40 @@
   }
 
   .fc-book-diagram {
-    margin: 12px 0 0 3px;
+    margin: 9px 0 0 2px;
   }
 
   .fc-layer {
-    height: 72px;
-    gap: 15px;
+    height: 75px;
+    gap: 12px;
   }
 
   .fc-layer + .fc-layer {
-    margin-top: -28px;
+    margin-top: -9px;
   }
 
   .fc-plane {
-    width: 124px;
-    --s: 84px;
+    width: 130px;
+    --s: 90px;
     --t: 11px;
   }
+
+  .fc-top {
+    padding: 10px;
+  }
+
+  .m-screen { gap: 5px; }
+  .m-topbar { height: 6px; }
+  .m-card { gap: 5px; padding: 8px 7px; }
+  .m-word { height: 7px; }
+  .m-ans { height: 5px; }
+  .m-btn { height: 9px; }
+  .m-code { gap: 6px; }
+  .m-kw { font-size: 14px; }
+  .m-b { height: 6px; }
+  .m-ind { padding-left: 11px; }
+  .m-ind2 { padding-left: 22px; }
+  .m-th, .m-td { height: 11px; }
 
   .fc-book-pitch {
     margin-top: 9px;

@@ -19,9 +19,9 @@ export default {
     titleHtml: '<strong>이해</strong>하며<br>만드는<br>나만의 웹 앱',
     subtitleHtml: 'AI에게 지시해 쉬운 프로그래밍 언어로 만들고,<br>개념을 익혀 오랫동안 안정적으로 운영한다',
     diagram: [
-      { name: '화면', tech: 'HTML · CSS' },
-      { name: '서버', tech: 'Go' },
-      { name: '데이터', tech: 'SQL' },
+      { name: '화면', tech: 'HTML · CSS', motif: 'screen' },
+      { name: '서버', tech: 'Go', motif: 'code' },
+      { name: '데이터', tech: 'SQL', motif: 'table' },
     ],
     pitch: [
       '코드는 AI 에이전트가 쓰고, 판단은 사람이 한다',
