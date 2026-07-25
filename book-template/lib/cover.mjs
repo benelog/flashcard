@@ -72,9 +72,11 @@ sidebar: false
     <p class="fc-book-subtitle">${c.subtitleHtml}</p>${diagram}${pitch}
     <div class="fc-book-footer"><p class="fc-book-author">${book.author} 지음</p></div>
   </a>
-  <p class="fc-home-desc">${c.homeDesc}</p>
-  <div class="fc-home-actions">
+  <div class="fc-home-side">
+    <p class="fc-home-desc">${c.homeDesc}</p>
+    <div class="fc-home-actions">
 ${actions}
+    </div>
   </div>
 </div>
 `
