@@ -33,8 +33,8 @@ function motifHtml(motif) {
   if (motif === 'table')
     return (
       '<span class="m-table">' +
-      '<span class="m-th"></span>'.repeat(3) +
-      '<span class="m-td"></span>'.repeat(9) +
+      '<span class="m-th"></span>'.repeat(4) +
+      '<span class="m-td"></span>'.repeat(12) +
       '</span>'
     )
   return ''
@@ -109,33 +109,35 @@ export function pdfCoverHtml(book) {
     h1 strong { display: inline-block; padding: 0 3mm 1.5mm; background: #f59e0b; color: #171717; font-size: 43pt; line-height: 1; font-weight: 700; }
     .subtitle { margin: 7mm 0 0; font-family: 'Noto Serif KR', serif; font-size: 14pt; font-weight: 600; color: #525252; line-height: 1.75; word-break: keep-all; }
     /* 세 층을 두께가 있는 판(아이소메트릭 슬래브)으로 쌓는다. 판마다 세 면을 그린다.
-       윗면은 사각형을 rotate(45deg)로 세워 scaleY(0.5)로 눕힌 마름모,
-       좌우 옆면은 마름모 아래 변에 맞춰 skewY(±26.565deg)로 기울인 직사각형이다
-       (마름모 변의 기울기가 정확히 0.5 = tan 26.565°).
+       윗면은 가로로 긴 직사각형을 rotate(45deg)로 세워 scaleY(0.45)로 눕힌 평행사변형,
+       좌우 옆면은 그 아래 두 변에 맞춰 skewY(±24.228deg)로 기울인 직사각형이다
+       (눕힌 뒤 변의 기울기가 0.45 = tan 24.228°).
        윗면은 실제 요소(.top)라 안에 각 층의 그림(motif)을 담고, 그림도 함께 눕는다. */
-    .diagram { flex: none; margin: 10mm 0 0 2mm; }
-    .layer { position: relative; display: flex; align-items: center; gap: 8mm; height: 39mm; }
-    .layer + .layer { margin-top: -5mm; }
+    .diagram { flex: none; margin: 9mm 0 0; }
+    .layer { position: relative; display: flex; align-items: center; gap: 8mm; height: 43mm; }
+    .layer + .layer { margin-top: -6mm; }
     .layer:nth-child(1) { z-index: 3; }
     .layer:nth-child(2) { z-index: 2; }
     .layer:nth-child(3) { z-index: 1; }
-    .plane { position: relative; flex: none; width: 67mm; height: 100%;
+    .plane { position: relative; flex: none; width: 86mm; height: 100%;
       filter: drop-shadow(0 3mm 4mm rgba(30, 64, 175, 0.16));
-      --s: 46mm;                       /* 윗면 정사각형 한 변 */
-      --d2: calc(var(--s) * 0.7071);   /* 마름모 반너비 */
-      --q: calc(var(--s) * 0.35355);   /* 마름모 반높이 */
-      --t: 6mm;                        /* 판 두께 */
+      --sw: 80mm;                                          /* 윗면 직사각형 가로 */
+      --sh: 38mm;                                          /* 윗면 직사각형 세로 */
+      --t: 5mm;                                            /* 판 두께 */
+      --dw: calc((var(--sw) + var(--sh)) * 0.3536);        /* 윗면 반너비 */
+      --dh: calc((var(--sw) + var(--sh)) * 0.1591);        /* 윗면 반높이 */
+      --ldrop: calc((var(--sh) - var(--sw)) * 0.1591);     /* 왼쪽 꼭짓점의 중심 대비 높이 */
     }
     .top {
       position: absolute; z-index: 1; left: 50%; top: calc(50% - var(--t) / 2);
-      width: var(--s); height: var(--s); box-sizing: border-box; padding: 5mm;
+      width: var(--sw); height: var(--sh); box-sizing: border-box; padding: 4.5mm 5mm;
       background: #fff; border: 0.5mm solid #d9e5f5;
       display: flex; flex-direction: column; justify-content: center;
-      transform: translate(-50%, -50%) scaleY(0.5) rotate(45deg);
+      transform: translate(-50%, -50%) scaleY(0.45) rotate(45deg);
     }
-    .side { position: absolute; width: var(--d2); height: var(--t); }
-    .side-l { left: calc(50% - var(--d2)); top: calc(50% - var(--t) / 2); transform-origin: 0 0; transform: skewY(26.565deg); }
-    .side-r { left: 50%; top: calc(50% - var(--t) / 2 + var(--q)); transform-origin: 0 0; transform: skewY(-26.565deg); }
+    .side { position: absolute; height: var(--t); }
+    .side-l { width: calc(var(--sw) * 0.7071); left: calc(50% - var(--dw)); top: calc(50% - var(--t) / 2 + var(--ldrop)); transform-origin: 0 0; transform: skewY(24.228deg); }
+    .side-r { width: calc(var(--sh) * 0.7071); left: calc(50% + (var(--sw) - var(--sh)) * 0.3536); top: calc(50% - var(--t) / 2 + var(--dh)); transform-origin: 0 0; transform: skewY(-24.228deg); }
     /* 층이 내려갈수록 옆면 파랑이 한 단씩 짙어진다 */
     .layer:nth-child(1) .side-l { background: #bfdbfe; }
     .layer:nth-child(1) .side-r { background: #93c5fd; }
@@ -144,27 +146,27 @@ export function pdfCoverHtml(book) {
     .layer:nth-child(3) .side-l { background: #1d4ed8; }
     .layer:nth-child(3) .side-r { background: #1e40af; }
     /* 윗면 그림: 간소화한 앱 화면 */
-    .m-screen { display: flex; flex-direction: column; justify-content: center; gap: 3mm; width: 100%; }
-    .m-topbar { height: 3mm; width: 55%; border-radius: 1mm; background: #e2e8f0; }
-    .m-card { display: flex; flex-direction: column; gap: 2.5mm; padding: 4mm 3.5mm; border: 0.8mm solid #bfdbfe; border-radius: 3mm; background: #eff6ff; }
-    .m-word { height: 3.2mm; width: 58%; border-radius: 1mm; background: #171717; }
-    .m-ans { height: 2.4mm; width: 80%; border-radius: 1mm; background: #93c5fd; }
-    .m-btn { height: 4.5mm; width: 100%; border-radius: 2mm; background: #2563eb; }
+    .m-screen { display: flex; flex-direction: column; justify-content: center; gap: 2.2mm; width: 100%; }
+    .m-topbar { height: 2.6mm; width: 45%; border-radius: 1mm; background: #e2e8f0; }
+    .m-card { display: flex; flex-direction: column; gap: 2mm; padding: 3mm 3.5mm; border: 0.8mm solid #bfdbfe; border-radius: 2.5mm; background: #eff6ff; }
+    .m-word { height: 3mm; width: 45%; border-radius: 1mm; background: #171717; }
+    .m-ans { height: 2.2mm; width: 70%; border-radius: 1mm; background: #93c5fd; }
+    .m-btn { height: 4mm; width: 100%; border-radius: 2mm; background: #2563eb; }
     /* 윗면 그림: if/for 코드 줄 */
-    .m-code { display: flex; flex-direction: column; gap: 3mm; width: 100%; }
+    .m-code { display: flex; flex-direction: column; gap: 2.2mm; width: 100%; }
     .m-cl { display: flex; align-items: center; gap: 2mm; }
     .m-ind { padding-left: 6mm; }
     .m-ind2 { padding-left: 12mm; }
     .m-kw { font-family: ui-monospace, 'Cascadia Code', 'Source Code Pro', Menlo, Consolas, monospace; font-style: normal; font-weight: 700; font-size: 8.5pt; line-height: 1; color: #2563eb; }
-    .m-b { height: 2.8mm; border-radius: 1mm; background: #cbd5e1; }
-    .m-b1 { width: 42%; }
-    .m-b2 { width: 55%; }
-    .m-b3 { width: 30%; }
-    .m-b4 { width: 46%; background: #93c5fd; }
+    .m-b { height: 2.5mm; border-radius: 1mm; background: #cbd5e1; }
+    .m-b1 { width: 48%; }
+    .m-b2 { width: 62%; }
+    .m-b3 { width: 36%; }
+    .m-b4 { width: 52%; background: #93c5fd; }
     /* 윗면 그림: DB 테이블 격자 */
-    .m-table { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.8mm; width: 100%; border: 0.8mm solid #bfdbfe; border-radius: 2.5mm; overflow: hidden; background: #bfdbfe; }
-    .m-th { height: 5.5mm; background: #2563eb; }
-    .m-td { height: 5.5mm; background: #fff; }
+    .m-table { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.8mm; width: 100%; border: 0.8mm solid #bfdbfe; border-radius: 2.5mm; overflow: hidden; background: #bfdbfe; }
+    .m-th { height: 4.8mm; background: #2563eb; }
+    .m-td { height: 4.8mm; background: #fff; }
     .label { display: flex; flex-direction: column; gap: 1mm; }
     .layer .name { font-size: 13pt; font-weight: 700; color: #171717; }
     .layer .tech { font-family: ui-monospace, 'Cascadia Code', 'Source Code Pro', Menlo, Consolas, monospace; font-size: 9.5pt; font-weight: 600; letter-spacing: 0.2mm; color: #2563eb; }

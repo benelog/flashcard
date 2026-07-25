@@ -724,13 +724,13 @@
 }
 
 /* 앱을 이루는 세 층(화면·서버·데이터)을 두께가 있는 판(아이소메트릭 슬래브)으로 쌓는다.
-   판마다 세 면을 그린다. 윗면은 사각형을 rotate(45deg)로 세워 scaleY(0.5)로 눕힌 마름모,
-   좌우 옆면은 마름모 아래 변에 맞춰 skewY(±26.565deg)로 기울인 직사각형이다
-   (마름모 변의 기울기가 정확히 0.5 = tan 26.565°).
+   판마다 세 면을 그린다. 윗면은 가로로 긴 직사각형을 rotate(45deg)로 세워
+   scaleY(0.45)로 눕힌 평행사변형, 좌우 옆면은 그 아래 두 변에 맞춰
+   skewY(±24.228deg)로 기울인 직사각형이다(눕힌 뒤 변의 기울기가 0.45 = tan 24.228°).
    윗면은 실제 요소(.fc-top)라 안에 각 층의 그림(motif)을 담고, 그림도 함께 눕는다.
    그림이 가려지지 않도록 판끼리는 거의 겹치지 않게 쌓는다. */
 .fc-book-diagram {
-  margin: 10px 0 0 2px;
+  margin: 8px 0 0;
   flex: none;
 }
 
@@ -738,12 +738,12 @@
   position: relative;
   display: flex;
   align-items: center;
-  gap: 14px;
-  height: 90px;
+  gap: 12px;
+  height: 94px;
 }
 
 .fc-layer + .fc-layer {
-  margin-top: -10px;
+  margin-top: -12px;
 }
 
 /* 위 판의 아랫귀가 아래 판을 덮어야 쌓인 모양이 된다 */
@@ -754,13 +754,15 @@
 .fc-plane {
   position: relative;
   flex: none;
-  width: 156px;
+  width: 188px;
   height: 100%;
   filter: drop-shadow(0 11px 15px rgba(30, 64, 175, 0.16));
-  --s: 108px;                      /* 윗면 정사각형 한 변 */
-  --d2: calc(var(--s) * 0.7071);   /* 마름모 반너비 */
-  --q: calc(var(--s) * 0.35355);   /* 마름모 반높이 */
-  --t: 13px;                       /* 판 두께 */
+  --sw: 176px;                                       /* 윗면 직사각형 가로 */
+  --sh: 84px;                                        /* 윗면 직사각형 세로 */
+  --t: 11px;                                         /* 판 두께 */
+  --dw: calc((var(--sw) + var(--sh)) * 0.3536);      /* 윗면 반너비 */
+  --dh: calc((var(--sw) + var(--sh)) * 0.1591);      /* 윗면 반높이 */
+  --ldrop: calc((var(--sh) - var(--sw)) * 0.1591);   /* 왼쪽 꼭짓점의 중심 대비 높이 */
 }
 
 .fc-top {
@@ -768,36 +770,37 @@
   z-index: 1;
   left: 50%;
   top: calc(50% - var(--t) / 2);
-  width: var(--s);
-  height: var(--s);
+  width: var(--sw);
+  height: var(--sh);
   box-sizing: border-box;
-  padding: 12px;
+  padding: 11px 13px;
   background: #fff;
   border: 1.5px solid #d9e5f5;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  transform: translate(-50%, -50%) scaleY(0.5) rotate(45deg);
+  transform: translate(-50%, -50%) scaleY(0.45) rotate(45deg);
 }
 
 .fc-side {
   position: absolute;
-  width: var(--d2);
   height: var(--t);
 }
 
 .fc-side-l {
-  left: calc(50% - var(--d2));
-  top: calc(50% - var(--t) / 2);
+  width: calc(var(--sw) * 0.7071);
+  left: calc(50% - var(--dw));
+  top: calc(50% - var(--t) / 2 + var(--ldrop));
   transform-origin: 0 0;
-  transform: skewY(26.565deg);
+  transform: skewY(24.228deg);
 }
 
 .fc-side-r {
-  left: 50%;
-  top: calc(50% - var(--t) / 2 + var(--q));
+  width: calc(var(--sh) * 0.7071);
+  left: calc(50% + (var(--sw) - var(--sh)) * 0.3536);
+  top: calc(50% - var(--t) / 2 + var(--dh));
   transform-origin: 0 0;
-  transform: skewY(-26.565deg);
+  transform: skewY(-24.228deg);
 }
 
 /* 층이 내려갈수록 옆면 파랑이 한 단씩 짙어진다 */
@@ -813,13 +816,13 @@
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: 7px;
+  gap: 5px;
   width: 100%;
 }
 
 .m-topbar {
-  height: 7px;
-  width: 55%;
+  height: 6px;
+  width: 45%;
   border-radius: 2px;
   background: #e2e8f0;
 }
@@ -827,31 +830,31 @@
 .m-card {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  padding: 10px 9px;
+  gap: 5px;
+  padding: 7px 8px;
   border: 2px solid #bfdbfe;
-  border-radius: 8px;
+  border-radius: 7px;
   background: #eff6ff;
 }
 
 .m-word {
-  height: 8px;
-  width: 58%;
+  height: 7px;
+  width: 45%;
   border-radius: 2px;
   background: #171717;
 }
 
 .m-ans {
-  height: 6px;
-  width: 80%;
+  height: 5px;
+  width: 70%;
   border-radius: 2px;
   background: #93c5fd;
 }
 
 .m-btn {
-  height: 11px;
+  height: 9px;
   width: 100%;
-  border-radius: 6px;
+  border-radius: 5px;
   background: #2563eb;
 }
 
@@ -859,7 +862,7 @@
 .m-code {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 5px;
   width: 100%;
 }
 
@@ -870,37 +873,37 @@
 }
 
 .m-ind {
-  padding-left: 14px;
+  padding-left: 16px;
 }
 
 .m-ind2 {
-  padding-left: 28px;
+  padding-left: 32px;
 }
 
 .m-kw {
   font-family: ui-monospace, 'Cascadia Code', 'Source Code Pro', Menlo, Consolas, monospace;
   font-style: normal;
   font-weight: 700;
-  font-size: 17px;
+  font-size: 15px;
   line-height: 1;
   color: #2563eb;
 }
 
 .m-b {
-  height: 7px;
+  height: 6px;
   border-radius: 2px;
   background: #cbd5e1;
 }
 
-.m-b1 { width: 42%; }
-.m-b2 { width: 55%; }
-.m-b3 { width: 30%; }
-.m-b4 { width: 46%; background: #93c5fd; }
+.m-b1 { width: 48%; }
+.m-b2 { width: 62%; }
+.m-b3 { width: 36%; }
+.m-b4 { width: 52%; background: #93c5fd; }
 
 /* 윗면 그림: DB 테이블 격자(머리 행 + 셀) */
 .m-table {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 2px;
   width: 100%;
   border: 2px solid #bfdbfe;
@@ -910,12 +913,12 @@
 }
 
 .m-th {
-  height: 13px;
+  height: 11px;
   background: #2563eb;
 }
 
 .m-td {
-  height: 13px;
+  height: 11px;
   background: #fff;
 }
 
@@ -1051,40 +1054,41 @@
   }
 
   .fc-book-diagram {
-    margin: 9px 0 0 2px;
+    margin: 7px 0 0;
   }
 
   .fc-layer {
-    height: 75px;
-    gap: 12px;
+    height: 77px;
+    gap: 10px;
   }
 
   .fc-layer + .fc-layer {
-    margin-top: -9px;
+    margin-top: -10px;
   }
 
   .fc-plane {
-    width: 130px;
-    --s: 90px;
-    --t: 11px;
+    width: 152px;
+    --sw: 142px;
+    --sh: 68px;
+    --t: 10px;
   }
 
   .fc-top {
-    padding: 10px;
+    padding: 9px 11px;
   }
 
-  .m-screen { gap: 5px; }
-  .m-topbar { height: 6px; }
-  .m-card { gap: 5px; padding: 8px 7px; }
-  .m-word { height: 7px; }
-  .m-ans { height: 5px; }
-  .m-btn { height: 9px; }
-  .m-code { gap: 6px; }
-  .m-kw { font-size: 14px; }
-  .m-b { height: 6px; }
-  .m-ind { padding-left: 11px; }
-  .m-ind2 { padding-left: 22px; }
-  .m-th, .m-td { height: 11px; }
+  .m-screen { gap: 4px; }
+  .m-topbar { height: 5px; }
+  .m-card { gap: 4px; padding: 6px 7px; }
+  .m-word { height: 6px; }
+  .m-ans { height: 4px; }
+  .m-btn { height: 8px; }
+  .m-code { gap: 4px; }
+  .m-kw { font-size: 13px; }
+  .m-b { height: 5px; }
+  .m-ind { padding-left: 13px; }
+  .m-ind2 { padding-left: 26px; }
+  .m-th, .m-td { height: 9px; }
 
   .fc-book-pitch {
     margin-top: 9px;
