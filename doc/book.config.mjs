@@ -20,7 +20,7 @@ export default {
     subtitleHtml: 'AI에게 지시해 쉬운 프로그래밍 언어로 만들고,<br>개념을 익혀 오랫동안 안정적으로 운영한다',
     diagram: [
       { name: '화면', tech: 'HTML · CSS', motif: 'screen' },
-      { name: '서버', tech: 'Go', motif: 'code' },
+      { name: '로직', tech: 'Go', motif: 'code' },
       { name: '데이터', tech: 'SQL', motif: 'table' },
     ],
     pitch: [
