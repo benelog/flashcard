@@ -7,7 +7,7 @@
 데이터베이스에서 꺼낸 덱 목록을 누가 HTML에 채워 넣는가.
 
 Flashcard의 답은 서버다.
-Go 표준 라이브러리 html/template가 HTML 양식에 데이터를 채워 완성된 화면을 만들고, 브라우저는 받은 그대로 그리기만 한다.
+Go 표준 라이브러리 html/template이 HTML 양식에 데이터를 채워 완성된 화면을 만들고, 브라우저는 받은 그대로 그리기만 한다.
 별도 프런트엔드 프레임워크 대신 서버가 화면을 그리는 구조를 택한 이유는 {ch-tech-choices}에서 정리했으므로, 이 장에서는 그 구조가 실제 코드로 어떻게 서 있는지를 살펴보겠다.
 템플릿 문법의 기초부터 레이아웃과 조각(partial) 구조, 함수를 등록하는 FuncMap, 사용자 입력을 안전하게 다루는 자동 이스케이프, 템플릿을 실행 파일에 싣는 embed, 그리고 페이지 핸들러의 흐름과 템플릿 테스트까지 차례로 짚는다.
 
@@ -33,7 +33,7 @@ HTML은 HTML대로 파일에 두고 데이터가 들어갈 자리만 표시해 �
 Go 진영에도 선택지는 여럿 있다.
 templ은 템플릿을 Go 코드로 컴파일해 필드 이름 오타를 컴파일 시점에 잡아 주고, quicktemplate은 속도를, pongo2는 Django풍 문법을 내세운다.
 템플릿이 수십 장으로 늘고 여러 사람이 고치는 프로젝트라면 컴파일 검사를 해 주는 templ이 더 나을 수 있다.
-Flashcard는 의존성이 늘지 않고 자동 이스케이프가 기본인 표준 라이브러리 html/template를 골랐고, 컴파일 검사가 없다는 약점은 이 장 마지막 절에서 테스트로 메운다.
+Flashcard는 의존성이 늘지 않고 자동 이스케이프가 기본인 표준 라이브러리 html/template을 골랐고, 컴파일 검사가 없다는 약점은 이 장 마지막 절에서 테스트로 메운다.
 
 Flashcard의 템플릿은 `internal/web/templates/` 아래에 있다.
 페이지 파일 12개(`pages/*.html`), 공통 뼈대 1개(`layout.html`), 여러 페이지가 나눠 쓰는 조각 3개(`partials/*.html`)가 전부다.
@@ -155,8 +155,8 @@ HTML 문서의 뼈대를 갖추고, 본문 자리에서 `content`라는 이름�
   <meta charset="utf-8">
   <!-- ... -->
   <title>{{.Title}}</title>
-  <link rel="stylesheet" href="/static/app.css">
-  <script src="/static/htmx.min.js" defer></script>
+  <link rel="stylesheet" href="{{asset "/static/app.css"}}">
+  <script src="{{asset "/static/htmx.min.js"}}" defer></script>
 </head>
 <body>
 <!-- ... -->
@@ -280,10 +280,10 @@ func icon(name string) template.HTML {
 
 반환 타입이 `string`이 아니라 `template.HTML`이라는 점이 핵심인데, 이 차이를 이해하려면 먼저 이스케이프 이야기를 해야 한다.
 
-== 자동 이스케이프와 XSS: html/template가 기본인 이유
+== 자동 이스케이프와 XSS: html/template이 기본인 이유
 
 Go 표준 라이브러리에는 템플릿 패키지가 둘 있다.
-text/template는 이름 그대로 일반 텍스트용이고, html/template는 같은 문법에 HTML을 위한 안전장치를 더한 것이다.
+text/template은 이름 그대로 일반 텍스트용이고, html/template은 같은 문법에 HTML을 위한 안전장치를 더한 것이다.
 그 안전장치가 컨텍스트 자동 이스케이프(contextual auto-escaping)다.
 
 왜 필요한지부터 보자.
@@ -300,12 +300,12 @@ XSS(Cross-Site Scripting)는 공격자가 입력란에 심어 둔 스크립트�
 사용자 입력을 화면에 되돌려 보여 주는 모든 웹 앱이 방어해야 하며, 이스케이프가 그 기본 방어다.
 ====
 
-html/template는 `{{.Meaning}}` 같은 자리 표시의 값을 내보낼 때 위험한 문자를 자동으로 이스케이프한다.
+html/template은 `{{.Meaning}}` 같은 자리 표시의 값을 내보낼 때 위험한 문자를 자동으로 이스케이프한다.
 카드 뜻에 `<b>중요</b>`를 입력해도 화면에 굵은 글씨가 나오지 않고 `<b>중요</b>`라는 글자 그대로 보이는 이유다.
 개발자가 자리마다 기억해서 챙길 필요가 없으니, 잊어서 뚫릴 일도 없다.
 
 "컨텍스트" 자동 이스케이프라는 이름에는 이유가 있다.
-같은 값이라도 HTML의 어느 자리에 들어가느냐에 따라 위험한 문자가 다르기 때문에, html/template는 파싱하면서 각 자리 표시가 본문인지, 속성값인지, URL인지 문맥을 파악해 두고 자리마다 맞는 이스케이프를 적용한다.
+같은 값이라도 HTML의 어느 자리에 들어가느냐에 따라 위험한 문자가 다르기 때문에, html/template은 파싱하면서 각 자리 표시가 본문인지, 속성값인지, URL인지 문맥을 파악해 두고 자리마다 맞는 이스케이프를 적용한다.
 앞의 발췌들에 문맥이 이미 여럿 나왔다.
 `{{.Name}}`(본문)에는 태그 문자를 막는 HTML 이스케이프가, `data-tts="{{$.TextTTS}}"`(속성값)에는 따옴표를 벗어나지 못하게 하는 속성 이스케이프가, `href="/decks/{{.Slug}}"`(URL)에는 주소로 쓰기에 안전하게 만드는 URL 인코딩이 적용된다.
 템플릿을 쓰는 사람은 세 자리를 똑같이 `{{...}}`로 쓸 뿐이고, 구분은 엔진이 한다.
@@ -332,9 +332,9 @@ type suggestionView struct {
 }
 ----
 
-홈 템플릿(home.html)은 이 값을 `href="/study?mode=smart&rule={{.Rule}}"` 링크에 그대로 넣는다.
+홈 템플릿(`home.html`)은 이 값을 `href="/study?mode=smart&rule={{.Rule}}"` 링크에 그대로 넣는다.
 덱 목록 페이지의 저장된 스마트 덱도 같은 방식인데, 규칙이 데이터베이스에서 `json.RawMessage`(바이트 슬라이스) 타입으로 오는 점만 다르다.
-바이트 슬라이스를 그대로 출력하면 숫자 나열이 되어 버리므로 문자열로 바꿔 주기만 하는 한 줄짜리 함수 `ruleRaw`를 FuncMap에 등록했고(앞 절의 등록부에 있었다), 덱 목록 템플릿(decks.html)은 `href="/study?mode=smart&rule={{ruleRaw .Rule}}..."`처럼 쓴다.
+바이트 슬라이스를 그대로 출력하면 숫자 나열이 되어 버리므로 문자열로 바꿔 주기만 하는 한 줄짜리 함수 `ruleRaw`를 FuncMap에 등록했고(앞 절의 등록부에 있었다), 덱 목록 템플릿(`decks.html`)은 `href="/study?mode=smart&rule={{ruleRaw .Rule}}..."`처럼 쓴다.
 인코딩은 여기서도 템플릿의 몫이다.
 
 === 이스케이프를 끄는 문: template.HTML
@@ -582,8 +582,8 @@ func TestTemplatesParse(t *testing.T) {
 
 템플릿 층을 에이전트와 함께 다룰 때의 요령이다.
 
-CLAUDE.md에는 템플릿 구조 규약을 적는다.
-"페이지는 pages/, 여러 페이지가 쓰는 조각은 partials/에 두고 layout.html은 최소로만 고친다", "새 정적 파일은 embed 대상 디렉터리 안에 둔다"가 후보다.
+`CLAUDE.md`에는 템플릿 구조 규약을 적는다.
+"페이지는 pages/, 여러 페이지가 쓰는 조각은 partials/에 두고 `layout.html`은 최소로만 고친다", "새 정적 파일은 embed 대상 디렉터리 안에 둔다"가 후보다.
 모든 페이지가 content라는 같은 블록 이름을 쓰는 구조처럼 이 저장소 특유의 규칙은 일반 지식으로 예측할 수 없으므로, 명시할 가치가 크다.
 
 템플릿은 컴파일 검사가 약한 영역이라는 점을 지시로 보완한다.

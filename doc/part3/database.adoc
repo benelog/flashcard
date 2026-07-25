@@ -28,7 +28,7 @@
 
 셋째, 카드마다 *간격 반복 상태*(다음 복습 시각, 용이도 등)가 있다 → `card_srs`.
 
-넷째, 학습은 *세션* 단위로 진행되고, 세션 안에서 카드 한 장에 대한 판정 하나하나가 *복습 기록*이다 → `study_sessions`, `review_logs`.
+넷째, 학습은 *세션* 단위로 진행되고, 세션 안에서 카드 한 장에 매긴 판정 하나하나가 *복습 기록*이다 → `study_sessions`, `review_logs`.
 
 다섯째, "오답률 높은 카드"처럼 조건으로 정의되는 가상의 덱인 *스마트 덱*이 있다 → `smart_decks`.
 
@@ -443,32 +443,11 @@ Flashcard의 SRS는 간격 반복 앱들이 널리 써 온 고전적 계산법�
 
 [source,go]
 ----
-// Grade는 첫 회차 답변 뒤의 다음 SRS 상태와 복습 예정 시각을 돌려준다.
-// 재도전 회차의 답변은 채점하면 안 된다.
-func Grade(s State, correct bool, now time.Time) (State, time.Time) {
-	if correct {
-		s.Repetitions++
-		switch s.Repetitions {
-		case 1:
-			s.IntervalDays = 1
-		case 2:
-			s.IntervalDays = 6
-		default:
-			s.IntervalDays = math.Round(s.IntervalDays * s.EaseFactor)
-		}
-		s.EaseFactor += easeGainCorrect
-	} else {
-		s.Repetitions = 0
-		s.IntervalDays = 1
-		s.EaseFactor = math.Max(MinEase, s.EaseFactor-easeLossIncorrect)
-	}
-	due := now.Add(time.Duration(s.IntervalDays * float64(24*time.Hour)))
-	return s, due
-}
+include::../../internal/srs/srs.go[tag=grade]
 ----
 
 다음 상태와 복습 시각, 결과 두 개를 함께 돌려주는 시그니처에서 {ch-go-hello}에서 익힌 다중 반환이 실전에 쓰이는 모습도 보인다.
-DB 상태와 계산 로직이 1:1로 대응한다는 점이 요지로, 스키마를 설계할 때 "알고리즘이 다음 계산에 필요로 하는 최소 상태가 무엇인가"를 물으면 컬럼 목록이 저절로 나온다.
+DB 상태와 계산 로직이 1:1로 대응한다는 점이 요지로, 스키마를 설계할 때 "알고리즘이 다음 계산에 쓰는 최소 상태가 무엇인가"를 물으면 컬럼 목록이 저절로 나온다.
 
 === 복습 기록과 상태 갱신 트랜잭션
 
@@ -673,7 +652,7 @@ Flashcard는 PostgreSQL의 행 수준 보안(RLS, Row Level Security)을 그 잠
 
 테이블 설계 층을 에이전트와 함께 다룰 때의 요령이다.
 
-CLAUDE.md에는 이 저장소의 설계 규약을 못 박아 둘 만하다.
+`CLAUDE.md`에는 이 저장소의 설계 규약을 못 박아 둘 만하다.
 "마이그레이션 파일은 수정하지 말고 새 번호로 추가한다", "모든 테이블에 외래 키와 제약을 선언한다", "SQLite와 PostgreSQL 스키마 두 벌을 함께 고친다"가 그 후보다.
 특히 마지막 항목은 이 저장소 특유의 함정이라, 지시가 없으면 에이전트가 한쪽만 고치고 끝낼 수 있다.
 
@@ -695,7 +674,7 @@ CLAUDE.md에는 이 저장소의 설계 규약을 못 박아 둘 만하다.
 UUID는 Go가 만들어 text에 담고, 시각은 고정 폭 UTC 텍스트로 적어 문자열 비교가 곧 시간 순서가 되게 했으며, 태그·설정·규칙은 JSON 텍스트로, 종류 값은 text 위의 check 제약으로 지켰다.
 운영 PostgreSQL의 전용 타입(uuid, timestamptz, jsonb, 배열, enum)은 같은 의도를 타입 자체로 표현한다.
 
-셋째, SRS 상태는 알고리즘이 필요로 하는 최소 상태로 컬럼을 구성했고, 복습 기록은 트랜잭션으로 로그 삽입과 상태 갱신을 원자적으로 처리한다.
+셋째, SRS 상태는 알고리즘에 필요한 최소 상태로 컬럼을 구성했고, 복습 기록은 트랜잭션으로 로그 삽입과 상태 갱신을 원자적으로 처리한다.
 재도전 라운드를 SRS에서 제외하는 도메인 규칙은 `is_retry` 컬럼 하나로 스키마에 새겨졌다.
 
 넷째, 덱 slug는 `max(seq)+1`로 채번한 순번을 곱셈 순열로 뒤섞은 Base36 4자 코드로, 짧은 URL과 순번 은닉을 저장 컬럼 추가 없이 얻었다.

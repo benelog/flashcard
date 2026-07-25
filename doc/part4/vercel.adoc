@@ -475,7 +475,7 @@ Vercel은 `api/index.go`를 저장소 모듈의 일원으로 빌드하지 않고
 
 [source,text]
 ----
-api/index.go  ──▶  pkg/app  ──▶  internal/{config,db,auth,handlers,store}
+api/index.go  ──▶  pkg/app  ──▶  internal/{config,db,auth,handlers,model,pgstore}
 cmd/server    ──▶  pkg/app
 ----
 
@@ -546,7 +546,7 @@ AI 에이전트와 함께 개발하는 프로젝트에서 이 검사는 특히 �
 `"framework": null`은 감지할 프레임워크가 없다는 앞의 결정을 파일에 새긴다.
 Vercel은 저장소를 import하는 순간 감지한 프레임워크를 프로젝트 설정(Framework Preset)에 저장해 두는데, 이 값은 저장소가 바뀌어도 따라 바뀌지 않는다.
 Flashcard가 이 함정을 실제로 밟았다.
-{ch-git}의 커밋 로그에 남아 있듯 이 앱의 초기 구현은 Next.js 프런트엔드였고, Go 서버 렌더링으로 전환하며 package.json까지 지웠지만 Framework Preset에는 import 시점에 감지된 Next.js가 그대로 남아 있었다.
+{ch-git}의 커밋 로그에 남아 있듯 이 앱의 초기 구현은 Next.js 프런트엔드였고, Go 서버 렌더링으로 전환하며 `package.json`까지 지웠지만 Framework Preset에는 import 시점에 감지된 Next.js가 그대로 남아 있었다.
 그 상태로 운영 배포를 하자 Vercel이 `next build`를 실행했고, pages 디렉터리를 찾지 못해 빌드가 실패했다.
 `"framework": null`은 대시보드에 무엇이 저장되어 있든 프레임워크 없음으로 덮어쓰므로, 설정 화면을 열어 볼 필요 없이 저장소만으로 빌드 방식이 정해진다.
 
@@ -739,10 +739,10 @@ Framework Preset 같은 빌드 설정은 `vercel.json`이 정하므로 손댈 �
 
 배포 영역을 에이전트와 함께 다룰 때는 이 저장소 고유의 함정을 지침으로 만드는 것이 핵심이다.
 
-CLAUDE.md에 적을 첫 항목은 이미 정해져 있다.
-"api/index.go는 internal/을 import할 수 없다. 공유 코드는 pkg/app에 둔다."
+`CLAUDE.md`에 적을 첫 항목은 이미 정해져 있다.
+"`api/index.go`는 internal/을 import할 수 없다. 공유 코드는 `pkg/app`에 둔다."
 {ch-quality-gates}에서 본 대로 이 규칙은 go-quality 서브에이전트의 `go build api/index.go` 검사로도 강제되는데, 지침과 자동 검사가 같은 규칙을 이중으로 떠받치는 것이 이상적인 모양이다.
-"vercel.json의 rewrite와 함수 리전은 바꾸지 않는다"도 후보다.
+"`vercel.json`의 rewrite와 함수 리전은 바꾸지 않는다"도 후보다.
 
 배포가 실패했을 때는 Vercel 대시보드의 빌드 로그를 대화에 붙여 넣으면 된다.
 빌드 환경 차이나 환경 변수 누락처럼 로컬에서 재현되지 않는 실패일수록 로그 해석을 맡기는 값어치가 크다.

@@ -112,7 +112,7 @@ func (w *Web) withUser() gin.HandlerFunc {
 
 VS Code는 작업 폴더의 `.vscode/` 디렉터리를 읽어 개인 설정 위에 덮어쓴다.
 프로젝트에 종속된 규칙만 골라 이 디렉터리에 담아 커밋하면, 클론한 사람은 별도 안내 없이 같은 환경을 얻는다.
-Flashcard의 `.vscode/`에는 파일 네 개(extensions.json, settings.json, tasks.json, launch.json)가 들어 있다.
+Flashcard의 `.vscode/`에는 파일 네 개(`extensions.json`, `settings.json`, `tasks.json`, `launch.json`)가 들어 있다.
 
 === extensions.json: 필요한 확장을 저장소가 알려 준다
 
@@ -133,7 +133,7 @@ VS Code는 이 목록을 읽고 "이 저장소가 권장하는 확장이 있습�
 
 === settings.json: 저장하는 순간 규칙이 적용된다
 
-다음은 settings.json의 주요 부분으로, 파일을 저장할 때 적용되는 규칙과 테스트 실행 방식을 정한다.
+다음은 `settings.json`의 주요 부분으로, 파일을 저장할 때 적용되는 규칙과 테스트 실행 방식을 정한다.
 
 [source,json]
 ----
@@ -206,7 +206,7 @@ Go의 언어 서버는 gopls이고, `go.useLanguageServer`가 이를 켜는 설�
 
 === launch.json: F5 한 번으로 디버거를 붙인다
 
-다음은 launch.json 전문으로, 서버 실행과 테스트 실행이라는 두 가지 디버깅 구성이 담겨 있다.
+다음은 `launch.json` 전문으로, 서버 실행과 테스트 실행이라는 두 가지 디버깅 구성이 담겨 있다.
 
 .[용어 풀이] 디버거(Debugger)와 중단점(Breakpoint)
 [NOTE]
@@ -289,11 +289,11 @@ Flashcard에서 포맷의 원본은 `gofmt`이고 검증의 원본은 `go vet`�
 
 개발 환경 자체도 에이전트와 함께 다듬을 수 있다.
 
-CLAUDE.md에는 "로컬 서버는 go run ./cmd/server, 환경 변수 없이 로컬 모드로 뜬다"와 "local-db/ 폴더는 지워도 되는 개발 데이터다"를 적어 둘 만하다.
+`CLAUDE.md`에는 "로컬 서버는 go run ./cmd/server, 환경 변수 없이 로컬 모드로 뜬다"와 "local-db/ 폴더는 지워도 되는 개발 데이터다"를 적어 둘 만하다.
 전자는 에이전트가 검증용 서버를 띄울 때, 후자는 실험 뒤 정리할 때 판단 근거가 된다.
 
 "서버를 띄우고 홈 화면과 /api/healthz 응답을 확인한 뒤 종료해 달라"는 스모크 테스트 지시를 스킬로 저장해 두면, 변경이 앱을 실제로 깨뜨렸는지 명령 하나로 확인할 수 있다.
-tasks.json에 적어 둔 검증 명령과 같은 것을 에이전트도 쓰게 하면, 사람과 에이전트의 게이트가 어긋나지 않는다.
+`tasks.json`에 적어 둔 검증 명령과 같은 것을 에이전트도 쓰게 하면, 사람과 에이전트의 게이트가 어긋나지 않는다.
 
 == 정리
 

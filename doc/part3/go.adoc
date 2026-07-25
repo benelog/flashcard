@@ -3,15 +3,15 @@
 {ch-go-hello}과 {ch-go-types}에서 Go 문법을, {ch-go-basics}에서 코드가 담기는 틀(모듈과 디렉터리)을 익혔다.
 이 장에서는 그 기초를 들고 Flashcard의 실제 도메인 코드 속으로 들어간다.
 
-중심 예제는 간격 반복(Spaced Repetition) 알고리즘을 구현한 internal/srs 패키지다.
+중심 예제는 간격 반복(Spaced Repetition) 알고리즘을 구현한 `internal/srs` 패키지다.
 암기 카드 앱의 심장에 해당하는 이 코드로, {ch-go-types}에서 연습용 예제로 본 구조체와 제로값이 실제 문제를 푸는 데 어떻게 쓰이는지 확인한다.
-이어서 스마트 덱 규칙을 다루는 internal/smartrules와 DB 접근 계층인 internal/pgstore와 그 둘이 주고받는 타입을 모아 둔 internal/model로 넘어가, 에러 처리 관례와 포인터, {ch-go-types}에서 미뤄 둔 제네릭, 슬라이스와 맵, 문자열 처리, JSON 직렬화까지 확인한다.
+이어서 스마트 덱 규칙을 다루는 `internal/smartrules`와 DB 접근 계층인 `internal/pgstore`, 그 둘이 주고받는 타입을 모아 둔 `internal/model`로 넘어가, 에러 처리 관례와 포인터, {ch-go-types}에서 미뤄 둔 제네릭, 슬라이스와 맵, 문자열 처리, JSON 직렬화까지 확인한다.
 이 장을 읽고 나면 이 저장소의 어느 Go 파일을 열어도 문장 단위로 따라갈 수 있을 것이다.
 
 == 간격 반복 알고리즘 읽기
 
 이제 실제 코드다.
-중심 예제인 internal/srs/srs.go는 간격 반복 알고리즘, 그중에서도 널리 쓰이는 SM-2의 변형을 구현한 파일인데, 전체가 49줄이라 한 장의 예제로 알맞다.
+중심 예제인 `internal/srs/srs.go`는 간격 반복 알고리즘, 그중에서도 널리 쓰이는 SM-2의 변형을 구현한 파일인데, 전체가 50줄 남짓이라 한 장의 예제로 알맞다.
 
 SM-2는 카드를 복습할 때마다 "얼마나 잘 기억했는지"에 따라 다음 복습까지의 간격을 늘리거나 줄이는 알고리즘이다.
 Flashcard의 UI는 맞음/틀림 두 버튼만 제공하므로, 원래 0~5점인 SM-2의 품질 점수를 5점(맞음)과 2점(틀림)에 대응시킨 이진 변형을 쓴다.
@@ -69,7 +69,7 @@ include::../../internal/srs/srs.go[tag=state]
 === 다중 반환과 알고리즘 본체
 
 이제 핵심인 `Grade` 함수다.
-카드를 맞혔는지에 따라 다음 복습 상태와 복습 시각을 계산해 돌려주는, internal/srs/srs.go의 나머지 절반이다.
+카드를 맞혔는지에 따라 다음 복습 상태와 복습 시각을 계산해 돌려주는, `internal/srs/srs.go`의 나머지 절반이다.
 
 [source,go]
 ----
@@ -119,7 +119,7 @@ Go는 숫자 타입 간 암묵적 변환을 허용하지 않으므로, `float64`
 == 에러 처리: 반환값으로서의 error
 
 `Grade`는 실패할 일이 없는 순수 계산이라 에러를 반환하지 않는다.
-실패할 수 있는 함수의 모양은 internal/smartrules/rules.go에서 볼 수 있다.
+실패할 수 있는 함수의 모양은 `internal/smartrules/rules.go`에서 볼 수 있다.
 이 패키지는 스마트 덱, 즉 카드를 직접 담아 두는 대신 "오답률 높은 카드", "오래 안 본 카드" 같은 조건에 맞는 카드를 학습할 때마다 골라 모으는 가상 덱의 규칙을 다룬다.
 아래 `Parse`는 규칙을 적은 JSON 텍스트를 해석해 `Rule` 값으로 바꾸는 함수다.
 
@@ -144,15 +144,15 @@ include::../../internal/smartrules/rules.go[tag=parse]
 ====
 
 센티널 에러의 선언은 한 줄이면 된다.
-internal/model/model.go에서 발췌했다.
+`internal/model/model.go`에서 발췌했다.
 
 [source,go]
 ----
 include::../../internal/model/model.go[tag=not-found]
 ----
 
-`ErrNotFound`는 "요청한 행이 없다"를 뜻하는 model 패키지 공용 에러 값이다.
-internal/pgstore/decks.go에서는 DB 드라이버의 에러를 이 값으로 번역한다.
+`ErrNotFound`는 "요청한 행이 없다"를 뜻하는 `model` 패키지 공용 에러 값이다.
+`internal/pgstore/decks.go`에서는 DB 드라이버의 에러를 이 값으로 번역한다.
 
 [source,go]
 ----
@@ -183,13 +183,13 @@ Go에서 함수의 인자는 복사되어 전달된다.
 `r`을 값으로 넘기면 함수는 복사본만 채우고, 정작 원본 `r`은 빈 채로 남는다.
 그래서 `&r`로 주소를 넘겨 "이 주소에 있는 원본을 채워 달라"고 알려 준다.
 
-{ch-go-basics} config.go의 `Load`가 반환하던 `*Config`도 이제 읽을 수 있다.
+{ch-go-basics} `config.go`의 `Load`가 반환하던 `*Config`도 이제 읽을 수 있다.
 설정 구조체를 통째로 복사해 돌려주는 대신 그것이 놓인 주소 하나를 건네고, 실패했을 때는 "가리키는 것이 없음"인 `nil`을 돌려주기 위한 선택이다.
 
 === 수정 의도를 드러내는 포인터 리시버
 
 앞서 `Grade`는 `State`를 값으로 받았다.
-반면 rules.go의 `Validate`는 포인터로 받는다.
+반면 `rules.go`의 `Validate`는 포인터로 받는다.
 방금 본 `Parse`가 마지막에 호출하던, 스마트 덱 규칙이 올바른지 검사하는 메서드다.
 
 [source,go]
@@ -212,7 +212,7 @@ include::../../internal/smartrules/rules.go[tag=validate-tag]
 === 값의 부재를 나타내는 포인터
 
 포인터의 또 다른 용도는 "값이 없음"의 표현이다.
-internal/pgstore/decks.go에서 덱 하나의 정보를 담는 `Deck` 구조체를 보자.
+`internal/model/deck.go`에서 덱 하나의 정보를 담는 `Deck` 구조체를 보자.
 
 [source,go]
 ----
@@ -356,7 +356,7 @@ fmt.Println(sum([]int{1, 2, 3}), sum([]float64{0.5, 2.5}))
 
 통념은 "같은 코드가 두세 번 반복되는 것을 눈으로 확인하기 전에는 쓰지 않는다"이다.
 타입 매개변수가 하나 붙는 순간 함수 선언이 읽기 어려워지고, 제약을 설계하는 일이 새 과제로 생긴다.
-반복이 실제로 나타났을 때 그것을 걷어 내는 데 쓰면 값을 하지만, 나중에 필요할지 모른다는 이유로 미리 일반화하면 얻는 것 없이 어려움만 남는다.
+반복이 실제로 나타났을 때 그것을 걷어 내는 데 쓰면 제값을 하지만, 나중에 필요할지 모른다는 이유로 미리 일반화하면 얻는 것 없이 어려움만 남는다.
 
 Flashcard에서 제네릭이 쓰인 곳도 이 기준을 지킨 결과다.
 데이터베이스에서 여러 행을 읽어 목록으로 만드는 코드가 덱, 카드, 태그처럼 종류마다 한 벌씩 여덟 곳에 있었고, 다른 것은 한 행을 읽는 방법뿐이었다.
@@ -367,7 +367,7 @@ Flashcard에서 제네릭이 쓰인 곳도 이 기준을 지킨 결과다.
 
 Go에서 일상적으로 쓰는 컬렉션 타입은 {ch-go-types}에서 익힌 슬라이스와 맵 둘이다.
 
-슬라이스의 전형적인 사용 패턴은 internal/pgstore/store.go의 `collect`에서 볼 수 있다.
+슬라이스의 전형적인 사용 패턴은 `internal/pgstore/store.go`의 `collect`에서 볼 수 있다.
 DB에서 결과를 한 행씩 읽어 슬라이스에 담아 돌려주는 함수다.
 
 [source,go]
@@ -389,7 +389,7 @@ include::../../internal/pgstore/store.go[tag=collect]
 앞 절에서 "반복을 눈으로 확인한 뒤에 쓴다"는 기준을 말했는데, 이 함수가 바로 그 사례다.
 
 덕분에 부르는 쪽에는 질의문만 남는다.
-한 사용자의 덱 목록을 돌려주는 internal/pgstore/decks.go의 `ListDecks`가 그렇다.
+한 사용자의 덱 목록을 돌려주는 `internal/pgstore/decks.go`의 `ListDecks`가 그렇다.
 
 [source,go]
 ----
@@ -398,11 +398,11 @@ include::../../internal/pgstore/decks.go[tag=list-decks]
 
 이 패키지에서 목록을 돌려주는 함수는 여덟 개인데, 예전에는 여덟 곳이 모두 위의 루프를 한 벌씩 품고 있었다.
 행마다 다른 것은 `scanDeck`, `scanCard`처럼 한 줄을 읽는 방법뿐이었으므로, 다른 부분만 인자로 받자 나머지가 한 곳으로 모였다.
-로컬 모드의 SQLite 구현(internal/litestore)에도 같은 이름의 짝이 있다.
+로컬 모드의 SQLite 구현(`internal/litestore`)에도 같은 이름의 짝이 있다.
 DB에서 결과를 꺼내 오는 통로의 타입이 서로 달라 함수는 둘이지만, 안에서 하는 일과 모양은 같다.
 
 맵은 키-값 저장소다.
-internal/pgstore/cards.go에서 CSV 대량 등록 시 중복 카드를 걸러내는 데 쓴다.
+`internal/pgstore/cards.go`에서 CSV 대량 등록 시 중복 카드를 걸러내는 데 쓴다.
 
 [source,go]
 ----
@@ -416,7 +416,7 @@ include::../../internal/pgstore/cards.go[tag=seen-mark]
 `map[string]bool`은 문자열 키마다 불리언 값을 붙여 두는 맵이다.
 기존 카드의 정규화된 텍스트를 `seen`에 넣어 두고, 새 카드를 넣기 전에 존재 여부를 확인하는 집합(Set) 용도다.
 
-슬라이스와 맵이 함께 일하는 장면은 같은 파일의 `SortCardsByIDOrder`다.
+슬라이스와 맵이 함께 일하는 장면은 `internal/model/card.go`의 `SortCardsByIDOrder`다.
 스마트 규칙으로 고른 카드 ID 목록(`ids`)의 순서에 맞춰, DB에서 읽어 온 카드들(`cards`)을 재정렬하는 함수다.
 
 [source,go]
@@ -432,7 +432,7 @@ include::../../internal/model/card.go[tag=sort-by-id-order]
 맵에서 키를 읽으면 값과 함께 "그 키가 실제로 있었는지"를 두 번째 반환값(불리언)으로 받을 수 있다.
 없는 키를 읽어도 에러가 나지 않고 제로값이 나오기 때문에, "값이 마침 제로값인 것"과 "키가 아예 없는 것"을 구별하려면 이 두 번째 값이 필요하다.
 
-슬라이스가 구조체 필드로 쓰이는 예는 rules.go의 `Rule` 타입에서 볼 수 있다.
+슬라이스가 구조체 필드로 쓰이는 예는 `rules.go`의 `Rule` 타입에서 볼 수 있다.
 
 [source,go]
 ----
@@ -446,12 +446,12 @@ include::../../internal/smartrules/rules.go[tag=rule]
 == 문자열 처리
 
 문자열을 자르고 다듬고 잇는 일상적인 조작은 표준 라이브러리 `strings` 패키지가 담당한다.
-{ch-go-basics} config.go에서 이미 쉼표로 자르는 `strings.Split`과 앞뒤 공백을 걷어 내는 `strings.TrimSpace`를 봤다.
+{ch-go-basics} `config.go`에서 이미 쉼표로 자르는 `strings.Split`과 앞뒤 공백을 걷어 내는 `strings.TrimSpace`를 봤다.
 도메인 코드에서 두 가지 쓰임을 더 보자.
 
 첫 번째는 중복 카드 판정이다.
 CSV로 카드를 대량 등록할 때 "hello"와 " Hello "를 다른 카드로 취급하면 같은 단어가 두 장 생긴다.
-internal/pgstore/cards.go의 `BulkCreateCards`는 카드 텍스트를 비교용 열쇠로 정규화해 이 문제를 막는다.
+`internal/pgstore/cards.go`의 `BulkCreateCards`는 카드 텍스트를 비교용 열쇠로 정규화해 이 문제를 막는다.
 
 [source,go]
 ----
@@ -466,7 +466,7 @@ include::../../internal/pgstore/cards.go[tag=dedup-key]
 
 두 번째는 목록을 한 줄로 잇는 반대 방향의 조작이다.
 덱을 CSV 파일로 내보낼 때는 카드 한 장의 태그 목록을 한 칸에 담아야 한다.
-internal/cardcsv/cardcsv.go에서 카드 하나를 CSV 한 행으로 쓰는 부분이다.
+`internal/cardcsv/cardcsv.go`에서 카드 하나를 CSV 한 행으로 쓰는 부분이다.
 
 [source,go]
 ----
@@ -475,7 +475,7 @@ include::../../internal/cardcsv/cardcsv.go[tag=write-rows]
 
 `strings.Join(card.Tags, tagSeparator)`는 태그 슬라이스를 `|` 문자로 이어 `verb|basic`처럼 하나의 문자열로 만든다.
 CSV의 칸 구분자인 쉼표와 겹치지 않는 문자를 구분자로 골라 상수에 이름을 붙여 두었다.
-`store.OrEmpty`는 값이 없을 수 있는 필드(`*string`)를 빈칸으로 바꾸는 함수인데, 포인터를 다룬 앞 절의 `nil` 이야기가 여기서 쓰인다.
+`model.OrEmpty`는 값이 없을 수 있는 필드(`*string`)를 빈칸으로 바꾸는 함수인데, 포인터를 다룬 앞 절의 `nil` 이야기가 여기서 쓰인다.
 화면에 그릴 때도 CSV로 내보낼 때도 빈 값을 같은 규칙으로 다뤄야 하므로, 이 함수는 `internal/model` 패키지에 한 벌만 두고 여러 곳에서 불러 쓴다.
 자르기(Split), 다듬기(TrimSpace), 잇기(Join), 대소문자 통일(ToLower)까지, 문자열에 하고 싶은 일은 대부분 `strings` 패키지에 이미 함수로 준비되어 있다.
 
@@ -494,7 +494,7 @@ Flashcard에서 프런트엔드와 백엔드가 데이터를 주고받을 때, �
 ====
 
 읽기 방향, 즉 JSON 텍스트를 구조체로 되살리는 함수가 `json.Unmarshal`이다.
-에러 처리 절에서 본 rules.go의 `Parse`를 다시 보자.
+에러 처리 절에서 본 `rules.go`의 `Parse`를 다시 보자.
 
 [source,go]
 ----
@@ -505,7 +505,7 @@ include::../../internal/smartrules/rules.go[tag=parse]
 어느 JSON 키를 어느 필드에 넣을지는 포인터 절의 `Deck`에서 본 구조체 태그(`` `json:"..."` ``)가 알려 준다.
 
 쓰기 방향이 `json.Marshal`이다.
-internal/handlers/smartdecks.go에서 스마트 덱을 저장하기 전, 규칙을 정돈된 JSON으로 다시 만드는 부분이다.
+`internal/handlers/smartdecks.go`에서 스마트 덱을 저장하기 전, 규칙을 정돈된 JSON으로 다시 만드는 부분이다.
 
 [source,go]
 ----
@@ -524,7 +524,7 @@ JSON을 읽고, 고치고, 다시 쓰는 왕복에 함수 두 개면 충분하�
 
 Go 코드를 에이전트와 함께 읽고 쓸 때 보태 둘 만한 것들이다.
 
-CLAUDE.md에는 문법이 아니라 이 저장소의 관례를 적는다.
+`CLAUDE.md`에는 문법이 아니라 이 저장소의 관례를 적는다.
 "에러는 fmt.Errorf와 %w로 감싸 전파한다", "시각은 time.Now()를 직접 부르지 말고 인자로 받는다" 같은 항목이 후보다.
 둘째 항목처럼 테스트 가능성을 지키는 규약일수록 어겨도 한참 뒤에야 티가 나므로, 지침으로 고정할 가치가 크다.
 
@@ -536,7 +536,7 @@ CLAUDE.md에는 문법이 아니라 이 저장소의 관례를 적는다.
 
 == 정리
 
-첫째, 49줄의 `internal/srs/srs.go` 하나로 구조체와 제로값, 다중 반환, 값 전달, time 패키지를 확인했다.
+첫째, 50줄 남짓의 `internal/srs/srs.go` 하나로 구조체와 제로값, 다중 반환, 값 전달, time 패키지를 확인했다.
 제로값이 곧 유효한 초기 상태가 되도록 타입을 설계하고, 현재 시각마저 인자로 받는 순수 함수로 만들어 동작을 예측 가능하게 했다.
 
 둘째, 에러는 예외가 아닌 값이다.
