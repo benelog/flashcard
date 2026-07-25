@@ -10,6 +10,7 @@ import (
 	"github.com/benelog/flashcard/internal/smartrules"
 )
 
+// tag::store-head[]
 // Store는 저장소 계약이다. *pgstore.Store(pgx, 배포 환경)와
 // *litestore.Store(SQLite, 로컬 모드)가 둘 다 이것을 만족한다.
 //
@@ -27,6 +28,7 @@ type Store interface {
 	CreateDeck(ctx context.Context, userID uuid.UUID, name string, description *string) (Deck, error)
 	UpdateDeck(ctx context.Context, userID, deckID uuid.UUID, name, description *string) (Deck, error)
 	DeleteDeck(ctx context.Context, userID, deckID uuid.UUID) error
+	// end::store-head[]
 
 	ListCards(ctx context.Context, userID, deckID uuid.UUID) ([]Card, error)
 	GetCard(ctx context.Context, userID, cardID uuid.UUID) (Card, error)

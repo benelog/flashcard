@@ -1,6 +1,6 @@
 = Gin으로 만드는 HTTP API: 라우팅·바인딩·미들웨어
 
-{ch-go-basics}과 {ch-go}에서는 Go 언어의 문법과 Flashcard 백엔드의 패키지 구조를 살펴봤다.
+{ch-code-map}에서 Flashcard 백엔드의 패키지 지도를 그렸고, {ch-go}에서는 그 위의 핵심 로직을 읽었다.
 이번 장에서는 그 위에서 HTTP API를 실제로 만드는 웹 프레임워크(web framework) Gin을 다룬다.
 Gin을 선택한 이유는 {ch-tech-choices}에서 정리했으므로, 여기서는 요청 하나가 Gin을 통과하는 길을 실제 코드로 좇는다.
 
@@ -438,7 +438,7 @@ API 층을 에이전트와 함께 넓혀 갈 때의 요령이다.
 
 이번 장에서는 요청 하나가 Gin을 통과하는 길을 따라가며 Flashcard의 HTTP API를 읽었다.
 
-Gin을 선택한 이유와 net/http·chi·Echo 같은 대안과의 비교는 {ch-tech-choices}에서 정리했다.
+Gin을 선택한 이유는 {ch-tech-choices}에, net/http·chi·Echo 같은 대안과의 비교는 {ch-alternatives}에 정리했다.
 
 라우팅은 메서드와 경로를 담당 함수에 잇는 일이고, 핸들러는 `gin.Context` 하나로 파라미터를 읽고 `c.JSON`으로 응답한다.
 요청 본문은 구조체 태그에 적어 둔 규칙대로 바인딩되며, 바인딩·검증 실패는 `badRequest`와 `fail` 도우미로 통일해 처리한다.

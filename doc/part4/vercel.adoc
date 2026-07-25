@@ -16,7 +16,7 @@ HTML 페이지·정적 자산·API를 함께 서빙하는 Go 앱이 배포 단�
 === 요구사항에서 출발하기
 
 기술 선택은 늘 요구사항에서 출발해야 한다.
-도입에서 정리했듯 Flashcard의 비기능 요구사항은 세 가지로 압축된다.
+{ch-requirements}에서 정리했듯 Flashcard의 비기능 요구사항은 세 가지로 압축된다.
 
 첫째, 완전 무료여야 한다.
 개인 학습용 앱에 매달 고정 비용을 낼 생각은 없었다.
@@ -350,7 +350,7 @@ func Engine() (*gin.Engine, error) {
 ----
 	var engine *gin.Engine
 	if cfg.Driver == "sqlite" {
-		// ... 로컬 모드: litestore를 열어 app.New로 조립한다 (16장)
+		// ... 로컬 모드: litestore를 열어 app.New로 조립한다 (17장)
 	} else {
 		engine, err = app.Engine()
 		if err != nil {

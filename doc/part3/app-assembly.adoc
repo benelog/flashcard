@@ -28,16 +28,8 @@ Flashcard 백엔드는 HTTP 관심사와 데이터 접근을 다른 패키지로
 
 [source,go]
 ----
-// internal/model/store.go
-
-// Store는 저장소 계약이다. *pgstore.Store(pgx, 배포 환경)와
-// *litestore.Store(SQLite, 로컬 모드)가 둘 다 이것을 만족한다.
-type Store interface {
-	GetOrCreateProfile(ctx context.Context, userID uuid.UUID, displayName string) (Profile, error)
-	// ...
-	ListDecks(ctx context.Context, userID uuid.UUID) ([]Deck, error)
-	GetDeckBySlug(ctx context.Context, userID uuid.UUID, slug string) (Deck, error)
-	// ... 카드·세션·공유·통계 메서드 생략 (모두 합해 32개)
+include::../../internal/model/store.go[tag=store-head]
+	// ... 카드·세션·공유·스마트 덱·통계 메서드 생략 (모두 합해 32개)
 }
 
 // internal/model/model.go
@@ -329,7 +321,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 우편물의 주소를 보고 담당 부서로 갈라 보내는 우체국 분류대에 해당한다.
 ====
 
-왜 조립 코드를 `internal`이 아닌 `pkg/app`에 두었는지는 {ch-go-basics}에서 본 대로다.
+왜 조립 코드를 `internal`이 아닌 `pkg/app`에 두었는지는 {ch-code-map}에서 본 대로다.
 Vercel의 Go 빌더가 이 파일을 모듈 바깥에서 컴파일하므로 `internal/` 패키지를 직접 가져올 수 없고, 주석에도 그 답이 적혀 있다.
 이런 Vercel 함수의 제약과 배포 구성은 {ch-vercel-config}에서 자세히 다룬다.
 

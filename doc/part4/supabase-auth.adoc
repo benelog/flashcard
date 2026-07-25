@@ -55,7 +55,7 @@ func LocalMiddleware() gin.HandlerFunc {
 
 == 왜 Supabase인가
 
-도입 장에서 정한 Flashcard의 비기능 요구사항을 다시 떠올려 보자.
+{ch-requirements}에서 정한 Flashcard의 비기능 요구사항을 다시 떠올려 보자.
 완전 무료 인프라로 운영할 것, 그리고 관리해야 할 플랫폼 수를 최소화할 것.
 기능 요구사항을 소화하려면 사용자별 덱과 카드, 학습 기록을 저장할 관계형 데이터베이스가 필요하고, "사용자별"이라는 말이 성립하려면 로그인이 필요하다.
 
@@ -633,7 +633,7 @@ Flashcard의 데이터베이스는 모든 테이블에 RLS를 켜 두고 정책�
 === OAuth 앱 등록과 Redirect URL
 
 코드 밖에서 손으로 해야 하는 준비가 두 층 있다.
-어느 화면에서 무엇을 누르는지까지의 클릭 절차는 부록(Supabase·Google·GitHub·Vercel 설정)에 화면 캡처와 함께 정리해 두었으니, 여기서는 구조만 잡는다.
+어느 화면에서 무엇을 누르는지까지의 클릭 절차는 {ch-deploy}에 화면 캡처와 함께 정리해 두었으니, 여기서는 구조만 잡는다.
 
 첫 번째 층은 프로바이더 쪽 등록이다.
 Google Cloud Console과 GitHub Developer Settings 각각에 OAuth 앱을 만들고, 발급받은 Client ID와 Secret을 Supabase 대시보드의 Providers 설정(어느 프로바이더로 로그인을 받을지 켜고 끄는 화면이다)에 입력한다.

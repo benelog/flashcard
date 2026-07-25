@@ -1,8 +1,11 @@
+// tag::pkg-doc[]
 // Package pgstore는 배포된 앱이 쓰는 model.Store의 pgx 구현이다.
 // 로컬 모드의 SQLite 구현(internal/litestore)과 나란히
 // 같은 계약을 만족하며, 행 타입과 ErrNotFound는 둘 다 internal/model에서
 // 읽어 온다. 여기 있는 것은 PostgreSQL 방언과 pgx 배선뿐이다.
 package pgstore
+
+// end::pkg-doc[]
 
 import (
 	"github.com/google/uuid"

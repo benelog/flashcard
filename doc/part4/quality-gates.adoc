@@ -344,7 +344,7 @@ Flashcard의 API는 {ch-vercel-config}에서 Vercel 서버리스 함수로 배�
 Go의 `internal/` 패키지는 같은 모듈 안에서만 import할 수 있으므로, 이 파일이 `internal/` 패키지를 import하는 순간 로컬에서는 멀쩡히 빌드되지만 Vercel 배포는 실패한다.
 그래서 이 파일에 필요한 공유 코드는 전부 `pkg/app`에 있다.
 
-이 제약은 `api/index.go` 상단 주석에도 박혀 있다({ch-go-basics}에서 인용한 그 주석이다).
+이 제약은 `api/index.go` 상단 주석에도 박혀 있다({ch-code-map}에서 인용한 그 주석이다).
 
 `go build ./...`도 `go test ./...`도 이 문제를 잡지 못한다는 점이 핵심이다.
 일반 빌드는 모듈 안에서 이루어지므로 internal import가 합법이기 때문이다.

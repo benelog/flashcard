@@ -25,14 +25,15 @@ export function firstRoute(book) {
   return flattenChapters(book)[0].route
 }
 
-// 장 참조 토큰({ch-파일명})용 라벨 지도: 파일 이름(확장자 없이) → "15장"·"부록".
-// 라벨은 toc 항목 제목의 선두에서 읽는다. 선두가 라벨 꼴이 아닌 항목(서문·도입)은
+// 장 참조 토큰({ch-파일명})용 라벨 지도: 파일 이름(확장자 없이) → "15장"·"부록 A".
+// 라벨은 toc 항목 제목의 선두에서 읽는다. 선두가 라벨 꼴이 아닌 항목(서문)은
 // 지도에 오르지 않아 토큰으로 가리킬 수 없다.
+// 부록이 둘 이상이면 "부록 A"처럼 글자나 숫자를 붙여 구분한다(하나뿐이면 "부록").
 export function chapterLabels(book) {
   const labels = new Map()
   for (const group of book.toc) {
     for (const item of group.items) {
-      const m = item.text.match(/^(\d+장|부록)\s/)
+      const m = item.text.match(/^(\d+장|부록(?:\s[A-Z0-9])?)\s/)
       if (!m) continue
       const key = stripExt(item.file).replace(/^.*\//, '')
       if (labels.has(key)) {

@@ -1,7 +1,10 @@
+// tag::pkg-doc[]
 // Package litestore는 로컬 단일 사용자 모드를 위한 model.Store의 SQLite 구현이다.
 // 행 타입과 ErrNotFound는 pgx 구현(internal/pgstore)과 똑같이 internal/model에서
 // 읽어 오며, 다른 것은 SQL 방언뿐이다.
 package litestore
+
+// end::pkg-doc[]
 
 import (
 	"database/sql"
