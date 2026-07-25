@@ -670,23 +670,23 @@
   aspect-ratio: 7 / 10;
   padding: 30px 32px 26px;
   box-sizing: border-box;
-  border: 1px solid #1d232d;
+  border: 1px solid #2a313c;
   border-radius: 2px 7px 7px 2px;
-  background: #f7f5ef;
-  color: #151a22;
+  background: #0d1117;
+  color: #f5f5f5;
   overflow: hidden;
   text-decoration: none !important;
   box-shadow:
-    inset 7px 0 #16a6a1,
-    0 18px 36px -14px rgba(29, 35, 45, 0.42);
+    inset 7px 0 #2563eb,
+    0 18px 36px -14px rgba(13, 17, 23, 0.55);
   transition: translate 0.25s, box-shadow 0.25s;
 }
 
 .fc-book:hover {
   translate: 0 -6px;
   box-shadow:
-    inset 7px 0 #16a6a1,
-    0 28px 48px -14px rgba(29, 35, 45, 0.5);
+    inset 7px 0 #2563eb,
+    0 28px 48px -14px rgba(13, 17, 23, 0.65);
 }
 
 .fc-book h1 {
@@ -695,7 +695,7 @@
   font-size: 34px;
   line-height: 1.22;
   font-weight: 700;
-  color: #151a22;
+  color: #f5f5f5;
   word-break: keep-all;
 }
 
@@ -707,8 +707,8 @@
 .fc-book h1 strong {
   display: inline-block;
   padding: 0 7px 2px;
-  background: #f2cf35;
-  color: #151a22;
+  background: #f59e0b;
+  color: #0d1117;
   font-size: 38px;
   line-height: 1;
 }
@@ -719,15 +719,16 @@
   font-size: 13.5px;
   line-height: 1.7;
   font-weight: 600;
-  color: #454d58;
+  color: #a3a3a3;
   word-break: keep-all;
 }
 
-/* 앱을 이루는 세 층(화면·서버·데이터)을 비스듬히 쌓인 판(아이소메트릭 스택)으로 표현한다.
-   사각형을 rotate(45deg)로 마름모로 세운 뒤 scaleY(0.5)로 눕힌다.
-   box-shadow는 회전을 함께 타므로 (6px,6px)가 곧장 아래로 떨어져 판의 두께가 된다. */
+/* 앱을 이루는 세 층(화면·서버·데이터)을 두께가 있는 판(아이소메트릭 슬래브)으로 쌓는다.
+   판마다 세 면을 그린다. 윗면은 사각형을 rotate(45deg)로 세워 scaleY(0.5)로 눕힌 마름모,
+   좌우 옆면은 마름모 아래 변에 맞춰 skewY(±26.565deg)로 기울인 직사각형이다
+   (마름모 변의 기울기가 정확히 0.5 = tan 26.565°). */
 .fc-book-diagram {
-  margin: 18px 0 0 4px;
+  margin: 16px 0 0 4px;
   flex: none;
 }
 
@@ -736,11 +737,11 @@
   display: flex;
   align-items: center;
   gap: 20px;
-  height: 78px;
+  height: 88px;
 }
 
 .fc-layer + .fc-layer {
-  margin-top: -27px;
+  margin-top: -34px;
 }
 
 /* 위 판이 아래 판을 덮어야 쌓인 모양이 된다 */
@@ -751,31 +752,55 @@
 .fc-plane {
   position: relative;
   flex: none;
-  width: 148px;
+  width: 150px;
   height: 100%;
+  --s: 104px;                      /* 윗면 정사각형 한 변 */
+  --d2: calc(var(--s) * 0.7071);   /* 마름모 반너비 */
+  --q: calc(var(--s) * 0.35355);   /* 마름모 반높이 */
+  --t: 14px;                       /* 판 두께 */
 }
 
 .fc-plane::before {
   content: '';
   position: absolute;
+  z-index: 1;
   left: 50%;
-  top: 50%;
-  width: 100px;
-  height: 100px;
-  box-sizing: border-box;
-  border: 2px solid #151a22;
-  background: #fff;
-  box-shadow: 6px 6px 0 #151a22;
+  top: calc(50% - var(--t) / 2);
+  width: var(--s);
+  height: var(--s);
   transform: translate(-50%, -50%) scaleY(0.5) rotate(45deg);
 }
 
-.fc-layer:nth-child(2) .fc-plane::before {
-  background: #cfe8e5;
+.fc-side {
+  position: absolute;
+  width: var(--d2);
+  height: var(--t);
 }
 
-.fc-layer:nth-child(3) .fc-plane::before {
-  background: #16a6a1;
+.fc-side-l {
+  left: calc(50% - var(--d2));
+  top: calc(50% - var(--t) / 2);
+  transform-origin: 0 0;
+  transform: skewY(26.565deg);
 }
+
+.fc-side-r {
+  left: 50%;
+  top: calc(50% - var(--t) / 2 + var(--q));
+  transform-origin: 0 0;
+  transform: skewY(-26.565deg);
+}
+
+/* 층마다 파랑 계열 한 단씩 어두워지고, 판 안에서도 윗면 → 좌측면 → 우측면 순으로 어둡다 */
+.fc-layer:nth-child(1) .fc-plane::before { background: #eff6ff; }
+.fc-layer:nth-child(1) .fc-side-l { background: #bfdbfe; }
+.fc-layer:nth-child(1) .fc-side-r { background: #93c5fd; }
+.fc-layer:nth-child(2) .fc-plane::before { background: #60a5fa; }
+.fc-layer:nth-child(2) .fc-side-l { background: #3b82f6; }
+.fc-layer:nth-child(2) .fc-side-r { background: #2563eb; }
+.fc-layer:nth-child(3) .fc-plane::before { background: #2563eb; }
+.fc-layer:nth-child(3) .fc-side-l { background: #1d4ed8; }
+.fc-layer:nth-child(3) .fc-side-r { background: #1e40af; }
 
 /* 행간을 죄어 이름과 기술이 한 묶음으로 읽히게 한다(본문 행간을 그대로 상속하면
    기술 라벨이 자기 층보다 다음 층 이름에 더 가까워 보인다) */
@@ -789,14 +814,15 @@
 .fc-layer-name {
   font-size: 13px;
   font-weight: 700;
-  color: #151a22;
+  color: #f5f5f5;
 }
 
 .fc-layer-tech {
+  font-family: ui-monospace, 'Cascadia Code', 'Source Code Pro', Menlo, Consolas, monospace;
   font-size: 10px;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: 0.05em;
-  color: #0e7d78;
+  color: #93c5fd;
 }
 
 .fc-book-pitch {
@@ -806,7 +832,7 @@
   font-size: 10.5px;
   line-height: 1.65;
   font-weight: 600;
-  color: #48505b;
+  color: #a3a3a3;
   word-break: keep-all;
 }
 
@@ -816,7 +842,7 @@
   width: 5px;
   height: 5px;
   margin: 0 7px 1px 0;
-  background: #16a6a1;
+  background: #2563eb;
 }
 
 .fc-book-footer {
@@ -825,17 +851,17 @@
   justify-content: flex-end;
   margin: auto 0 0;
   padding-top: 10px;
-  border-top: 1px solid #aeb3b7;
+  border-top: 1px solid #30363d;
   font-size: 9px;
   font-weight: 700;
-  color: #5a616b;
+  color: #737373;
 }
 
 .fc-book-author {
   margin: 0;
   font-size: 13px;
   font-weight: 600;
-  color: #151a22;
+  color: #f5f5f5;
 }
 
 .fc-home-desc {
@@ -908,26 +934,22 @@
   }
 
   .fc-book-diagram {
-    margin: 13px 0 0 3px;
+    margin: 12px 0 0 3px;
   }
 
   .fc-layer {
-    height: 64px;
+    height: 72px;
     gap: 15px;
   }
 
   .fc-layer + .fc-layer {
-    margin-top: -22px;
+    margin-top: -28px;
   }
 
   .fc-plane {
-    width: 122px;
-  }
-
-  .fc-plane::before {
-    width: 82px;
-    height: 82px;
-    box-shadow: 5px 5px 0 #151a22;
+    width: 124px;
+    --s: 84px;
+    --t: 11px;
   }
 
   .fc-book-pitch {
