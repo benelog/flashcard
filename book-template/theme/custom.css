@@ -739,7 +739,7 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  height: 94px;
+  height: 95px;
 }
 
 .fc-layer + .fc-layer {
@@ -754,11 +754,11 @@
 .fc-plane {
   position: relative;
   flex: none;
-  width: 188px;
+  width: 190px;
   height: 100%;
   filter: drop-shadow(0 11px 15px rgba(30, 64, 175, 0.16));
-  --sw: 176px;                                       /* 윗면 직사각형 가로 */
-  --sh: 84px;                                        /* 윗면 직사각형 세로 */
+  --sw: 162px;                                       /* 윗면 직사각형 가로 */
+  --sh: 101.25px;                                    /* 세로: 가로와 16:10(모니터 비율) */
   --t: 11px;                                         /* 판 두께 */
   --dw: calc((var(--sw) + var(--sh)) * 0.3536);      /* 윗면 반너비 */
   --dh: calc((var(--sw) + var(--sh)) * 0.1591);      /* 윗면 반높이 */
@@ -1058,7 +1058,7 @@
   }
 
   .fc-layer {
-    height: 77px;
+    height: 79px;
     gap: 10px;
   }
 
@@ -1067,9 +1067,9 @@
   }
 
   .fc-plane {
-    width: 152px;
-    --sw: 142px;
-    --sh: 68px;
+    width: 154px;
+    --sw: 132px;
+    --sh: 82.5px;
     --t: 10px;
   }
 

@@ -113,16 +113,16 @@ export function pdfCoverHtml(book) {
        좌우 옆면은 그 아래 두 변에 맞춰 skewY(±24.228deg)로 기울인 직사각형이다
        (눕힌 뒤 변의 기울기가 0.45 = tan 24.228°).
        윗면은 실제 요소(.top)라 안에 각 층의 그림(motif)을 담고, 그림도 함께 눕는다. */
-    .diagram { flex: none; margin: 9mm 0 0; }
-    .layer { position: relative; display: flex; align-items: center; gap: 8mm; height: 43mm; }
+    .diagram { flex: none; margin: 8mm 0 0; }
+    .layer { position: relative; display: flex; align-items: center; gap: 8mm; height: 44mm; }
     .layer + .layer { margin-top: -6mm; }
     .layer:nth-child(1) { z-index: 3; }
     .layer:nth-child(2) { z-index: 2; }
     .layer:nth-child(3) { z-index: 1; }
-    .plane { position: relative; flex: none; width: 86mm; height: 100%;
+    .plane { position: relative; flex: none; width: 90mm; height: 100%;
       filter: drop-shadow(0 3mm 4mm rgba(30, 64, 175, 0.16));
-      --sw: 80mm;                                          /* 윗면 직사각형 가로 */
-      --sh: 38mm;                                          /* 윗면 직사각형 세로 */
+      --sw: 75mm;                                          /* 윗면 직사각형 가로 */
+      --sh: 47mm;                                          /* 세로: 가로와 16:10(모니터 비율) */
       --t: 5mm;                                            /* 판 두께 */
       --dw: calc((var(--sw) + var(--sh)) * 0.3536);        /* 윗면 반너비 */
       --dh: calc((var(--sw) + var(--sh)) * 0.1591);        /* 윗면 반높이 */
