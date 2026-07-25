@@ -4,9 +4,9 @@
 export default {
   lang: 'ko-KR',
   title: '이해하며 만드는 나만의 웹 앱',
-  subtitle: 'AI에게 지시해 쉬운 프로그래밍 언어로 만들고, 개념을 익혀 오래 운영한다',
+  subtitle: 'AI에게 지시해 쉬운 프로그래밍 언어로 만들고, 개념을 익혀 오랫동안 안정적으로 운영한다',
   description:
-    'AI에게 지시해 쉬운 프로그래밍 언어로 만들고, 개념을 익혀 오래 운영한다. 작은 웹 앱의 실제 코드로 Go, Gin, PostgreSQL과 HTML·htmx를 익히고 Vercel·Supabase 무료 티어로 서버 비용 없이 운영하는 과정을 배운다.',
+    'AI에게 지시해 쉬운 프로그래밍 언어로 만들고, 개념을 익혀 오랫동안 안정적으로 운영한다. 작은 웹 앱의 실제 코드로 Go, Gin, PostgreSQL과 HTML·htmx를 익히고, Vercel·Supabase 무료 티어로 서버 비용 없이 배포해 기능을 더해 가는 과정을 배운다.',
   site: 'https://benelog.github.io/flashcard/',
   base: '/flashcard/',
   repo: 'https://github.com/benelog/flashcard',
@@ -19,7 +19,7 @@ export default {
     kicker: 'AI와 함께 만드는 실전 개발서',
     volume: '01',
     titleHtml: '<strong>이해</strong>하며<br>만드는<br>나만의 웹 앱',
-    subtitleHtml: 'AI에게 지시해 쉬운 프로그래밍 언어로 만들고,<br>개념을 익혀 오래 운영한다',
+    subtitleHtml: 'AI에게 지시해 쉬운 프로그래밍 언어로 만들고,<br>개념을 익혀 오랫동안 안정적으로 운영한다',
     diagram: [
       { name: '화면', tech: 'HTML · CSS' },
       { name: '서버', tech: 'Go' },
@@ -43,8 +43,9 @@ export default {
       text: '도입',
       items: [
         { file: 'preface.adoc', text: '저자 서문', pdfPart: '서문' },
+        { file: 'how-to-read.adoc', text: '이 책을 읽는 법', pdfPart: '읽는 법' },
         {
-          file: 'intro.adoc',
+          file: 'requirements.adoc',
           text: '무엇을 만드는가: Flashcard의 기능 요구사항',
           pdfTitle: '도입: 무엇을 만드는가',
           pdfPart: '도입',
@@ -105,7 +106,7 @@ export default {
       ],
     },
     {
-      text: '5부 오래 운영하기',
+      text: '5부 안정적으로 오래 운영하기',
       items: [
         { file: 'part5/env-secrets.adoc', text: '28장 환경 변수와 시크릿: 값이 두 벌이 된다' },
         { file: 'part5/pwa.adoc', text: '29장 PWA: 설치되는 앱으로 만들기' },
