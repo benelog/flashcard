@@ -1,9 +1,9 @@
-= 부록 배포 준비: Supabase·Google·GitHub·Vercel 설정
+= 배포 준비: Supabase·Google·GitHub·Vercel 설정
 
 이 책의 배포는 세 곳의 웹 대시보드를 오간다.
 데이터베이스와 로그인을 맡는 Supabase, 소셜 로그인을 내주는 Google과 GitHub, 그리고 앱을 실제로 띄우는 Vercel이다.
 코드를 올려 둘 GitHub 저장소를 만들고 처음 push하는 절차도 이 부록에서 함께 다룬다.
-23장부터 28장까지는 이 구성이 왜 이렇게 짜였는지를 다뤘다.
+{ch-vercel}부터 {ch-env-secrets}까지는 이 구성이 왜 이렇게 짜였는지를 다뤘다.
 이 부록에서는 그 위에서 어느 화면의 무엇을 누르는지를, 실제 대시보드 화면과 함께 처음부터 끝까지 따라가 보겠다.
 
 저장소 루트의 `DEPLOY.md`에도 같은 절차가 짧은 체크리스트로 정리되어 있다.
@@ -25,7 +25,7 @@
 셋째, Google이 인증을 마치면 Supabase를 거쳐 다시 앱의 `/auth/callback`으로 돌려보낸다.
 
 세 관문에는 저마다 지켜야 할 설정이 하나씩 있다.
-첫째 관문은 Supabase에서 그 프로바이더(provider, 로그인을 대신 처리해 주는 Google·GitHub 같은 서비스. 자세한 설명은 24장)가 켜져 있어야 지난다.
+첫째 관문은 Supabase에서 그 프로바이더(provider, 로그인을 대신 처리해 주는 Google·GitHub 같은 서비스. 자세한 설명은 {ch-supabase-auth})가 켜져 있어야 지난다.
 둘째 관문은 Google 쪽에 "Supabase가 보낸 요청을 받아 준다"는 등록이 있어야 지난다.
 셋째 관문은 Supabase에 "이 앱 주소로 돌려보내도 된다"는 등록이 있어야 지난다.
 셋 중 하나라도 빠지면 로그인은 그 관문에서 멈춘다.
@@ -46,12 +46,12 @@ Vercel 함수가 기본으로 뜨는 리전(iad1)과 같은 곳이라야 앱과 
 프로젝트가 만들어지면 두 종류의 값을 꺼내 둔다.
 하나는 DB 연결 문자열이다.
 대시보드 위쪽의 Connect 버튼을 누르면 여러 문자열이 나오는데, 서버가 쓸 Transaction pooler(포트 6543)와 마이그레이션이 쓸 Session pooler(포트 5432)를 각각 복사한다.
-둘은 포트 번호가 다르고 쓰임도 다르다(이유는 26장).
+둘은 포트 번호가 다르고 쓰임도 다르다(이유는 {ch-supabase-db}).
 다른 하나는 API 값이다.
 Settings → API에서 Project URL과 anon(public) key를 복사한다.
 복사한 값들은 5절에서 Vercel에 환경 변수로 넣을 때 쓰니, 메모장 같은 곳에 잠시 모아 두되 남이 볼 수 있는 곳에는 올리지 않는다.
 
-이 책은 개발용과 운영용 DB를 완전히 나눠 쓴다(26장).
+이 책은 개발용과 운영용 DB를 완전히 나눠 쓴다({ch-supabase-db}).
 그러니 같은 방식으로 프로젝트를 하나 더 만들어, 한쪽은 운영용, 다른 한쪽은 개발용으로 삼는다.
 아래 로그인 설정도 두 프로젝트에 각각 해 주어야 한다.
 개발 프로젝트를 새로 만들면서 이 설정을 한쪽에만 하고 지나치기 쉬운데, 그것이 로그인 실패의 흔한 원인이다.
@@ -92,7 +92,7 @@ Google이 인증을 마치고 처음 돌려보내는 곳은 우리 앱이 아니
 <p class="fc-caption">그림 5 Google 인증 플랫폼 클라이언트 상세. 승인된 리디렉션 URI에는 앱 주소가 아니라 Supabase 콜백 주소를 넣는다.</p>
 ++++
 
-클라이언트를 만들면 Client ID와 Client Secret이 나온다(둘의 차이는 24장).
+클라이언트를 만들면 Client ID와 Client Secret이 나온다(둘의 차이는 {ch-supabase-auth}).
 이 값을 Supabase로 가져간다.
 Supabase 대시보드에서 Authentication → Sign In / Providers를 열고, 목록에서 Google을 찾아 Client ID와 Secret을 넣은 뒤 사용 설정(Enable)한다.
 Secret은 Supabase 대시보드에만 두고 저장소나 코드에는 두지 않는다.
@@ -158,7 +158,7 @@ Redirect URLs에 맞는 주소가 없을 때 Supabase가 대신 보내는 기본
 그러니 두 칸을 이렇게 채운다.
 운영 프로젝트는 Site URL을 배포 주소(커스텀 도메인이 있으면 그 주소)로 두고, Redirect URLs에 그 주소의 `/auth/callback`을 넣는다.
 개발 프로젝트는 Site URL을 개발 배포의 고정 주소로 두고, Redirect URLs에 그 주소의 `/auth/callback`과 함께 `http://localhost:8080/auth/callback`을 넣는다.
-뒤엣것은 로컬에서 개발 DB에 붙어 로그인을 시험할 때 쓴다(`run_dev.sh`, 28장).
+뒤엣것은 로컬에서 개발 DB에 붙어 로그인을 시험할 때 쓴다(`run_dev.sh`, {ch-env-secrets}).
 
 개발 배포 주소로는 배포마다 바뀌는 고유 URL이 아니라 고정된 대표 주소를 넣어야 한다.
 main 브랜치 프리뷰의 고정 별칭(`<앱>-git-main-<계정>.vercel.app`)이나, 프리뷰에 지정해 둔 대표 도메인(이 책에서는 `flashcard-dev.vercel.app`)이 그것이다.
@@ -172,12 +172,12 @@ Redirect URLs의 기존 항목을 편집할 때, 값 중간에 새 주소를 붙
 == 4. GitHub에 저장소 만들고 올리기
 
 Vercel은 GitHub 저장소에서 코드를 가져가므로, 그 전에 내 컴퓨터의 저장소를 GitHub에 올려 둔다.
-20장에서 개념으로 정리한 첫 push를 여기서 실제로 한다.
+{ch-git}에서 개념으로 정리한 첫 push를 여기서 실제로 한다.
 
 https://github.com 에서 무료 계정을 만들고, New repository로 빈 저장소를 만든다.
 저장소 이름만 정하면 되고, README 같은 파일을 추가하는 옵션은 모두 끈 채 비워 둔다.
 내 컴퓨터에 이미 코드와 이력이 있으므로, 원격은 빈 그릇이어야 한다.
-공개(Public)와 비공개(Private) 중 무엇을 골라도 28장의 규칙은 같다.
+공개(Public)와 비공개(Private) 중 무엇을 골라도 {ch-env-secrets}의 규칙은 같다.
 비밀 값은 커밋하지 않는다.
 
 만들어진 저장소의 주소를 로컬 저장소에 원격으로 등록하고 push하는 명령은 에이전트에게 맡기면 된다.
@@ -186,7 +186,7 @@ https://github.com 에서 무료 계정을 만들고, New repository로 빈 저�
 SSH 키를 등록하거나 액세스 토큰을 만들어 비밀번호 대신 쓰는 방식인데, 화면과 절차가 자주 바뀌므로 GitHub 공식 문서의 최신 안내를 따르는 편이 빠르다.
 막히면 그 화면의 문구를 에이전트에게 보여 주며 물어보는 것도 요령이다.
 
-push가 끝나면 20장의 브랜치 정책대로 운영용 release 브랜치를 만들어 함께 올려 둔다.
+push가 끝나면 {ch-git}의 브랜치 정책대로 운영용 release 브랜치를 만들어 함께 올려 둔다.
 이것도 "main에서 release 브랜치를 만들어 push해 줘"라고 지시하면 된다.
 
 == 5. Vercel에 올리고 환경을 나눈다
@@ -195,9 +195,9 @@ push가 끝나면 20장의 브랜치 정책대로 운영용 release 브랜치를
 https://vercel.com 에서 Add New Project로 저장소를 가져온다(import).
 Root Directory는 저장소 루트 그대로 둔다.
 Framework Preset은 무엇으로 감지되든 상관없다.
-`vercel.json`의 `"framework": null`이 그 값을 덮어쓰기 때문이다(23장).
+`vercel.json`의 `"framework": null`이 그 값을 덮어쓰기 때문이다({ch-vercel}).
 
-이 책의 브랜치 정책은 main을 개발용, release를 운영용으로 삼는다(20장).
+이 책의 브랜치 정책은 main을 개발용, release를 운영용으로 삼는다({ch-git}).
 그런데 Vercel은 처음에 main을 운영 브랜치로 잡아 둔다.
 그대로 두면 main에 푸시할 때마다 운영 도메인에 배포되어, 개발과 운영의 분리가 성립하지 않는다.
 그래서 Settings → Environments를 연다.
@@ -220,10 +220,10 @@ Production을 열어 Branch Tracking의 브랜치 값을 main에서 release로 �
 1절에서 꺼내 둔 값(`DATABASE_URL`, `SUPABASE_URL`, `SUPABASE_ANON_KEY`)을 넣는데, 스코프를 나눠 넣는 것이 핵심이다.
 이름과 값의 짝은 이렇다.
 `DATABASE_URL`에는 Transaction pooler 연결 문자열(포트 6543)을, `SUPABASE_URL`에는 Project URL을, `SUPABASE_ANON_KEY`에는 anon(public) key를 넣는다.
-Production 스코프에는 운영 프로젝트 값을, Preview 스코프에는 개발 프로젝트 값을 넣는다(이유는 28장).
+Production 스코프에는 운영 프로젝트 값을, Preview 스코프에는 개발 프로젝트 값을 넣는다(이유는 {ch-env-secrets}).
 이렇게 해야 개발 배포는 개발 DB에, 운영 배포는 운영 DB에 붙는다.
 세 번째 스코프인 Development 칸은 비워 둔다.
-이름만 보면 개발 값이 들어갈 자리 같지만, 이 스코프는 `vercel dev`라는 로컬 실행 명령이 읽는 자리라 이 책의 구성에서는 쓰이지 않는다(23장).
+이름만 보면 개발 값이 들어갈 자리 같지만, 이 스코프는 `vercel dev`라는 로컬 실행 명령이 읽는 자리라 이 책의 구성에서는 쓰이지 않는다({ch-vercel}).
 개발 값이 들어갈 곳은 Preview다.
 값은 각 환경 상세 화면의 Environment Variables 구역에서 넣거나, 왼쪽 메뉴 Environment Variables에서 한꺼번에 관리한다.
 

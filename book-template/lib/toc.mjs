@@ -25,6 +25,25 @@ export function firstRoute(book) {
   return flattenChapters(book)[0].route
 }
 
+// 장 참조 토큰({ch-파일명})용 라벨 지도: 파일 이름(확장자 없이) → "15장"·"부록".
+// 라벨은 toc 항목 제목의 선두에서 읽는다. 선두가 라벨 꼴이 아닌 항목(서문·도입)은
+// 지도에 오르지 않아 토큰으로 가리킬 수 없다.
+export function chapterLabels(book) {
+  const labels = new Map()
+  for (const group of book.toc) {
+    for (const item of group.items) {
+      const m = item.text.match(/^(\d+장|부록)\s/)
+      if (!m) continue
+      const key = stripExt(item.file).replace(/^.*\//, '')
+      if (labels.has(key)) {
+        throw new Error(`장 파일 이름이 겹쳐 {ch-${key}} 참조가 모호하다: ${item.file}`)
+      }
+      labels.set(key, m[1])
+    }
+  }
+  return labels
+}
+
 // VitePress 사이드바
 export function sidebar(book) {
   return book.toc.map((group) => ({

@@ -8,7 +8,8 @@ import { dirname, join, relative } from 'node:path'
 import { convertAdoc } from './adoc.mjs'
 import { homeCoverMarkdown } from './cover.mjs'
 import { resolveIncludes } from './include.mjs'
-import { flattenChapters } from './toc.mjs'
+import { applyChapterRefs, numberTitle } from './refs.mjs'
+import { chapterLabels, flattenChapters } from './toc.mjs'
 
 export const GEN_DIR = '.generated'
 
@@ -28,7 +29,8 @@ export function chapterSources(root, book) {
 
 // generateChapter writes one chapter and reports the files it quoted with
 // include:: (book dev watches them alongside the manuscript).
-export async function generateChapter(root, { route, src }) {
+// book이 있으면 toc에서 장 라벨을 파생해 {ch-…} 토큰을 치환하고 제목에 번호를 붙인다.
+export async function generateChapter(root, { file, route, src }, book) {
   const out = join(root, GEN_DIR, route + '.md')
   await mkdir(dirname(out), { recursive: true })
   const raw = await readFile(src, 'utf8')
@@ -37,7 +39,14 @@ export async function generateChapter(root, { route, src }) {
     return []
   }
   const { text, lineNumbers, deps } = resolveIncludes(raw, src, root)
-  await writeFile(out, convertAdoc(text, relative(root, src), { lineNumbers }))
+  const at = relative(root, src)
+  let manuscript = text
+  if (book) {
+    const labels = chapterLabels(book)
+    const key = route.replace(/^.*\//, '')
+    manuscript = numberTitle(applyChapterRefs(text, labels, at, lineNumbers), labels.get(key))
+  }
+  await writeFile(out, convertAdoc(manuscript, at, { lineNumbers }))
   return deps
 }
 
@@ -59,7 +68,7 @@ export async function generateAll(root, book, { clean = false } = {}) {
   await mkdir(gen, { recursive: true })
   const quoted = new Set()
   for (const chapter of chapterSources(root, book)) {
-    for (const dep of await generateChapter(root, chapter)) quoted.add(dep)
+    for (const dep of await generateChapter(root, chapter, book)) quoted.add(dep)
   }
   await writeFile(join(gen, 'index.md'), homeCoverMarkdown(book))
   await linkPublic(root)

@@ -68,7 +68,7 @@ switch (cmd) {
         }
         const chapter = chapterSources(root, book).find((c) => c.src === path)
         if (chapter) {
-          quoted = [...new Set([...quoted, ...(await generateChapter(root, chapter))])]
+          quoted = [...new Set([...quoted, ...(await generateChapter(root, chapter, book))])]
           watcher.add(watchTargets())
           console.log(`재생성: ${chapter.route}`)
           return
