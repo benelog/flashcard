@@ -1,6 +1,6 @@
 # 책 집필 지침
 
-`doc/` 아래 원고(intro.adoc, part1/, part2/, appendix/)를 쓰거나 고칠 때 지키는 규칙이다.
+`doc/` 아래 원고(intro.adoc, part1/~part5/, appendix/)를 쓰거나 고칠 때 지키는 규칙이다.
 이 파일은 사이트 빌드에 포함되지 않는다(`book.config.mjs`의 toc에 오른 원고만 빌드된다).
 
 ## 책 개요
@@ -27,42 +27,54 @@
 ## 장 구성
 
 도입은 기능 요구사항만 다루고, 비기능 요구사항·아키텍처는 1장(도입 소속)으로 모았다.
-1부 **내 컴퓨터에서 웹 앱 완성하기**(1~17장)는 SQLite 로컬 모드로 내 컴퓨터에서 완결되고,
-2부 **세상에 공개하고 오래 운영하기**(18~25장)는 버전 관리와 개발·운영 환경 분리 위에서 배포·운영을 다룬다.
+다섯 부로 나뉜다(2026-07-25 전면 재편).
+1부 **AI와 함께 시작하기**(1~5장)는 에이전트와 개발을 시작해 완성본 앱을 내 컴퓨터에 띄우는 데까지,
+2부 **세 언어 첫걸음**(6~10장)은 HTML·CSS, Go, SQL의 최소 문법을 저장소에 없는 연습용 예제로 다룬다.
+3부 **앱 코드 해부**(11~19장)는 실제 코드를 데이터에서 화면 순으로 읽고,
+4부 **세상에 공개하기**(20~27장)는 버전 관리·품질 게이트·배포·인증·운영 DB를,
+5부 **오래 운영하기**(28~31장)는 값 관리·PWA·무료 티어·다음 공부를 다룬다.
+3부까지는 SQLite 로컬 모드로 내 컴퓨터에서 완결된다.
 
-언어 장은 **문법 먼저, 앱 코드 나중** 순서로 짝지어 둔다.
-6·7장(Go)과 12·13장(HTML/CSS)은 저장소에 없는 연습용 예제로 문법만 익히고, 8·9장과 14장이 같은 문법을 이 앱의 실제 코드에서 다시 읽는다.
+언어 장은 **문법 먼저(2부), 앱 코드 나중(3부)** 순서로 짝지어 둔다.
+6·7장(HTML/CSS)과 8·9장(Go)은 저장소에 없는 연습용 예제로 문법만 익히고, 16장과 12·13장이 같은 문법을 이 앱의 실제 코드에서 다시 읽는다.
+독자의 첫 성취를 앞당기기 위해 완성본 앱의 클론·실행 체험은 5장에 두고, 그 원리 해부는 19장에 둔다.
+토큰 검증(25장)처럼 "따라 하기에 필수는 아닌 원리 심화"는 별도 장으로 분리해 건너뛸 수 있게 한다.
 
 | 장 | 제목 | 파일 |
 |---|---|---|
 | 도입 | 무엇을 만드는가: Flashcard의 기능 요구사항 | `intro.adoc` |
 | 1 | 기술 선택: 요구사항에서 아키텍처까지 | `part1/tech-choices.adoc` |
-| 2 | Claude Code: AI 에이전트와 개발하기 | `part1/claude-code.adoc` |
-| 3 | 에이전트에게 지시하기: Plan 모드로 다듬는 요구사항과 아키텍처 | `part1/instructing.adoc` |
-| 4 | 데이터베이스 기초: 테이블, SQL, 인덱스 | `part1/database-basics.adoc` |
-| 5 | 데이터베이스 설계: 요구사항에서 테이블로 | `part1/database.adoc` |
-| 6 | Go 첫걸음: Hello, World로 배우는 기본 문법 | `part1/go-hello.adoc` |
-| 7 | Go로 데이터 다루기: 구조체, 슬라이스와 맵, 제네릭 | `part1/go-types.adoc` |
-| 8 | Go 기초: 모듈, 변수, 함수 | `part1/go-basics.adoc` |
-| 9 | Go 코드 읽기: 구조체, 포인터, 에러 처리 | `part1/go.adoc` |
-| 10 | Go 테스트와 품질 게이트: 도구, 훅, 서브에이전트 | `part1/go-testing.adoc` |
-| 11 | Gin으로 만드는 HTTP API | `part1/gin.adoc` |
-| 12 | HTML 첫걸음: 파일 하나로 만드는 웹 문서 | `part1/html-hello.adoc` |
-| 13 | CSS 첫걸음: 색과 배치를 입히는 규칙 | `part1/css-hello.adoc` |
-| 14 | HTML과 CSS: 화면을 이루는 문서와 스타일 | `part1/html-css.adoc` |
-| 15 | html/template으로 만드는 화면 | `part1/go-templates.adoc` |
-| 16 | htmx: 자바스크립트 없이 만드는 동적 화면 | `part1/htmx.adoc` |
-| 17 | 로컬 개발 환경: 내 컴퓨터에서 앱 완성하기 | `part1/local-dev.adoc` |
-| 18 | Git: 개념과 브랜치 정책 | `part2/git.adoc` |
-| 19 | GitHub Actions: 원격 품질 게이트 | `part2/github-actions.adoc` |
-| 20 | Vercel: 한 플랫폼에 모두 배포하기 | `part2/vercel.adoc` |
-| 21 | Supabase 인증: OAuth와 JWKS 검증 | `part2/supabase-auth.adoc` |
-| 22 | Supabase 데이터베이스: pgx 연결과 개발·운영 DB 분리 | `part2/supabase-db.adoc` |
-| 23 | PWA: 설치되는 앱으로 만들기 | `part2/pwa.adoc` |
-| 24 | 무료 티어 운영과 한도 관리 | `part2/free-tier.adoc` |
-| 25 | 다음 단계: 여기서 더 공부할 것들 | `part2/whats-next.adoc` |
-| 부록 A | 개발 도구 설치 | `appendix/setup.adoc` |
-| 부록 B | 배포 준비: Supabase·Google·GitHub·Vercel 설정 | `appendix/deploy.adoc` |
+| 2 | 개발 도구 설치 | `part1/setup.adoc` |
+| 3 | Claude Code: AI 에이전트와 개발하기 | `part1/claude-code.adoc` |
+| 4 | 에이전트에게 지시하기: Plan 모드로 다듬는 요구사항과 아키텍처 | `part1/instructing.adoc` |
+| 5 | 완성된 앱 띄워 보기: 클론에서 실행까지 | `part1/first-run.adoc` |
+| 6 | HTML 첫걸음: 파일 하나로 만드는 웹 문서 | `part2/html-hello.adoc` |
+| 7 | CSS 첫걸음: 색과 배치를 입히는 규칙 | `part2/css-hello.adoc` |
+| 8 | Go 첫걸음: Hello, World로 배우는 기본 문법 | `part2/go-hello.adoc` |
+| 9 | Go로 데이터 다루기: 구조체, 슬라이스와 맵 | `part2/go-types.adoc` |
+| 10 | 데이터베이스 기초: 테이블, SQL, 인덱스 | `part2/database-basics.adoc` |
+| 11 | 데이터베이스 설계: 요구사항에서 테이블로 | `part3/database.adoc` |
+| 12 | Go 기초: 모듈, 변수, 함수 | `part3/go-basics.adoc` |
+| 13 | Go 코드 읽기: 구조체, 포인터, 에러 처리 | `part3/go.adoc` |
+| 14 | Go 테스트와 품질 검사 도구 | `part3/go-testing.adoc` |
+| 15 | Gin으로 만드는 HTTP API | `part3/gin.adoc` |
+| 16 | HTML과 CSS: 화면을 이루는 문서와 스타일 | `part3/html-css.adoc` |
+| 17 | html/template으로 만드는 화면 | `part3/go-templates.adoc` |
+| 18 | htmx: 자바스크립트 없이 만드는 동적 화면 | `part3/htmx.adoc` |
+| 19 | 로컬 개발 환경: 무설정 실행의 원리와 개발 도구 | `part3/local-dev.adoc` |
+| 20 | Git: 개념과 브랜치 정책 | `part4/git.adoc` |
+| 21 | 품질 게이트: 훅과 서브에이전트 | `part4/quality-gates.adoc` |
+| 22 | GitHub Actions: 원격 품질 게이트 | `part4/github-actions.adoc` |
+| 23 | Vercel: 한 플랫폼에 모두 배포하기 | `part4/vercel.adoc` |
+| 24 | Supabase 인증: OAuth 로그인과 쿠키 세션 | `part4/supabase-auth.adoc` |
+| 25 | 토큰 검증의 원리: JWT와 JWKS | `part4/token-verification.adoc` |
+| 26 | Supabase 데이터베이스: pgx 연결과 커넥션 풀 | `part4/supabase-db.adoc` |
+| 27 | 마이그레이션: 운영 중에 스키마를 고친다 | `part4/migrations.adoc` |
+| 28 | 환경 변수와 시크릿: 값이 두 벌이 된다 | `part5/env-secrets.adoc` |
+| 29 | PWA: 설치되는 앱으로 만들기 | `part5/pwa.adoc` |
+| 30 | 무료 티어 운영과 한도 관리 | `part5/free-tier.adoc` |
+| 31 | 다음 단계: 여기서 더 공부할 것들 | `part5/whats-next.adoc` |
+| 부록 | 배포 준비: Supabase·Google·GitHub·Vercel 설정 | `appendix/deploy.adoc` |
 
 기술 장에는 "에이전트 활용 아이디어" 절을 둔다.
 장을 늘리거나 줄이면 상호 참조와 `book.config.mjs`의 toc·description을 함께 맞춘다(사이드바·PDF 차례·아웃라인은 toc에서 자동으로 파생된다).
@@ -92,7 +104,7 @@ include::../../internal/srs/srs.go[tag=grade]
 ----
 ```
 
-- 경로는 원고 파일 기준 상대 경로다(`part1/`·`part2/`에서 저장소 루트까지 `../../`).
+- 경로는 원고 파일 기준 상대 경로다(`part1/`부터 `part5/`, `appendix/` 어디서든 저장소 루트까지 `../../`).
 - 인용할 코드에는 마커 주석을 단다. 주석 기호는 그 언어의 것을 쓴다(`// tag::grade[]` … `// end::grade[]`, 셸·YAML은 `#`).
 - 마커 줄과 발췌 앞뒤의 빈 줄은 결과에서 빠진다. 파일 전체를 인용할 때는 `[]`만 쓴다(마커가 있어도 그 줄은 빠진다).
 - `indent=0`은 공통 들여쓰기를 걷어 낸다. `lines=`는 지원하지 않는다(줄 번호는 코드가 바뀌면 어긋난다).
@@ -111,8 +123,8 @@ include::../../internal/srs/srs.go[tag=grade]
   ----
   ```
 
-- **문법 입문 장은 예외다.** 6·7장(Go)과 12·13장(HTML/CSS)의 예제는 저장소에 없는 연습용 코드라 `include::` 없이 원고에 직접 적는다. 앱 코드를 끌어오면 문법 하나를 보여 주는 데 앱의 사정이 함께 딸려 오기 때문이다. 대신 원고에 싣기 전에 실제로 컴파일·실행해 결과를 확인하고, 출력 예시(`[source,text]` 블록)는 그 실행 결과를 그대로 옮긴다.
-- **마커를 달지 않는 경우가 있다.** 한두 줄짜리 발췌는 마커가 코드보다 길어지므로 원고에 그대로 쓴다. 구조체 필드 사이에도 넣지 않는다. gofmt가 주석을 경계로 정렬 그룹을 끊어 필드 정렬이 깨진다(8장이 설명하는 그 세로 정렬이다). 구조체는 통째로 인용한다.
+- **문법 입문 장은 예외다.** 6·7장(HTML/CSS)과 8·9장(Go)의 예제는 저장소에 없는 연습용 코드라 `include::` 없이 원고에 직접 적는다. 앱 코드를 끌어오면 문법 하나를 보여 주는 데 앱의 사정이 함께 딸려 오기 때문이다. 대신 원고에 싣기 전에 실제로 컴파일·실행해 결과를 확인하고, 출력 예시(`[source,text]` 블록)는 그 실행 결과를 그대로 옮긴다.
+- **마커를 달지 않는 경우가 있다.** 한두 줄짜리 발췌는 마커가 코드보다 길어지므로 원고에 그대로 쓴다. 구조체 필드 사이에도 넣지 않는다. gofmt가 주석을 경계로 정렬 그룹을 끊어 필드 정렬이 깨진다(14장이 설명하는 그 세로 정렬이다). 구조체는 통째로 인용한다.
 - 생략이 두 군데 이상인 발췌는 태그를 여러 개 다는 대신 원고에 그대로 두거나, 인용 범위를 줄여 생략이 없게 만든다.
 - `book dev`는 인용한 코드 파일까지 감시하므로, 코드를 고치면 책 화면이 곧바로 갱신된다.
 
@@ -145,41 +157,47 @@ include::../../internal/srs/srs.go[tag=grade]
 | 파일 | 소유 용어 |
 |---|---|
 | `intro.adoc` | API, 서버, CSV |
-| `part1/tech-choices.adoc` | 기술 스택, 컴파일/인터프리터 언어, 런타임, 정적/동적 타입, 프레임워크와 라이브러리, 의존성, 관계형 데이터베이스, NoSQL과 문서형 데이터베이스, 호스팅, 무료 티어, PostgreSQL, 프런트엔드와 백엔드, 상주 서버, PWA, 서버리스, 콜드스타트, 바이너리, SPA, 아키텍처, OAuth, JWT |
+| `part1/tech-choices.adoc` | 기술 스택, 컴파일/인터프리터 언어, 런타임, 정적/동적 타입, 프레임워크와 라이브러리, 의존성, 관계형 데이터베이스, NoSQL과 문서형 데이터베이스, 호스팅, 무료 티어, PostgreSQL, 프런트엔드와 백엔드, 상주 서버, PWA, 서버리스, 콜드스타트, 바이너리, SPA, 아키텍처 |
+| `part1/setup.adoc` | 터미널, WSL, 패키지 매니저, sudo, PATH와 셸 설정 파일 |
 | `part1/claude-code.adoc` | LLM, AI 코딩 에이전트와 도구 호출 루프, 컨텍스트와 토큰, 세션, 프롬프트, 프로젝트 지침(CLAUDE.md), 디렉터리와 프로젝트 루트, 스킬 |
-| `part1/database-basics.adoc` | 테이블·행·열, 정규화와 비정규화, 기본 키와 외래 키, SQL, 스키마, UUID, 제약, NULL, JSON, SQL 인젝션, 드라이버, 조인, 인증과 인가, 인덱스, 실행 계획 |
-| `part1/database.adoc` | 엔티티, 잠금, 뷰, 트랜잭션, 원자적, slug |
-| `part1/go-hello.adoc` | 임포트, 표준 라이브러리, 타입 추론, 제로값, 예외, 다중 반환값과 에러 처리, 공개와 비공개 |
-| `part1/go-types.adoc` | 구조체, 메서드와 리시버, 포인터, 슬라이스와 맵, 인터페이스, 제네릭 |
-| `part1/go-basics.adoc` | 모듈과 패키지 |
-| `part1/go.adoc` | 생성자, 순수 함수, 에러 래핑과 센티널 에러, 구조체 태그, 직렬화와 역직렬화 |
-| `part1/go-testing.adoc` | 플래그, 테이블 주도 테스트, 경쟁 상태, 픽스처, 포매터와 정적 분석, 품질 게이트, 셸과 셸 스크립트, 훅(Claude Code), 표준 입출력과 표준 에러, 종료 코드, 서브에이전트, 프런트매터 (세로 정렬은 상자 없이 본문 절로 다룬다) |
-| `part1/gin.adoc` | HTTP 요청과 응답, 프로세스, 패닉, 라우터와 라우팅, 엔드포인트, 핸들러, 바인딩, 경로/쿼리 파라미터, 미들웨어, CORS, 팩토리 함수와 클로저, 의존성 주입, 모의 객체 |
-| `part1/html-hello.adoc` | HTML 태그와 요소, 시맨틱 마크업, 화면 낭독기, class와 id, 요소의 가족 관계, 폼 |
-| `part1/css-hello.adoc` | CSS 선택자, rem, CSS 변수(커스텀 프로퍼티), 박스 모델, 플렉스박스와 그리드, 미디어 쿼리 |
-| `part1/html-css.adoc` | 상태(state) |
-| `part1/go-templates.adoc` | 템플릿 엔진, 파싱, SVG와 인라인, 이스케이프와 XSS, embed(Go), PRG 패턴, 플래시 메시지 |
-| `part1/htmx.adoc` | AJAX(비동기 요청), DOM(문서 객체 모델), HTML 조각, hidden 필드, Web API(브라우저), data-* 속성, 이벤트 위임 |
-| `part1/local-dev.adoc` | 클론, localhost와 포트, 코드 편집기와 확장, 언어 서버, 디버거와 중단점 |
-| `part2/git.adoc` | 버전 관리, 커밋, 브랜치, 병합과 풀 리퀘스트, 저장소, 원격 저장소와 push·pull, 스테이징, diff, 기본 브랜치 |
-| `part2/github-actions.adoc` | 지속적 통합(CI), 워크플로·잡·스텝, YAML, 러너, 브랜치 보호 규칙, 저장소 시크릿 |
-| `part2/vercel.adoc` | 인스턴스, 컨테이너와 Dockerfile, 웹소켓, 엣지, HTTPS, CDN, 빌드와 배포, CRUD, 캐치올, 리라이트, 리전, 프리뷰 배포 |
-| `part2/supabase-auth.adoc` | 관리형 서비스, 프로바이더, 액세스 토큰과 리프레시 토큰, 리다이렉트와 콜백, 쿠키, PKCE, CSRF, 무상태, 클레임, 대칭 키와 비대칭 키, JWKS와 서명 검증, Client ID와 Client Secret |
-| `part2/supabase-db.adoc` | 환경 변수, 연결 문자열, GIN 인덱스, 커넥션 풀러, 프리페어드 스테이트먼트, 마이그레이션, 권고 잠금, 확장 후 축소, 콜로케이션, RLS |
-| `part2/pwa.adoc` | 웹 앱 매니페스트, 서비스 워커, 캐시 전략, Cache Storage, 개발자 도구 |
-| `part2/free-tier.adoc` | 한도와 스로틀링, 대역폭과 전송량, 핑과 헬스 체크, 백업과 덤프(pg_dump) |
-| `part2/whats-next.adoc` | E2E 테스트, 관측성 |
-| `appendix/setup.adoc` | 터미널, WSL, 패키지 매니저, sudo, PATH와 셸 설정 파일 |
+| `part1/first-run.adoc` | 클론, localhost와 포트 |
+| `part2/html-hello.adoc` | HTML 태그와 요소, 시맨틱 마크업, 화면 낭독기, class와 id, 요소의 가족 관계, 폼 |
+| `part2/css-hello.adoc` | CSS 선택자, rem, CSS 변수(커스텀 프로퍼티), 박스 모델, 플렉스박스와 그리드, 미디어 쿼리 |
+| `part2/go-hello.adoc` | 임포트, 표준 라이브러리, 타입 추론, 제로값, 예외, 다중 반환값과 에러 처리, 공개와 비공개 |
+| `part2/go-types.adoc` | 구조체, 메서드와 리시버, 포인터, 슬라이스와 맵, 인터페이스 |
+| `part2/database-basics.adoc` | 테이블·행·열, 정규화와 비정규화, 기본 키와 외래 키, SQL, 스키마, UUID, 제약, NULL, JSON, SQL 인젝션, 드라이버, 조인, 인증과 인가, 인덱스, 실행 계획 |
+| `part3/database.adoc` | 엔티티, 잠금, 뷰, 트랜잭션, 원자적, slug |
+| `part3/go-basics.adoc` | 모듈과 패키지 |
+| `part3/go.adoc` | 생성자, 순수 함수, 에러 래핑과 센티널 에러, 구조체 태그, 직렬화와 역직렬화, 제네릭 |
+| `part3/go-testing.adoc` | 플래그, 테이블 주도 테스트, 경쟁 상태, 픽스처, 포매터와 정적 분석 (세로 정렬은 상자 없이 본문 절로 다룬다) |
+| `part3/gin.adoc` | HTTP 요청과 응답, 프로세스, 패닉, 라우터와 라우팅, 엔드포인트, 핸들러, 바인딩, 경로/쿼리 파라미터, 미들웨어, CORS, 팩토리 함수와 클로저, 의존성 주입, 모의 객체 |
+| `part3/html-css.adoc` | 상태(state) |
+| `part3/go-templates.adoc` | 템플릿 엔진, 파싱, SVG와 인라인, 이스케이프와 XSS, embed(Go), PRG 패턴, 플래시 메시지 |
+| `part3/htmx.adoc` | AJAX(비동기 요청), DOM(문서 객체 모델), HTML 조각, hidden 필드, Web API(브라우저), data-* 속성, 이벤트 위임 |
+| `part3/local-dev.adoc` | 코드 편집기와 확장, 언어 서버, 디버거와 중단점 |
+| `part4/git.adoc` | 버전 관리, 커밋, 브랜치, 병합과 풀 리퀘스트, 저장소, 원격 저장소와 push·pull, 스테이징, diff, 기본 브랜치 |
+| `part4/quality-gates.adoc` | 품질 게이트, 셸과 셸 스크립트, 훅(Claude Code), 표준 입출력과 표준 에러, 종료 코드, 서브에이전트, 프런트매터 |
+| `part4/github-actions.adoc` | 지속적 통합(CI), 워크플로·잡·스텝, YAML, 러너, 브랜치 보호 규칙 |
+| `part4/vercel.adoc` | 인스턴스, 컨테이너와 Dockerfile, 웹소켓, 엣지, HTTPS, CDN, 빌드와 배포, CRUD, 캐치올, 리라이트, 리전, 프리뷰 배포 |
+| `part4/supabase-auth.adoc` | OAuth, 관리형 서비스, 프로바이더, 액세스 토큰과 리프레시 토큰, 리다이렉트와 콜백, 쿠키, PKCE, CSRF, 무상태, Client ID와 Client Secret |
+| `part4/token-verification.adoc` | JWT, 클레임, 대칭 키와 비대칭 키, JWKS와 서명 검증 |
+| `part4/supabase-db.adoc` | 환경 변수, 연결 문자열, GIN 인덱스, 커넥션 풀러, 프리페어드 스테이트먼트, 콜로케이션, RLS |
+| `part4/migrations.adoc` | 마이그레이션, 권고 잠금, 확장 후 축소, 저장소 시크릿 |
+| `part5/pwa.adoc` | 웹 앱 매니페스트, 서비스 워커, 캐시 전략, Cache Storage, 개발자 도구 |
+| `part5/free-tier.adoc` | 한도와 스로틀링, 대역폭과 전송량, 핑과 헬스 체크, 백업과 덤프(pg_dump) |
+| `part5/whats-next.adoc` | E2E 테스트, 관측성 |
+
+`part5/env-secrets.adoc`(28장)은 소유 상자가 없다(환경 변수·연결 문자열 상자는 26장 소유를 따른다).
 
 **동음이의어 주의.** 같은 말이 다른 뜻으로 쓰이는 곳은 그 자리에서 한 구절로 구분해 준다. 모르는 말은 독자가 멈추지만, 아는 줄 알았던 말은 조용히 오해로 굳는다.
 
-- **훅**: 8장의 훅은 Claude Code가 자동 실행하는 스크립트이고, React 같은 프런트엔드 프레임워크의 훅(상태 관리 함수)과는 다른 것이다(8장 상자에서 한 문장으로 짚는다).
-- **세션**: 네 가지 뜻으로 쓰인다. 2장은 Claude Code의 대화 단위, 12장은 카드 한 벌을 도는 한 번의 학습(`study_sessions`), 17장은 로그인 상태, 18장은 DB에 접속해 있는 연결 하나다. 12·17·18장에서 각각 다른 뜻임을 짚는다.
-- **컨텍스트**: 2장은 에이전트에게 건네는 대화 내용, 11장은 템플릿이 지금 보고 있는 데이터 한 덩어리다(11장에서 구분).
-- **커넥션 풀과 커넥션 풀러**: 이름이 한 글자 차이지만 다른 물건이다. 풀은 우리 서버가 자기 안에 쥐고 돌려쓰는 연결 묶음(pgxpool), 풀러는 DB 앞에 서서 중개하는 별도의 서버(Supavisor)다(18장 상자에서 구분).
-- **메서드**: 7장은 구조체에 딸린 함수(Go의 메서드), 11장은 HTTP 요청의 종류(GET, POST)다(7장 상자에서 구분).
-- **토큰**: 2장은 LLM이 글을 쪼개 세는 단위, 17장은 로그인 상태를 증명하는 문자열이다(17장 상자에서 구분).
-- **인가**: 4장은 그 사람이 이 일을 해도 되는지 앱 안에서 확인하는 권한 검사이고, 17장의 인가 코드·인가 화면·인가 주소는 사용자가 프로바이더 화면에서 앱의 로그인 요청을 허가하는 OAuth 절차다(17장 본문에서 한 문장으로 구분).
+- **훅**: 21장의 훅은 Claude Code가 자동 실행하는 스크립트이고, React 같은 프런트엔드 프레임워크의 훅(상태 관리 함수)과는 다른 것이다(21장 상자에서 한 문장으로 짚는다).
+- **세션**: 네 가지 뜻으로 쓰인다. 3장은 Claude Code의 대화 단위, 18장은 카드 한 벌을 도는 한 번의 학습(`study_sessions`), 24장은 로그인 상태, 26장은 DB에 접속해 있는 연결 하나다. 18·24·26장에서 각각 다른 뜻임을 짚는다.
+- **컨텍스트**: 3장은 에이전트에게 건네는 대화 내용, 17장은 템플릿이 지금 보고 있는 데이터 한 덩어리다(17장에서 구분).
+- **커넥션 풀과 커넥션 풀러**: 이름이 한 글자 차이지만 다른 물건이다. 풀은 우리 서버가 자기 안에 쥐고 돌려쓰는 연결 묶음(pgxpool), 풀러는 DB 앞에 서서 중개하는 별도의 서버(Supavisor)다(26장 상자에서 구분).
+- **메서드**: 9장은 구조체에 딸린 함수(Go의 메서드), 15장은 HTTP 요청의 종류(GET, POST)다(9장 상자에서 구분).
+- **토큰**: 3장은 LLM이 글을 쪼개 세는 단위, 24장은 로그인 상태를 증명하는 문자열이다(24장 상자에서 구분).
+- **인가**: 10장은 그 사람이 이 일을 해도 되는지 앱 안에서 확인하는 권한 검사이고, 24장의 인가 코드·인가 화면·인가 주소는 사용자가 프로바이더 화면에서 앱의 로그인 요청을 허가하는 OAuth 절차다(24장 본문에서 한 문장으로 구분).
 
 ## 화면 캡처
 
@@ -205,9 +223,9 @@ include::../../internal/srs/srs.go[tag=grade]
 - 재촬영 절차는 `doc/scripts/capture-screenshots.mjs`로 자동화되어 있다(별도 프로필 Chrome에 수동 로그인 → CDP 연결 촬영 → ImageMagick 합성. 사용법은 스크립트 머리 주석).
 - 현재 실린 그림: 그림 1 덱 상세, 그림 2 학습 3단계, 그림 3 홈·복습 큐, 그림 4 통계·공유 (모두 intro).
 
-### 대시보드 캡처(부록 B)
+### 대시보드 캡처(부록)
 
-부록 B는 앱이 아니라 Supabase·Google·Vercel 대시보드 화면을 싣는다. 앱 캡처와 규칙이 조금 다르다.
+부록(배포 준비)은 앱이 아니라 Supabase·Google·Vercel 대시보드 화면을 싣는다. 앱 캡처와 규칙이 조금 다르다.
 
 - 데스크톱 화면이라 가로가 넓다. `fc-shots single`(휴대폰용 좁은 폭)이 아니라 기본 `fc-shots`를 쓴다(폭이 본문 단을 그대로 채운다).
 - 저자 본인의 프로젝트 식별자(Supabase project ref, Google client ID, 조직·프로젝트 이름, Vercel slug)는 화면에 그대로 싣기로 했다. 공개 OAuth 흐름에 드러나는 값이라 비밀이 아니다. 단 연결 문자열·anon key·client secret이 보이는 화면은 찍지 않는다.
