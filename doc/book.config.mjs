@@ -29,7 +29,7 @@ export default {
       '무료 티어에 유리하게 수십 MB 메모리만 사용하는 서버',
     ],
     homeDesc:
-      '암기 카드 앱의 실제 코드로 Go, Gin, PostgreSQL과 HTML·htmx를 익히고, Claude Code와 함께 개발해 Vercel·Supabase 무료 티어로 서버 비용 없이 배포·운영하는 과정을 배운다.',
+      '코딩을 해 본 적이 없어도 시작할 수 있습니다. AI 코딩 에이전트인 Claude Code에게 지시해 암기 카드 앱을 만들고, 화면(HTML·CSS), 로직(Go), 데이터(SQL) 세 층의 실제 코드를 한 층씩 이해해 갑니다. 완성한 앱은 무료로 쓸 수 있는 클라우드 서비스인 Vercel과 Supabase에 올려, 서버 비용 없이 세상에 공개하고 운영하는 법까지 익힙니다.',
     actions: [
       { text: '읽기 시작', link: 'start', brand: true },
       { text: 'PDF 다운로드', link: 'pdf' },
