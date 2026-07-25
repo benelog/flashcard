@@ -17,6 +17,7 @@ func TestHealthz(t *testing.T) {
 	mustContain(t, rec, `"ok":true`)
 }
 
+// tag::deck-crud[]
 func TestAPIDeckCRUD(t *testing.T) {
 	a := newTestApp(t)
 
@@ -50,6 +51,8 @@ func TestAPIDeckCRUD(t *testing.T) {
 	mustStatus(t, a.sendJSON(http.MethodDelete, "/api/decks/"+deck.Slug, ""), http.StatusNoContent)
 	mustStatus(t, a.sendJSON(http.MethodGet, "/api/decks/"+deck.Slug, ""), http.StatusNotFound)
 }
+
+// end::deck-crud[]
 
 func TestAPIDeckValidation(t *testing.T) {
 	a := newTestApp(t)

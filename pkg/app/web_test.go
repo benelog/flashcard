@@ -11,6 +11,7 @@ import (
 	"github.com/benelog/flashcard/internal/model"
 )
 
+// tag::pages-render[]
 // 로그인한 사용자가 여는 화면은 전부 200이어야 한다. 템플릿이 참조하는 값 하나가
 // 사라지면 여기서 500으로 잡힌다.
 func TestPagesRender(t *testing.T) {
@@ -27,6 +28,8 @@ func TestPagesRender(t *testing.T) {
 		})
 	}
 }
+
+// end::pages-render[]
 
 func TestDeckAndCardLifecycle(t *testing.T) {
 	a := newTestApp(t)
@@ -120,6 +123,7 @@ func TestUnknownAPIPathReturnsJSON(t *testing.T) {
 	mustNotContain(t, rec, "<html")
 }
 
+// tag::study-start[]
 // 학습 한 판을 처음부터 끝까지 돈다. 상태는 서버가 아니라 폼의 hidden 필드에
 // 실려 오가므로, 매 단계 응답에서 필드를 그대로 꺼내 다음 요청에 싣는다.
 func TestStudySessionFullRound(t *testing.T) {
@@ -146,7 +150,9 @@ func TestStudySessionFullRound(t *testing.T) {
 	if n := len(strings.Split(state.Get("queue"), ",")); n != 2 {
 		t.Fatalf("queue has %d cards, want 2", n)
 	}
+	// end::study-start[]
 
+	// tag::study-grade[]
 	// 첫 장은 맞히고 둘째 장은 틀린다.
 	state.Set("correct", "true")
 	second := a.postHTMX("/study/grade", state)
@@ -187,6 +193,7 @@ func TestStudySessionFullRound(t *testing.T) {
 	if summary.TotalReviews != 2 || summary.CorrectReviews != 1 {
 		t.Errorf("first-pass reviews = %d/%d, want 1/2", summary.CorrectReviews, summary.TotalReviews)
 	}
+	// end::study-grade[]
 }
 
 // 카드가 한 장도 없으면 채점 화면 대신 안내를 보여 준다.
@@ -225,6 +232,7 @@ func TestQuitStudyReturnsToSafePath(t *testing.T) {
 	}
 }
 
+// tag::csv-round-trip[]
 // 내보낸 CSV를 다른 덱으로 그대로 가져올 수 있어야 한다.
 func TestCSVExportImportRoundTrip(t *testing.T) {
 	a := newTestApp(t)
@@ -255,6 +263,8 @@ func TestCSVExportImportRoundTrip(t *testing.T) {
 	}
 }
 
+// end::csv-round-trip[]
+
 func TestCSVImportRejectsUnusableFile(t *testing.T) {
 	a := newTestApp(t)
 	slug := a.makeDeck("Verbs")
@@ -266,6 +276,7 @@ func TestCSVImportRejectsUnusableFile(t *testing.T) {
 	}
 }
 
+// tag::tz-date[]
 // 갤러리의 공유 날짜는 방문자의 하루를 따라야 한다. 저장소는 시각을 UTC로 읽어
 // 오므로, 옮기지 않으면 한국에서 이른 아침에 공유한 덱이 하루 전으로 보인다.
 //
@@ -296,6 +307,8 @@ func TestSharedGalleryDateFollowsVisitorTimezone(t *testing.T) {
 		t.Errorf("두 시간대가 같은 날짜를 냈다: %v", seen)
 	}
 }
+
+// end::tz-date[]
 
 // 공유를 켜면 갤러리에 뜨고, 다른 사람이 자기 덱으로 복사해 갈 수 있다. 공유를
 // 풀면 그 링크는 곧바로 죽는다.
@@ -332,6 +345,7 @@ func TestShareAndImportSharedDeck(t *testing.T) {
 	mustStatus(t, a.get("/shared/"+shareSlug), http.StatusNotFound)
 }
 
+// tag::htmx-redirect[]
 func TestDeleteDeckRemovesItsCards(t *testing.T) {
 	a := newTestApp(t)
 	slug := a.makeDeck("Verbs")
@@ -344,6 +358,8 @@ func TestDeleteDeckRemovesItsCards(t *testing.T) {
 	}
 	mustStatus(t, a.get("/decks/"+slug), http.StatusNotFound)
 }
+
+// end::htmx-redirect[]
 
 // 설정은 범위를 벗어난 값을 조용히 기본값으로 되돌린다.
 func TestSaveSettings(t *testing.T) {

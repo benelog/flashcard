@@ -28,6 +28,7 @@ import (
 // 확인된다. 화면(HTML)과 JSON API가 같은 저장소를 보므로 한쪽으로 넣고 다른
 // 쪽으로 읽어 보는 확인도 여기서 할 수 있다.
 
+// tag::app-struct[]
 // app은 테스트용으로 띄운 애플리케이션 하나다.
 type app struct {
 	t      *testing.T
@@ -36,6 +37,9 @@ type app struct {
 	userID uuid.UUID
 }
 
+// end::app-struct[]
+
+// tag::new-test-app[]
 func newTestApp(t *testing.T) *app {
 	t.Helper()
 	return newAppWith(t, func(s model.Store) model.Store { return s })
@@ -56,6 +60,9 @@ func newAppWith(t *testing.T, wrap func(model.Store) model.Store) *app {
 	return &app{t: t, engine: New(cfg, wrap(s)), store: s, userID: auth.LocalUserID}
 }
 
+// end::new-test-app[]
+
+// tag::serve[]
 func (a *app) do(req *http.Request) *httptest.ResponseRecorder {
 	a.t.Helper()
 	rec := httptest.NewRecorder()
@@ -68,6 +75,8 @@ func (a *app) get(path string) *httptest.ResponseRecorder {
 	return a.do(httptest.NewRequest(http.MethodGet, path, nil))
 }
 
+// end::serve[]
+
 // getInTZ는 그 시간대의 방문자로 페이지를 요청한다. app.js가 첫 화면에서
 // 심어 주는 tz 쿠키를 흉내 낸다.
 func (a *app) getInTZ(path, tz string) *httptest.ResponseRecorder {
@@ -77,6 +86,7 @@ func (a *app) getInTZ(path, tz string) *httptest.ResponseRecorder {
 	return a.do(req)
 }
 
+// tag::post-form[]
 // postForm은 템플릿의 폼과 같은 방식으로 브라우저 폼을 제출한다.
 func (a *app) postForm(path string, form url.Values) *httptest.ResponseRecorder {
 	a.t.Helper()
@@ -95,6 +105,9 @@ func (a *app) postHTMX(path string, form url.Values) *httptest.ResponseRecorder 
 	return a.do(req)
 }
 
+// end::post-form[]
+
+// tag::send-json[]
 // sendJSON은 JSON API를 부른다. body가 빈 문자열이면 본문 없이 보낸다.
 func (a *app) sendJSON(method, path, body string) *httptest.ResponseRecorder {
 	a.t.Helper()
@@ -107,6 +120,9 @@ func (a *app) sendJSON(method, path, body string) *httptest.ResponseRecorder {
 	return a.do(req)
 }
 
+// end::send-json[]
+
+// tag::upload[]
 // upload는 CSV 가져오기 폼처럼 파일 필드 하나를 올린다.
 func (a *app) upload(path, field, filename, content string) *httptest.ResponseRecorder {
 	a.t.Helper()
@@ -126,6 +142,8 @@ func (a *app) upload(path, field, filename, content string) *httptest.ResponseRe
 	req.Header.Set("Content-Type", form.FormDataContentType())
 	return a.do(req)
 }
+
+// end::upload[]
 
 // ---------- 응답 확인 ----------
 
@@ -178,6 +196,7 @@ func truncate(body string) string {
 
 // ---------- 화면에서 값 꺼내기 ----------
 
+// tag::hidden-fields[]
 var hiddenInput = regexp.MustCompile(`<input type="hidden" name="([^"]+)" value="([^"]*)">`)
 
 // hiddenFields는 렌더링된 폼의 hidden 입력, 즉 브라우저가 되돌려 보낼 값
@@ -195,8 +214,11 @@ func hiddenFields(t *testing.T, rec *httptest.ResponseRecorder) url.Values {
 	return values
 }
 
+// end::hidden-fields[]
+
 // ---------- 자료 만들기 ----------
 
+// tag::make-data[]
 // makeDeck은 웹 폼으로 덱을 만들고 URL 슬러그를 돌려준다.
 func (a *app) makeDeck(name string) string {
 	a.t.Helper()
@@ -219,6 +241,8 @@ func (a *app) makeCard(deckSlug, text, meaning string) {
 	})
 	mustRedirect(a.t, rec)
 }
+
+// end::make-data[]
 
 // deck은 저장소에서 덱 행을 바로 읽는다. ID가 필요한 검증용이다.
 func (a *app) deck(slug string) model.Deck {

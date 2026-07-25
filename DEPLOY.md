@@ -10,7 +10,7 @@
    - **Transaction pooler (port 6543)** → `DATABASE_URL` (서버용)
    - **Direct connection (port 5432)** 또는 Session pooler → `MIGRATE_DATABASE_URL` (마이그레이션용)
 3. Settings → API에서 **Project URL**(`SUPABASE_URL`)과 **anon(public) key**(`SUPABASE_ANON_KEY`) 복사
-4. 같은 방법으로 **개발용 프로젝트**를 하나 더 생성 (운영 DB/개발 DB 분리, 이유는 책 18장 참고).
+4. 같은 방법으로 **개발용 프로젝트**를 하나 더 생성 (운영 DB/개발 DB 분리, 이유는 책 29장 "환경 변수와 시크릿" 참고).
    개발용 프로젝트의 값들은 로컬 개발과 Vercel **Preview** 스코프(6단계)에 씁니다.
 
 ## 2. DB 마이그레이션
@@ -30,7 +30,7 @@ Supabase Table Editor에 `profiles, decks, cards, card_srs, study_sessions, revi
 > 대시보드 메뉴 이름은 자주 바뀝니다. 책 부록 B("배포 준비: Supabase·Google·GitHub·Vercel 설정")에 화면 캡처와 함께 정리해 두었으니,
 > 아래 경로가 화면과 다르면 부록 B를 참고하세요. 여기서는 무엇을 어디에 등록하는지를 기준으로 적습니다.
 
-로그인은 세 관문을 지납니다. 세 곳의 설정이 모두 있어야 로그인이 완성됩니다(원리는 책 17장, 실제 장애 기록은 [notes/2026-07-login-outage.md](./notes/2026-07-login-outage.md)).
+로그인은 세 관문을 지납니다. 세 곳의 설정이 모두 있어야 로그인이 완성됩니다(원리는 책 25장 "Supabase 인증", 실제 장애 기록은 [notes/2026-07-login-outage.md](./notes/2026-07-login-outage.md)).
 ① 앱 → Supabase가 프로바이더를 켜 두어야 하고, ② Supabase → OAuth 프로바이더가 Supabase 콜백을 승인해야 하며, ③ OAuth 프로바이더 → 앱이 Supabase의 Redirect URLs에 있어야 합니다.
 
 **Google** — https://console.cloud.google.com
@@ -121,7 +121,7 @@ GitHub Actions 러너는 IPv4라, Supabase의 IPv6 전용 direct 호스트(`db.<
 2. **Settings → Environments → Production**을 열고, Branch Tracking의 **Branch is** 값을 `main`에서 `release`로 변경
    (Environments 목록 화면에서 Production·Preview·Development 세 환경의 브랜치와 도메인을 한눈에 확인할 수 있습니다.
    이후 release 푸시/병합 = 운영 배포, main 푸시 = Preview 배포 = 개발 확인용 고유 URL)
-3. Environment Variables 등록 — 스코프를 나눠 **Production에는 운영 Supabase 프로젝트 값, Preview에는 개발 프로젝트 값**을 넣습니다 (분리 이유는 책 18장):
+3. Environment Variables 등록 — 스코프를 나눠 **Production에는 운영 Supabase 프로젝트 값, Preview에는 개발 프로젝트 값**을 넣습니다 (분리 이유는 책 29장 "환경 변수와 시크릿"):
    | 이름 | 값 |
    |---|---|
    | `DATABASE_URL` | Transaction pooler 문자열 (6543) |

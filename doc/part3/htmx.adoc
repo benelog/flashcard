@@ -461,7 +461,7 @@ if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("/sw.js").catch(() => {});
 }
 
-// ... 로그아웃 뒤 서비스 워커의 페이지 캐시를 비우는 덩어리는 29장에서 본다 ...
+// ... 로그아웃 뒤 서비스 워커의 페이지 캐시를 비우는 덩어리는 30장에서 본다 ...
 
 // 오프라인 배너.
 const banner = document.getElementById("offline-banner");
@@ -594,4 +594,5 @@ htmx는 `hx-post`(어디로 보낼지), `hx-target`(어디에 끼울지), `hx-sw
 반대로 키 입력 하나하나에 화면이 반응해야 하는 앱이라면, 이 100줄로는 부족해지고 React 같은 자바스크립트 프레임워크가 제값을 한다.
 
 여기까지로 데이터베이스, Go와 Gin, 화면까지 앱 한 벌이 어떻게 생겼는지 읽을 수 있게 됐다.
-다음 {ch-local-dev}에서는 {ch-first-run}에서 명령 하나로 띄웠던 이 앱이 어떻게 설정 없이 돌 수 있었는지 그 원리를 해부하고, 코드를 고치는 사람 쪽 개발 환경까지 갖춰 3부를 마무리한다.
+다음 {ch-app-tests}에서는 이 층들이 이어 붙었을 때에도 옳은지 확인한다.
+방금 본 hidden 필드 왕복과 HX-Request 헤더가 거기서는 검증의 대상이 된다.

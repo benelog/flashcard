@@ -20,6 +20,7 @@ import (
 // 한다. 브라우저에 JSON이 뜨거나 API 호출자가 HTML을 받으면 곤란하다. 둘째,
 // 어느 쪽도 DB가 뱉은 원문을 방문자에게 그대로 보여 주지 않아야 한다.
 
+// tag::broken-store[]
 var errStoreDown = errors.New("connection reset by peer: table cards is on fire")
 
 // brokenStore는 진짜 저장소에서 고른 메서드만 깨뜨린 것이다. model.Store를
@@ -32,6 +33,8 @@ type brokenStore struct {
 	getProfile bool
 }
 
+// end::broken-store[]
+
 func (b brokenStore) GetOrCreateProfile(ctx context.Context, userID uuid.UUID, displayName string) (model.Profile, error) {
 	if b.getProfile {
 		return model.Profile{}, errStoreDown
@@ -39,12 +42,15 @@ func (b brokenStore) GetOrCreateProfile(ctx context.Context, userID uuid.UUID, d
 	return b.Store.GetOrCreateProfile(ctx, userID, displayName)
 }
 
+// tag::broken-list-decks[]
 func (b brokenStore) ListDecks(ctx context.Context, userID uuid.UUID) ([]model.Deck, error) {
 	if b.listDecks {
 		return nil, errStoreDown
 	}
 	return b.Store.ListDecks(ctx, userID)
 }
+
+// end::broken-list-decks[]
 
 func (b brokenStore) DueCount(ctx context.Context, userID uuid.UUID, dueBefore time.Time) (int, error) {
 	if b.dueCount {
@@ -60,6 +66,7 @@ func (b brokenStore) ListCards(ctx context.Context, userID, deckID uuid.UUID) ([
 	return b.Store.ListCards(ctx, userID, deckID)
 }
 
+// tag::error-screen[]
 func TestPagesShowAnErrorScreenWhenTheStoreFails(t *testing.T) {
 	tests := []struct {
 		name   string
@@ -90,6 +97,8 @@ func TestPagesShowAnErrorScreenWhenTheStoreFails(t *testing.T) {
 		})
 	}
 }
+
+// end::error-screen[]
 
 func TestAPIReturnsJSONWhenTheStoreFails(t *testing.T) {
 	tests := []struct {
