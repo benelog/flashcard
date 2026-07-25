@@ -1,0 +1,90 @@
+<mxGraphModel adaptiveColors="auto">
+  <root>
+    <mxCell id="0"/>
+    <mxCell id="1" parent="0"/>
+
+    <mxCell id="margin" value="" style="rounded=0;html=1;fillColor=#FBE4CC;strokeColor=#D79B63;dashed=1;dashPattern=6 4;strokeWidth=2;" vertex="1" parent="1">
+      <mxGeometry x="40" y="40" width="640" height="300" as="geometry"/>
+    </mxCell>
+    <mxCell id="border" value="" style="rounded=0;html=1;fillColor=#FDEFC3;strokeColor=#4D4D4D;strokeWidth=5;" vertex="1" parent="1">
+      <mxGeometry x="100" y="90" width="520" height="200" as="geometry"/>
+    </mxCell>
+    <mxCell id="padding" value="" style="rounded=0;html=1;fillColor=#D9EAD3;strokeColor=#7BA05B;strokeWidth=1;dashed=1;dashPattern=4 4;" vertex="1" parent="1">
+      <mxGeometry x="145" y="135" width="430" height="110" as="geometry"/>
+    </mxCell>
+    <mxCell id="content" value="" style="rounded=0;html=1;fillColor=#CFE2F3;strokeColor=#6C8EBF;strokeWidth=1;" vertex="1" parent="1">
+      <mxGeometry x="200" y="170" width="320" height="40" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="lab-margin" value="바깥 여백 margin" style="text;html=1;align=left;verticalAlign=middle;fontSize=15;fontStyle=1;fontColor=#7F5124;" vertex="1" parent="1">
+      <mxGeometry x="52" y="49" width="220" height="22" as="geometry"/>
+    </mxCell>
+    <mxCell id="lab-border" value="테두리 border" style="text;html=1;align=left;verticalAlign=middle;fontSize=15;fontStyle=1;fontColor=#7A5B00;" vertex="1" parent="1">
+      <mxGeometry x="112" y="101" width="220" height="22" as="geometry"/>
+    </mxCell>
+    <mxCell id="lab-padding" value="안쪽 여백 padding" style="text;html=1;align=left;verticalAlign=middle;fontSize=15;fontStyle=1;fontColor=#3F6B2B;" vertex="1" parent="1">
+      <mxGeometry x="157" y="146" width="220" height="22" as="geometry"/>
+    </mxCell>
+    <mxCell id="lab-content" value="내용 content" style="text;html=1;align=center;verticalAlign=middle;fontSize=15;fontStyle=1;fontColor=#1F4E79;" vertex="1" parent="1">
+      <mxGeometry x="200" y="174" width="320" height="20" as="geometry"/>
+    </mxCell>
+    <mxCell id="lab-content-ex" value="apple 사과" style="text;html=1;align=center;verticalAlign=middle;fontSize=13;fontColor=#333333;" vertex="1" parent="1">
+      <mxGeometry x="200" y="190" width="320" height="18" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="code-margin" value="margin-bottom: 0.5rem" style="text;html=1;align=right;verticalAlign=middle;fontSize=12;fontColor=#8C6239;fontFamily=Courier New;" vertex="1" parent="1">
+      <mxGeometry x="428" y="49" width="240" height="22" as="geometry"/>
+    </mxCell>
+    <mxCell id="code-border" value="border: 1px solid" style="text;html=1;align=right;verticalAlign=middle;fontSize=12;fontColor=#7A5B00;fontFamily=Courier New;" vertex="1" parent="1">
+      <mxGeometry x="375" y="101" width="230" height="22" as="geometry"/>
+    </mxCell>
+    <mxCell id="code-padding" value="padding: 0.75rem 1rem" style="text;html=1;align=right;verticalAlign=middle;fontSize=12;fontColor=#3F6B2B;fontFamily=Courier New;" vertex="1" parent="1">
+      <mxGeometry x="325" y="146" width="240" height="22" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="guide-c-left" style="endArrow=none;html=1;dashed=1;dashPattern=2 3;strokeColor=#9AA0A6;" edge="1" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="200" y="212" as="sourcePoint"/>
+        <mxPoint x="200" y="398" as="targetPoint"/>
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="guide-c-right" style="endArrow=none;html=1;dashed=1;dashPattern=2 3;strokeColor=#9AA0A6;" edge="1" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="520" y="212" as="sourcePoint"/>
+        <mxPoint x="520" y="398" as="targetPoint"/>
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="guide-b-left" style="endArrow=none;html=1;dashed=1;dashPattern=2 3;strokeColor=#9AA0A6;" edge="1" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="100" y="294" as="sourcePoint"/>
+        <mxPoint x="100" y="448" as="targetPoint"/>
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="guide-b-right" style="endArrow=none;html=1;dashed=1;dashPattern=2 3;strokeColor=#9AA0A6;" edge="1" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="620" y="294" as="sourcePoint"/>
+        <mxPoint x="620" y="448" as="targetPoint"/>
+      </mxGeometry>
+    </mxCell>
+
+    <mxCell id="arrow-content" style="endArrow=classic;startArrow=classic;html=1;strokeColor=#1F4E79;strokeWidth=1.5;" edge="1" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="200" y="398" as="sourcePoint"/>
+        <mxPoint x="520" y="398" as="targetPoint"/>
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="arrow-border" style="endArrow=classic;startArrow=classic;html=1;strokeColor=#4D4D4D;strokeWidth=1.5;" edge="1" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="100" y="448" as="sourcePoint"/>
+        <mxPoint x="620" y="448" as="targetPoint"/>
+      </mxGeometry>
+    </mxCell>
+
+    <mxCell id="lab-arrow-content" value="기본값일 때 width가 재는 폭" style="text;html=1;align=center;verticalAlign=bottom;fontSize=13;fontColor=#1F4E79;" vertex="1" parent="1">
+      <mxGeometry x="200" y="374" width="320" height="20" as="geometry"/>
+    </mxCell>
+    <mxCell id="lab-arrow-border" value="box-sizing: border-box일 때 width가 재는 폭" style="text;html=1;align=center;verticalAlign=bottom;fontSize=13;fontColor=#4D4D4D;" vertex="1" parent="1">
+      <mxGeometry x="100" y="424" width="520" height="20" as="geometry"/>
+    </mxCell>
+  </root>
+</mxGraphModel>

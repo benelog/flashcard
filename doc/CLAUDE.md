@@ -232,6 +232,30 @@ include::../../internal/srs/srs.go[tag=grade]
 - 재촬영 절차는 `doc/scripts/capture-screenshots.mjs`로 자동화되어 있다(별도 프로필 Chrome에 수동 로그인 → CDP 연결 촬영 → ImageMagick 합성. 사용법은 스크립트 머리 주석).
 - 현재 실린 그림: 그림 1 덱 상세, 그림 2 학습 3단계, 그림 3 홈·복습 큐, 그림 4 통계·공유 (모두 intro).
 
+### 문법 입문 장의 예제 캡처(6·7장)
+
+6·7장은 앱이 아니라 저장소에 없는 연습용 예제를 찍는다. 그 예제 파일은 `doc/scripts/examples/`에 있다.
+
+- 원고의 코드 블록과 예제 파일은 손으로 맞춘 쌍이다. 한쪽을 고치면 다른 쪽도 고치고 다시 촬영한다(빌드가 대조해 주지 않는다).
+- 재촬영: `cd doc && node scripts/capture-examples.mjs`. headless Chrome이라 서버도 로그인도 필요 없고, 합성·축소까지 스크립트가 한다.
+- 데스크톱 폭(480) 화면이라 `fc-shots single`이 아니라 기본 `fc-shots`를 쓴다.
+- 그림 5 첫 문서, 그림 6 폼과 입력 칸(6장), 그림 8 스타일 적용 전·후·다크 모드(7장).
+
+### 다이어그램(7장)
+
+- 그림 7(박스 모델)은 캡처가 아니라 draw.io로 그린 그림이다. 소스는 `doc/scripts/diagrams/box-model.drawio`.
+- 내보내기: `cd doc/scripts/diagrams && drawio -x -f png -e -b 12 -s 2 -o ../../public/screenshots/box-model.png box-model.drawio`
+- `-e`가 PNG에 원본 XML을 심으므로 내보낸 PNG를 draw.io에서 바로 열어 고칠 수도 있다. 그래도 텍스트로 비교할 수 있게 `.drawio` 소스를 저장소에 함께 둔다.
+- snap으로 설치한 draw.io는 `/tmp` 아래 파일을 읽지 못한다. 소스와 출력 경로를 모두 홈 디렉터리 아래에 둔다.
+
+### 앱 화면 캡처(16장)
+
+16장 그림은 개인 학습 데이터가 아니라 CSS 동작을 보이는 것이라 배포본 대신 로컬 서버를 찍는다. 로그인이 없어 촬영 전체가 자동화된다.
+
+- 재촬영 절차는 `doc/scripts/capture-app-html-css.mjs`(캡처용 빈 SQLite로 서버 기동 → 데모 덱 생성 → 촬영. 사용법은 스크립트 머리 주석).
+- `local-db/flashcard.db`를 쓰지 않는다. 저자의 학습 데이터가 그림에 섞이지 않게 `SQLITE_PATH`로 임시 DB를 지정한다.
+- 그림 9 카드 입력 화면(알약 라디오), 그림 10 밝은 테마와 어두운 테마.
+
 ### 대시보드 캡처(부록)
 
 부록(배포 준비)은 앱이 아니라 Supabase·Google·Vercel 대시보드 화면을 싣는다. 앱 캡처와 규칙이 조금 다르다.
@@ -239,7 +263,7 @@ include::../../internal/srs/srs.go[tag=grade]
 - 데스크톱 화면이라 가로가 넓다. `fc-shots single`(휴대폰용 좁은 폭)이 아니라 기본 `fc-shots`를 쓴다(폭이 본문 단을 그대로 채운다).
 - 저자 본인의 프로젝트 식별자(Supabase project ref, Google client ID, 조직·프로젝트 이름, Vercel slug)는 화면에 그대로 싣기로 했다. 공개 OAuth 흐름에 드러나는 값이라 비밀이 아니다. 단 연결 문자열·anon key·client secret이 보이는 화면은 찍지 않는다.
 - 재촬영 절차는 `doc/scripts/capture-dashboards.mjs`(세 대시보드에 로그인한 디버그 포트 Chrome에 CDP로 연결해 촬영). 사용법은 스크립트 머리 주석.
-- 그림 5~9: 그림 5 Google 클라이언트, 그림 6 Supabase 프로바이더, 그림 7 Supabase URL Configuration, 그림 8 Vercel Environments, 그림 9 Vercel 환경 변수.
+- 그림 11~15: 그림 11 Google 클라이언트, 그림 12 Supabase 프로바이더, 그림 13 Supabase URL Configuration, 그림 14 Vercel Environments, 그림 15 Vercel 환경 변수.
 - `public/screenshots/dash-*.png`는 실촬영본이다(2026-07 교체 완료). 대시보드 화면 구성이 바뀌면 `capture-dashboards.mjs`로 재촬영해 교체한다.
 
 ## 문체 가이드

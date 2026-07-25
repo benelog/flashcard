@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>카드 추가</title>
+</head>
+<body>
+  <h1>카드 추가</h1>
+
+  <form method="post" action="/cards">
+    <div>
+      <label for="front">앞면</label>
+      <input id="front" name="front" placeholder="apple" required>
+    </div>
+    <div>
+      <label for="back">뒷면</label>
+      <input id="back" name="back" required>
+    </div>
+    <div>
+      <label for="count">반복 횟수</label>
+      <input type="number" id="count" name="count" min="1" max="100" value="3">
+    </div>
+    <div>
+      <label for="file">CSV 파일</label>
+      <input type="file" id="file" name="file" accept=".csv">
+    </div>
+    <div>
+      <label><input type="radio" name="card_type" value="word" checked> 단어</label>
+      <label><input type="radio" name="card_type" value="sentence"> 문장</label>
+    </div>
+    <div>
+      <label><input type="checkbox" name="shared" value="yes"> 다른 사람에게 공개</label>
+    </div>
+    <div>
+      <label for="example">예문</label>
+      <textarea id="example" name="example" rows="3"></textarea>
+    </div>
+    <div>
+      <label for="direction">학습 방향</label>
+      <select id="direction" name="direction">
+        <option value="front-back">앞면 보고 뒷면 맞히기</option>
+        <option value="back-front">뒷면 보고 앞면 맞히기</option>
+      </select>
+    </div>
+    <button type="submit">추가</button>
+  </form>
+</body>
+</html>
