@@ -1,0 +1,364 @@
+= 앱을 조립하기: 계층 분리와 두 진입점
+
+{ch-gin}에서 요청 하나가 Gin을 통과하는 길을 따라갔다.
+라우팅이 담당 함수를 찾고, 미들웨어가 공통 검사를 하고, 핸들러가 응답을 만드는 데까지였다.
+그런데 핸들러는 데이터를 스스로 꺼내지 않았다.
+`store`라는 이름의 무언가에 물어보고 그 답을 JSON으로 옮겼을 뿐이다.
+
+이 장은 그 뒤편을 본다.
+핸들러 뒤에 놓인 저장소 계층이 왜 따로 있는지, 그리고 그렇게 나뉜 조각들이 어떻게 한 벌의 앱으로 조립되어 내 컴퓨터의 서버와 Vercel 함수 양쪽에서 같은 모습으로 도는지가 내용이다.
+
+뒤엣것이 이 장의 값어치다.
+로컬에서 검증한 라우팅과 미들웨어가 배포 환경에서도 그대로 동작한다는 보장은 저절로 생기지 않는다.
+조립 코드를 어디에 두고 무엇을 공유하게 만드느냐에서 나오고, 그 자리를 잘못 고르면 로컬은 통과하고 배포만 깨진다.
+
+== 계층 분리: handlers와 store
+
+=== 두 계층의 골격
+
+Flashcard 백엔드는 HTTP 관심사와 데이터 접근을 다른 패키지로 나눈다.
+`internal/handlers`는 요청 파싱·검증·상태 코드를, `internal/pgstore`는 SQL을 담당한다.
+
+여기에 세 번째 패키지가 하나 더 있다.
+두 계층 사이를 오가는 카드와 덱 같은 행 타입, 그리고 "없음"을 알리는 에러 값은 어느 쪽의 소유도 아니어서 `internal/model`에 따로 둔다.
+저장소 구현이 둘(PostgreSQL용과 SQLite용)이기 때문인데, 행 타입을 한쪽 구현에 두면 다른 구현이 그 패키지를 이름값과 상관없이 의존하게 된다.
+
+각 계층의 골격은 단순하다.
+세 패키지의 선언부를 차례로 발췌한다.
+
+[source,go]
+----
+// internal/model/store.go
+
+// Store는 저장소 계약이다. *pgstore.Store(pgx, 배포 환경)와
+// *litestore.Store(SQLite, 로컬 모드)가 둘 다 이것을 만족한다.
+type Store interface {
+	GetOrCreateProfile(ctx context.Context, userID uuid.UUID, displayName string) (Profile, error)
+	// ...
+	ListDecks(ctx context.Context, userID uuid.UUID) ([]Deck, error)
+	GetDeckBySlug(ctx context.Context, userID uuid.UUID, slug string) (Deck, error)
+	// ... 카드·세션·공유·통계 메서드 생략 (모두 합해 32개)
+}
+
+// internal/model/model.go
+var ErrNotFound = errors.New("not found")
+----
+
+[source,go]
+----
+// internal/handlers/handlers.go
+type Handlers struct {
+	Store model.Store
+}
+
+func New(s model.Store) *Handlers {
+	return &Handlers{Store: s}
+}
+----
+
+[source,go]
+----
+// internal/pgstore/store.go
+type Store struct {
+	pool *pgxpool.Pool
+}
+
+func New(pool *pgxpool.Pool) *Store {
+	return &Store{pool: pool}
+}
+----
+
+`Handlers`는 `model.Store` 인터페이스를 품고, 그 인터페이스를 만족하는 PostgreSQL 구현 `pgstore.Store`가 pgx 커넥션 풀(connection pool, DB 연결을 미리 여러 개 열어 두고 돌려쓰는 묶음)을 품는다.
+조립은 `pkg/app/app.go`가 `pgstore.New(pool)`로 만든 스토어를 `handlers.New`에 건네는 한 줄이 전부다.
+프레임워크 없이 생성자 함수로 엮는 수동 의존성 주입(dependency injection)이다.
+조립할 부품이 커넥션 풀·스토어·핸들러 정도인 이 규모에서는 도구의 도움 없이 이 한 줄로 충분하다.
+핸들러가 구체 타입이 아니라 인터페이스에 의존하는 덕에, 같은 계약을 만족하는 SQLite 구현(`internal/litestore`)이 로컬 모드에서 그 자리에 그대로 꽂힌다.
+이 교체가 로컬의 SQLite에서 운영의 PostgreSQL로 실제로 일어나는 장면은 {ch-supabase-db}에서 확인한다.
+
+.[용어 풀이] 의존성 주입(Dependency Injection)
+[NOTE]
+====
+어떤 부품이 필요한 쪽이 그 부품을 스스로 만들지 않고, 밖에서 완성된 것을 건네받아 쓰는 조립 방식이다.
+핸들러가 자기 안에서 PostgreSQL 스토어를 직접 만들어 버리면 그 핸들러는 영영 PostgreSQL에 묶이지만, 밖에서 만들어 넣어 주면 무엇을 넣느냐에 따라 상대가 바뀐다.
+전동 드릴이 날을 몸에 붙박아 두지 않고 밖에서 끼우게 만들어 둔 것과 같다.
+자바의 Spring처럼 이 주입을 자동으로 해 주는 프레임워크도 있지만, 부품이 몇 개뿐이면 생성자 함수에 손으로 건네는 것으로 충분하다.
+====
+
+`ErrNotFound`는 {ch-go}에서 본 센티널 에러(sentinel error)다.
+특정 상황을 알리는 신호로 쓰자고 미리 약속해 둔 에러 값이라는 뜻이다.
+스토어의 모든 조회 함수가 "행 없음"을 이 에러로 통일해 반환하고, 앞서 본 핸들러의 `fail`이 이를 404로 변환한다.
+pgx의 `ErrNoRows` 같은 드라이버 세부가 핸들러까지 새어 나오지 않도록 경계에서 번역해 두는 것이다.
+
+=== 경계에서 무엇이 오가는가
+
+같은 기능을 두 계층이 어떻게 나눠 맡는지 덱 슬러그 해석으로 확인해 보자.
+`internal/pgstore/decks.go`의 스토어 쪽 코드다.
+주소에 쓰인 짧은 슬러그를 받아 그 사용자의 덱 ID를 찾아 주는 함수다.
+
+[source,go]
+----
+include::../../internal/pgstore/decks.go[tag=deck-id-by-slug]
+----
+
+핸들러 쪽 대응부는 `internal/handlers/handlers.go`의 도우미다.
+경로의 슬러그를 덱 ID로 바꿔 주되, 실패하면 에러 응답까지 마치고 성공 여부만 알려 준다.
+
+[source,go]
+----
+include::../../internal/handlers/handlers.go[tag=deck-id-from-path]
+
+include::../../internal/handlers/handlers.go[tag=deck-id-by-slug]
+----
+
+역할 분담이 뚜렷하다.
+스토어는 `context.Context`, `uuid.UUID`, `string` 같은 일반 타입만 받고 SQL을 실행하며, 실패를 도메인 에러로 번역한다.
+핸들러는 `gin.Context`에서 값을 꺼내 스토어에 넘기고, 결과를 상태 코드와 JSON으로 번역한다.
+스토어는 HTTP를 모르고, 핸들러는 SQL을 모른다.
+
+이 분리의 이점을 세 가지로 정리할 수 있다.
+
+첫째, 책임이 분리되어 변경 범위가 예측된다.
+응답 형식을 바꾸는 일은 handlers만, 쿼리를 최적화하는 일은 store만 건드린다.
+잘못된 슬러그와 남의 덱을 모두 404로 처리하는 정책처럼 두 계층에 걸치는 결정도, `ErrNotFound`라는 하나의 계약으로 표현된다.
+
+둘째, 테스트가 쉬워진다.
+스토어 함수는 `gin.Context`를 요구하지 않으므로 HTTP 없이 DB만 있으면 검증할 수 있고, 슬러그 인코딩 같은 순수 로직은 `internal/model/deckslug_test.go`처럼 DB조차 없이 단위 테스트할 수 있으며, 핸들러가 얇아진 덕에 HTTP 계층의 테스트 부담 자체가 줄어든다.
+
+셋째, AI 에이전트와의 협업 단위가 명확해진다.
+"덱 목록 응답에 카드 수를 추가해 줘" 같은 요청이 어느 파일의 어느 계층을 고치는 일인지 구조에서 바로 드러나므로, 에이전트가 생성한 변경을 사람이 검토하는 범위도 좁아진다.
+
+다만 이 앱의 분리는 실용주의적 절충이라는 점도 밝혀 둔다.
+`internal/model/deck.go`의 `Deck` 구조체에는 `json:"id"` 같은 태그가 붙어 있어, 스토어의 도메인 타입이 API 응답 타입을 겸한다.
+교과서적으로는 응답 전용 DTO(Data Transfer Object)를 따로 두어야 하지만, 두 형태가 거의 같은 이 앱에서는 변환 코드만 늘어난다.
+`Store` 인터페이스도 처음부터 있었던 것이 아니다.
+초기에는 `Handlers`가 `*pgstore.Store` 구체 타입에 직접 의존했고, 로컬 모드용 SQLite 스토어라는 두 번째 구현이 필요해졌을 때 인터페이스를 추출했다.
+그 덕에 스토어를 모의 객체(mock)로 바꿔 끼우는 핸들러 단위 테스트의 길도 함께 열렸다.
+처음부터 계층을 겹겹이 쌓기보다, API 응답과 내부 모델이 서로 달라지거나 두 번째 구현처럼 필요가 증명될 때 분리하는 편이 작은 프로젝트에는 맞다.
+
+.[용어 풀이] 모의 객체(Mock)
+[NOTE]
+====
+테스트할 때 진짜 부품 대신 끼워 넣는 가짜 부품이다.
+진짜 데이터베이스에 다녀오는 대신 "이 요청에는 이 답을 돌려준다"고 미리 정해 둔 답만 내놓으므로, DB를 띄우지 않고도 핸들러의 동작만 따로 시험할 수 있다.
+영화 촬영에 쓰는 소품 전화기와 같아서, 진짜로 통화가 되지는 않지만 배우가 통화하는 장면을 찍기에는 충분하다.
+평소에 재현하기 어려운 상황(DB 장애, 특정 에러)을 마음대로 만들어 낼 수 있다는 것도 이점인데, 스토어를 인터페이스로 받아 두었기 때문에 이런 교체가 가능하다.
+====
+
+== 하나의 엔진, 두 개의 진입점
+
+라우팅, 핸들러, 미들웨어, 계층 분리까지 요청이 지나는 길은 다 봤다.
+남은 질문은 이 부품들을 누가 어디서 하나로 조립하느냐다.
+앞의 발췌들이 거듭 가리킨 `pkg/app/app.go`가 그 답이다.
+
+=== pkg/app: Gin 엔진을 만드는 조립 지점
+
+Flashcard 백엔드의 심장은 `pkg/app/app.go`다.
+이 패키지는 핸들러 조립과 라우트 등록을 마친 `*gin.Engine`을 만들어 반환하고, 필요하면 설정 로드와 DB 커넥션 풀 생성까지 대신한다.
+
+다음은 `pkg/app/app.go`의 엔진 생성부다.
+엔진을 프로세스에 하나만 만들어 돌려주는 `Engine`과, 설정과 저장소를 받아 라우터를 조립하는 `New`, 두 함수가 등장한다.
+
+[source,go]
+----
+var (
+	engine     *gin.Engine
+	engineOnce sync.Once
+	engineErr  error
+)
+
+// Engine은 프로세스 전역 라우터를 돌려준다. 서버리스 인스턴스가 따뜻할 때는
+// 재사용된다.
+func Engine() (*gin.Engine, error) {
+	engineOnce.Do(func() {
+		engine, engineErr = build()
+	})
+	return engine, engineErr
+}
+
+func build() (*gin.Engine, error) {
+	cfg, err := config.Load()
+	if err != nil {
+		return nil, err
+	}
+	if cfg.Driver != "postgres" {
+		return nil, fmt.Errorf("app.Engine requires postgres, got driver %q", cfg.Driver)
+	}
+	pool, err := db.Pool(context.Background(), cfg.DatabaseURL)
+	// ... 에러 처리 생략
+	return New(cfg, pgstore.New(pool)), nil
+}
+
+// New는 아무 Store 구현 위에 라우터를 조립한다. 미들웨어는 cfg.AuthMode가
+// 고른다. 운영은 Supabase 토큰 검증, 로컬 모드는 고정 사용자다.
+func New(cfg *config.Config, s model.Store) *gin.Engine {
+	h := handlers.New(s)
+
+	gin.SetMode(gin.ReleaseMode)
+	r := gin.New()
+	r.Use(gin.Recovery())
+	// ... 미들웨어와 API 라우트 등록 (뒤 절에서 발췌)
+
+	// HTML 화면: 서버 렌더링 템플릿 + htmx, 쿠키 세션. 위의 API는 프로그램
+	// 호출자를 위해 토큰 기반으로 남는다.
+	web.New(cfg, s).Register(r)
+
+	return r
+}
+----
+
+몇 가지 눈여겨볼 부분이 있다.
+
+첫째, 조립과 준비가 두 함수로 나뉘어 있다.
+`New`는 설정과 스토어를 받아 미들웨어와 라우트를 얹은 라우터를 만드는 순수한 조립 함수이고, `Engine`은 설정 로드와 DB 커넥션 풀 생성까지 마친 완성품을 돌려주는 포장이다.
+`New`가 구체적인 DB 타입이 아니라 `model.Store` 인터페이스를 받는 덕에 어떤 저장소 구현이든 꽂을 수 있다.
+{ch-go-types}에서 "할 줄 아는 일만 적어 둔 타입"으로 인터페이스를 익혔는데, `model.Store`가 이 앱에서 가장 크게 쓰이는 그 사례이고 이 설계의 효용은 앞의 계층 분리 절에서 봤다.
+
+둘째, `Engine`은 `sync.Once`로 엔진을 프로세스(process)당 한 번만 만든다.
+서버리스 함수는 요청이 뜸하면 꺼졌다가 새 요청이 오면 다시 켜지는데, 한 번 켜진 실행 환경은 한동안 살아남아 뒤이은 요청들을 이어서 처리한다.
+Vercel 서버리스 함수도 이렇게 웜 인스턴스(warm instance)가 살아 있는 동안 여러 요청을 같은 프로세스에서 처리하므로, 요청마다 DB 풀과 라우터를 다시 만들면 낭비가 크다.
+한 번 만든 것을 계속 돌려쓰는 싱글턴(singleton)으로 만들어 두면 콜드스타트(cold start) 첫 요청에서만 조립 비용을 치른다.
+
+.[용어 풀이] 프로세스(Process)
+[NOTE]
+====
+운영체제가 프로그램 하나를 실행하려고 띄운 실행 단위다.
+같은 프로그램이라도 두 번 실행하면 프로세스는 둘이고, 둘은 각자 자기만의 메모리를 갖는다.
+서버는 켜져서 꺼질 때까지가 프로세스 하나의 수명이라, 그동안 메모리에 만들어 둔 것(라우터, 커넥션 풀, 캐시)은 요청이 바뀌어도 남아서 재사용된다.
+반대로 프로세스가 꺼지면 그 메모리에 있던 것은 전부 사라지고, 다음 프로세스는 처음부터 다시 만들어야 한다.
+서버리스 함수에서 웜 인스턴스와 콜드스타트의 비용 차이가 생기는 이유가 여기에 있다.
+====
+
+셋째, `gin.Default()` 대신 `gin.New()`에 `gin.Recovery()`만 붙였다.
+`gin.Default()`는 로거와 패닉(panic) 복구 미들웨어를 함께 등록하는데, Vercel 환경에서는 플랫폼이 요청 로그를 남겨 주므로 Gin의 요청 로거는 중복이다.
+복구 미들웨어는 패닉으로 인한 중단을 요청 하나의 실패(500 응답)로 가둬 서버 프로세스 전체가 멈추지 않게 하므로, 이것만 남겼다.
+
+.[용어 풀이] 패닉(Panic)
+[NOTE]
+====
+Go 프로그램이 더 진행할 수 없는 오류를 만나 그 자리에서 실행을 중단하는 것이다.
+일상어의 "당황"과 달리 프로그램이 실제로 멈춰 서는 사건이라, 아무도 손을 쓰지 않으면 프로세스 전체가 종료된다.
+없는 배열 칸을 읽거나 nil 포인터를 따라가는 것처럼 코드가 당연하게 여기던 전제가 깨졌을 때 일어난다.
+예상한 실패를 `error` 값으로 돌려주는 것과 달리, 패닉은 예상하지 못한 실패 앞에서 프로그램을 세우는 쪽을 고른다.
+Go는 `recover`로 이 중단을 가로챌 길을 열어 두었고, Gin의 `gin.Recovery()`가 요청마다 그 일을 대신해 준다.
+====
+
+넷째, 마지막의 `web.New(cfg, s).Register(r)`는 브라우저에 보일 HTML 화면의 라우트를 같은 엔진에 등록한다.
+화면은 {ch-go-templates}에서 다룰 서버 렌더링 템플릿이 담당하므로, 이 장의 주인공인 `/api/*` 경로는 사람이 아니라 프로그램을 위한 창구로 남는다.
+터미널에서 curl로 데이터를 조회하는 사람, 카드 등록을 자동화하는 스크립트, 나중에 생길지 모를 모바일 앱 같은 외부 클라이언트가 이 창구의 손님이다.
+curl은 브라우저를 열지 않고 터미널에서 웹 요청을 직접 보내 응답을 그대로 받아 보는 도구다.
+두 세계는 인증 방식이 다르지만(화면은 쿠키, API는 Authorization 헤더의 토큰) 같은 스토어 `s`를 공유하므로, 어느 쪽으로 만든 카드든 다른 쪽에서도 그대로 보인다.
+
+다섯째, `build()` 안에서 실패할 수 있는 일(설정 누락, 잘못된 드라이버, DB 연결 실패)은 모두 에러로 반환한다.
+진입점 쪽에서 이 에러를 어떻게 다루는지가 다음 주제다.
+
+=== 로컬 서버와 Vercel 함수가 같은 앱을 공유한다
+
+이 앱에는 진입점(entrypoint)이 두 개다.
+로컬 개발용 상주 서버와 Vercel에 배포되는 서버리스 함수(serverless function)다.
+둘 다 방금 본 `New`가 조립한 엔진 위에서 돈다.
+
+설정을 읽고, 저장 방식에 맞는 스토어를 갖춘 엔진을 얻어, 지정한 포트에서 서버를 띄우는 것, 이것이 로컬 서버 `cmd/server/main.go`가 하는 일의 전부다.
+
+[source,go]
+----
+func main() {
+	cfg, err := config.Load()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var engine *gin.Engine
+	if cfg.Driver == "sqlite" {
+		s, err := litestore.Open(cfg.SQLitePath)
+		if err != nil {
+			log.Fatal(err)
+		}
+		engine = app.New(cfg, s)
+	} else {
+		engine, err = app.Engine()
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+	// ... 기동 로그 생략
+	if err := engine.Run(":" + cfg.Port); err != nil {
+		log.Fatal(err)
+	}
+}
+----
+
+분기의 기준은 설정의 드라이버다.
+`DATABASE_URL` 없이 도는 로컬 모드(sqlite)에서는 SQLite 스토어(`internal/litestore`)를 직접 열어 `app.New`에 꽂고, PostgreSQL 설정이 있으면 그 조립까지 대신하는 `app.Engine()`을 부른다.
+어느 쪽이든 라우터를 만드는 것은 같은 `New`다.
+로컬 모드의 전체 그림은 {ch-local-dev}에서 다룬다.
+
+`engine.Run`은 내부적으로 `http.ListenAndServe`를 호출하는 얇은 포장이다.
+로컬에서는 `go run ./cmd/server` 명령 하나로 8080 포트에 서버가 뜨고, 이 한 프로세스가 화면과 API를 모두 서빙한다.
+
+Vercel 쪽 진입점은 `api/index.go`다.
+이쪽도 하는 일은 같아서, `app.Engine()`으로 엔진을 얻어 들어온 요청을 그대로 넘겨줄 뿐이다.
+
+[source,go]
+----
+// Package handler는 Vercel 서버리스 진입점이다.
+// ...
+// Vercel은 이 파일을 모듈 바깥에서 컴파일하므로 internal/ 패키지를 (직접)
+// import할 수 없다. 필요한 공용 코드는 pkg/에 둔다.
+package handler
+
+func Handler(w http.ResponseWriter, r *http.Request) {
+	engine, err := app.Engine()
+	if err != nil {
+		http.Error(w, "server misconfigured: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	engine.ServeHTTP(w, r)
+}
+----
+
+이 코드가 성립하는 이유는 `*gin.Engine`이 표준 `http.Handler` 인터페이스를 구현하기 때문이다.
+풀어 말하면, Go 표준 라이브러리가 정해 둔 "요청을 받아 응답을 쓰는 물건"의 규격을 Gin 엔진이 그대로 따른다는 뜻이다.
+그래서 Vercel이 요구하는 시그니처 `func(http.ResponseWriter, *http.Request)` 안에서 `engine.ServeHTTP`를 호출하면, Gin 라우터가 경로를 보고 알아서 핸들러를 찾아 실행한다.
+`vercel.json`의 재작성(rewrite) 규칙이 화면이든 API든 모든 경로의 요청을 이 함수 하나로 모아 주므로, 함수는 하나지만 앱 전체가 동작한다.
+
+.[용어 풀이] 라우터와 라우팅
+[NOTE]
+====
+들어온 요청의 주소(예: `/api/decks`)와 메서드를 보고 어느 처리 함수로 보낼지 정하는 교환대가 라우터다.
+그 주소와 함수를 짝지어 주는 일을 라우팅이라 한다.
+우편물의 주소를 보고 담당 부서로 갈라 보내는 우체국 분류대에 해당한다.
+====
+
+왜 조립 코드를 `internal`이 아닌 `pkg/app`에 두었는지는 {ch-go-basics}에서 본 대로다.
+Vercel의 Go 빌더가 이 파일을 모듈 바깥에서 컴파일하므로 `internal/` 패키지를 직접 가져올 수 없고, 주석에도 그 답이 적혀 있다.
+이런 Vercel 함수의 제약과 배포 구성은 {ch-vercel-config}에서 자세히 다룬다.
+
+정리하면, 두 진입점이 엔진 하나를 공유하는 이 구조의 이점은 두 가지다.
+첫째, 진입점은 둘이어도 조립은 `New` 하나여서 로컬과 프로덕션이 같은 라우팅·핸들러·미들웨어 순서를 지나므로, "로컬에서는 됐는데 배포하니 다르다"류의 문제가 줄어든다.
+둘째, 실행 환경이 바뀌어도(예: Vercel에서 일반 컨테이너로 이전) 진입점 파일 하나만 새로 쓰면 된다.
+
+
+== 에이전트 활용 아이디어
+
+계층 경계를 에이전트와 함께 지켜 갈 때의 요령이다.
+
+`CLAUDE.md`에는 계층 규약을 적는다.
+"핸들러는 바인딩과 응답만 하고 로직은 store로 내린다", "새 라우트는 `pkg/app`의 조립부에 등록한다", "DB 접근은 Store 인터페이스를 통해서만 한다"가 이 저장소의 후보다.
+에이전트는 편의상 핸들러 안에 SQL을 넣고 싶어 하므로, 계층 경계일수록 지침이 필요하다.
+
+조립 코드의 위치 제약은 지침보다 검사에 맡기는 편이 낫다.
+`api/index.go`가 `internal/`을 가져올 수 없다는 규칙은 어겨도 로컬 빌드가 통과하므로, 지켜 달라고 부탁하는 대신 어기면 실패하는 장치로 만든다.
+그 장치를 서브에이전트로 만드는 방법은 {ch-quality-gates}에서 다룬다.
+
+== 정리
+
+이번 장에서는 Flashcard의 조각들이 한 벌의 앱으로 조립되는 방식을 살펴봤다.
+
+handlers(HTTP 관심사)와 store(DB 접근)의 계층 분리가 변경 범위 예측과 테스트 용이성을 어떻게 확보하는지 확인했다.
+핸들러가 구현이 아니라 `Store` 인터페이스에 기대므로, 같은 핸들러가 PostgreSQL과 SQLite 어느 쪽과도 짝을 이룬다.
+
+구조 면에서는 `pkg/app/app.go`의 `New`가 조립한 `*gin.Engine`을 로컬 서버(`cmd/server`)와 Vercel 함수(`api/index.go`)가 공유하고, Vercel 쪽 완성품은 `Engine`이 `sync.Once` 싱글턴으로 제공한다.
+이 공유가 성립하는 것은 `*gin.Engine`이 표준 `http.Handler`이기 때문이고, 조립 코드를 `pkg/`에 둔 것은 Vercel 빌더가 `internal` 패키지를 가져올 수 없기 때문이다.
+같은 엔진에 web 패키지의 HTML 화면 라우트도 함께 등록되므로, `/api/*`는 화면이 아니라 curl·자동화 스크립트 같은 프로그램을 위한 창구로 남는다.
+
+다음 장에서는 시선을 브라우저 쪽으로 돌려, {ch-html-hello}과 {ch-css-hello}에서 익힌 HTML과 CSS를 이 앱의 실제 화면 파일에서 다시 읽어 보겠다.

@@ -76,7 +76,7 @@ Vercel은 자기 위에서 도는 프로세스에 `VERCEL`이라는 환경 변�
 === 스토어 교체는 인터페이스 한 장 뒤에 숨는다
 
 환경 변수 하나로 데이터베이스가 통째로 바뀌는데 핸들러 코드는 어떻게 그대로일까.
-답은 {ch-gin}에서 본 handlers→store 계층 분리에 있다.
+답은 {ch-app-assembly}에서 본 handlers→store 계층 분리에 있다.
 `internal/model/store.go`에는 핸들러가 저장소에 요구하는 계약이 Go 인터페이스(interface)로 선언되어 있다.
 인터페이스는 메서드의 이름과 모양만 나열한 목록으로, 그 목록을 전부 갖춘 타입이면 무엇이든 이 자리에 들어올 수 있다.
 
@@ -308,7 +308,7 @@ func Pool(ctx context.Context, databaseURL string) (*pgxpool.Pool, error) {
 
 == 리전 콜로케이션: 함수와 DB를 같은 곳에
 
-{ch-vercel}에서 본 `vercel.json`은 함수 리전을 고정하고 있다.
+{ch-vercel-config}에서 본 `vercel.json`은 함수 리전을 고정하고 있다.
 
 [source,json]
 ----
@@ -423,7 +423,7 @@ RLS를 접근 제어 규칙이 아니라 뒷문을 잠그는 자물쇠로 쓴 �
 설령 가능했더라도 운영과 배포 방식이 다른 플랫폼이 하나 더 늘어나, 개발에서 통과한 것이 운영에서도 통과한다는 환경 일치의 전제가 약해진다.
 이미 쓰는 두 플랫폼 안에서 Vercel의 Preview 스코프와 Supabase의 두 번째 무료 프로젝트로 꾸리는 지금 구성이, 추가 플랫폼 없이 운영과 같은 기술 스택을 유지하는 답이었다.
 
-이 두 프로젝트는 {ch-git}에서 정한 브랜치 정책, {ch-vercel}에서 설정한 배포 구분과 나란히 개발·운영으로 정렬된다.
+이 두 프로젝트는 {ch-git}에서 정한 브랜치 정책, {ch-vercel-config}에서 설정한 배포 구분과 나란히 개발·운영으로 정렬된다.
 
 |===
 | 층 | 코드 | 배포 | 데이터베이스
@@ -433,7 +433,7 @@ RLS를 접근 제어 규칙이 아니라 뒷문을 잠그는 자물쇠로 쓴 �
 | 운영 | `release` 브랜치 | Vercel 프로덕션 배포 | 운영 Supabase 프로젝트
 |===
 
-배선은 {ch-vercel}에서 본 환경 변수 스코프가 담당한다.
+배선은 {ch-vercel-config}에서 본 환경 변수 스코프가 담당한다.
 `DATABASE_URL`이라는 같은 이름에 Production 스코프로는 운영 프로젝트의 값을, Preview 스코프로는 개발 프로젝트의 값을 등록해 두면, `main`에 push한 코드는 프리뷰 배포에서 개발 DB를, `release`에 병합한 코드는 운영 배포에서 운영 DB를 바라본다.
 `SUPABASE_URL`과 `SUPABASE_ANON_KEY`도 프로젝트마다 다르므로 같은 방식으로 스코프를 나눈다.
 

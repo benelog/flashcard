@@ -198,7 +198,7 @@ alter table decks add constraint decks_seq_key unique (seq);
 
 `generated always as identity` 컬럼을 추가하면 기존 행에도 순번이 자동으로 채워진다(backfill).
 새 컬럼을 추가하는 마이그레이션에서 기존 데이터를 어떻게 채울지는 항상 따라오는 질문인데, identity의 기본 동작이 그 답을 대신해 준 경우다.
-이 `seq`를 뒤섞어 4자 URL 코드로 바꾸는 slug 설계는 {ch-database}에서 다뤘다.
+이 `seq`를 뒤섞어 4자 URL 코드로 바꾸는 slug 설계는 {ch-domain-model}에서 다뤘다.
 
 세 사례의 공통점은 사용자 데이터가 쌓인 뒤에 도착한 요구라는 것이다.
 데이터를 보존한 채 열을 더하고 이름을 바꾸고 기존 행을 채우는 일이 모두 순서 있는 파일로 남아, 어떤 환경이든 같은 명령 하나로 같은 스키마에 도달한다.

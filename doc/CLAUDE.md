@@ -27,58 +27,66 @@
 
 ## 장 구성
 
-책의 사용법(구성·준비물·읽는 순서·다루는 범위)은 번호 없는 `how-to-read.adoc`으로 분리했다(2026-07-25). 도입은 기능 요구사항만 다루고, 비기능 요구사항·아키텍처는 1장(도입 소속)으로 모았다.
+책의 사용법(구성·준비물·읽는 순서·다루는 범위)은 번호 없는 `how-to-read.adoc`으로 분리했다(2026-07-25). 도입은 기능 요구사항과 비기능 요구사항을 함께 다루고(2026-07-25 이관), 아키텍처 전체 그림은 계획을 다듬는 3장에 둔다.
 `how-to-read.adoc`의 부별 소개는 장 목록이 아니라 다섯 부 요약이다. 장을 옮기거나 이름을 바꿔도 여기를 고칠 일이 거의 없도록 일부러 부 단위로 적었다.
-다섯 부로 나뉜다(2026-07-25 전면 재편).
-1부 **AI와 함께 시작하기**(1~5장)는 에이전트와 개발을 시작해 완성본 앱을 내 컴퓨터에 띄우는 데까지,
-2부 **세 언어 첫걸음**(6~10장)은 HTML·CSS, Go, SQL의 최소 문법을 저장소에 없는 연습용 예제로 다룬다.
-3부 **앱 코드 해부**(11~20장)는 실제 코드를 데이터에서 화면 순으로 읽고 앱을 통째로 띄우는 테스트로 그 층들의 배선까지 확인하며,
-4부 **세상에 공개하기**(21~28장)는 버전 관리·품질 게이트·배포·인증·운영 DB를,
-5부 **안정적으로 오래 운영하기**(29~32장)는 값 관리·PWA·무료 티어·다음 공부를 다룬다.
+다섯 부 35장으로 나뉜다(2026-07-25 전면 재편, 같은 날 분량 균등화 재편).
+1부 **AI와 함께 시작하기**(1~4장)는 기술 선택과 에이전트 협업을 읽고 마지막에 도구를 설치해 완성본 앱을 내 컴퓨터에 띄우는 데까지,
+2부 **세 언어 첫걸음**(5~9장)은 HTML·CSS, Go, SQL의 최소 문법을 저장소에 없는 연습용 예제로 다룬다.
+3부 **앱 코드 해부**(10~21장)는 실제 코드를 데이터에서 화면 순으로 읽고 앱을 통째로 띄우는 테스트로 그 층들의 배선까지 확인하며,
+4부 **세상에 공개하기**(22~30장)는 버전 관리·품질 게이트·배포·인증·운영 DB를,
+5부 **안정적으로 오래 운영하기**(31~35장)는 값 관리·PWA·캐시·무료 티어·다음 공부를 다룬다.
 3부까지는 SQLite 로컬 모드로 내 컴퓨터에서 완결된다.
 
+**설치는 1부 마지막(4장)에 몰아 둔다(2026-07-25).**
+1~3장은 아무것도 깔지 않고 코드를 읽고 이해하기만 하는 장이고, 각 장 도입부에 그 사실을 적어 두었다. 4장에서 처음 손을 움직여 도구를 설치하고 완성본을 띄운다. 앞 장에 "설치했으니 따라 해 보자" 류의 문장을 새로 넣지 않는다.
+
 언어 장은 **문법 먼저(2부), 앱 코드 나중(3부)** 순서로 짝지어 둔다.
-6·7장(HTML/CSS)과 8·9장(Go)은 저장소에 없는 연습용 예제로 문법만 익히고, 16장과 12·13장이 같은 문법을 이 앱의 실제 코드에서 다시 읽는다.
-독자의 첫 성취를 앞당기기 위해 완성본 앱의 클론·실행 체험은 5장에 두고, 그 원리 해부는 20장에 둔다.
-토큰 검증(26장)처럼 "따라 하기에 필수는 아닌 원리 심화"는 별도 장으로 분리해 건너뛸 수 있게 한다.
-테스트도 두 자리로 나눠 둔다. 14장은 함수 하나를 부르는 단위 테스트와 품질 검사 도구를, 19장은 앱을 통째로 띄워 화면과 API의 배선을 확인하는 통합 테스트를 다룬다. 19장이 검증하는 것(PRG 리다이렉트, htmx 헤더, hidden 필드 왕복)을 15·17·18장에서 먼저 배우므로 이 순서를 뒤집지 않는다.
+5·6장(HTML/CSS)과 7·8장(Go)은 저장소에 없는 연습용 예제로 문법만 익히고, 17장과 12·13장이 같은 문법을 이 앱의 실제 코드에서 다시 읽는다.
+완성본 앱의 클론·실행 체험은 4장에 두고, 그 원리 해부는 21장에 둔다.
+토큰 검증(28장)처럼 "따라 하기에 필수는 아닌 원리 심화"는 별도 장으로 분리해 건너뛸 수 있게 한다.
+테스트도 두 자리로 나눠 둔다. 14장은 함수 하나를 부르는 단위 테스트와 품질 검사 도구를, 20장은 앱을 통째로 띄워 화면과 API의 배선을 확인하는 통합 테스트를 다룬다. 20장이 검증하는 것(PRG 리다이렉트, htmx 헤더, hidden 필드 왕복)을 15·18·19장에서 먼저 배우므로 이 순서를 뒤집지 않는다.
+
+**장 하나가 너무 커지면 나눈다.** 큰 장은 대개 절 경계에 주제의 이음매가 이미 있다. 15·16장(Gin/조립), 10·11장(테이블 설계/도메인 설계), 25·26장(Vercel 선택/설정), 32·33장(PWA 설치/캐시)이 그렇게 갈라 둔 짝이다. 분량은 `node scripts/chapter-stats.mjs`로 재고, 결과와 진단은 `chapter-dist.md`에 있다.
 
 | 장 | 제목 | 파일 |
 |---|---|---|
 | 읽는 법 | 이 책을 읽는 법 | `how-to-read.adoc` |
-| 도입 | 무엇을 만드는가: Flashcard의 기능 요구사항 | `requirements.adoc` |
+| 도입 | 무엇을 만드는가: 기능·비기능 요구사항 | `requirements.adoc` |
 | 1 | 기술 선택: 요구사항에서 아키텍처까지 | `part1/tech-choices.adoc` |
-| 2 | 개발 도구 설치 | `part1/setup.adoc` |
-| 3 | Claude Code: AI 에이전트와 개발하기 | `part1/claude-code.adoc` |
-| 4 | 에이전트에게 지시하기: Plan 모드로 다듬는 요구사항과 아키텍처 | `part1/instructing.adoc` |
-| 5 | 완성된 앱 띄워 보기: 클론에서 실행까지 | `part1/first-run.adoc` |
-| 6 | HTML 첫걸음: 파일 하나로 만드는 웹 문서 | `part2/html-hello.adoc` |
-| 7 | CSS 첫걸음: 색과 배치를 입히는 규칙 | `part2/css-hello.adoc` |
-| 8 | Go 첫걸음: Hello, World로 배우는 기본 문법 | `part2/go-hello.adoc` |
-| 9 | Go로 데이터 다루기: 구조체, 슬라이스와 맵 | `part2/go-types.adoc` |
-| 10 | 데이터베이스 기초: 테이블, SQL, 인덱스 | `part2/database-basics.adoc` |
-| 11 | 데이터베이스 설계: 요구사항에서 테이블로 | `part3/database.adoc` |
+| 2 | Claude Code: AI 에이전트와 개발하기 | `part1/claude-code.adoc` |
+| 3 | 에이전트에게 지시하기: Plan 모드로 다듬는 요구사항과 아키텍처 | `part1/instructing.adoc` |
+| 4 | 개발 도구 설치와 첫 실행: 깔고, 받고, 띄운다 | `part1/first-run.adoc` |
+| 5 | HTML 첫걸음: 파일 하나로 만드는 웹 문서 | `part2/html-hello.adoc` |
+| 6 | CSS 첫걸음: 색과 배치를 입히는 규칙 | `part2/css-hello.adoc` |
+| 7 | Go 첫걸음: Hello, World로 배우는 기본 문법 | `part2/go-hello.adoc` |
+| 8 | Go로 데이터 다루기: 구조체, 슬라이스와 맵 | `part2/go-types.adoc` |
+| 9 | 데이터베이스 기초: 테이블, SQL, 인덱스 | `part2/database-basics.adoc` |
+| 10 | 데이터베이스 설계: 요구사항에서 테이블로 | `part3/database.adoc` |
+| 11 | 도메인을 표에 담기: 학습 상태와 덱 주소 | `part3/domain-model.adoc` |
 | 12 | Go 기초: 모듈, 변수, 함수 | `part3/go-basics.adoc` |
 | 13 | Go 코드 읽기: 구조체, 포인터, 에러 처리 | `part3/go.adoc` |
 | 14 | Go 테스트와 품질 검사 도구 | `part3/go-testing.adoc` |
-| 15 | Gin으로 만드는 HTTP API | `part3/gin.adoc` |
-| 16 | HTML과 CSS: 화면을 이루는 문서와 스타일 | `part3/html-css.adoc` |
-| 17 | html/template으로 만드는 화면 | `part3/go-templates.adoc` |
-| 18 | htmx: 자바스크립트 없이 만드는 동적 화면 | `part3/htmx.adoc` |
-| 19 | 앱을 통째로 띄우는 테스트: 화면과 API를 한 번에 검증하기 | `part3/app-tests.adoc` |
-| 20 | 로컬 개발 환경: 무설정 실행의 원리와 개발 도구 | `part3/local-dev.adoc` |
-| 21 | Git: 개념과 브랜치 정책 | `part4/git.adoc` |
-| 22 | 품질 게이트: 훅과 서브에이전트 | `part4/quality-gates.adoc` |
-| 23 | GitHub Actions: 원격 품질 게이트 | `part4/github-actions.adoc` |
-| 24 | Vercel: 한 플랫폼에 모두 배포하기 | `part4/vercel.adoc` |
-| 25 | Supabase 인증: OAuth 로그인과 쿠키 세션 | `part4/supabase-auth.adoc` |
-| 26 | 토큰 검증의 원리: JWT와 JWKS | `part4/token-verification.adoc` |
-| 27 | Supabase 데이터베이스: pgx 연결과 커넥션 풀 | `part4/supabase-db.adoc` |
-| 28 | 마이그레이션: 운영 중에 스키마를 고친다 | `part4/migrations.adoc` |
-| 29 | 환경 변수와 시크릿: 값이 두 벌이 된다 | `part5/env-secrets.adoc` |
-| 30 | PWA: 설치되는 앱으로 만들기 | `part5/pwa.adoc` |
-| 31 | 무료 티어 운영과 한도 관리 | `part5/free-tier.adoc` |
-| 32 | 다음 단계: 여기서 더 공부할 것들 | `part5/whats-next.adoc` |
+| 15 | Gin으로 만드는 HTTP API: 라우팅·바인딩·미들웨어 | `part3/gin.adoc` |
+| 16 | 앱을 조립하기: 계층 분리와 두 진입점 | `part3/app-assembly.adoc` |
+| 17 | HTML과 CSS: 화면을 이루는 문서와 스타일 | `part3/html-css.adoc` |
+| 18 | html/template으로 만드는 화면 | `part3/go-templates.adoc` |
+| 19 | htmx: 자바스크립트 없이 만드는 동적 화면 | `part3/htmx.adoc` |
+| 20 | 앱을 통째로 띄우는 테스트: 화면과 API를 한 번에 검증하기 | `part3/app-tests.adoc` |
+| 21 | 로컬 개발 환경: 무설정 실행의 원리와 개발 도구 | `part3/local-dev.adoc` |
+| 22 | Git: 개념과 브랜치 정책 | `part4/git.adoc` |
+| 23 | 품질 게이트: 훅과 서브에이전트 | `part4/quality-gates.adoc` |
+| 24 | GitHub Actions: 원격 품질 게이트 | `part4/github-actions.adoc` |
+| 25 | Vercel: 왜 이 플랫폼이고, 무엇이 배포되는가 | `part4/vercel.adoc` |
+| 26 | Vercel 설정과 제약: vercel.json, 콜드스타트, 배포 절차 | `part4/vercel-config.adoc` |
+| 27 | Supabase 인증: OAuth 로그인과 쿠키 세션 | `part4/supabase-auth.adoc` |
+| 28 | 토큰 검증의 원리: JWT와 JWKS | `part4/token-verification.adoc` |
+| 29 | Supabase 데이터베이스: pgx 연결과 커넥션 풀 | `part4/supabase-db.adoc` |
+| 30 | 마이그레이션: 운영 중에 스키마를 고친다 | `part4/migrations.adoc` |
+| 31 | 환경 변수와 시크릿: 값이 두 벌이 된다 | `part5/env-secrets.adoc` |
+| 32 | PWA: 설치되는 앱으로 만들기 | `part5/pwa.adoc` |
+| 33 | 캐시와 서비스 워커: 낡은 화면이 남지 않게 | `part5/caching.adoc` |
+| 34 | 무료 티어 운영과 한도 관리 | `part5/free-tier.adoc` |
+| 35 | 다음 단계: 여기서 더 공부할 것들 | `part5/whats-next.adoc` |
 | 부록 | 배포 준비: Supabase·Google·GitHub·Vercel 설정 | `appendix/deploy.adoc` |
 
 기술 장에는 "에이전트 활용 아이디어" 절을 둔다.
@@ -171,7 +179,7 @@ include::../../internal/srs/srs.go[tag=grade]
 | 파일 | 소유 용어 |
 |---|---|
 | `requirements.adoc` | API, CSV |
-| `part1/tech-choices.adoc` | 기술 스택, 서버, 컴파일/인터프리터 언어, 런타임, 정적/동적 타입, 프레임워크와 라이브러리, 의존성, 관계형 데이터베이스, NoSQL과 문서형 데이터베이스, 호스팅, 무료 티어, PostgreSQL, 프런트엔드와 백엔드, 상주 서버, PWA, 서버리스, 콜드스타트, 바이너리, SPA, 아키텍처 |
+| `part1/tech-choices.adoc` | 기술 스택, 데이터베이스, 서버, 컴파일/인터프리터 언어, 런타임, 정적/동적 타입, 프레임워크와 라이브러리, 의존성, 관계형 데이터베이스, NoSQL과 문서형 데이터베이스, 호스팅, 무료 티어, PostgreSQL, 프런트엔드와 백엔드, 상주 서버, PWA, 서버리스, 콜드스타트, 바이너리, SPA, 아키텍처 |
 | `part1/setup.adoc` | 터미널, WSL, 패키지 매니저, sudo, PATH와 셸 설정 파일 |
 | `part1/claude-code.adoc` | LLM, AI 코딩 에이전트와 도구 호출 루프, 컨텍스트와 토큰, 세션, 프롬프트, 프로젝트 지침(CLAUDE.md), 디렉터리와 프로젝트 루트, 스킬 |
 | `part1/first-run.adoc` | 클론, localhost와 포트 |

@@ -195,7 +195,7 @@ push가 끝나면 {ch-git}의 브랜치 정책대로 운영용 release 브랜치
 https://vercel.com 에서 Add New Project로 저장소를 가져온다(import).
 Root Directory는 저장소 루트 그대로 둔다.
 Framework Preset은 무엇으로 감지되든 상관없다.
-`vercel.json`의 `"framework": null`이 그 값을 덮어쓰기 때문이다({ch-vercel}).
+`vercel.json`의 `"framework": null`이 그 값을 덮어쓰기 때문이다({ch-vercel-config}).
 
 이 책의 브랜치 정책은 main을 개발용, release를 운영용으로 삼는다({ch-git}).
 그런데 Vercel은 처음에 main을 운영 브랜치로 잡아 둔다.
@@ -223,7 +223,7 @@ Production을 열어 Branch Tracking의 브랜치 값을 main에서 release로 �
 Production 스코프에는 운영 프로젝트 값을, Preview 스코프에는 개발 프로젝트 값을 넣는다(이유는 {ch-env-secrets}).
 이렇게 해야 개발 배포는 개발 DB에, 운영 배포는 운영 DB에 붙는다.
 세 번째 스코프인 Development 칸은 비워 둔다.
-이름만 보면 개발 값이 들어갈 자리 같지만, 이 스코프는 `vercel dev`라는 로컬 실행 명령이 읽는 자리라 이 책의 구성에서는 쓰이지 않는다({ch-vercel}).
+이름만 보면 개발 값이 들어갈 자리 같지만, 이 스코프는 `vercel dev`라는 로컬 실행 명령이 읽는 자리라 이 책의 구성에서는 쓰이지 않는다({ch-vercel-config}).
 개발 값이 들어갈 곳은 Preview다.
 값은 각 환경 상세 화면의 Environment Variables 구역에서 넣거나, 왼쪽 메뉴 Environment Variables에서 한꺼번에 관리한다.
 

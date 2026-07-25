@@ -66,7 +66,7 @@ func LocalMiddleware() gin.HandlerFunc {
 }
 ----
 
-{ch-gin}에서 본 라우터 조립부(`pkg/app/app.go`)는 인증 모드가 로컬이면 JWT 검증 미들웨어 자리에 이 함수를 대신 끼운다.
+{ch-app-assembly}에서 본 라우터 조립부(`pkg/app/app.go`)는 인증 모드가 로컬이면 JWT 검증 미들웨어 자리에 이 함수를 대신 끼운다.
 라우터도, 핸들러도, 그 아래 store 계층도 전부 그대로이고 바뀌는 것은 문 앞의 문지기 하나뿐이다.
 로컬 모드라고 다른 앱이 도는 것이 아니라, 배포 환경과 같은 코드가 다른 문지기를 세우고 도는 것이다.
 
@@ -82,7 +82,7 @@ func (w *Web) withUser() gin.HandlerFunc {
 			c.Next()
 		}
 	}
-	// ... 쿠키 세션 검증과 갱신 (25장에서 다룬다)
+	// ... 쿠키 세션 검증과 갱신 (27장에서 다룬다)
 }
 ----
 
@@ -95,7 +95,7 @@ func (w *Web) withUser() gin.HandlerFunc {
 
 앱이 돌았으니 이제 코드를 고치는 사람의 환경을 갖출 차례다.
 여기서는 코드 편집기로 VS Code(Visual Studio Code)를 쓰고, 그 위에 확장(extension) 두 개를 얹는다.
-설치는 {ch-setup}의 안내를 따르면 된다.
+설치는 {ch-first-run}의 안내를 따르면 된다.
 다른 편집기를 쓰는 독자라면 이 절을 "프로젝트의 규칙을 어떻게 저장소에 실어 보내는가"라는 관점으로만 읽어도 좋다.
 
 .[용어 풀이] 코드 편집기(Code Editor)와 확장(Extension)

@@ -79,7 +79,7 @@ func keyfuncFor(jwksURL, secret string) (jwt.Keyfunc, error) {
 
 기본 경로는 아래쪽 JWKS 분기다.
 `github.com/MicahParks/keyfunc/v3` 라이브러리가 JWKS 문서를 내려받아 캐시하고 주기적으로 갱신하며, 토큰 헤더의 키 ID(`kid`)에 맞는 공개키를 골라 준다.
-패키지 전역 변수 `jwks`를 `sync.Once`로 한 번만 초기화하는 것은 {ch-vercel}에서 본 서버리스 함수의 생명주기 때문이다.
+패키지 전역 변수 `jwks`를 `sync.Once`로 한 번만 초기화하는 것은 {ch-vercel-config}에서 본 서버리스 함수의 생명주기 때문이다.
 웜 인스턴스는 여러 요청을 처리하므로, JWKS 클라이언트를 재사용하면 첫 요청 이후에는 네트워크 조회 없이 검증할 수 있다.
 
 위쪽 분기는 공유 시크릿(HS256) 폴백(fallback)이다.

@@ -56,7 +56,7 @@ Claude Code는 이를 위한 장치로 훅을 제공한다.
 .[용어 풀이] 셸(Shell)과 셸 스크립트(Shell Script)
 [NOTE]
 ====
-셸은 터미널({ch-setup})에 친 명령을 받아 프로그램을 대신 실행하고 그 결과를 돌려주는 프로그램이다.
+셸은 터미널({ch-first-run})에 친 명령을 받아 프로그램을 대신 실행하고 그 결과를 돌려주는 프로그램이다.
 터미널이 명령을 주고받는 창이라면, 셸은 그 창 안에 앉아 명령을 알아듣고 처리하는 담당자다.
 리눅스와 macOS에서는 보통 bash나 zsh가 그 자리를 맡는다.
 셸 스크립트는 그렇게 한 줄씩 치던 명령들을 파일에 적어 두고 한꺼번에 실행하게 만든 것으로, 변수와 조건 분기를 쓸 수 있어 작은 프로그램이 된다.
@@ -340,7 +340,7 @@ include::../../.claude/agents/go-quality.md[]
 === 5단계 검사가 특히 중요한 이유
 
 5단계 `go build api/index.go`는 이 저장소 고유의 검사이며, 다섯 검사 중 가장 중요하다.
-Flashcard의 API는 {ch-vercel}에서 Vercel 서버리스 함수로 배포되는데, Vercel의 Go 런타임은 진입점인 `api/index.go`를 *모듈 컨텍스트 밖에서 단독 컴파일*한다.
+Flashcard의 API는 {ch-vercel-config}에서 Vercel 서버리스 함수로 배포되는데, Vercel의 Go 런타임은 진입점인 `api/index.go`를 *모듈 컨텍스트 밖에서 단독 컴파일*한다.
 Go의 `internal/` 패키지는 같은 모듈 안에서만 import할 수 있으므로, 이 파일이 `internal/` 패키지를 import하는 순간 로컬에서는 멀쩡히 빌드되지만 Vercel 배포는 실패한다.
 그래서 이 파일에 필요한 공유 코드는 전부 `pkg/app`에 있다.
 
@@ -351,7 +351,7 @@ Go의 `internal/` 패키지는 같은 모듈 안에서만 import할 수 있으�
 `go build api/index.go`처럼 파일을 단독 지정해야 Vercel의 컴파일 방식이 가깝게 재현된다.
 즉 이 검사는 *로컬 검증으로는 잡히지 않는 배포 실패를 커밋 전에 잡는 검사*다.
 푸시하고 배포가 깨진 뒤에 알게 되면 수정→푸시→배포 대기의 왕복이 몇 분씩 걸리지만, 이 검사는 몇 초 만에 같은 답을 준다.
-Vercel의 Go 함수 빌드 방식과 `pkg/app` 구조는 {ch-vercel}에서 자세히 다룬다.
+Vercel의 Go 함수 빌드 방식과 `pkg/app` 구조는 {ch-vercel-config}에서 자세히 다룬다.
 
 === 보고 규칙: 반환값을 설계한다
 

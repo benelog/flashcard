@@ -312,7 +312,7 @@ GitHub에서 만든 저장소의 기본 브랜치 이름은 관례상 main이다
 |  | `main` | `release`
 
 | 역할 | 개발 | 운영
-| 배포({ch-vercel}) | Vercel 프리뷰 | Vercel 프로덕션
+| 배포({ch-vercel-config}) | Vercel 프리뷰 | Vercel 프로덕션
 | 데이터베이스({ch-supabase-db}) | 개발용 DB | 운영용 DB
 | 코드가 들어오는 길 | 일상 개발의 커밋 | main에서의 병합만
 |===
@@ -333,7 +333,7 @@ release ─────────●───────────●──
 main에 쌓인 변경은 개발 환경, 즉 프리뷰 배포와 개발용 DB 위에서 실제로 굴려 본다.
 사용자에게 내보낼 만큼 무르익었다고 판단하면 main을 release로 병합한다.
 이 병합이 곧 운영 배포다.
-release에 커밋이 도착하면 프로덕션이 새로 배포되고({ch-vercel}), 그 코드는 운영용 DB를 바라본다({ch-supabase-db}).
+release에 커밋이 도착하면 프로덕션이 새로 배포되고({ch-vercel-config}), 그 코드는 운영용 DB를 바라본다({ch-supabase-db}).
 
 이 정책에서 "배포한다"는 별도의 행위가 아니라 병합이라는 Git 작업이 된다.
 배포의 단위가 곧 이력의 단위라는 첫 절의 이야기가 여기서 완성된다.
@@ -384,7 +384,7 @@ diff 요약, 커밋 메시지 초안, 변경이 건드린 파일 중 테스트�
 단일 브랜치는 가장 단순하지만 개발과 운영이 갈리지 않고, git flow는 층이 많은 대신 혼자에게 과하고, GitLab flow는 환경 브랜치로 그 사이를 절충한다.
 
 다섯째, Flashcard는 main(개발)과 release(운영) 두 브랜치를 둔다.
-main에서 release로의 병합이 곧 운영 배포이고, 두 브랜치는 {ch-vercel}의 프리뷰·프로덕션 배포와 {ch-supabase-db}의 개발·운영 데이터베이스 분리로 이어진다.
+main에서 release로의 병합이 곧 운영 배포이고, 두 브랜치는 {ch-vercel-config}의 프리뷰·프로덕션 배포와 {ch-supabase-db}의 개발·운영 데이터베이스 분리로 이어진다.
 
 이제 브랜치마다 의미가 생겼다.
 main에 도착하는 코드는 개발 환경으로 가고, release에 도착하는 코드는 사용자에게 간다.
