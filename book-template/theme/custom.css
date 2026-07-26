@@ -655,11 +655,11 @@
   justify-content: center;
   gap: 28px;
   padding: 48px 24px 72px;
-  background: #edf0f2;
+  background: #f4ece1;
 }
 
 .dark .fc-home {
-  background: #202226;
+  background: #262220;
 }
 
 .fc-book {
@@ -670,23 +670,23 @@
   aspect-ratio: 7 / 10;
   padding: 30px 32px 26px;
   box-sizing: border-box;
-  border: 1px solid #dfe3e8;
-  border-radius: 2px 7px 7px 2px;
-  background: #ffffff;
-  color: #171717;
+  border: 1px solid #ecdfd0;
+  border-radius: 2px 10px 10px 2px;
+  background: #fdf8f2;
+  color: #2b2320;
   overflow: hidden;
   text-decoration: none !important;
   box-shadow:
-    inset 7px 0 #2563eb,
-    0 18px 36px -14px rgba(23, 37, 84, 0.35);
+    inset 7px 0 #c2410c,
+    0 18px 36px -14px rgba(120, 72, 20, 0.35);
   transition: translate 0.25s, box-shadow 0.25s;
 }
 
 .fc-book:hover {
   translate: 0 -6px;
   box-shadow:
-    inset 7px 0 #2563eb,
-    0 28px 48px -14px rgba(23, 37, 84, 0.45);
+    inset 7px 0 #c2410c,
+    0 28px 48px -14px rgba(120, 72, 20, 0.45);
 }
 
 .fc-book h1 {
@@ -695,7 +695,7 @@
   font-size: 34px;
   line-height: 1.22;
   font-weight: 700;
-  color: #171717;
+  color: #2b2320;
   word-break: keep-all;
 }
 
@@ -707,8 +707,9 @@
 .fc-book h1 strong {
   display: inline-block;
   padding: 0 7px 2px;
-  background: #f59e0b;
-  color: #171717;
+  border-radius: 5px;
+  background: #fbbf24;
+  color: #2b2320;
   font-size: 38px;
   line-height: 1;
 }
@@ -719,7 +720,7 @@
   font-size: 13.5px;
   line-height: 1.7;
   font-weight: 600;
-  color: #525252;
+  color: #6f6259;
   word-break: keep-all;
 }
 
@@ -739,11 +740,11 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  height: 95px;
+  height: 87px;
 }
 
 .fc-layer + .fc-layer {
-  margin-top: -12px;
+  margin-top: -11px;
 }
 
 /* 위 판의 아랫귀가 아래 판을 덮어야 쌓인 모양이 된다 */
@@ -754,11 +755,11 @@
 .fc-plane {
   position: relative;
   flex: none;
-  width: 190px;
+  width: 176px;
   height: 100%;
-  filter: drop-shadow(0 11px 15px rgba(30, 64, 175, 0.16));
-  --sw: 162px;                                       /* 윗면 직사각형 가로 */
-  --sh: 101.25px;                                    /* 세로: 가로와 16:10(모니터 비율) */
+  filter: drop-shadow(0 11px 15px rgba(146, 88, 30, 0.18));
+  --sw: 150px;                                       /* 윗면 직사각형 가로 */
+  --sh: 93.75px;                                     /* 세로: 가로와 16:10(모니터 비율) */
   --t: 11px;                                         /* 판 두께 */
   --dw: calc((var(--sw) + var(--sh)) * 0.3536);      /* 윗면 반너비 */
   --dh: calc((var(--sw) + var(--sh)) * 0.1591);      /* 윗면 반높이 */
@@ -774,8 +775,9 @@
   height: var(--sh);
   box-sizing: border-box;
   padding: 11px 13px;
-  background: #fff;
-  border: 1.5px solid #d9e5f5;
+  background: #fffdfa;
+  border: 1.5px solid #f0dcc2;
+  border-radius: 5px;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -803,13 +805,13 @@
   transform: skewY(-24.228deg);
 }
 
-/* 층이 내려갈수록 옆면 파랑이 한 단씩 짙어진다 */
-.fc-layer:nth-child(1) .fc-side-l { background: #bfdbfe; }
-.fc-layer:nth-child(1) .fc-side-r { background: #93c5fd; }
-.fc-layer:nth-child(2) .fc-side-l { background: #3b82f6; }
-.fc-layer:nth-child(2) .fc-side-r { background: #2563eb; }
-.fc-layer:nth-child(3) .fc-side-l { background: #1d4ed8; }
-.fc-layer:nth-child(3) .fc-side-r { background: #1e40af; }
+/* 층이 내려갈수록 옆면 주황이 한 단씩 짙어진다 */
+.fc-layer:nth-child(1) .fc-side-l { background: #fde3b8; }
+.fc-layer:nth-child(1) .fc-side-r { background: #fbcd86; }
+.fc-layer:nth-child(2) .fc-side-l { background: #f6a94c; }
+.fc-layer:nth-child(2) .fc-side-r { background: #ea8c2a; }
+.fc-layer:nth-child(3) .fc-side-l { background: #d97a1e; }
+.fc-layer:nth-child(3) .fc-side-r { background: #b45309; }
 
 /* 윗면 그림: 간소화한 앱 화면(상단 바·플래시카드·버튼) */
 .m-screen {
@@ -823,8 +825,8 @@
 .m-topbar {
   height: 6px;
   width: 45%;
-  border-radius: 2px;
-  background: #e2e8f0;
+  border-radius: 3px;
+  background: #efe4d6;
 }
 
 .m-card {
@@ -832,30 +834,30 @@
   flex-direction: column;
   gap: 5px;
   padding: 7px 8px;
-  border: 2px solid #bfdbfe;
+  border: 2px solid #f8d9a8;
   border-radius: 7px;
-  background: #eff6ff;
+  background: #fff7ec;
 }
 
 .m-word {
   height: 7px;
   width: 45%;
-  border-radius: 2px;
-  background: #171717;
+  border-radius: 3px;
+  background: #2b2320;
 }
 
 .m-ans {
   height: 5px;
   width: 70%;
-  border-radius: 2px;
-  background: #93c5fd;
+  border-radius: 3px;
+  background: #f6a94c;
 }
 
 .m-btn {
   height: 9px;
   width: 100%;
   border-radius: 5px;
-  background: #2563eb;
+  background: #ea8c2a;
 }
 
 /* 윗면 그림: if/for 코드 줄 */
@@ -886,19 +888,19 @@
   font-weight: 700;
   font-size: 15px;
   line-height: 1;
-  color: #2563eb;
+  color: #c2410c;
 }
 
 .m-b {
   height: 6px;
-  border-radius: 2px;
-  background: #cbd5e1;
+  border-radius: 3px;
+  background: #e6dbcd;
 }
 
 .m-b1 { width: 48%; }
 .m-b2 { width: 62%; }
 .m-b3 { width: 36%; }
-.m-b4 { width: 52%; background: #93c5fd; }
+.m-b4 { width: 52%; background: #f6c98a; }
 
 /* 윗면 그림: DB 테이블 격자(머리 행 + 셀) */
 .m-table {
@@ -906,20 +908,20 @@
   grid-template-columns: repeat(4, 1fr);
   gap: 2px;
   width: 100%;
-  border: 2px solid #bfdbfe;
+  border: 2px solid #f8d9a8;
   border-radius: 7px;
   overflow: hidden;
-  background: #bfdbfe;
+  background: #f8d9a8;
 }
 
 .m-th {
   height: 11px;
-  background: #2563eb;
+  background: #ea8c2a;
 }
 
 .m-td {
   height: 11px;
-  background: #fff;
+  background: #fffdfa;
 }
 
 /* 행간을 죄어 이름과 기술이 한 묶음으로 읽히게 한다(본문 행간을 그대로 상속하면
@@ -934,15 +936,14 @@
 .fc-layer-name {
   font-size: 13px;
   font-weight: 700;
-  color: #171717;
+  color: #2b2320;
 }
 
 .fc-layer-tech {
-  font-family: ui-monospace, 'Cascadia Code', 'Source Code Pro', Menlo, Consolas, monospace;
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.05em;
-  color: #2563eb;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: #c2410c;
 }
 
 .fc-book-pitch {
@@ -950,9 +951,9 @@
   padding: 0;
   list-style: none;
   font-size: 10.5px;
-  line-height: 1.65;
+  line-height: 1.75;
   font-weight: 600;
-  color: #525252;
+  color: #6f6259;
   word-break: keep-all;
 }
 
@@ -962,7 +963,8 @@
   width: 5px;
   height: 5px;
   margin: 0 7px 1px 0;
-  background: #2563eb;
+  border-radius: 50%;
+  background: #ea8c2a;
 }
 
 .fc-book-footer {
@@ -971,17 +973,17 @@
   justify-content: flex-end;
   margin: auto 0 0;
   padding-top: 10px;
-  border-top: 1px solid #e5e5e5;
+  border-top: 1px solid #ecdfd0;
   font-size: 9px;
   font-weight: 700;
-  color: #737373;
+  color: #8a7a6d;
 }
 
 .fc-book-author {
   margin: 0;
   font-size: 13px;
   font-weight: 600;
-  color: #171717;
+  color: #2b2320;
 }
 
 /* 책 설명과 버튼 묶음. 좁은 화면에서는 표지 아래에, 넓은 화면에서는 표지 오른쪽에 놓인다 */
@@ -1046,18 +1048,20 @@
 }
 
 .fc-btn:hover {
-  border-color: var(--vp-c-brand-1);
-  color: var(--vp-c-brand-1);
+  border-color: #c2410c;
+  color: #c2410c;
 }
 
+/* 표지 옆에 놓이는 버튼이라 사이트 브랜드 색이 아니라 표지 색을 따른다 */
 .fc-btn.brand {
-  background: var(--vp-c-brand-1);
-  border-color: var(--vp-c-brand-1);
+  background: #c2410c;
+  border-color: #c2410c;
   color: #fff;
 }
 
 .fc-btn.brand:hover {
-  background: var(--vp-c-brand-2);
+  background: #9a3412;
+  border-color: #9a3412;
   color: #fff;
 }
 
@@ -1089,19 +1093,19 @@
   }
 
   .fc-layer {
-    height: 79px;
+    height: 71px;
     gap: 10px;
   }
 
   .fc-layer + .fc-layer {
-    margin-top: -10px;
+    margin-top: -9px;
   }
 
   .fc-plane {
-    width: 154px;
-    --sw: 132px;
-    --sh: 82.5px;
-    --t: 10px;
+    width: 140px;
+    --sw: 120px;
+    --sh: 75px;
+    --t: 9px;
   }
 
   .fc-top {
