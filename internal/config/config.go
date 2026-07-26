@@ -22,7 +22,6 @@ type Config struct {
 	SupabaseAnonKey string // 서버 쪽 OAuth 흐름에 쓰는 GoTrue apikey
 	JWKSURL         string
 	JWTSecret       string // 옛 HS256 대비책. 값이 있으면 쓴다
-	AllowedOrigins  []string
 	Port            string
 }
 
@@ -37,11 +36,6 @@ func Load() (*Config, error) {
 	}
 	if cfg.Port == "" {
 		cfg.Port = "8080"
-	}
-	for _, o := range strings.Split(os.Getenv("ALLOWED_ORIGINS"), ",") {
-		if o = strings.TrimSpace(o); o != "" {
-			cfg.AllowedOrigins = append(cfg.AllowedOrigins, o)
-		}
 	}
 
 	if cfg.DatabaseURL != "" {

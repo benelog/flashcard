@@ -158,7 +158,7 @@ Gin의 구조는 {ch-gin}에서, Vercel 함수로 감싸는 배포 구조와 그
 === 기술 스택 요약
 
 의존성 목록으로 기술 스택을 요약해 두겠다.
-Go 쪽의 직접 의존성은 웹 프레임워크 Gin, JWT 검증 라이브러리(golang-jwt, keyfunc), PostgreSQL 드라이버 pgx, 로컬 모드가 쓰는 SQLite 드라이버, 마이그레이션 도구 golang-migrate, CORS 미들웨어, UUID 라이브러리까지 여덟 개가 전부다.
+Go 쪽의 직접 의존성은 웹 프레임워크 Gin, JWT 검증 라이브러리(golang-jwt, keyfunc), PostgreSQL 드라이버 pgx, 로컬 모드가 쓰는 SQLite 드라이버, 마이그레이션 도구 golang-migrate, UUID 라이브러리까지 일곱 개가 전부다.
 화면 쪽에는 의존성 목록이라 부를 것 자체가 없다.
 템플릿(html/template)과 CSV 처리(encoding/csv)는 Go 표준 라이브러리이고, 브라우저에서 쓰는 외부 라이브러리는 htmx 하나뿐인데 그 파일마저 저장소에 그대로 넣어 두었다.
 패키지 매니저도, 빌드 도구도, 버전 잠금 파일도 화면 쪽에는 없다.

@@ -37,7 +37,6 @@ go 1.26.4
 
 require (
 	github.com/MicahParks/keyfunc/v3 v3.8.0
-	github.com/gin-contrib/cors v1.7.7
 	github.com/gin-gonic/gin v1.12.0
 	github.com/golang-jwt/jwt/v5 v5.3.1
 	github.com/golang-migrate/migrate/v4 v4.19.1
@@ -52,8 +51,8 @@ require (
 `internal/srs` 패키지를 쓰려면 `import "github.com/benelog/flashcard/internal/srs"`라고 쓴다.
 경로가 GitHub 주소와 같은 이유는 Go가 별도의 중앙 패키지 저장소 없이 소스 저장소 URL을 그대로 패키지 좌표로 쓰기 때문이다.
 
-`require` 블록에는 JWT 검증(keyfunc, golang-jwt), 웹 프레임워크(gin), DB 드라이버(pgx, sqlite) 등 직접 의존성 여덟 개뿐이다.
-웹 서버 하나에 바깥에서 가져온 코드가 여덟 꾸러미뿐이라는 사실이 {ch-go-hello}에서 말한 표준 라이브러리의 두터움을 숫자로 보여 준다.
+`require` 블록에는 JWT 검증(keyfunc, golang-jwt), 웹 프레임워크(gin), DB 드라이버(pgx, sqlite) 등 직접 의존성 일곱 개뿐이다.
+웹 서버 하나에 바깥에서 가져온 코드가 일곱 꾸러미뿐이라는 사실이 {ch-go-hello}에서 말한 표준 라이브러리의 두터움을 숫자로 보여 준다.
 이 목록이 짧다는 것은 {ch-tech-choices}에서 세운 "관리할 것이 적은가"라는 기준이 코드에 남긴 흔적이기도 하다.
 
 === 디렉터리마다 맡은 일이 있다
@@ -201,14 +200,13 @@ type Config struct {
 	SupabaseAnonKey string // 서버 쪽 OAuth 흐름에 쓰는 GoTrue apikey
 	JWKSURL         string
 	JWTSecret       string // 옛 HS256 대비책. 값이 있으면 쓴다
-	AllowedOrigins  []string
 	Port            string
 }
 ----
 
-칸 열 개 중 앞의 넷만 지금 필요하다.
+칸 아홉 개 중 앞의 넷만 지금 필요하다.
 `Driver`와 `DatabaseURL`·`SQLitePath`가 데이터를 어디에 둘지를, `AuthMode`가 사용자를 어떻게 확인할지를 나른다.
-Supabase와 JWT 관련 값들은 {ch-supabase-auth}에서, 접속 허용 주소(`AllowedOrigins`)는 {ch-gin}에서 쓰인다.
+Supabase와 JWT 관련 값들은 {ch-supabase-auth}에서 쓰인다.
 
 이 그릇을 채우는 것이 같은 파일의 `Load` 함수다.
 
@@ -219,7 +217,7 @@ func Load() (*Config, error) {
 		DatabaseURL: os.Getenv("DATABASE_URL"),
 		// ... Supabase 값과 포트 읽기 생략
 	}
-	// ... 포트 기본값과 ALLOWED_ORIGINS 처리 생략
+	// ... 포트 기본값 처리 생략
 
 	if cfg.DatabaseURL != "" {
 		cfg.Driver = "postgres"

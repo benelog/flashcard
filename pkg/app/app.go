@@ -14,9 +14,7 @@ import (
 	"context"
 	"fmt"
 	"sync"
-	"time"
 
-	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 
 	"github.com/benelog/flashcard/internal/auth"
@@ -66,16 +64,6 @@ func New(cfg *config.Config, s model.Store) *gin.Engine {
 	gin.SetMode(gin.ReleaseMode)
 	r := gin.New()
 	r.Use(gin.Recovery())
-
-	if len(cfg.AllowedOrigins) > 0 {
-		r.Use(cors.New(cors.Config{
-			AllowOrigins:     cfg.AllowedOrigins,
-			AllowMethods:     []string{"GET", "POST", "PATCH", "DELETE", "OPTIONS"},
-			AllowHeaders:     []string{"Authorization", "Content-Type"},
-			MaxAge:           12 * time.Hour,
-			AllowCredentials: false,
-		}))
-	}
 
 	required := auth.Middleware(cfg.JWKSURL, cfg.JWTSecret)
 	optional := auth.OptionalMiddleware(cfg.JWKSURL, cfg.JWTSecret)
