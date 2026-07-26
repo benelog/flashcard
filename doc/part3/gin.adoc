@@ -283,56 +283,20 @@ Gin에서 미들웨어와 핸들러는 같은 타입 `gin.HandlerFunc`이고, �
 [NOTE]
 ====
 요청이 최종 처리 함수(핸들러)에 닿기 전에 반드시 거치는 중간 관문이다.
-신분증을 확인하고 통과 여부를 정하는 검문소처럼, 로그인 검사나 출처 확인 같은 공통 처리를 핸들러 앞에서 대신 맡는다.
+신분증을 확인하고 통과 여부를 정하는 검문소처럼, 로그인 검사처럼 여러 요청에 공통으로 필요한 처리를 핸들러 앞에서 대신 맡는다.
 여러 관문을 순서대로 세워 두고, 한 곳에서 막히면 뒤는 건너뛴다.
 ====
 
 Flashcard에서 인증이 필요한 요청 하나가 지나는 체인을 나열하면 다음과 같다.
 
 . `gin.Recovery()`: 패닉(코드의 전제가 깨져 프로그램이 그 자리에서 실행을 중단하는 오류)을 잡아 500으로 변환한다(전역).
-. CORS 미들웨어: 허용 출처 검사와 사전 요청(preflight) 응답(전역, 설정된 경우).
 . `auth.Middleware`: JWT 검증, 사용자 ID를 컨텍스트에 저장(그룹).
 . `h.EnsureProfile()`: 프로필 행 지연 생성(그룹).
 . 최종 핸들러.
 
-그룹 미들웨어를 `r.Group(경로, 미들웨어...)`로 붙인다는 것은 앞 절에서 봤고, 전역 미들웨어는 `r.Use(...)`로 엔진에 직접 붙인다(다음 절의 CORS가 그 예다).
+그룹 미들웨어를 `r.Group(경로, 미들웨어...)`로 붙인다는 것은 앞 절에서 봤고, 전역 미들웨어는 `r.Use(...)`로 엔진에 직접 붙인다(맨 위의 `gin.Recovery()`가 그 예다).
 순서가 곧 의미다.
 Recovery가 가장 바깥에 있어야 안쪽 어디에서 패닉이 나도 잡을 수 있고, 인증이 EnsureProfile보다 앞이어야 "누구의 프로필인지"를 알 수 있다.
-
-=== CORS: 다른 출처를 위한 예외 통로
-
-웹페이지가 자신과 다른 출처(origin)의 API를 부르면 브라우저는 교차 출처 리소스 공유(CORS, Cross-Origin Resource Sharing) 검사를 수행한다.
-Flashcard에서는 화면과 API가 같은 Go 서버에서 나가므로(로컬은 8080 포트 하나, 배포는 같은 Vercel 도메인) 앱 자신의 화면이 API를 부를 때는 교차 출처가 아예 발생하지 않는다.
-그래도 `pkg/app/app.go`에는 gin-contrib/cors 미들웨어가 준비되어 있다.
-
-.[용어 풀이] CORS(Cross-Origin Resource Sharing)
-[NOTE]
-====
-웹페이지가 자신과 다른 출처(도메인·포트)의 API를 부를 때, 브라우저가 그 호출을 허용할지 검사하는 보안 규칙이다.
-서버가 "이 출처는 허용한다"고 응답 헤더로 밝혀야 브라우저가 결과를 넘겨준다.
-남의 사이트가 몰래 내 API를 호출해 사용자를 도용하는 일을 막기 위한 장치다.
-====
-
-다음 코드는 설정에 허용 출처 목록이 있을 때만 CORS 미들웨어를 등록하고, 어떤 출처·메서드·헤더를 받아 줄지 선언한다.
-
-[source,go]
-----
-if len(cfg.AllowedOrigins) > 0 {
-	r.Use(cors.New(cors.Config{
-		AllowOrigins:     cfg.AllowedOrigins,
-		AllowMethods:     []string{"GET", "POST", "PATCH", "DELETE", "OPTIONS"},
-		AllowHeaders:     []string{"Authorization", "Content-Type"},
-		MaxAge:           12 * time.Hour,
-		AllowCredentials: false,
-	}))
-}
-----
-
-허용 출처는 소스 코드에 값을 박아 두는 하드코딩(hard-coding) 대신 환경 변수 `ALLOWED_ORIGINS`에서 읽는다(`internal/config/config.go`).
-이 변수를 비워 두면(기본 상태) 미들웨어 자체가 등록되지 않는다.
-같은 출처끼리는 검사가 없으니 아무것도 필요 없고, 이 미들웨어가 일하는 경우는 별도 출처에 올린 웹페이지가 이 API를 직접 호출하는 예외적 구성뿐이다.
-그런 클라이언트를 붙일 일이 생기면 `ALLOWED_ORIGINS`에 그 출처를 적어 주면 문이 열린다.
-`AllowCredentials: false`인 이유는 이 API의 인증이 쿠키가 아니라 Authorization 헤더를 쓰기 때문이다.
 
 === JWT 인증 미들웨어: 컨텍스트에 사용자 ID를 싣는다
 
@@ -442,7 +406,7 @@ Gin을 선택한 이유는 {ch-tech-choices}에, net/http·chi·Echo 같은 대�
 
 라우팅은 메서드와 경로를 담당 함수에 잇는 일이고, 핸들러는 `gin.Context` 하나로 파라미터를 읽고 `c.JSON`으로 응답한다.
 요청 본문은 구조체 태그에 적어 둔 규칙대로 바인딩되며, 바인딩·검증 실패는 `badRequest`와 `fail` 도우미로 통일해 처리한다.
-미들웨어 체인은 Recovery → CORS(설정된 경우) → JWT 인증(로컬 모드에서는 고정 사용자) → 프로필 보장 순으로 흐르고, 인증 미들웨어가 실어 준 사용자 ID를 모든 핸들러가 `auth.UserID(c)`로 꺼내 쓴다.
+미들웨어 체인은 Recovery → JWT 인증(로컬 모드에서는 고정 사용자) → 프로필 보장 순으로 흐르고, 인증 미들웨어가 실어 준 사용자 ID를 모든 핸들러가 `auth.UserID(c)`로 꺼내 쓴다.
 
 여기까지가 요청 하나가 지나는 길이었다.
 다음 {ch-app-assembly}에서는 그 길을 이루는 조각들이 어떻게 한 벌의 앱으로 조립되는지를 본다.
