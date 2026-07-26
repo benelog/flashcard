@@ -38,11 +38,15 @@ dev URL은 main 브랜치의 최신 Preview 배포를 가리키는 고정 별칭
 ```bash
 ./run_local.sh   # SQLite, 환경 변수 없음, 로그인 없음
 ./run_dev.sh     # 개발 Supabase DB + GitHub/Google 로그인 (.env.dev 필요)
+./run_book.sh    # 책(doc/) 이북 뷰어 개발 서버
 ```
 
 `run_local.sh`는 환경 변수 없이 http://localhost:8080 이 뜬다 (SQLite 로컬 모드).
 개발 DB에 붙어 로그인까지 시험하려면 `.env.dev.example`을 `.env.dev`로 복사해 채우고 `run_dev.sh`를 쓴다.
 스키마를 개발 DB에 적용하는 `./migrate_dev.sh`도 같은 파일을 읽는다. 상세는 [DEPLOY.md](./DEPLOY.md) 참고.
+
+책 원고를 보려면 `./run_book.sh`로 http://localhost:5173/flashcard/ 를 띄운다(npm 의존성은 처음 한 번 자동 설치).
+`./run_book.sh build`는 인용과 링크까지 검증하는 전체 빌드, `./run_book.sh preview`는 그 결과를 그대로 보여 준다.
 
 ## 테스트
 

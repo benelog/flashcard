@@ -18,7 +18,7 @@
 - 원고는 **AsciiDoc**(.adoc)이고, 빌드 엔진은 저장소 루트의 **`book-template/`**(다른 책에도 재사용할 수 있는 npm 패키지, 추후 별도 저장소로 분리 예정)다. `book build`가 원고를 downdoc으로 마크다운으로 변환해 `.generated/`(gitignore)에 만들고 **VitePress**가 사이트로 빌드한다.
 - `doc/`은 독립 `package.json`으로 `file:../book-template`을 의존한다(앱에는 npm이 없다). npm scripts(dev/build/pdf/og)는 모두 `book` CLI를 부른다.
 - **책의 단일 설정 소스는 `doc/book.config.mjs`다.** 제목·설명·저자·배포 주소·표지 문구·장 목차(toc)가 여기 있고, 사이트 사이드바·nav·OG 메타·홈 표지·PDF 표지·차례·아웃라인이 전부 여기서 파생된다.
-- 로컬 확인: `cd book-template && npm install`(최초 한 번) 후 `cd doc && npm install && npm run dev` / 빌드 검증: `npm run build` (깨진 링크 포함 검증)
+- 로컬 확인: 저장소 루트의 `./run_book.sh`(의존성 설치까지 알아서 하고 http://localhost:5173/flashcard/ 를 띄운다). 손으로 하려면 `cd book-template && npm install`(최초 한 번) 후 `cd doc && npm install && npm run dev` / 빌드 검증: `./run_book.sh build`(= `cd doc && npm run build`, 깨진 링크 포함 검증)
 - 테마: `book-template/theme/custom.css` — 본문 명조(Noto Serif KR)·제목 고딕, 행간 2.05·양쪽 정렬, 인쇄용 CSS 포함. 한글 폰트가 없는 CI 러너 대비로 웹폰트 폴백을 둔다.
 - 이북 뷰어 레이아웃: `book-template/theme/Layout.vue`(DefaultTheme 확장). 목차는 왼쪽 하나뿐(오른쪽 아웃라인 없음), 상단 바 "목차" 버튼으로 접기/펼치기, 본문은 회색 배경 위 페이지 카드, 상단 읽기 진행 바, 좌우 화살표와 ←/→ 키로 장 이동. 홈(책 표지 랜딩)은 `book.config.mjs`의 cover 데이터에서 생성된다(홈 원고 파일은 없다).
 - PDF: `npm run pdf`(`book-template/lib/pdf.mjs`)가 표지·차례를 만들고 빌드 결과를 장 순서대로 인쇄해 `flashcard-book.pdf` 한 권으로 병합한다. CI(`book.yml`)가 매 배포마다 재생성한다.
