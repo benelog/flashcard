@@ -16,7 +16,7 @@ export default {
   // 북마크·형광펜 localStorage 키 접두사. ef-는 앱 이름 변경 전의 잔재를 이행한다.
   storage: { prefix: 'fc', legacyPrefixes: ['ef'] },
   cover: {
-    titleHtml: '<strong>이해</strong>하며<br>만드는<br>나만의 웹 앱',
+    titleHtml: '<strong>이해</strong>하며 만드는<br>나만의 웹 앱',
     subtitleHtml: 'AI에게 지시해 쉬운 프로그래밍 언어로 만들고,<br>개념을 익혀 오랫동안 안정적으로 운영한다',
     diagram: [
       { name: '화면', tech: 'HTML · CSS', motif: 'screen' },
@@ -26,7 +26,6 @@ export default {
     pitch: [
       '프로그래밍이 처음이어도 첫 장부터 따라올 수 있다',
       '코드는 AI 에이전트가 쓰고, 판단은 사람이 한다',
-      '배우는 언어는 셋뿐: HTML·CSS, Go, SQL',
       '무료 티어에 올려 서버 비용 월 0원으로 운영한다',
     ],
     homeDesc:
