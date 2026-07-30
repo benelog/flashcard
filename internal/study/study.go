@@ -30,13 +30,41 @@ const (
 	MaxDailyGoal     = 200
 )
 
+// ClampGoal은 하루 학습량을 유효 범위로 보정한다. 저장된 설정이든 API의
+// limit이든 범위 밖 값은 기본값으로 돌아간다.
+func ClampGoal(n int) int {
+	if n <= 0 || n > MaxDailyGoal {
+		return DefaultDailyGoal
+	}
+	return n
+}
+
+// GoalFromProfile은 프로필 설정 JSON에서 하루 학습량을 읽는다. 화면의 학습
+// 시작과 JSON API의 세션 생성이 같은 값을 읽어야 "설정한 학습량"이 입구마다
+// 다르지 않다.
+func GoalFromProfile(p model.Profile) int {
+	var s struct {
+		DailyGoal int `json:"dailyGoal"`
+	}
+	_ = json.Unmarshal(p.Settings, &s)
+	return ClampGoal(s.DailyGoal)
+}
+
+// EndOfDay는 "오늘 복습"의 만기 상한으로, 방문자 시간대에서 now가 속한 날의
+// 마지막 순간이다. now를 인자로 받아 날짜 경계 계산을 시계 없이 검증한다.
+// 홈 배지·학습 시작·JSON API의 기본 만기 창이 전부 이 함수를 쓴다.
+func EndOfDay(now time.Time, loc *time.Location) time.Time {
+	now = now.In(loc)
+	return time.Date(now.Year(), now.Month(), now.Day(), 23, 59, 59, 0, loc)
+}
+
 // Request는 호출자의 요청 하나다. 모드마다 쓰는 필드가 다르다.
 type Request struct {
 	Mode      string
 	DeckID    *uuid.UUID      // model.ModeDeck
 	Rule      json.RawMessage // model.ModeSmart
-	DueBefore time.Time       // model.ModeDue: 이 시각까지 만기인 카드까지
-	Limit     int             // model.ModeDue
+	DueBefore time.Time       // model.ModeDue: 이 시각까지 만기인 카드까지. "오늘 복습"이면 EndOfDay
+	Limit     int             // model.ModeDue. 호출자가 정하지 않으면 GoalFromProfile
 }
 
 // Plan은 고른 카드 목록과 세션 행에 적을 값들이다.

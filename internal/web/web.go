@@ -89,13 +89,6 @@ func clientTZ(c *gin.Context) (string, *time.Location) {
 	return model.Location(cookieValue(c, tzCookie))
 }
 
-// endOfToday는 복습 큐의 만기 상한으로, 방문자 시간대에서 now가 속한 날의
-// 마지막 순간이다. now를 인자로 받아 날짜 경계 계산을 시계 없이 검증한다.
-func endOfToday(now time.Time, loc *time.Location) time.Time {
-	now = now.In(loc)
-	return time.Date(now.Year(), now.Month(), now.Day(), 23, 59, 59, 0, loc)
-}
-
 // postFormValues는 요청 본문을 해석해 폼 값을 돌려준다. 핸들러 옆의 필드
 // 해석 함수들이 url.Values만 보는 순수 함수로 남게 하기 위해서다.
 // multipart와 urlencoded 모두 지원한다(ErrNotMultipart는 정상 경로).

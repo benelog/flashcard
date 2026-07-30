@@ -42,9 +42,9 @@ func settingsFrom(profile model.Profile) profileSettings {
 	if settings.TtsRate <= 0 {
 		settings.TtsRate = defaultTtsRate
 	}
-	if settings.DailyGoal <= 0 {
-		settings.DailyGoal = defaultDailyGoal
-	}
+	// 하루 학습량의 보정 규칙은 JSON API의 limit 보정과 같아야 하므로
+	// internal/study가 정한다.
+	settings.DailyGoal = study.ClampGoal(settings.DailyGoal)
 	return settings
 }
 

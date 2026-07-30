@@ -144,7 +144,7 @@ func (w *Web) planStudy(c *gin.Context, dailyGoal int, loc *time.Location) (stud
 	req := study.Request{
 		Mode:      c.Query("mode"),
 		Rule:      json.RawMessage(c.Query("rule")),
-		DueBefore: endOfToday(time.Now(), loc),
+		DueBefore: study.EndOfDay(time.Now(), loc),
 		Limit:     dailyGoal,
 	}
 	if req.Mode == "" {

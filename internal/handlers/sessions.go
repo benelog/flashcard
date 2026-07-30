@@ -29,9 +29,6 @@ func (h *Handlers) CreateSession(c *gin.Context) {
 		badRequest(c, "invalid body")
 		return
 	}
-	if body.Limit <= 0 || body.Limit > study.MaxDailyGoal {
-		body.Limit = study.DefaultDailyGoal
-	}
 	if body.Direction == "" {
 		body.Direction = model.DefaultDirection
 	}
@@ -41,13 +38,28 @@ func (h *Handlers) CreateSession(c *gin.Context) {
 		badRequest(c, "direction must be "+strings.Join(model.Directions, " or "))
 		return
 	}
-	dueBefore := time.Now()
-	if body.DueBefore != nil {
-		dueBefore = *body.DueBefore
-	}
 
 	userID := auth.UserID(c)
 	ctx := c.Request.Context()
+
+	// due 모드에서 호출자가 정하지 않은 값은 화면과 같은 규칙으로 채운다:
+	// limit은 프로필의 하루 학습량, dueBefore는 방문자(?tz=) 시간대의 오늘 끝.
+	// 그래야 같은 사용자가 어느 입구로 오든 "오늘 복습"이 같은 카드를 낸다.
+	if body.Limit <= 0 || body.Limit > study.MaxDailyGoal {
+		profile, err := h.Store.GetOrCreateProfile(ctx, userID, "")
+		if err != nil {
+			fail(c, err)
+			return
+		}
+		body.Limit = study.GoalFromProfile(profile)
+	}
+	var dueBefore time.Time
+	if body.DueBefore != nil {
+		dueBefore = *body.DueBefore
+	} else {
+		_, loc := clientLocation(c)
+		dueBefore = study.EndOfDay(time.Now(), loc)
+	}
 
 	// 어느 카드를 낼지는 internal/study가 정한다. 화면 쪽 학습도 같은 함수를
 	// 부르므로 두 입구가 같은 카드를 같은 순서로 낸다.
@@ -130,7 +142,10 @@ func (h *Handlers) FinishSession(c *gin.Context) {
 }
 
 func (h *Handlers) DueCount(c *gin.Context) {
-	dueBefore := time.Now()
+	// 기본 만기 창은 방문자(?tz=) 시간대의 오늘 끝. 홈 화면 배지와 같은 수가
+	// 나오게 하기 위해서다.
+	_, loc := clientLocation(c)
+	dueBefore := study.EndOfDay(time.Now(), loc)
 	if raw := c.Query("dueBefore"); raw != "" {
 		t, err := time.Parse(time.RFC3339, raw)
 		if err != nil {

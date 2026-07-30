@@ -25,7 +25,7 @@ func (w *Web) homePage(c *gin.Context) {
 	ctx := c.Request.Context()
 	tz, loc := clientTZ(c)
 
-	due, err := w.store.DueCount(ctx, userID, endOfToday(time.Now(), loc))
+	due, err := w.store.DueCount(ctx, userID, study.EndOfDay(time.Now(), loc))
 	if err != nil {
 		w.failPage(c, err)
 		return

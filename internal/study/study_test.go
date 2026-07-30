@@ -205,6 +205,55 @@ func TestPickPropagatesStoreFailure(t *testing.T) {
 	}
 }
 
+// "오늘 복습"의 만기 상한은 방문자 시간대의 그날 마지막 순간이다. 시각을 주입
+// 받으므로 자정 경계와 시간대 변환을 시계 없이 검증한다.
+func TestEndOfDay(t *testing.T) {
+	seoul, err := time.LoadLocation("Asia/Seoul")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// UTC 7/24 16:00 = 서울 7/25 01:00. 서울 방문자의 "오늘"은 이미 25일이다.
+	now := time.Date(2026, 7, 24, 16, 0, 0, 0, time.UTC)
+	got := EndOfDay(now, seoul)
+	want := time.Date(2026, 7, 25, 23, 59, 59, 0, seoul)
+	if !got.Equal(want) {
+		t.Errorf("EndOfDay(%v, Seoul) = %v, want %v", now, got, want)
+	}
+
+	// 같은 순간이라도 UTC 방문자의 하루는 아직 24일이다.
+	got = EndOfDay(now, time.UTC)
+	want = time.Date(2026, 7, 24, 23, 59, 59, 0, time.UTC)
+	if !got.Equal(want) {
+		t.Errorf("EndOfDay(%v, UTC) = %v, want %v", now, got, want)
+	}
+}
+
+// 하루 학습량은 화면과 JSON API가 같은 프로필 값을 읽어야 한다. 설정 JSON이
+// 없거나 범위를 벗어나면 기본값으로 돌아간다.
+func TestGoalFromProfile(t *testing.T) {
+	tests := []struct {
+		name     string
+		settings string
+		want     int
+	}{
+		{"저장한 적 없음", "", DefaultDailyGoal},
+		{"빈 객체", `{}`, DefaultDailyGoal},
+		{"정상 값", `{"dailyGoal":30}`, 30},
+		{"0은 기본값으로", `{"dailyGoal":0}`, DefaultDailyGoal},
+		{"상한 초과도 기본값으로", `{"dailyGoal":999}`, DefaultDailyGoal},
+		{"깨진 JSON", `{nope`, DefaultDailyGoal},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := GoalFromProfile(model.Profile{Settings: []byte(tt.settings)})
+			if got != tt.want {
+				t.Errorf("GoalFromProfile(%q) = %d, want %d", tt.settings, got, tt.want)
+			}
+		})
+	}
+}
+
 func TestSuggestionsKeepOnlyRulesWithCards(t *testing.T) {
 	suggested := smartrules.Suggested()
 	if len(suggested) < 2 {
