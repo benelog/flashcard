@@ -73,7 +73,7 @@ func bucketDaily(moments []reviewMoment, loc *time.Location) []model.DailyStat {
 func (s *Store) StatsSummary(ctx context.Context, userID uuid.UUID, tz string, loc *time.Location) (model.Summary, error) {
 	var sum model.Summary
 	err := s.db.QueryRowContext(ctx,
-		`select count(*), coalesce(sum(result), 0)
+		`select count(*), count(*) filter (where result)
 		 from review_logs where user_id = ? and is_retry = 0`, userID.String()).
 		Scan(&sum.TotalReviews, &sum.CorrectReviews)
 	if err != nil {
@@ -81,7 +81,9 @@ func (s *Store) StatsSummary(ctx context.Context, userID uuid.UUID, tz string, l
 	}
 
 	// 스트릭: 리뷰 시각을 Go에서 현지 날짜로 묶고 오늘부터 거슬러 센다. 어제
-	// 끝난 스트릭도 인정한다(model.Streak의 의미 그대로).
+	// 끝난 스트릭도 인정한다(model.Streak의 의미 그대로). pgstore는 같은 조회에
+	// 400일 상한을 두지만 여기는 없다: 로컬 DB는 한 사용자 것이라 그만큼 쌓이지
+	// 않고, SQLite는 날짜 중복 제거를 Go에서 해야 해 어차피 전 행을 읽는다.
 	rows, err := s.db.QueryContext(ctx,
 		`select reviewed_at from review_logs where user_id = ?`, userID.String())
 	if err != nil {

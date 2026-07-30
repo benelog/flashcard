@@ -215,39 +215,42 @@ func withParam(q url.Values, key, value string) string {
 }
 
 // studyBody는 상태의 현재 단계에 맞는 조각을 만들고, 학습 중이면 현재 카드를
-// 읽어 온다.
+// 읽어 온다. 재귀가 아니라 루프인 이유: 카드가 그 사이 삭제된 극단적 경우 큐를
+// 한 칸 줄여 다시 도는데, 대량 삭제라면 재귀 깊이가 큐 길이만큼 깊어진다.
 func (w *Web) studyBody(c *gin.Context, state studyState) studyBodyView {
-	v := studyBodyView{State: state}
-	switch {
-	case state.FirstPassTotal == 0:
-		v.Phase = "empty"
-	case len(state.Queue) > 0:
-		v.Phase = "studying"
-		v.Index = state.RoundCards - len(state.Queue)
-		cardID, err := uuid.Parse(state.Queue[0])
-		if err == nil {
-			card, cerr := w.store.GetCard(c.Request.Context(), auth.UserID(c), cardID)
-			err = cerr
-			if cerr == nil {
-				v.Card = &card
-				v.TextTTS = card.Text
-				v.BackTTS = card.Text
-				if card.Example != nil {
-					v.BackTTS = card.Text + ". " + *card.Example
+	for {
+		v := studyBodyView{State: state}
+		switch {
+		case state.FirstPassTotal == 0:
+			v.Phase = "empty"
+		case len(state.Queue) > 0:
+			v.Phase = "studying"
+			v.Index = state.RoundCards - len(state.Queue)
+			cardID, err := uuid.Parse(state.Queue[0])
+			if err == nil {
+				card, cerr := w.store.GetCard(c.Request.Context(), auth.UserID(c), cardID)
+				err = cerr
+				if cerr == nil {
+					v.Card = &card
+					v.TextTTS = card.Text
+					v.BackTTS = card.Text
+					if card.Example != nil {
+						v.BackTTS = card.Text + ". " + *card.Example
+					}
 				}
 			}
+			if v.Card == nil {
+				// 카드가 그 사이 삭제된 극단적 경우: 남은 큐로 계속한다.
+				state.Queue = state.Queue[1:]
+				continue
+			}
+		case len(state.Missed) > 0:
+			v.Phase = "break"
+		default:
+			v.Phase = "finished"
 		}
-		if v.Card == nil {
-			// 카드가 그 사이 삭제된 극단적 경우: 남은 큐로 계속한다.
-			state.Queue = state.Queue[1:]
-			return w.studyBody(c, state)
-		}
-	case len(state.Missed) > 0:
-		v.Phase = "break"
-	default:
-		v.Phase = "finished"
+		return v
 	}
-	return v
 }
 
 // stateFromForm은 이전 조각이 실어 보낸 학습 상태를 되살린다.

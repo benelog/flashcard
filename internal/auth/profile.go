@@ -1,9 +1,11 @@
 package auth
 
 import (
+	"context"
 	"sync"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 
 	"github.com/benelog/flashcard/internal/model"
 )
@@ -15,7 +17,14 @@ import (
 // 화면과 JSON API가 같이 쓰므로 실패를 어떤 모양으로 알릴지(오류 화면, JSON)는
 // fail로 받는다.
 // tag::ensure-profile[]
-func EnsureProfile(s model.Store, fail func(*gin.Context, error)) gin.HandlerFunc {
+// profileStore는 이 미들웨어가 저장소에서 쓰는 전부다. 인터페이스는 쓰는 쪽에서
+// 최소로 정의한다: model.Store가 이 계약을 포함하므로 호출자는 저장소를 그대로
+// 넘기면 된다.
+type profileStore interface {
+	GetOrCreateProfile(ctx context.Context, userID uuid.UUID, displayName string) (model.Profile, error)
+}
+
+func EnsureProfile(s profileStore, fail func(*gin.Context, error)) gin.HandlerFunc {
 	var seen sync.Map
 	return func(c *gin.Context) {
 		userID := UserID(c)

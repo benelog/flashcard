@@ -7,7 +7,9 @@
 // 전에 api/index.go의 주석을 함께 읽는다.
 //
 // 이 패키지는 internal/litestore를 import하면 안 된다. Engine은 Vercel에서
-// 돌고, 서버리스 바이너리에 SQLite가 링크되면 안 되기 때문이다.
+// 돌고, 서버리스 바이너리에 SQLite가 링크되면 안 되기 때문이다. 예외는 _test
+// 파일뿐이다(테스트는 배포 바이너리에 들어가지 않으므로 임시 SQLite로 앱을
+// 통째로 띄운다).
 package app
 
 import (

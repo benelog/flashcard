@@ -5,7 +5,7 @@
 // 판단만 여기 모았고, 제목·되돌아갈 주소·오류를 어떤 모양으로 알릴지는 부르는
 // 쪽에 남겼다.
 //
-// model.Store만 보므로 HTTP 없이 단위 테스트할 수 있다.
+// 저장소는 아래 Store 인터페이스로만 보므로 HTTP 없이 단위 테스트할 수 있다.
 package study
 
 import (
@@ -58,6 +58,16 @@ func EndOfDay(now time.Time, loc *time.Location) time.Time {
 	return time.Date(now.Year(), now.Month(), now.Day(), 23, 59, 59, 0, loc)
 }
 
+// Store는 학습 정책이 저장소에서 쓰는 부분집합이다. 인터페이스는 쓰는 쪽에서
+// 최소로 정의한다는 Go 관용구를 따른 것으로, model.Store가 이 계약을 포함하므로
+// 호출자는 저장소를 그대로 넘기면 되고 테스트 스텁은 이 네 개만 채우면 된다.
+type Store interface {
+	ListCards(ctx context.Context, userID, deckID uuid.UUID) ([]model.Card, error)
+	DueCards(ctx context.Context, userID uuid.UUID, dueBefore time.Time, limit int) ([]model.Card, error)
+	CardsByRule(ctx context.Context, userID uuid.UUID, rule smartrules.Rule) ([]model.Card, error)
+	CountByRule(ctx context.Context, userID uuid.UUID, rule smartrules.Rule) (int, error)
+}
+
 // Request는 호출자의 요청 하나다. 모드마다 쓰는 필드가 다르다.
 type Request struct {
 	Mode      string
@@ -86,7 +96,7 @@ var (
 
 // Pick은 req에 맞는 카드를 불러온다. 돌려주는 error가 위 sentinel 중 하나면
 // 요청이 잘못된 것이고, 그 밖의 error는 저장소 실패다.
-func Pick(ctx context.Context, s model.Store, userID uuid.UUID, req Request) (Plan, error) {
+func Pick(ctx context.Context, s Store, userID uuid.UUID, req Request) (Plan, error) {
 	plan := Plan{Mode: req.Mode}
 	var err error
 	switch req.Mode {
@@ -134,7 +144,7 @@ type Suggestion struct {
 // Suggestions는 지금 카드가 있는 추천 규칙만 남긴다. 빈 타일을 권하지 않기
 // 위해서다. 홈 화면과 JSON API의 /suggestions가 같은 목록을 내놓도록 세는 일은
 // 여기 한 번만 적는다.
-func Suggestions(ctx context.Context, s model.Store, userID uuid.UUID) ([]Suggestion, error) {
+func Suggestions(ctx context.Context, s Store, userID uuid.UUID) ([]Suggestion, error) {
 	found := []Suggestion{}
 	for _, rule := range smartrules.Suggested() {
 		n, err := s.CountByRule(ctx, userID, rule)

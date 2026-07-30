@@ -14,13 +14,12 @@ import (
 	"github.com/benelog/flashcard/internal/smartrules"
 )
 
-// stubStore는 인터페이스를 embed해서 model.Store를 만족한다. 테스트가 쓰는
-// 메서드만 채우고 나머지는 비워 둔다. 채우지 않은 메서드를 부르면 nil 인터페이스
-// 호출로 그 자리에서 터지므로, 이 패키지가 저장소의 무엇을 건드리는지가
-// 테스트마다 그대로 드러난다. 26개짜리 인터페이스를 통째로 구현하지 않고도
-// 저장소를 갈아 끼울 수 있는 이유이기도 하다.
+// stubStore는 study.Store를 만족하는 스텁이다. 이 패키지가 저장소에서 쓰는
+// 부분집합만 인터페이스로 정의해 둔 덕에, model.Store 전체가 아니라 네 메서드만
+// 채우면 저장소를 갈아 끼울 수 있다. 각 테스트는 자기가 쓰는 func 필드만 채우고,
+// 채우지 않은 메서드를 부르면 nil 함수 호출로 그 자리에서 터지므로 어느 조회를
+// 건드리는지가 테스트마다 그대로 드러난다.
 type stubStore struct {
-	model.Store
 	listCards   func(deckID uuid.UUID) ([]model.Card, error)
 	dueCards    func(dueBefore time.Time, limit int) ([]model.Card, error)
 	cardsByRule func(rule smartrules.Rule) ([]model.Card, error)

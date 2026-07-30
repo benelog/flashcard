@@ -23,7 +23,7 @@
 ## 테스트
 
 - 순수 로직(`srs`, `smartrules`, `cardcsv`, `model`)은 각 패키지에서 단위 테스트한다. DB에 붙지 않는 것은 `pgstore`도 마찬가지다(`rules_test.go`는 만들어진 SQL 문자열만 본다).
-- **저장소를 갈아 끼울 때는 `model.Store` 인터페이스를 묻은 구조체를 쓴다.** 26개를 다 구현할 필요 없이 그 테스트가 쓰는 메서드만 채우면 된다. `internal/study`의 스텁과 `pkg/app`의 `brokenStore`(한 메서드만 실패시켜 500 경로를 확인)가 그 예다.
+- **저장소를 갈아 끼울 때 전부 구현할 필요는 없다.** 소비자가 쓰는 부분집합만 소비자 쪽 인터페이스로 정의했거나(`study.Store`, `cardcsv`의 `deckSource`, `auth`의 `profileStore`), `model.Store`를 묻은 구조체로 그 테스트가 쓰는 메서드만 채우면 된다(`pkg/app`의 `brokenStore`: 한 메서드만 실패시켜 500 경로를 확인).
 - 화면과 API는 `pkg/app`에서 **앱을 통째로 띄워 실제 HTTP 요청을 보내** 확인한다(임시 SQLite + 고정 사용자). 라우팅·미들웨어·템플릿·저장소가 이어져 있는지까지 한 번에 잡힌다.
 - 그래서 `go test -cover`의 `handlers`·`web` 수치는 낮게 나온다. 커버리지는 자기 패키지의 테스트가 실행한 줄만 세기 때문이지, 검사되지 않는다는 뜻이 아니다.
 
