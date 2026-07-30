@@ -75,36 +75,21 @@ func typeLabel(t string) string {
 	return t
 }
 
-// ruleLabel은 스마트 규칙을 사람이 읽을 문구로 만든다.
+// ruleLabel은 스마트 규칙을 사람이 읽을 문구로 만든다. 기본값(오답률 0.4,
+// 7일 창 …)의 단일 출처는 smartrules.Validate이므로 여기서 다시 적지 않는다.
+// 들어온 규칙은 대개 이미 정규화돼 있지만, 값 복사본을 한 번 더 보정해 어느
+// 경로로 오든 빈 값이 문구에 새지 않게 한다.
 func ruleLabel(r smartrules.Rule) string {
+	_ = r.Validate()
 	switch r.Type {
 	case smartrules.HighError:
-		rate := r.MinErrorRate
-		if rate == 0 {
-			rate = 0.4
-		}
-		return fmt.Sprintf("오답률 %d%% 이상", int(math.Round(rate*100)))
+		return fmt.Sprintf("오답률 %d%% 이상", int(math.Round(r.MinErrorRate*100)))
 	case smartrules.Stale:
-		days := r.NotReviewedDays
-		if days == 0 {
-			days = 7
-		}
-		return fmt.Sprintf("%d일 이상 안 본 카드", days)
+		return fmt.Sprintf("%d일 이상 안 본 카드", r.NotReviewedDays)
 	case smartrules.Tag:
-		label := ""
-		for i, t := range r.Tags {
-			if i > 0 {
-				label += ", "
-			}
-			label += t
-		}
-		return "태그: " + label
+		return "태그: " + strings.Join(r.Tags, ", ")
 	case smartrules.Recent:
-		days := r.AddedWithinDays
-		if days == 0 {
-			days = 7
-		}
-		return fmt.Sprintf("최근 %d일 추가", days)
+		return fmt.Sprintf("최근 %d일 추가", r.AddedWithinDays)
 	}
 	return string(r.Type)
 }

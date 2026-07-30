@@ -2,7 +2,9 @@ package litestore
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
+	"errors"
 	"time"
 
 	"github.com/google/uuid"
@@ -10,12 +12,15 @@ import (
 	"github.com/benelog/flashcard/internal/model"
 )
 
-func (s *Store) scanProfile(ctx context.Context, userID uuid.UUID) (model.Profile, error) {
+const profileColumns = `id, display_name, settings, created_at`
+
+func scanProfile(r rowScanner) (model.Profile, error) {
 	var p model.Profile
 	var id, settings, createdAt string
-	err := s.db.QueryRowContext(ctx,
-		`select id, display_name, settings, created_at from profiles where id = ?`,
-		userID.String()).Scan(&id, &p.DisplayName, &settings, &createdAt)
+	err := r.Scan(&id, &p.DisplayName, &settings, &createdAt)
+	if errors.Is(err, sql.ErrNoRows) {
+		return p, model.ErrNotFound
+	}
 	if err != nil {
 		return p, err
 	}
@@ -37,7 +42,8 @@ func (s *Store) GetOrCreateProfile(ctx context.Context, userID uuid.UUID, displa
 	if err != nil {
 		return model.Profile{}, err
 	}
-	return s.scanProfile(ctx, userID)
+	return scanProfile(s.db.QueryRowContext(ctx,
+		`select `+profileColumns+` from profiles where id = ?`, userID.String()))
 }
 
 func (s *Store) UpdateProfile(ctx context.Context, userID uuid.UUID, displayName *string, settings json.RawMessage) (model.Profile, error) {
@@ -50,5 +56,6 @@ func (s *Store) UpdateProfile(ctx context.Context, userID uuid.UUID, displayName
 	if err != nil {
 		return model.Profile{}, err
 	}
-	return s.scanProfile(ctx, userID)
+	return scanProfile(s.db.QueryRowContext(ctx,
+		`select `+profileColumns+` from profiles where id = ?`, userID.String()))
 }

@@ -16,6 +16,9 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+	"time"
+
+	"github.com/benelog/flashcard/internal/smartrules"
 )
 
 const pgstoreDir = "../pgstore"
@@ -58,17 +61,25 @@ func TestSharedSQLConstantsStayInSync(t *testing.T) {
 		}
 	}
 	// 대조가 조용히 비어 버리면(상수 이름 변경, 파서 문제) 이 테스트는 아무것도
-	// 지키지 않는다. 지금 공유 상수는 cardSelect, deckSelect, sharedDeckSelect다.
-	if len(shared) < 3 {
-		t.Fatalf("shared SQL constants = %v, want at least 3", shared)
+	// 지키지 않는다. 지금 공유 상수는 cardSelect, deckSelect, sharedDeckSelect,
+	// sharedDeckBySlug, profileColumns다.
+	if len(shared) < 5 {
+		t.Fatalf("shared SQL constants = %v, want at least 5", shared)
 	}
 }
 
 // identicalQueryFuncs는 두 구현의 SQL이 자리표시자만 빼고 같아야 하는 메서드
-// 목록이다. 시각·id를 Go에서 만들어 바인딩하는 litestore와 DB 기본값(now(),
-// gen_random_uuid())에 맡기는 pgstore가 정당하게 다른 메서드(insertCard,
-// UpdateDeck, UpdateCard, RecordReview, CreateSession, FinishSession,
-// ShareDeck, GetOrCreateProfile, ImportSharedDeck, CardsByRule)는 넣지 않는다.
+// 목록이다. 다음은 정당한 이유로 넣지 않는다.
+//   - 시각·id를 Go에서 만들어 바인딩하는 litestore와 DB 기본값(now(),
+//     gen_random_uuid())에 맡기는 pgstore가 다른 메서드: insertCard, UpdateDeck,
+//     UpdateCard, RecordReview, CreateSession, FinishSession, ShareDeck,
+//     GetOrCreateProfile, UpdateProfile(pg는 returning, lite는 재조회),
+//     CreateDeck·ImportSharedDeck(seq 채번 방식이 다름), CreateSmartDeck
+//   - 문장을 동적으로 조립해 리터럴 대조가 성립하지 않는 메서드: CardsByRule,
+//     CountByRule(다만 order by 절은 TestRuleOrderingStaysInSync가 대조한다)
+//   - 시간대 처리 방언이 다른 메서드: DailyStats, StatsSummary
+//   - SQL이 공유 상수뿐이라 상수 대조가 대신 지키는 메서드: GetSharedDeck
+//     (sharedDeckSelect + sharedDeckBySlug)
 var identicalQueryFuncs = []string{
 	"ListDecks", "GetDeck", "GetDeckBySlug", "DeckIDBySlug", "DeleteDeck",
 	"ListCards", "GetCard", "DeleteCard", "BulkCreateCards", "DueCards", "DueCount",
@@ -88,6 +99,73 @@ func TestSharedQueriesStayInSync(t *testing.T) {
 		}
 		if !slices.Equal(liteSQL, pgSQL) {
 			t.Errorf("%s가 두 구현에서 다르다.\nlitestore: %q\npgstore:   %q", name, liteSQL, pgSQL)
+		}
+	}
+}
+
+// 규칙별 정렬 순서는 규칙의 의미인데 두 ruleQuery의 SQL 문장 안에만 있다.
+// 방언이 달라 문장 전체는 대조할 수 없으므로 order by 절만 뽑아 대조한다.
+// 정렬을 한쪽만 바꾸는 변경은 컴파일도 각자의 rules_test도 잡지 못하기 때문이다.
+// SQLite는 asc에서 null을 이미 앞에 두므로 Postgres의 명시적 nulls first는
+// 지우고 비교한다(litestore/rules.go의 Stale 주석 참고).
+func TestRuleOrderingStaysInSync(t *testing.T) {
+	orderByPattern := regexp.MustCompile(`order by (.+?) limit`)
+	nullsFirstPattern := regexp.MustCompile(`\s+nulls first`)
+	clause := func(sql string) string {
+		m := orderByPattern.FindStringSubmatch(normalizeSQL(sql))
+		if m == nil {
+			return ""
+		}
+		return nullsFirstPattern.ReplaceAllString(m[1], "")
+	}
+
+	// pgstore 쪽은 소스의 문자열 리터럴에서 읽는다. 어느 규칙의 문장인지는
+	// 그 규칙에만 있는 조건으로 알아본다.
+	pgClauses := map[smartrules.RuleType]string{}
+	for _, lit := range sqlInFuncs(t, pgstoreDir, []string{"ruleQuery"})["ruleQuery"] {
+		c := clause(lit)
+		if c == "" {
+			continue
+		}
+		var rt smartrules.RuleType
+		switch {
+		case strings.Contains(lit, "error_rate"):
+			rt = smartrules.HighError
+		case strings.Contains(lit, "last_reviewed_at"):
+			rt = smartrules.Stale
+		case strings.Contains(lit, "tags &&"):
+			rt = smartrules.Tag
+		case strings.Contains(lit, "created_at >="):
+			rt = smartrules.Recent
+		default:
+			t.Errorf("pgstore ruleQuery에서 어느 규칙인지 알 수 없는 문장: %q", lit)
+			continue
+		}
+		pgClauses[rt] = c
+	}
+
+	// litestore 쪽은 진짜 ruleQuery를 불러 확인한다. 새 규칙 종류를 더하면
+	// 여기에도 견본을 더해야 두 구현의 정렬이 계속 묶인다.
+	samples := map[smartrules.RuleType]smartrules.Rule{
+		smartrules.HighError: {Type: smartrules.HighError},
+		smartrules.Stale:     {Type: smartrules.Stale},
+		smartrules.Tag:       {Type: smartrules.Tag, Tags: []string{"t"}},
+		smartrules.Recent:    {Type: smartrules.Recent},
+	}
+	if len(pgClauses) != len(samples) {
+		t.Errorf("pgstore ruleQuery의 규칙 수 = %d, litestore 견본 수 = %d — 한쪽에만 규칙이 추가됐다",
+			len(pgClauses), len(samples))
+	}
+	for rt, rule := range samples {
+		sql, _ := ruleQuery(rule, time.Unix(0, 0))
+		got := clause(sql)
+		want, ok := pgClauses[rt]
+		if !ok {
+			t.Errorf("%s: pgstore ruleQuery에서 order by를 찾지 못했다", rt)
+			continue
+		}
+		if got != want {
+			t.Errorf("%s 규칙의 정렬이 두 구현에서 다르다.\nlitestore: %q\npgstore:   %q", rt, got, want)
 		}
 	}
 }

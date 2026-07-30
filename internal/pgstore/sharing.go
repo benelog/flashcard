@@ -58,6 +58,11 @@ const sharedDeckSelect = `
 	join profiles p on p.id = d.user_id
 	where d.share_slug is not null`
 
+// sharedDeckBySlug는 sharedDeckSelect에 이어 붙는 조건 조각이다. SQL 키워드가
+// 없어 메서드 단위 문장 대조(sqlsync_test.go)에 걸리지 않으므로, 이름 있는
+// 상수로 두어 상수 대조 쪽에 태운다.
+const sharedDeckBySlug = ` and d.share_slug = $2`
+
 func scanSharedDeck(row pgx.Row) (model.SharedDeckSummary, error) {
 	var d model.SharedDeckSummary
 	err := row.Scan(&d.ShareSlug, &d.Name, &d.Description, &d.CardCount,
@@ -78,7 +83,7 @@ func (s *Store) ListSharedDecks(ctx context.Context, viewerID uuid.UUID) ([]mode
 }
 
 func (s *Store) GetSharedDeck(ctx context.Context, viewerID uuid.UUID, slug string) (model.SharedDeckSummary, error) {
-	return scanSharedDeck(s.pool.QueryRow(ctx, sharedDeckSelect+` and d.share_slug = $2`, viewerID, slug))
+	return scanSharedDeck(s.pool.QueryRow(ctx, sharedDeckSelect+sharedDeckBySlug, viewerID, slug))
 }
 
 func (s *Store) GetSharedDeckCards(ctx context.Context, slug string) ([]model.SharedCard, error) {
