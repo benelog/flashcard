@@ -360,7 +360,7 @@ func Engine() (*gin.Engine, error) {
 ----
 	var engine *gin.Engine
 	if cfg.Driver == "sqlite" {
-		// ... 로컬 모드: litestore를 열어 app.New로 조립한다 (17장)
+		// ... 로컬 모드: litestore를 열어 app.New로 조립한다 (18장)
 	} else {
 		engine, err = app.Engine()
 		if err != nil {

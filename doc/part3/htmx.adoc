@@ -461,7 +461,7 @@ if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("/sw.js").catch(() => {});
 }
 
-// ... 로그아웃 뒤 서비스 워커의 페이지 캐시를 비우는 덩어리는 34장에서 본다 ...
+// ... 로그아웃 뒤 서비스 워커의 페이지 캐시를 비우는 덩어리는 35장에서 본다 ...
 
 // 오프라인 배너.
 const banner = document.getElementById("offline-banner");
