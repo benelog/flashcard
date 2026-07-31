@@ -121,8 +121,7 @@ include::../../internal/litestore/store.go[tag=pkg-doc]
 
 이 대칭은 파일 이름에도 있다.
 두 디렉터리 모두 구현 파일은 `cards.go`, `decks.go`, `profiles.go`, `rules.go`, `sessions.go`, `sharing.go`, `smartdecks.go`, `stats.go`, `store.go` 아홉 개다.
-덱을 다루는 코드를 고치러 왔다면 양쪽의 `decks.go`를 나란히 열면 되고, 한쪽에만 있는 파일이나 함수가 보이면 그것이 곧 빠뜨린 구현이다.
-새 기능을 더할 때 "한쪽만 고치고 다른 쪽을 잊는" 실수를 배치가 먼저 알려 주게 만든 것이다.
+{ch-design-principles}에서 본 대칭 관리가 디렉터리 목록에 그대로 드러난 모습이다.
 
 두 구현이 무엇을 함께 만족하는지, 그 계약이 왜 어느 구현도 아닌 `internal/model`에 있는지는 {ch-app-assembly}에서 계층을 다루며 읽는다.
 여기서는 지도의 한 칸으로 위치만 기억해 두자.
@@ -156,8 +155,8 @@ Vercel의 Go 런타임은 `api/` 아래 파일을 모듈 바깥에서 컴파일�
 
 패키지를 나눴다고 구조가 생기는 것은 아니다.
 서로가 서로를 아는 관계가 되면 나눈 의미가 없어지므로, 어느 패키지가 어느 패키지를 알아도 되는지를 정해 두어야 한다.
-Flashcard의 규칙은 한 문장이다.
-모두가 `internal/model`을 알고, `model`은 아무도 모른다.
+그 규칙이 {ch-design-principles}의 첫째 원칙, 곧 모두가 `internal/model`을 알고 `model`은 아무도 모른다는 한 문장이었다.
+여기서는 그 방향이 실제 임포트 목록에서 어떻게 확인되는지를 본다.
 
 `internal/model`에는 앱이 공통으로 쓰는 말이 들어 있다.
 카드와 덱 같은 행 타입, "없음"을 뜻하는 에러 값, 카드 종류와 학습 방향처럼 열이 받는 값과 그 판정, 그리고 데이터베이스를 전혀 모르는 순수한 계산 함수들이다.
@@ -165,7 +164,6 @@ Flashcard의 규칙은 한 문장이다.
 
 그래서 화면을 그리는 `web`, JSON API인 `handlers`, CSV를 다루는 `cardcsv`, 학습할 카드를 고르는 `study`는 `model`만 보면 된다.
 이 네 패키지는 `pgstore`도 `litestore`도 임포트하지 않고, 따라서 pgx 드라이버를 링크하지도 않는다.
-데이터베이스를 바꾸는 일이 화면 코드에 닿지 않는 것이 이 방향의 보상이다.
 
 방향이 지켜지는지는 임포트 목록으로 확인할 수 있다.
 `internal/web` 아래 어느 파일을 열어도 `pgstore`나 `litestore`라는 이름이 없고, 반대로 `pgstore`의 파일에는 `web`이나 `handlers`가 없다.

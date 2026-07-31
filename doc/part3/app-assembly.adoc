@@ -312,15 +312,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 이 코드가 성립하는 이유는 `*gin.Engine`이 표준 `http.Handler` 인터페이스를 구현하기 때문이다.
 풀어 말하면, Go 표준 라이브러리가 정해 둔 "요청을 받아 응답을 쓰는 물건"의 규격을 Gin 엔진이 그대로 따른다는 뜻이다.
 그래서 Vercel이 요구하는 시그니처 `func(http.ResponseWriter, *http.Request)` 안에서 `engine.ServeHTTP`를 호출하면, Gin 라우터가 경로를 보고 알아서 핸들러를 찾아 실행한다.
-`vercel.json`의 재작성(rewrite) 규칙이 화면이든 API든 모든 경로의 요청을 이 함수 하나로 모아 주므로, 함수는 하나지만 앱 전체가 동작한다.
-
-.[용어 풀이] 라우터와 라우팅
-[NOTE]
-====
-들어온 요청의 주소(예: `/api/decks`)와 메서드를 보고 어느 처리 함수로 보낼지 정하는 교환대가 라우터다.
-그 주소와 함수를 짝지어 주는 일을 라우팅이라 한다.
-우편물의 주소를 보고 담당 부서로 갈라 보내는 우체국 분류대에 해당한다.
-====
+`vercel.json`의 리라이트 규칙이 화면이든 API든 모든 경로의 요청을 이 함수 하나로 모아 주므로, 함수는 하나지만 앱 전체가 동작한다.
 
 왜 조립 코드를 `internal`이 아닌 `pkg/app`에 두었는지는 {ch-code-map}에서 본 대로다.
 Vercel의 Go 빌더가 이 파일을 모듈 바깥에서 컴파일하므로 `internal/` 패키지를 직접 가져올 수 없고, 주석에도 그 답이 적혀 있다.

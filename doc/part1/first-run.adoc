@@ -268,18 +268,17 @@ go run ./cmd/server
 아무 설정도 주지 않았으므로 서버가 로컬 모드로 떴고, 데이터는 `local-db/flashcard.db`라는 SQLite 파일에 저장된다는 뜻이다.
 이것으로 실행은 끝이다.
 이 Go 서버 하나가 HTML 화면과 JSON API를 모두 서빙하므로, 프로세스를 하나 더 띄울 일이 없다(이 구조는 {ch-gin}에서 다룬다).
-저장소 루트의 `run_local.sh`는 같은 명령을 스크립트로 감싼 것이라 어느 쪽을 써도 결과가 같다.
+저장소 루트에는 같은 명령을 감싼 `run_local.sh`도 있다.
 
 [source,bash]
 ----
-#!/usr/bin/env bash
-# 로컬 모드 실행: Go 서버 하나(:8080)가 HTML 페이지와 API를 모두 서빙한다.
-# 환경 변수 불필요, SQLite 파일(local-db/flashcard.db) 사용, 로그인 없음.
-set -euo pipefail
-cd "$(dirname "$0")"
-
-exec go run ./cmd/server
+include::../../run_local.sh[]
 ----
+
+마지막 줄의 `env -u DATABASE_URL`이 방금 친 명령과의 유일한 차이다.
+`DATABASE_URL`은 어느 데이터베이스에 붙을지 알려 주는 설정값인데, 이 값이 셸에 남아 있으면 서버는 로컬 모드 대신 그 데이터베이스로 붙으려 한다.
+스크립트는 그 값을 지운 채 실행하므로 언제나 SQLite로 뜬다.
+아직 그 값을 설정한 적이 없으니 지금은 어느 쪽을 써도 결과가 같고, 배포 환경의 값을 다루기 시작하면({ch-env-secrets}) 스크립트 쪽이 안전해진다.
 
 브라우저로 `http://localhost:8080`을 열면 로그인 화면 없이 곧바로 홈 화면이 나온다.
 배포된 앱이라면 계정 이메일이 있을 상단 바 오른쪽 자리에는 "로컬 모드"라고 적혀 있다.
