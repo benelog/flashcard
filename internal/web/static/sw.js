@@ -60,7 +60,7 @@ self.addEventListener("fetch", (event) => {
   }
 
   // 정적 자원: stale-while-revalidate. URL에 콘텐츠 해시(?v=)가 붙어 있어
-  // 배포로 내용이 바뀌면 주소부터 달라진다 — 낡은 사본이 새 HTML에 물리지 않는다.
+  // 배포로 내용이 바뀌면 주소부터 달라진다. 낡은 사본이 새 HTML에 물리지 않는다.
   event.respondWith(
     caches.open(STATIC).then(async (cache) => {
       const cached = await cache.match(event.request);

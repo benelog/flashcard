@@ -83,13 +83,13 @@ Vercel은 자기 위에서 도는 프로세스에 `VERCEL`이라는 환경 변�
 [source,go]
 ----
 type Store interface {
-	GetOrCreateProfile(ctx context.Context, userID uuid.UUID, displayName string) (model.Profile, error)
+	GetOrCreateProfile(ctx context.Context, userID uuid.UUID, displayName string) (Profile, error)
 
-	ListDecks(ctx context.Context, userID uuid.UUID) ([]model.Deck, error)
-	CreateDeck(ctx context.Context, userID uuid.UUID, name string, description *string) (model.Deck, error)
+	ListDecks(ctx context.Context, userID uuid.UUID) ([]Deck, error)
+	CreateDeck(ctx context.Context, userID uuid.UUID, name string, description *string) (Deck, error)
 	// ... (덱·카드·세션·공유·스마트 덱·통계에 걸쳐 모두 32개 메서드)
 
-	DailyStats(ctx context.Context, userID uuid.UUID, tz string, days int) ([]model.DailyStat, error)
+	DailyStats(ctx context.Context, userID uuid.UUID, tz string, days int) ([]DailyStat, error)
 }
 ----
 
@@ -123,7 +123,7 @@ Vercel 함수의 진입점 `api/index.go`가 부르는 `pkg/app`의 `Engine()`�
 {ch-database}에서 한 설계(일곱 테이블, 외래 키와 cascade, 조회 패턴에서 역산한 인덱스)는 PostgreSQL에서도 그대로고, 바뀌는 것은 표현이다.
 SQLite는 타입의 가짓수를 최소로 줄인 대신 어디서나 도는 쪽을 택한 DB라 {ch-database}의 스키마는 많은 것을 `text` 열에 눌러 담았는데, PostgreSQL은 그 자리마다 전용 타입을 내준다.
 
-아래 표의 왼쪽은 {ch-database}에서 SQLite가 전용 타입이 없어 문자열에 눌러 담았던 자리이고, 오른쪽은 PostgreSQL이 그 자리마다 내주는 전용 타입이다.
+아래 표가 그 대응이다.
 오른쪽 이름들이 낯설어도 지금 외울 필요는 없고, 표 아래에서 하나씩 풀어 나간다.
 
 |===
@@ -232,7 +232,7 @@ Postgres의 타입과 프로토콜을 직접 다루므로 성능이 좋고, 커�
 
 `database/sql` 인터페이스가 나은 경우도 분명히 있다.
 DB 종류를 바꿀 가능성이 있거나 `sqlx` 같은 표준 인터페이스 기반 생태계를 활용하고 싶다면 그쪽이 맞다.
-Flashcard에도 DB가 둘 있지만 그 추상화는 드라이버 계층이 아니라 앞서 본 Store 인터페이스 계층에서 해결했으므로, PostgreSQL 쪽은 추상화 계층을 걷어내고 pgx 네이티브 API를 그대로 쓸 수 있다.
+Flashcard에도 DB가 둘 있지만 그 추상화는 드라이버 계층이 아니라 앞서 본 Store 인터페이스 계층에서 해결했으므로, PostgreSQL 쪽은 추상화 계층을 걷어 내고 pgx 네이티브 API를 그대로 쓸 수 있다.
 
 === 서버리스에서 커넥션이 폭증하는 문제
 
@@ -245,7 +245,7 @@ Flashcard에도 DB가 둘 있지만 그 추상화는 드라이버 계층이 아�
 
 === 트랜잭션 풀러와 simple protocol
 
-이 문제의 표준 해법이 연결 풀러(connection pooler)로, Supabase는 Supavisor라는 풀러를 함께 제공한다.
+이 문제의 표준 해법이 커넥션 풀러(connection pooler)로, Supabase는 Supavisor라는 풀러를 함께 제공한다.
 우리 서버의 풀(pgxpool)이 DB에 직접 붙는 대신 풀러에 붙고, 풀러가 소수의 실제 Postgres 커넥션을 여러 클라이언트가 나눠 쓰게 한다.
 
 여기서 용어 하나를 못 박아 두자.
@@ -260,7 +260,7 @@ Flashcard에도 DB가 둘 있지만 그 추상화는 드라이버 계층이 아�
 공용 회의실을 회의 한 건 단위로 빌려주느냐, 한 사람에게 하루 종일 배정하느냐의 차이로 볼 수 있다.
 ====
 
-풀러의 트랜잭션 모드(포트 6543)는 트랜잭션 하나가 실행되는 동안만 실제 커넥션을 빌려주고, 끝나면 즉시 회수해 다른 클라이언트에게 준다.
+풀러의 트랜잭션 모드(포트 6543)는 트랜잭션 하나가 실행되는 동안만 실제 커넥션을 빌려주고, 끝나면 즉시 회수해 다른 클라이언트에 준다.
 함수 인스턴스가 아무리 늘어나도 실제 DB 커넥션은 소수로 유지되므로 서버리스와 궁합이 가장 좋다.
 
 공짜는 아니다.
@@ -359,7 +359,7 @@ RLS를 켜면 기본값이 "거부"라서 허용 정책을 하나도 두지 않�
 
 Flashcard는 다른 길을 택해, 모든 데이터 접근을 Go API로만 받고 PostgREST 경로는 원천 차단한다.
 `internal/db/migrations/000001_init.up.sql`의 마지막 부분이다.
-모든 테이블에 RLS를 켜고, PostgREST가 쓰는 두 역할에게서 기본 접근 권한을 회수하는 코드다.
+모든 테이블에 RLS를 켜고, PostgREST가 쓰는 두 역할의 기본 접근 권한을 회수하는 코드다.
 
 [source,sql]
 ----
@@ -381,7 +381,7 @@ end $$;
 ----
 
 동작 원리는 RLS의 기본값 거부(default deny) 성질에 있다.
-RLS를 켜면 정책이 허용한 행만 보이는데 정책이 하나도 없으면 아무 행도 보이지 않으므로, "enable + 정책 0개"는 PostgREST 역할에게 모든 테이블이 빈 것처럼 보이게 만드는 잠금 장치다.
+RLS를 켜면 정책이 허용한 행만 보이는데 정책이 하나도 없으면 아무 행도 보이지 않으므로, "enable + 정책 0개"는 PostgREST 역할에는 모든 테이블이 빈 것처럼 보이게 만드는 잠금 장치다.
 반면 Go API는 `DATABASE_URL`의 postgres 역할로 접속하고, 이 역할은 테이블 소유자라서 RLS를 우회한다.
 그 아래의 `revoke`는 RLS 설정이 실수로 풀리더라도 권한(grant) 자체가 없으면 접근이 막히게 하는, 벨트에 멜빵을 더한(belt and braces) 이중 잠금이다.
 `do $$ ... $$` 블록으로 역할 존재를 확인하는 것은 `anon` 역할이 없는 순정 PostgreSQL에서도 같은 마이그레이션이 돌게 하기 위함이다.

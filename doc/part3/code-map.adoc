@@ -120,7 +120,7 @@ include::../../internal/litestore/store.go[tag=pkg-doc]
 행 타입과 "없음"을 알리는 에러 값은 둘 다 `internal/model`에서 읽어 오고, 각자에게 남은 것은 SQL 방언과 드라이버 배선뿐이라는 것이다.
 
 이 대칭은 파일 이름에도 있다.
-두 디렉터리 모두 `cards.go`, `decks.go`, `profiles.go`, `rules.go`, `sessions.go`, `sharing.go`, `smartdecks.go`, `stats.go`, `store.go` 아홉 개로 되어 있다.
+두 디렉터리 모두 구현 파일은 `cards.go`, `decks.go`, `profiles.go`, `rules.go`, `sessions.go`, `sharing.go`, `smartdecks.go`, `stats.go`, `store.go` 아홉 개다.
 덱을 다루는 코드를 고치러 왔다면 양쪽의 `decks.go`를 나란히 열면 되고, 한쪽에만 있는 파일이나 함수가 보이면 그것이 곧 빠뜨린 구현이다.
 새 기능을 더할 때 "한쪽만 고치고 다른 쪽을 잊는" 실수를 배치가 먼저 알려 주게 만든 것이다.
 
@@ -129,7 +129,7 @@ include::../../internal/litestore/store.go[tag=pkg-doc]
 
 === internal이 막고 Vercel이 밀어낸 pkg
 
-`internal/`은 Go 컴파일러가 특별 취급하는 유일한 디렉터리 이름이다.
+`internal/`은 Go 컴파일러가 특별 취급하는 디렉터리 이름이다.
 `internal/` 아래의 패키지는 같은 모듈 안에서만 임포트할 수 있고, 외부 모듈이 임포트하면 컴파일 에러가 난다.
 공개 API를 최소화하고 내부 구현을 마음껏 바꿀 자유를 확보하는 장치다.
 
@@ -303,7 +303,7 @@ func main() {
 앞 절에서 본 판정 결과가 여기서 `if cfg.Driver == "sqlite"` 한 줄로 쓰이는 모습을 확인할 수 있다.
 
 진입점을 얇게 유지하고 로직은 임포트할 수 있는 패키지에 두는 것이 Go의 관례다.
-이 관례가 여기서는 실용적인 값어치까지 갖는다.
+이 관례가 여기서는 실용적인 값어치까지 얻는다.
 `api/index.go`가 같은 `pkg/app`을 불러 같은 엔진을 만들기 때문에, 로컬에서 확인한 앱과 배포된 앱이 조립 코드를 공유한다.
 그 조립 안에서 무엇이 어떻게 엮이는지가 {ch-app-assembly}의 주제이고, 두 진입점이 실제로 어떻게 다른지는 {ch-vercel}에서 다시 본다.
 
@@ -346,7 +346,7 @@ func main() {
 
 == 정리
 
-첫째, Flashcard는 모듈 하나에 패키지 열넷이고 바깥 의존성은 여덟 꾸러미뿐이다.
+첫째, Flashcard는 모듈 하나에 패키지 열넷이고 바깥 의존성은 일곱 꾸러미뿐이다.
 `go.mod`의 모듈 이름이 곧 임포트 주소의 접두어가 된다.
 
 둘째, 디렉터리마다 맡은 일이 정해져 있다.

@@ -208,7 +208,8 @@ include::../../internal/srs/srs.go[tag=grade]
 | `part3/code-map.adoc` | 모듈과 패키지 |
 | `part3/go.adoc` | 생성자, 순수 함수, 에러 래핑과 센티널 에러, 구조체 태그, 직렬화와 역직렬화 |
 | `part3/go-testing.adoc` | 플래그, 테이블 주도 테스트, 경쟁 상태, 픽스처, 포매터와 정적 분석 (세로 정렬은 상자 없이 본문 절로 다룬다) |
-| `part3/gin.adoc` | HTTP 요청과 응답, 프로세스, 패닉, 라우터와 라우팅, 엔드포인트, 핸들러, 바인딩, 경로/쿼리 파라미터, 미들웨어, 팩토리 함수와 클로저, 의존성 주입, 모의 객체 |
+| `part3/gin.adoc` | HTTP 요청과 응답, 엔드포인트, 핸들러, 바인딩, 경로/쿼리 파라미터, 미들웨어, 팩토리 함수와 클로저 |
+| `part3/app-assembly.adoc` | 프로세스, 패닉, 라우터와 라우팅, 의존성 주입, 모의 객체 |
 | `part3/html-css.adoc` | 상태(state) |
 | `part3/go-templates.adoc` | 템플릿 엔진, 파싱, SVG와 인라인, 이스케이프와 XSS, embed(Go), PRG 패턴, 플래시 메시지 |
 | `part3/htmx.adoc` | AJAX(비동기 요청), DOM(문서 객체 모델), HTML 조각, hidden 필드, Web API(브라우저), data-* 속성, 이벤트 위임 |
@@ -223,7 +224,8 @@ include::../../internal/srs/srs.go[tag=grade]
 | `part4/token-verification.adoc` | JWT, 클레임, 대칭 키와 비대칭 키, JWKS와 서명 검증 |
 | `part4/supabase-db.adoc` | 환경 변수, 연결 문자열, GIN 인덱스, 커넥션 풀러, 프리페어드 스테이트먼트, 콜로케이션, RLS |
 | `part4/migrations.adoc` | 마이그레이션, 권고 잠금, 확장 후 축소, 저장소 시크릿 |
-| `part5/pwa.adoc` | 웹 앱 매니페스트, 서비스 워커, 캐시 전략, Cache Storage, 개발자 도구 |
+| `part5/pwa.adoc` | 웹 앱 매니페스트, 서비스 워커 |
+| `part5/caching.adoc` | 캐시 전략, Cache Storage, 개발자 도구 |
 | `part5/free-tier.adoc` | 한도와 스로틀링, 대역폭과 전송량, 핑과 헬스 체크, 백업과 덤프(pg_dump) |
 | `part5/whats-next.adoc` | E2E 테스트, 관측성 |
 | `appendix/alternatives.adoc` | NoSQL과 문서형 데이터베이스 |

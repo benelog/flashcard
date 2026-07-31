@@ -13,14 +13,14 @@
 대시보드의 메뉴 이름과 위치는 자주 바뀐다.
 이 부록의 화면은 2026년 7월 기준이고, 실제로 이 무렵에도 Google 콘솔의 메뉴 구조가 한 차례 바뀌었다.
 그러니 화면이 책과 다르면 메뉴 이름을 글자 그대로 찾기보다, "무엇을 어디에 등록하는가"라는 목적으로 되짚는 편이 안전하다.
-각 절 끝에 그 목적을 한 줄로 남겨 두었다.
+관문을 다루는 절 끝에는 그 목적을 한 줄로 남겨 두었다.
 
 == 로그인은 세 관문을 지난다
 
 설정에 앞서 로그인이 어떤 길을 지나는지부터 그려 두면, 나중에 막혔을 때 어느 화면을 열어야 할지 바로 안다.
 사용자가 "Google로 계속하기"를 누른 순간부터 앱으로 돌아오기까지, 요청은 세 관문을 지난다.
 
-첫째, 앱이 Supabase(GoTrue)에게 "이 사용자를 Google로 로그인시켜 달라"고 넘긴다.
+첫째, 앱이 Supabase(GoTrue)에 "이 사용자를 Google로 로그인시켜 달라"고 넘긴다.
 둘째, Supabase가 사용자를 Google 로그인 화면으로 보낸다.
 셋째, Google이 인증을 마치면 Supabase를 거쳐 다시 앱의 `/auth/callback`으로 돌려보낸다.
 
@@ -37,7 +37,7 @@
 == 1. Supabase 프로젝트 만들기
 
 먼저 데이터베이스와 로그인을 맡을 Supabase 프로젝트를 만든다.
-https://supabase.com 에서 무료 계정을 만들고 New project를 누른다.
+https://supabase.com[supabase.com]에서 무료 계정을 만들고 New project를 누른다.
 프로젝트 이름과 데이터베이스 비밀번호를 정하는 칸이 나오는데, 이 비밀번호는 나중에 연결 문자열에 들어가므로 안전한 곳에 적어 둔다.
 리전(region)은 East US (North Virginia)를 고른다.
 Vercel 함수가 기본으로 뜨는 리전(iad1)과 같은 곳이라야 앱과 DB가 가깝다.
@@ -64,7 +64,7 @@ Google(또는 GitHub)에 "이 앱을 위해 로그인을 내준다"는 뜻으로
 
 === Google 클라이언트 만들기
 
-https://console.cloud.google.com 에 들어간다.
+https://console.cloud.google.com[console.cloud.google.com]에 들어간다.
 예전에는 "APIs & Services" 아래 OAuth consent screen과 Credentials로 나뉘어 있었지만, 지금은 *Google 인증 플랫폼(Google Auth Platform)* 이라는 곳으로 묶였다.
 왼쪽 메뉴가 개요·브랜딩·대상·클라이언트로 되어 있으면 제대로 찾아온 것이다.
 
@@ -79,7 +79,7 @@ https://<project-ref>.supabase.co/auth/v1/callback
 
 `<project-ref>`는 각 Supabase 프로젝트를 가리키는 고유 식별자로, 1절에서 복사한 Project URL(`https://<project-ref>.supabase.co`)의 앞부분에 들어 있다.
 Google이 인증을 마치고 처음 돌려보내는 곳은 우리 앱이 아니라 Supabase이기 때문에, 여기 넣는 주소도 Supabase의 것이다.
-앱의 `/auth/callback`은 그다음 단계에서 Supabase가 부르는 두 번째 홉이라, 이 칸에 넣지 않는다.
+앱의 `/auth/callback`은 그다음 단계에서 Supabase가 부르는 두 번째 홉(hop, 중계 구간)이라, 이 칸에 넣지 않는다.
 이 둘을 헷갈려 앱 주소를 넣으면, 로그인 시도가 Google 화면에서 `redirect_uri_mismatch` 오류로 막힌다.
 
 ++++
@@ -115,7 +115,7 @@ Secret은 Supabase 대시보드에만 두고 저장소나 코드에는 두지 �
 === GitHub 클라이언트 만들기
 
 GitHub도 구조는 같다.
-https://github.com/settings/developers 에서 New OAuth App을 만들고, Authorization callback URL에 위와 똑같은 Supabase 콜백 주소를 넣는다.
+https://github.com/settings/developers[github.com/settings/developers]에서 New OAuth App을 만들고, Authorization callback URL에 위와 똑같은 Supabase 콜백 주소를 넣는다.
 이름(Application name)과 홈페이지 주소(Homepage URL) 칸도 필수로 채워야 하는데, 앱 이름과 배포 주소를 적으면 되고, 로그인 동작에는 영향이 없다.
 발급된 Client ID와 Secret을 Supabase의 Sign In / Providers → GitHub에 넣고 사용 설정한다.
 
@@ -174,7 +174,7 @@ Redirect URLs의 기존 항목을 편집할 때, 값 중간에 새 주소를 붙
 Vercel은 GitHub 저장소에서 코드를 가져가므로, 그 전에 내 컴퓨터의 저장소를 GitHub에 올려 둔다.
 {ch-git}에서 개념으로 정리한 첫 push를 여기서 실제로 한다.
 
-https://github.com 에서 무료 계정을 만들고, New repository로 빈 저장소를 만든다.
+https://github.com[github.com]에서 무료 계정을 만들고, New repository로 빈 저장소를 만든다.
 저장소 이름만 정하면 되고, README 같은 파일을 추가하는 옵션은 모두 끈 채 비워 둔다.
 내 컴퓨터에 이미 코드와 이력이 있으므로, 원격은 빈 그릇이어야 한다.
 공개(Public)와 비공개(Private) 중 무엇을 골라도 {ch-env-secrets}의 규칙은 같다.
@@ -192,7 +192,7 @@ push가 끝나면 {ch-git}의 브랜치 정책대로 운영용 release 브랜치
 == 5. Vercel에 올리고 환경을 나눈다
 
 로그인 배선과 저장소 준비가 끝났으니, 이제 앱을 Vercel에 올린다.
-https://vercel.com 에서 Add New Project로 저장소를 가져온다(import).
+https://vercel.com[vercel.com]에서 Add New Project로 저장소를 가져온다(import).
 Root Directory는 저장소 루트 그대로 둔다.
 Framework Preset은 무엇으로 감지되든 상관없다.
 `vercel.json`의 `"framework": null`이 그 값을 덮어쓰기 때문이다({ch-vercel-config}).
