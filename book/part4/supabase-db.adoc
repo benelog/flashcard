@@ -1,4 +1,4 @@
-= Supabase 데이터베이스: pgx 연결과 커넥션 풀
+= Supabase 데이터베이스: 커넥션 풀러와 개발·운영 분리
 
 {ch-supabase-auth}과 {ch-token-verification}에서 인증을 마쳤으니, 검증을 통과한 요청은 이제 데이터베이스로 내려간다.
 

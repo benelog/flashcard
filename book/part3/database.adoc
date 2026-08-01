@@ -96,7 +96,7 @@ SQLite에는 배열이나 JSON 전용 타입이 없어 text에 담지만, 운영
 `cards`에 `deck_id`뿐 아니라 `user_id`도 중복해 둔 점도 설계 결정이다.
 덱을 거치지 않고 "이 사용자의 모든 카드"를 자주 조회하기 때문에(due 큐, 스마트 덱), 조인을 한 단계 줄이려는 실용적 비정규화(denormalization, {ch-database-basics})다.
 
-카드 종류 `card_type`이 네 값 중 하나만 갖도록 지키는 `check` 제약은 뒤의 제약 절에서, `decks`의 `share_slug`·`shared_at`·`seq`는 덱 공유와 URL slug를 다루는 마지막 절에서 짚는다.
+카드 종류 `card_type`이 네 값 중 하나만 갖도록 지키는 `check` 제약은 뒤의 제약 절에서 짚고, `decks`의 `share_slug`·`shared_at`·`seq`가 받치는 덱 공유와 URL slug 설계는 다음 {ch-domain-model}에서 다룬다.
 
 === 카드와 SRS 상태의 분리
 

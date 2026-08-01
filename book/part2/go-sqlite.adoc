@@ -1,4 +1,4 @@
-= Go에서 SQLite 쓰기: database/sql로 저장하고 꺼낸다
+= database/sql 첫걸음: Go로 SQLite에 저장하고 꺼낸다
 
 {ch-database-basics}에서는 sqlite3 프롬프트에 SQL 문장을 손으로 쳐서 표를 만들고 행을 넣었다.
 그런데 앱의 서버 옆에는 프롬프트 앞에 앉아 문장을 쳐 줄 사람이 없다.

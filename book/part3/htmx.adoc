@@ -60,7 +60,7 @@ htmx를 켜는 방법은 한 줄이다.
 ----
 
 주소를 감싼 `asset`은 파일 내용의 해시를 주소 끝에 `?v=`로 붙여 주는 템플릿 함수다.
-브라우저와 서비스 워커가 낡은 사본을 새 화면에 물리지 않게 하려는 장치이고, {ch-caching}에서 다룬다.
+브라우저와 서비스 워커가 이전 버전 사본을 새 화면에 물리지 않게 하려는 장치이고, {ch-caching}에서 다룬다.
 지금은 세 파일을 불러오는 줄이라고만 읽으면 된다.
 
 `htmx.min.js` 파일을 외부 서버 대신 저장소에 복사해 두는 이유는 {ch-htmx-hello}에서 봤다(이 방식을 벤더링, vendoring이라 부른다).
@@ -458,7 +458,7 @@ if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("/sw.js").catch(() => {});
 }
 
-// ... 로그아웃 뒤 서비스 워커의 페이지 캐시를 비우는 덩어리는 35장에서 본다 ...
+// ... 로그아웃 뒤 서비스 워커의 페이지 캐시를 비우는 덩어리는 38장에서 본다 ...
 
 // 오프라인 배너.
 const banner = document.getElementById("offline-banner");

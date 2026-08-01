@@ -48,7 +48,7 @@ export default {
           file: 'part1/requirements.adoc',
           text: '1장 무엇을 만드는가: 기능과 비기능 요구사항',
         },
-        { file: 'part1/tech-choices.adoc', text: '2장 기술 선택: 요구사항에서 아키텍처까지' },
+        { file: 'part1/tech-choices.adoc', text: '2장 기술 선택: 요구사항에서 도출하는 네 계층' },
         { file: 'part1/claude-code.adoc', text: '3장 Claude Code: AI 에이전트와 개발하기' },
         {
           file: 'part1/instructing.adoc',
@@ -61,16 +61,16 @@ export default {
       ],
     },
     {
-      text: '2부 코딩 첫걸음: 문법에서 첫 웹 앱까지',
+      text: '2부 코딩 기초: 문법에서 첫 웹 앱까지',
       items: [
         { file: 'part2/html-hello.adoc', text: '6장 HTML 첫걸음: 파일 하나로 만드는 웹 문서' },
         { file: 'part2/css-hello.adoc', text: '7장 CSS 첫걸음: 색과 배치를 입히는 규칙' },
         { file: 'part2/go-hello.adoc', text: '8장 Go 첫걸음: Hello, World로 배우는 기본 문법' },
-        { file: 'part2/go-types.adoc', text: '9장 Go로 데이터 다루기: 구조체, 슬라이스와 맵' },
+        { file: 'part2/go-types.adoc', text: '9장 Go로 데이터 다루기: 구조체에서 인터페이스까지' },
         { file: 'part2/database-basics.adoc', text: '10장 데이터베이스 기초: 테이블, SQL, 인덱스' },
         {
           file: 'part2/go-sqlite.adoc',
-          text: '11장 Go에서 SQLite 쓰기: database/sql로 저장하고 꺼낸다',
+          text: '11장 database/sql 첫걸음: Go로 SQLite에 저장하고 꺼낸다',
         },
         { file: 'part2/gin-hello.adoc', text: '12장 Gin 첫걸음: 저장한 데이터를 웹 화면으로' },
         {
@@ -87,23 +87,26 @@ export default {
           text: '14장 설계 철학: 이 앱을 지탱하는 다섯 가지 원칙',
         },
         { file: 'part3/database.adoc', text: '15장 데이터베이스 설계: 요구사항에서 테이블로' },
-        { file: 'part3/domain-model.adoc', text: '16장 도메인을 표에 담기: 학습 상태와 덱 주소' },
+        { file: 'part3/domain-model.adoc', text: '16장 이 앱만의 설계 둘: 간격 반복 상태와 덱 주소' },
         {
           file: 'part3/code-map.adoc',
-          text: '17장 코드는 어디에 있는가: 패키지 지도와 앱의 시작점',
+          text: '17장 코드는 어디에 있는가: 패키지 지도와 의존 방향',
         },
         {
           file: 'part3/go.adoc',
-          text: '18장 핵심 로직 읽기: 간격 반복 알고리즘과 도메인 코드',
+          text: '18장 핵심 로직 읽기: 간격 반복 알고리즘과 이 앱이 푸는 문제들',
         },
-        { file: 'part3/go-testing.adoc', text: '19장 Go 테스트와 품질 검사 도구' },
+        { file: 'part3/go-testing.adoc', text: '19장 함수 하나씩 검증하기: 단위 테스트와 품질 검사 도구' },
         { file: 'part3/gin.adoc', text: '20장 Gin 깊이 보기: 완성본의 라우팅·바인딩·미들웨어' },
         { file: 'part3/app-assembly.adoc', text: '21장 앱을 조립하기: 계층 분리와 두 진입점' },
         {
           file: 'part3/html-css.adoc',
           text: '22장 화면의 구조: 템플릿 삼층과 스타일 시스템',
         },
-        { file: 'part3/go-templates.adoc', text: '23장 html/template으로 만드는 화면' },
+        {
+          file: 'part3/go-templates.adoc',
+          text: '23장 html/template으로 만드는 화면: 데이터 채우기와 자동 이스케이프',
+        },
         { file: 'part3/htmx.adoc', text: '24장 htmx 실전 패턴: 조각 응답과 무상태 학습 화면' },
         {
           file: 'part3/app-tests.adoc',
@@ -113,10 +116,10 @@ export default {
       ],
     },
     {
-      text: '4부 인터넷에 공개하기: 버전 관리에서 배포와 인증까지',
+      text: '4부 인터넷에 공개하기: 버전 관리에서 인증과 운영 데이터베이스까지',
       items: [
         { file: 'part4/git.adoc', text: '27장 Git: 개념과 브랜치 정책' },
-        { file: 'part4/quality-gates.adoc', text: '28장 품질 게이트: 훅과 서브에이전트' },
+        { file: 'part4/quality-gates.adoc', text: '28장 품질 게이트: Claude Code 훅과 서브에이전트' },
         { file: 'part4/github-actions.adoc', text: '29장 GitHub Actions: 원격 품질 게이트' },
         { file: 'part4/vercel.adoc', text: '30장 Vercel: 왜 이 플랫폼이고, 무엇이 배포되는가' },
         {
@@ -127,7 +130,7 @@ export default {
         { file: 'part4/token-verification.adoc', text: '33장 토큰 검증의 원리: JWT와 JWKS' },
         {
           file: 'part4/supabase-db.adoc',
-          text: '34장 Supabase 데이터베이스: pgx 연결과 커넥션 풀',
+          text: '34장 Supabase 데이터베이스: 커넥션 풀러와 개발·운영 분리',
         },
         { file: 'part4/migrations.adoc', text: '35장 마이그레이션: 운영 중에 스키마를 고친다' },
       ],
@@ -135,10 +138,10 @@ export default {
     {
       text: '5부 안정적으로 오래 운영하기',
       items: [
-        { file: 'part5/env-secrets.adoc', text: '36장 환경 변수와 시크릿: 값이 두 벌이 된다' },
+        { file: 'part5/env-secrets.adoc', text: '36장 환경 변수와 시크릿: 개발과 운영, 두 벌이 된 값' },
         { file: 'part5/pwa.adoc', text: '37장 PWA: 설치되는 앱으로 만들기' },
-        { file: 'part5/caching.adoc', text: '38장 캐시와 서비스 워커: 낡은 화면이 남지 않게' },
-        { file: 'part5/free-tier.adoc', text: '39장 무료 티어 운영과 한도 관리' },
+        { file: 'part5/caching.adoc', text: '38장 캐시와 서비스 워커: 무엇을 저장하고 언제 버리는가' },
+        { file: 'part5/free-tier.adoc', text: '39장 무료 티어 운영: 무엇이 앱을 가장 먼저 멈추는가' },
         { file: 'part5/whats-next.adoc', text: '40장 다음 단계: 여기서 더 공부할 것들' },
       ],
     },
