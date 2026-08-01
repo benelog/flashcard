@@ -20,6 +20,7 @@
 - **책의 단일 설정 소스는 `book/book.config.mjs`다.** 제목·설명·저자·배포 주소·표지 문구·장 목차(toc)가 여기 있고, 사이트 사이드바·nav·OG 메타·홈 표지·PDF 표지·차례·아웃라인이 전부 여기서 파생된다.
 - 로컬 확인: 저장소 루트의 `./run_book.sh`(의존성 설치까지 알아서 하고 http://localhost:5173/flashcard/ 를 띄운다). 손으로 하려면 `cd book-template && npm install`(최초 한 번) 후 `cd book && npm install && npm run dev` / 빌드 검증: `./run_book.sh build`(= `cd book && npm run build`, 깨진 링크 포함 검증)
 - 테마: `book-template/theme/custom.css` — 본문 명조(Noto Serif KR)·제목 고딕, 행간 2.05·양쪽 정렬, 인쇄용 CSS 포함. 한글 폰트가 없는 CI 러너 대비로 웹폰트 폴백을 둔다.
+- 표지 글꼴만 예외로 D2Coding이다(홈의 표지 카드와 PDF 표지). 폰트 파일과 라이선스·재생성 방법은 `book/public/fonts/`, `@font-face` 선언은 `book-template/lib/fonts.mjs`에 있다. 표지 바탕은 흰색·회색·검정으로 두고 색은 세 층을 구분하는 데만 쓴다(화면=HTML의 주황, 로직=Go의 시안, 데이터=보라).
 - 이북 뷰어 레이아웃: `book-template/theme/Layout.vue`(DefaultTheme 확장). 목차는 왼쪽 하나뿐(오른쪽 아웃라인 없음), 상단 바 "목차" 버튼으로 접기/펼치기, 본문은 회색 배경 위 페이지 카드, 상단 읽기 진행 바, 좌우 화살표와 ←/→ 키로 장 이동. 홈(책 표지 랜딩)은 `book.config.mjs`의 cover 데이터에서 생성된다(홈 원고 파일은 없다).
 - PDF: `npm run pdf`(`book-template/lib/pdf.mjs`)가 표지·차례를 만들고 빌드 결과를 장 순서대로 인쇄해 `flashcard-book.pdf` 한 권으로 병합한다. CI(`book.yml`)가 매 배포마다 재생성한다.
 - 배포: GitHub Pages (https://benelog.github.io/flashcard/). `.github/workflows/book.yml`이 `book/**`·`book-template/**` 변경 push 시 자동 배포한다.

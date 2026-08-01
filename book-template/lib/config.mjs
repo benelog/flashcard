@@ -1,7 +1,7 @@
 // book.config.mjs 하나를 VitePress 설정으로 펼친다.
 // 소비자의 .vitepress/config.ts는 이 함수를 부르는 몇 줄짜리 심(shim)이면 된다.
 import { defineConfig } from 'vitepress'
-import { FONT_URL } from './fonts.mjs'
+import { FONT_URL, coverFontFaceCss } from './fonts.mjs'
 import { firstRoute, sidebar } from './toc.mjs'
 
 export function defineBookConfig(book) {
@@ -36,6 +36,8 @@ export function defineBookConfig(book) {
       ['link', { rel: 'preconnect', href: 'https://fonts.googleapis.com' }],
       ['link', { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: '' }],
       ['link', { rel: 'stylesheet', href: FONT_URL }],
+      // 표지 글꼴(D2Coding). 파일은 이 책의 public/fonts/에 있다.
+      ['style', {}, coverFontFaceCss(book.base)],
     ],
     vite: {
       // 테마(.vue)가 이 패키지 안에 있으므로 SSR 빌드에서 외부 모듈로 두지 않고 함께 컴파일한다.

@@ -655,11 +655,11 @@
   justify-content: center;
   gap: 28px;
   padding: 48px 24px 72px;
-  background: #eef4e4;
+  background: #ececec;
 }
 
 .dark .fc-home {
-  background: #21261f;
+  background: #1b1b1b;
 }
 
 .fc-book {
@@ -670,32 +670,33 @@
   aspect-ratio: 7 / 10;
   padding: 30px 32px 26px;
   box-sizing: border-box;
-  border: 1px solid #dfead0;
+  border: 1px solid #e0e0e0;
   border-radius: 2px 10px 10px 2px;
-  background: #f9fdf1;
-  color: #26301f;
+  background: #fff;
+  /* 표지 안은 본문과 달리 D2Coding으로 짠다(선언은 lib/fonts.mjs) */
+  font-family: 'D2Coding', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  color: #1a1a1a;
   overflow: hidden;
   text-decoration: none !important;
   box-shadow:
-    inset 7px 0 #4d7c0f,
-    0 18px 36px -14px rgba(70, 105, 35, 0.32);
+    inset 7px 0 #2b2b2b,
+    0 18px 36px -14px rgba(0, 0, 0, 0.30);
   transition: translate 0.25s, box-shadow 0.25s;
 }
 
 .fc-book:hover {
   translate: 0 -6px;
   box-shadow:
-    inset 7px 0 #4d7c0f,
-    0 28px 48px -14px rgba(70, 105, 35, 0.42);
+    inset 7px 0 #2b2b2b,
+    0 28px 48px -14px rgba(0, 0, 0, 0.40);
 }
 
 .fc-book h1 {
   margin: 6px 0 0;
-  font-family: var(--vp-font-family-base);
   font-size: 34px;
   line-height: 1.22;
   font-weight: 700;
-  color: #26301f;
+  color: #1a1a1a;
   word-break: keep-all;
 }
 
@@ -708,19 +709,18 @@
   display: inline-block;
   padding: 0 7px 2px;
   border-radius: 5px;
-  background: #bef264;
-  color: #26301f;
+  background: #1a1a1a;
+  color: #fff;
   font-size: 38px;
   line-height: 1;
 }
 
 .fc-book-subtitle {
   margin: 10px 0 0;
-  font-family: var(--fc-font-serif);
   font-size: 13.5px;
   line-height: 1.7;
   font-weight: 600;
-  color: #5f6b55;
+  color: #5c5c5c;
   word-break: keep-all;
 }
 
@@ -757,7 +757,7 @@
   flex: none;
   width: 197px;
   height: 100%;
-  filter: drop-shadow(0 11px 15px rgba(88, 120, 45, 0.20));
+  filter: drop-shadow(0 11px 15px rgba(0, 0, 0, 0.16));
   --sw: 168px;                                       /* 윗면 직사각형 가로 */
   --sh: 105px;                                       /* 세로: 가로와 16:10(모니터 비율) */
   --t: 12px;                                         /* 판 두께 */
@@ -775,8 +775,8 @@
   height: var(--sh);
   box-sizing: border-box;
   padding: 12px 15px;
-  background: #fcfff5;
-  border: 1.5px solid #dcedc0;
+  background: #fff;
+  border: 1.5px solid var(--lc-bd);
   border-radius: 6px;
   display: flex;
   flex-direction: column;
@@ -790,6 +790,7 @@
 }
 
 .fc-side-l {
+  background: var(--lc-l);
   width: calc(var(--sw) * 0.7071);
   left: calc(50% - var(--dw));
   top: calc(50% - var(--t) / 2 + var(--ldrop));
@@ -798,6 +799,7 @@
 }
 
 .fc-side-r {
+  background: var(--lc-r);
   width: calc(var(--sh) * 0.7071);
   left: calc(50% + (var(--sw) - var(--sh)) * 0.3536);
   top: calc(50% - var(--t) / 2 + var(--dh));
@@ -805,13 +807,32 @@
   transform: skewY(-24.228deg);
 }
 
-/* 층이 내려갈수록 옆면 초록이 한 단씩 짙어진다 */
-.fc-layer:nth-child(1) .fc-side-l { background: #d9f99d; }
-.fc-layer:nth-child(1) .fc-side-r { background: #bef264; }
-.fc-layer:nth-child(2) .fc-side-l { background: #84cc16; }
-.fc-layer:nth-child(2) .fc-side-r { background: #65a30d; }
-.fc-layer:nth-child(3) .fc-side-l { background: #4d7c0f; }
-.fc-layer:nth-child(3) .fc-side-r { background: #3f6212; }
+/* 표지 바탕은 무채색이고, 색은 층을 구분하는 데만 쓴다.
+   색은 그 층의 기술이 흔히 입는 옷을 따랐다. 화면은 HTML의 주황, 로직은 Go의 시안,
+   데이터는 깊은 곳에 쌓아 두는 보라다. 색상각이 38°·192°·263°로 벌어져 서로 헷갈리지 않고,
+   짙은 옆면의 밝기가 아래로 갈수록 낮아져 흑백 인쇄에서도 층의 순서가 남는다.
+   한 계열 안에서 왼쪽 옆면이 밝고 오른쪽 옆면이 짙어 판의 두께가 보인다.
+   판 하나가 쓰는 네 색을 여기서 변수로 정해 아래 규칙들이 나눠 쓴다. */
+.fc-layer:nth-child(1) {
+  --lc-l: #fcd34d;
+  --lc-r: #f59e0b;
+  --lc-bd: #fae3ab;
+  --lc-tech: #b45309;
+}
+
+.fc-layer:nth-child(2) {
+  --lc-l: #22d3ee;
+  --lc-r: #0891b2;
+  --lc-bd: #b3e7f2;
+  --lc-tech: #0e7490;
+}
+
+.fc-layer:nth-child(3) {
+  --lc-l: #a78bfa;
+  --lc-r: #6d28d9;
+  --lc-bd: #d5cbfd;
+  --lc-tech: #5b21b6;
+}
 
 /* 윗면 그림: 간소화한 앱 화면(상단 바·플래시카드·버튼) */
 .m-screen {
@@ -826,7 +847,7 @@
   height: 7px;
   width: 45%;
   border-radius: 3.5px;
-  background: #e5eedb;
+  background: #e6e6e6;
 }
 
 .m-card {
@@ -834,30 +855,30 @@
   flex-direction: column;
   gap: 6px;
   padding: 8px 9px;
-  border: 2.2px solid #bef264;
+  border: 2.2px solid #fcd34d;
   border-radius: 8px;
-  background: #f5fde3;
+  background: #fff8e6;
 }
 
 .m-word {
   height: 8px;
   width: 45%;
   border-radius: 4px;
-  background: #26301f;
+  background: #1f1f1f;
 }
 
 .m-ans {
   height: 6px;
   width: 70%;
   border-radius: 3px;
-  background: #84cc16;
+  background: #f59e0b;
 }
 
 .m-btn {
   height: 10px;
   width: 100%;
   border-radius: 6px;
-  background: #65a30d;
+  background: #d97706;
 }
 
 /* 윗면 그림: if/for 코드 줄 */
@@ -888,19 +909,19 @@
   font-weight: 700;
   font-size: 17px;
   line-height: 1;
-  color: #4d7c0f;
+  color: #0e7490;
 }
 
 .m-b {
   height: 7px;
   border-radius: 3.5px;
-  background: #e0e9d4;
+  background: #d9d9d9;
 }
 
 .m-b1 { width: 48%; }
 .m-b2 { width: 62%; }
 .m-b3 { width: 36%; }
-.m-b4 { width: 52%; background: #bef264; }
+.m-b4 { width: 52%; background: #22d3ee; }
 
 /* 윗면 그림: DB 테이블 격자(머리 행 + 셀) */
 .m-table {
@@ -908,20 +929,20 @@
   grid-template-columns: repeat(4, 1fr);
   gap: 2.2px;
   width: 100%;
-  border: 2.2px solid #bef264;
+  border: 2.2px solid #a78bfa;
   border-radius: 8px;
   overflow: hidden;
-  background: #bef264;
+  background: #a78bfa;
 }
 
 .m-th {
   height: 12px;
-  background: #65a30d;
+  background: #6d28d9;
 }
 
 .m-td {
   height: 12px;
-  background: #fcfff5;
+  background: #fff;
 }
 
 /* 행간을 죄어 이름과 기술이 한 묶음으로 읽히게 한다(본문 행간을 그대로 상속하면
@@ -936,14 +957,14 @@
 .fc-layer-name {
   font-size: 13px;
   font-weight: 700;
-  color: #26301f;
+  color: #1a1a1a;
 }
 
 .fc-layer-tech {
   font-size: 10.5px;
   font-weight: 700;
   letter-spacing: 0.04em;
-  color: #4d7c0f;
+  color: var(--lc-tech);
 }
 
 .fc-book-pitch {
@@ -953,10 +974,11 @@
   font-size: 10.5px;
   line-height: 1.75;
   font-weight: 600;
-  color: #5f6b55;
+  color: #5c5c5c;
   word-break: keep-all;
 }
 
+/* 불릿 세 개에 세 층의 색을 그대로 물려 표지 아래쪽까지 같은 팔레트가 이어지게 한다 */
 .fc-book-pitch li::before {
   content: '';
   display: inline-block;
@@ -964,8 +986,11 @@
   height: 5px;
   margin: 0 7px 1px 0;
   border-radius: 50%;
-  background: #65a30d;
+  background: #d97706;
 }
+
+.fc-book-pitch li:nth-child(2)::before { background: #0891b2; }
+.fc-book-pitch li:nth-child(3)::before { background: #6d28d9; }
 
 .fc-book-footer {
   display: flex;
@@ -973,17 +998,17 @@
   justify-content: flex-end;
   margin: auto 0 0;
   padding-top: 10px;
-  border-top: 1px solid #dfead0;
+  border-top: 1px solid #e6e6e6;
   font-size: 9px;
   font-weight: 700;
-  color: #79856f;
+  color: #8a8a8a;
 }
 
 .fc-book-author {
   margin: 0;
   font-size: 13px;
   font-weight: 600;
-  color: #26301f;
+  color: #1a1a1a;
 }
 
 /* 책 설명과 버튼 묶음. 좁은 화면에서는 표지 아래에, 넓은 화면에서는 표지 오른쪽에 놓인다 */
@@ -1048,21 +1073,39 @@
 }
 
 .fc-btn:hover {
-  border-color: #4d7c0f;
-  color: #4d7c0f;
+  border-color: #1a1a1a;
+  color: #1a1a1a;
 }
 
-/* 표지 옆에 놓이는 버튼이라 사이트 브랜드 색이 아니라 표지 색을 따른다 */
+/* 표지 옆에 놓이는 버튼이라 사이트 브랜드 색이 아니라 표지 색을 따른다.
+   표지가 무채색이므로 버튼도 검정이고, 다크 모드에서는 검은 배경에 묻히지 않게 뒤집는다. */
 .fc-btn.brand {
-  background: #4d7c0f;
-  border-color: #4d7c0f;
+  background: #1a1a1a;
+  border-color: #1a1a1a;
   color: #fff;
 }
 
 .fc-btn.brand:hover {
-  background: #3f6212;
-  border-color: #3f6212;
+  background: #000;
+  border-color: #000;
   color: #fff;
+}
+
+.dark .fc-btn:hover {
+  border-color: #e5e5e5;
+  color: #e5e5e5;
+}
+
+.dark .fc-btn.brand,
+.dark .fc-btn.brand:hover {
+  background: #ededed;
+  border-color: #ededed;
+  color: #1a1a1a;
+}
+
+.dark .fc-btn.brand:hover {
+  background: #fff;
+  border-color: #fff;
 }
 
 @media (max-width: 480px) {

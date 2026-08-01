@@ -1,7 +1,7 @@
 // 표지의 단일 소스. book.config의 cover 데이터에서
 // 홈(랜딩) 페이지 마크다운과 PDF 표지·차례 HTML을 만든다.
 // 스타일은 theme/custom.css(홈)와 이 파일 안의 인쇄 CSS(PDF)가 담당한다.
-import { FONT_LINKS } from './fonts.mjs'
+import { COVER_FONT, FONT_LINKS, coverFontFaceCss } from './fonts.mjs'
 import { firstRoute } from './toc.mjs'
 
 // cover.actions의 link 약어를 실제 주소로 푼다.
@@ -96,20 +96,23 @@ export function pdfCoverHtml(book) {
   const pitch = c.pitch?.length
     ? `\n    <ul class="pitch">\n${c.pitch.map((p) => `      <li>${p}</li>`).join('\n')}\n    </ul>`
     : ''
+  // 표지 글꼴 파일은 이 책의 public/fonts/에 있다. setContent는 마지막으로 연 페이지의
+  // 주소를 기준으로 삼으므로, 로컬 서버 루트에서 시작하는 절대 경로로 가리킨다.
   return `<!doctype html><html lang="ko"><head><meta charset="utf-8">${FONT_LINKS}
   <style>
+    ${coverFontFaceCss(book.base)}
     @page { size: A4; margin: 0; }
     html, body { margin: 0; padding: 0; }
     .cover {
       position: relative; box-sizing: border-box; width: 210mm; height: 296mm;
       padding: 20mm 19mm 17mm 24mm; overflow: hidden;
-      background: #f9fdf1; color: #26301f; font-family: 'Noto Sans KR', sans-serif;
+      background: #fff; color: #1a1a1a; font-family: ${COVER_FONT};
       display: flex; flex-direction: column;
     }
-    .spine { position: absolute; inset: 0 auto 0 0; width: 4mm; background: #4d7c0f; }
+    .spine { position: absolute; inset: 0 auto 0 0; width: 4mm; background: #2b2b2b; }
     h1 { font-size: 38pt; line-height: 1.24; font-weight: 700; margin: 3mm 0 0; word-break: keep-all; }
-    h1 strong { display: inline-block; padding: 0 3mm 1.5mm; border-radius: 2mm; background: #bef264; color: #26301f; font-size: 43pt; line-height: 1; font-weight: 700; }
-    .subtitle { margin: 7mm 0 0; font-family: 'Noto Serif KR', serif; font-size: 14pt; font-weight: 600; color: #5f6b55; line-height: 1.75; word-break: keep-all; }
+    h1 strong { display: inline-block; padding: 0 3mm 1.5mm; border-radius: 2mm; background: #1a1a1a; color: #fff; font-size: 43pt; line-height: 1; font-weight: 700; }
+    .subtitle { margin: 7mm 0 0; font-size: 14pt; font-weight: 600; color: #5c5c5c; line-height: 1.75; word-break: keep-all; }
     /* 세 층을 두께가 있는 판(아이소메트릭 슬래브)으로 쌓는다. 판마다 세 면을 그린다.
        윗면은 가로로 긴 직사각형을 rotate(45deg)로 세워 scaleY(0.45)로 눕힌 평행사변형,
        좌우 옆면은 그 아래 두 변에 맞춰 skewY(±24.228deg)로 기울인 직사각형이다
@@ -122,7 +125,7 @@ export function pdfCoverHtml(book) {
     .layer:nth-child(2) { z-index: 2; }
     .layer:nth-child(3) { z-index: 1; }
     .plane { position: relative; flex: none; width: 101mm; height: 100%;
-      filter: drop-shadow(0 3mm 4mm rgba(88, 120, 45, 0.20));
+      filter: drop-shadow(0 3mm 4mm rgba(0, 0, 0, 0.16));
       --sw: 84mm;                                          /* 윗면 직사각형 가로 */
       --sh: 52.5mm;                                        /* 세로: 가로와 16:10(모니터 비율) */
       --t: 5.6mm;                                          /* 판 두께 */
@@ -133,50 +136,52 @@ export function pdfCoverHtml(book) {
     .top {
       position: absolute; z-index: 1; left: 50%; top: calc(50% - var(--t) / 2);
       width: var(--sw); height: var(--sh); box-sizing: border-box; padding: 5mm 5.6mm;
-      background: #fcfff5; border: 0.5mm solid #dcedc0; border-radius: 1.7mm;
+      background: #fff; border: 0.5mm solid var(--lc-bd); border-radius: 1.7mm;
       display: flex; flex-direction: column; justify-content: center;
       transform: translate(-50%, -50%) scaleY(0.45) rotate(45deg);
     }
     .side { position: absolute; height: var(--t); }
-    .side-l { width: calc(var(--sw) * 0.7071); left: calc(50% - var(--dw)); top: calc(50% - var(--t) / 2 + var(--ldrop)); transform-origin: 0 0; transform: skewY(24.228deg); }
-    .side-r { width: calc(var(--sh) * 0.7071); left: calc(50% + (var(--sw) - var(--sh)) * 0.3536); top: calc(50% - var(--t) / 2 + var(--dh)); transform-origin: 0 0; transform: skewY(-24.228deg); }
-    /* 층이 내려갈수록 옆면 초록이 한 단씩 짙어진다 */
-    .layer:nth-child(1) .side-l { background: #d9f99d; }
-    .layer:nth-child(1) .side-r { background: #bef264; }
-    .layer:nth-child(2) .side-l { background: #84cc16; }
-    .layer:nth-child(2) .side-r { background: #65a30d; }
-    .layer:nth-child(3) .side-l { background: #4d7c0f; }
-    .layer:nth-child(3) .side-r { background: #3f6212; }
+    .side-l { background: var(--lc-l); width: calc(var(--sw) * 0.7071); left: calc(50% - var(--dw)); top: calc(50% - var(--t) / 2 + var(--ldrop)); transform-origin: 0 0; transform: skewY(24.228deg); }
+    .side-r { background: var(--lc-r); width: calc(var(--sh) * 0.7071); left: calc(50% + (var(--sw) - var(--sh)) * 0.3536); top: calc(50% - var(--t) / 2 + var(--dh)); transform-origin: 0 0; transform: skewY(-24.228deg); }
+    /* 표지 바탕은 무채색이고, 색은 층을 구분하는 데만 쓴다.
+       화면은 HTML의 주황, 로직은 Go의 시안, 데이터는 깊은 곳에 쌓아 두는 보라다.
+       짙은 옆면의 밝기가 아래로 갈수록 낮아져 흑백 인쇄에서도 층의 순서가 남는다. */
+    .layer:nth-child(1) { --lc-l: #fcd34d; --lc-r: #f59e0b; --lc-bd: #fae3ab; --lc-tech: #b45309; }
+    .layer:nth-child(2) { --lc-l: #22d3ee; --lc-r: #0891b2; --lc-bd: #b3e7f2; --lc-tech: #0e7490; }
+    .layer:nth-child(3) { --lc-l: #a78bfa; --lc-r: #6d28d9; --lc-bd: #d5cbfd; --lc-tech: #5b21b6; }
     /* 윗면 그림: 간소화한 앱 화면 */
     .m-screen { display: flex; flex-direction: column; justify-content: center; gap: 2.5mm; width: 100%; }
-    .m-topbar { height: 2.9mm; width: 45%; border-radius: 1.5mm; background: #e5eedb; }
-    .m-card { display: flex; flex-direction: column; gap: 2.2mm; padding: 3.4mm 3.9mm; border: 0.9mm solid #bef264; border-radius: 2.8mm; background: #f5fde3; }
-    .m-word { height: 3.4mm; width: 45%; border-radius: 1.7mm; background: #26301f; }
-    .m-ans { height: 2.5mm; width: 70%; border-radius: 1.2mm; background: #84cc16; }
-    .m-btn { height: 4.5mm; width: 100%; border-radius: 2.2mm; background: #65a30d; }
+    .m-topbar { height: 2.9mm; width: 45%; border-radius: 1.5mm; background: #e6e6e6; }
+    .m-card { display: flex; flex-direction: column; gap: 2.2mm; padding: 3.4mm 3.9mm; border: 0.9mm solid #fcd34d; border-radius: 2.8mm; background: #fff8e6; }
+    .m-word { height: 3.4mm; width: 45%; border-radius: 1.7mm; background: #1f1f1f; }
+    .m-ans { height: 2.5mm; width: 70%; border-radius: 1.2mm; background: #f59e0b; }
+    .m-btn { height: 4.5mm; width: 100%; border-radius: 2.2mm; background: #d97706; }
     /* 윗면 그림: if/for 코드 줄 */
     .m-code { display: flex; flex-direction: column; gap: 2.5mm; width: 100%; }
     .m-cl { display: flex; align-items: center; gap: 2.2mm; }
     .m-ind { padding-left: 6.7mm; }
     .m-ind2 { padding-left: 13.4mm; }
-    .m-kw { font-family: ui-monospace, 'Cascadia Code', 'Source Code Pro', Menlo, Consolas, monospace; font-style: normal; font-weight: 700; font-size: 9.5pt; line-height: 1; color: #4d7c0f; }
-    .m-b { height: 2.8mm; border-radius: 1.5mm; background: #e0e9d4; }
+    .m-kw { font-style: normal; font-weight: 700; font-size: 9.5pt; line-height: 1; color: #0e7490; }
+    .m-b { height: 2.8mm; border-radius: 1.5mm; background: #d9d9d9; }
     .m-b1 { width: 48%; }
     .m-b2 { width: 62%; }
     .m-b3 { width: 36%; }
-    .m-b4 { width: 52%; background: #bef264; }
+    .m-b4 { width: 52%; background: #22d3ee; }
     /* 윗면 그림: DB 테이블 격자 */
-    .m-table { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.9mm; width: 100%; border: 0.9mm solid #bef264; border-radius: 2.8mm; overflow: hidden; background: #bef264; }
-    .m-th { height: 5.4mm; background: #65a30d; }
-    .m-td { height: 5.4mm; background: #fcfff5; }
+    .m-table { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.9mm; width: 100%; border: 0.9mm solid #a78bfa; border-radius: 2.8mm; overflow: hidden; background: #a78bfa; }
+    .m-th { height: 5.4mm; background: #6d28d9; }
+    .m-td { height: 5.4mm; background: #fff; }
     .label { display: flex; flex-direction: column; gap: 1mm; }
-    .layer .name { font-size: 13pt; font-weight: 700; color: #26301f; }
-    .layer .tech { font-size: 9.5pt; font-weight: 700; letter-spacing: 0.15mm; color: #4d7c0f; }
-    .pitch { margin: 9mm 0 7mm; padding: 0; list-style: none; font-size: 10.5pt; line-height: 1.95; font-weight: 600; color: #5f6b55; word-break: keep-all; }
-    .pitch li::before { content: ''; display: inline-block; width: 2.2mm; height: 2.2mm; margin: 0 3mm 0.3mm 0; border-radius: 50%; background: #65a30d; }
-    .bottom { display: flex; align-items: flex-end; justify-content: flex-end; margin-top: auto; padding-top: 5mm; border-top: 0.3mm solid #dfead0; }
-    .author { font-size: 14pt; font-weight: 600; color: #26301f; margin: 0 0 2mm; text-align: right; }
-    .site { font-family: ui-monospace, 'Cascadia Code', 'Source Code Pro', Menlo, Consolas, monospace; font-size: 8.5pt; color: #79856f; margin: 0; text-align: right; }
+    .layer .name { font-size: 13pt; font-weight: 700; color: #1a1a1a; }
+    .layer .tech { font-size: 9.5pt; font-weight: 700; letter-spacing: 0.15mm; color: var(--lc-tech); }
+    .pitch { margin: 9mm 0 7mm; padding: 0; list-style: none; font-size: 10.5pt; line-height: 1.95; font-weight: 600; color: #5c5c5c; word-break: keep-all; }
+    /* 불릿 세 개에 세 층의 색을 그대로 물려 표지 아래쪽까지 같은 팔레트가 이어지게 한다 */
+    .pitch li::before { content: ''; display: inline-block; width: 2.2mm; height: 2.2mm; margin: 0 3mm 0.3mm 0; border-radius: 50%; background: #d97706; }
+    .pitch li:nth-child(2)::before { background: #0891b2; }
+    .pitch li:nth-child(3)::before { background: #6d28d9; }
+    .bottom { display: flex; align-items: flex-end; justify-content: flex-end; margin-top: auto; padding-top: 5mm; border-top: 0.3mm solid #e6e6e6; }
+    .author { font-size: 14pt; font-weight: 600; color: #1a1a1a; margin: 0 0 2mm; text-align: right; }
+    .site { font-size: 8.5pt; color: #8a8a8a; margin: 0; text-align: right; }
   </style></head><body>
   <div class="cover">
     <div class="spine"></div>
