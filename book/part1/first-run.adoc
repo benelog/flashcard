@@ -313,34 +313,10 @@ localhost는 "내 컴퓨터 자신"을 가리키는 주소다.
 그 목록이 무엇이고 코드의 이력을 어떻게 남기는지는 {ch-git}에서 다룬다.
 
 그런데 테이블을 만드는 명령을 한 번도 실행하지 않았는데도 이 앱의 테이블들이 전부 준비되어 있다.
-서버가 시작할 때 스키마(테이블의 구조 정의)를 통째로 적용하기 때문인데, 그 일을 하는 코드가 `internal/litestore/store.go`에 있다.
-이 코드는 SQLite 파일과 그것이 담길 폴더를 없으면 만들어 가며 열고, 소스에 함께 임베드된 스키마를 곧바로 적용한다.
-
-[source,go]
-----
-//go:embed schema.sql
-var schemaSQL string
-
-// ...
-func Open(path string) (*Store, error) {
-	if dir := filepath.Dir(path); dir != "." {
-		if err := os.MkdirAll(dir, 0o755); err != nil {
-			return nil, fmt.Errorf("create sqlite dir: %w", err)
-		}
-	}
-	db, err := sql.Open("sqlite",
-		path+"?_pragma=foreign_keys(1)&_pragma=busy_timeout(5000)&_pragma=journal_mode(wal)")
-	// ...
-	if _, err := db.Exec(schemaSQL); err != nil {
-		db.Close()
-		return nil, fmt.Errorf("apply schema: %w", err)
-	}
-	return &Store{db: db}, nil
-}
-----
-
-`internal/litestore/schema.sql`이 그 스키마 파일이고, {ch-database}에서 이 파일을 발췌해 읽는다.
-모든 문장이 `if not exists` 꼴이라 몇 번을 다시 실행해도 이미 있는 테이블과 인덱스는 건드리지 않으므로, 별도의 명령 없이 서버를 켜기만 하면 스키마가 준비된다.
+서버가 시작할 때 스키마(테이블의 구조 정의)를 통째로 적용하기 때문이다.
+`internal/litestore/schema.sql`이 그 스키마 파일인데, 모든 문장이 "이미 있으면 건너뛰라"(`if not exists`)는 꼴이라 몇 번을 다시 실행해도 이미 있는 테이블과 인덱스는 건드리지 않는다.
+그래서 별도의 명령 없이 서버를 켜기만 하면 스키마가 준비된다.
+이 일을 하는 Go 코드는 {ch-local-dev}에서 읽고, 스키마 파일 자체는 {ch-database}에서 발췌해 읽는다.
 
 이번에는 데이터베이스 파일을 직접 열어 보자.
 앞에서 설치한 sqlite3 명령줄 도구를 쓴다.

@@ -49,6 +49,35 @@
 중간의 `VERCEL` 검사는 로컬 기본값이 사고로 번지는 것을 막는 가드다.
 배포 환경에서 `DATABASE_URL`을 깜빡 빠뜨리면 서버리스 함수의 일회용 파일 시스템에 조용히 SQLite 파일을 만들었다가 데이터를 통째로 잃게 되므로, Vercel 위에서는 로컬 모드로 넘어가는 대신 기동을 거부한다.
 
+드라이버가 SQLite로 정해지면 스키마 준비도 서버가 직접 한다.
+{ch-first-run}에서 테이블을 만드는 명령 없이도 테이블이 전부 갖춰져 있던 이유가 `internal/litestore/store.go`의 `Open`이다.
+이 코드는 SQLite 파일과 그것이 담길 폴더를 없으면 만들어 가며 열고, 소스에 함께 임베드된 `schema.sql`을 곧바로 적용한다.
+
+[source,go]
+----
+//go:embed schema.sql
+var schemaSQL string
+
+// ...
+func Open(path string) (*Store, error) {
+	if dir := filepath.Dir(path); dir != "." {
+		if err := os.MkdirAll(dir, 0o755); err != nil {
+			return nil, fmt.Errorf("create sqlite dir: %w", err)
+		}
+	}
+	db, err := sql.Open("sqlite",
+		path+"?_pragma=foreign_keys(1)&_pragma=busy_timeout(5000)&_pragma=journal_mode(wal)")
+	// ...
+	if _, err := db.Exec(schemaSQL); err != nil {
+		db.Close()
+		return nil, fmt.Errorf("apply schema: %w", err)
+	}
+	return &Store{db: db}, nil
+}
+----
+
+스키마의 모든 문장이 `if not exists` 꼴이라 몇 번을 켜도 이미 있는 테이블은 건드리지 않고, 파일을 바이너리에 함께 굽는 embed({ch-go-templates}) 덕에 스키마 파일을 따로 배포할 일도 없다.
+
 인증 쪽 분기는 `internal/auth/local.go`에 있다.
 이 코드는 토큰을 검사하는 대신 모든 요청을 고정된 한 명의 사용자로 로그인시킨다.
 

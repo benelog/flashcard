@@ -91,7 +91,6 @@ create table if not exists cards (
 태그 자체가 관리 대상이 되는 순간(태그 일괄 개명, 태그 설명 등) 연결 테이블로 옮기는 것이 맞다는 트레이드오프는 기억해 두자.
 사용자 설정 `profiles.settings`와 뒤에 나올 스마트 덱 규칙도 같은 방식의 JSON 텍스트다.
 SQLite에는 배열이나 JSON 전용 타입이 없어 text에 담지만, 운영 PostgreSQL에는 배열 타입(`text[]`)과 JSON을 이해하는 전용 타입(jsonb)이 있다.
-그 차이는 {ch-supabase-db}에서 본다.
 
 `cards`에 `deck_id`뿐 아니라 `user_id`도 중복해 둔 점도 설계 결정이다.
 덱을 거치지 않고 "이 사용자의 모든 카드"를 자주 조회하기 때문에(due 큐, 스마트 덱), 조인을 한 단계 줄이려는 실용적 비정규화(denormalization, {ch-database-basics})다.
@@ -306,7 +305,7 @@ func insertCard(ctx context.Context, tx *sql.Tx, userID uuid.UUID, in model.Card
 그래서 행이 빠르게 대량으로 쌓이는 작업에서는 순번 키보다 불리하다(B-tree 인덱스의 삽입 지역성 문제).
 빠르게 쌓이고 외부에 노출되지 않는 `review_logs`에 autoincrement 순번을 쓴 이유가 여기에 있다.
 "노출되는 것은 UUID, 내부 대량 로그는 순번"이라는 이원 전략이다.
-운영 스키마도 같은 전략인데, 그쪽은 uuid 타입에 `gen_random_uuid()` 기본값, 순번에는 identity 컬럼이라는 전용 장치가 있다는 점만 다르다({ch-supabase-db}).
+운영 스키마도 같은 전략인데, 그쪽은 uuid 타입에 `gen_random_uuid()` 기본값, 순번에는 identity 컬럼이라는 전용 장치가 있다는 점만 다르다.
 
 === 외래 키와 ON DELETE 정책
 
@@ -338,7 +337,6 @@ SQLite는 옛 버전과의 호환 때문에 외래 키 강제를 꺼 둔 채 출
 `card_type`, `mode`, `direction`이 그 예다.
 허용 값 목록이 스키마 자체에 문서로 남고, 목록에 없는 값은 insert 시점에 거부된다.
 운영 PostgreSQL에는 값 목록을 아예 타입으로 만들어 버리는 enum이 있어 같은 울타리를 타입 수준에서 치는데, enum은 값 목록 변경이 비싸다는 트레이드오프가 있다.
-그 차이와 실제로 치른 비용은 {ch-supabase-db}에서 확인한다.
 
 UNIQUE 제약 중에는 부분 유니크 인덱스(partial unique index)가 흥미롭다.
 표 전체가 아니라 조건에 맞는 행만 골라 중복을 검사하는 인덱스다.
@@ -387,7 +385,6 @@ SQLite도 PostgreSQL도 외래 키에 인덱스를 자동으로 만들지 않으
 `cards.text`에 인덱스가 없는 것은 카드 본문 검색 기능이 아직 없기 때문으로, 인덱스는 쓰기마다 유지 비용을 내는 자료구조라 조회 요구 없이 미리 만드는 것은 손해다.
 태그 검색을 받치는 인덱스도 없는데, 앞서 본 `json_each` 검색은 한 사람의 카드 수백~수천 장 규모에서는 인덱스 없이도 충분히 빠르다.
 운영 PostgreSQL 스키마는 같은 자리에 배열 열 전용의 GIN(역색인) 인덱스를 걸어 태그 검색을 받친다.
-이 차이도 {ch-supabase-db}에서 짚는다.
 
 === 고정 폭 UTC 텍스트: 문자열 비교가 곧 시간 순서다
 
@@ -425,7 +422,6 @@ const timeLayout = "2006-01-02T15:04:05.000Z"
 SQLite에는 시간대 변환 기능이 없으므로, `internal/litestore/stats.go`의 `DailyStats`는 UTC 텍스트로 쌓인 복습 시각을 읽어 와 Go에서 사용자의 IANA 시간대(전 세계 시간대에 붙인 표준 이름으로, 예: `Asia/Seoul`)의 날짜로 묶는다.
 이 소박한 방식은 데이터가 한 사람 분량이라 가능하다.
 운영 PostgreSQL에는 시간대를 품은 전용 타입 timestamptz가 있어, 절대 시각 저장과 시간대 변환은 물론 날짜별 집계까지 DB 안에서 처리한다.
-이 차이는 {ch-supabase-db}에서 다룬다.
 
 == 에이전트 활용 아이디어
 
@@ -448,7 +444,7 @@ SQLite에는 시간대 변환 기능이 없으므로, `internal/litestore/stats.
 
 둘째, 전용 타입이 없는 SQLite에는 설계 의도를 표현 방식으로 담았다.
 UUID는 Go가 만들어 text에 담고, 시각은 고정 폭 UTC 텍스트로 적어 문자열 비교가 곧 시간 순서가 되게 했으며, 태그·설정·규칙은 JSON 텍스트로, 종류 값은 text 위의 check 제약으로 지켰다.
-운영 PostgreSQL의 전용 타입(uuid, timestamptz, jsonb, 배열, enum)은 같은 의도를 타입 자체로 표현하는데, 그 대응은 {ch-supabase-db}에서 다룬다.
+운영 PostgreSQL의 전용 타입(uuid, timestamptz, jsonb, 배열, enum)은 같은 의도를 타입 자체로 표현하는데, 그 대응과 이 장 곳곳에서 미뤄 둔 차이들(enum의 비용, GIN 인덱스, 시간대 집계)은 {ch-supabase-db}에서 한꺼번에 다룬다.
 
 여기까지가 일반적인 설계 원칙이 이 앱에 적용된 모습이다.
 다음 {ch-domain-model}에서는 이 앱에만 있는 두 가지 설계를 본다.
