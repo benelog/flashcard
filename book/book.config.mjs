@@ -4,9 +4,9 @@
 export default {
   lang: 'ko-KR',
   title: '이해하며 만드는 나만의 웹 앱',
-  subtitle: 'AI에게 지시해 쉬운 프로그래밍 언어로 만들고, 개념을 익혀 오랫동안 안정적으로 운영한다',
+  subtitle: '쉬운 프로그래밍 언어로 시작하는 AI 코딩',
   description:
-    'AI에게 지시해 쉬운 프로그래밍 언어로 만들고, 개념을 익혀 오랫동안 안정적으로 운영한다. 작은 웹 앱의 실제 코드로 Go, Gin, PostgreSQL과 HTML·htmx를 익히고, Vercel·Supabase 무료 티어로 서버 비용 없이 배포해 기능을 더해 가는 과정을 배운다.',
+    '쉬운 프로그래밍 언어로 시작하는 AI 코딩. AI에게 지시해 만들고, 개념을 익혀 오랫동안 안정적으로 운영한다. 작은 웹 앱의 실제 코드로 Go, Gin, PostgreSQL과 HTML·htmx를 익히고, Vercel·Supabase 무료 티어로 서버 비용 없이 배포해 기능을 더해 가는 과정을 배운다.',
   site: 'https://benelog.github.io/flashcard/',
   base: '/flashcard/',
   repo: 'https://github.com/benelog/flashcard',
@@ -17,16 +17,16 @@ export default {
   storage: { prefix: 'fc', legacyPrefixes: ['ef'] },
   cover: {
     titleHtml: '<strong>이해</strong>하며 만드는<br>나만의 웹 앱',
-    subtitleHtml: 'AI에게 지시해 쉬운 프로그래밍 언어로 만들고,<br>개념을 익혀 오랫동안 안정적으로 운영한다',
+    subtitleHtml: '쉬운 프로그래밍 언어로 시작하는 AI 코딩',
     diagram: [
       { name: '화면', tech: 'HTML · CSS', motif: 'screen' },
       { name: '로직', tech: 'Go', motif: 'code' },
       { name: '데이터', tech: 'SQL', motif: 'table' },
     ],
     pitch: [
-      '프로그래밍이 처음이어도 첫 장부터 따라올 수 있다',
-      '코드는 AI 에이전트가 쓰고, 판단은 사람이 한다',
-      '무료 티어에 올려 서버 비용 월 0원으로 운영한다',
+      '코딩이 처음이어도 개념까지 이해하며 만든다',
+      '방향은 사람이 정하고, 코드는 AI 에이전트가 작성한다',
+      '무료로 쓰는 클라우드에 올려 월 0원으로 운영한다',
     ],
     homeDesc:
       '코딩을 해 본 적이 없어도 시작할 수 있습니다. AI 코딩 에이전트인 Claude Code에게 지시해 암기 카드 앱을 만들고, 화면(HTML·CSS), 로직(Go), 데이터(SQL) 세 층의 실제 코드를 한 층씩 이해해 갑니다. 완성한 앱은 무료로 쓸 수 있는 클라우드 서비스인 Vercel과 Supabase에 올려, 서버 비용 없이 세상에 공개하고 운영하는 법까지 익힙니다.',

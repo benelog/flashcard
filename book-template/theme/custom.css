@@ -950,20 +950,33 @@
 .fc-layer-label {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  align-items: flex-start;
+  gap: 5px;
   line-height: 1.15;
 }
 
 .fc-layer-name {
-  font-size: 13px;
+  font-size: 12.5px;
   font-weight: 700;
-  color: #1a1a1a;
+  color: #5c5c5c;
 }
 
+/* 기술 이름은 표지에서 가장 먼저 읽히게 층 이름보다 크게 키우고, 그 층의 옅은 색을
+   바탕에 깔아 알약으로 만든다. 이름 하나가 알약 하나라 좁은 화면에서는 줄이 나뉜다. */
 .fc-layer-tech {
-  font-size: 10.5px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.fc-layer-tech .tk {
+  padding: 2px 7px 3px;
+  border-radius: 5px;
+  background: var(--lc-bd);
+  font-size: 19px;
   font-weight: 700;
-  letter-spacing: 0.04em;
+  line-height: 1.15;
+  letter-spacing: 0.02em;
   color: var(--lc-tech);
 }
 
@@ -978,19 +991,15 @@
   word-break: keep-all;
 }
 
-/* 불릿 세 개에 세 층의 색을 그대로 물려 표지 아래쪽까지 같은 팔레트가 이어지게 한다 */
+/* 세 줄 앞에는 터미널 프롬프트를 닮은 > 를 세운다. 색은 세 층을 구분하는 데만 쓰므로
+   불릿은 표지의 무채색 톤을 따른다(표지 글꼴이 D2Coding이라 프롬프트로 읽힌다) */
 .fc-book-pitch li::before {
-  content: '';
+  content: '>';
   display: inline-block;
-  width: 5px;
-  height: 5px;
-  margin: 0 7px 1px 0;
-  border-radius: 50%;
-  background: #d97706;
+  margin-right: 6px;
+  font-weight: 700;
+  color: #1a1a1a;
 }
-
-.fc-book-pitch li:nth-child(2)::before { background: #0891b2; }
-.fc-book-pitch li:nth-child(3)::before { background: #6d28d9; }
 
 .fc-book-footer {
   display: flex;
@@ -1167,6 +1176,20 @@
   .m-ind { padding-left: 15px; }
   .m-ind2 { padding-left: 29px; }
   .m-th, .m-td { height: 10px; }
+
+  /* 표지가 좁아지면 판 옆에 남는 폭도 줄어든다. 알약이 두 줄로 나뉘어도 읽히게 줄인다 */
+  .fc-layer-label {
+    gap: 4px;
+  }
+
+  .fc-layer-name {
+    font-size: 11px;
+  }
+
+  .fc-layer-tech .tk {
+    padding: 1px 6px 2px;
+    font-size: 15px;
+  }
 
   .fc-book-pitch {
     margin-top: 9px;

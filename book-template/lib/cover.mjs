@@ -40,6 +40,15 @@ function motifHtml(motif) {
   return ''
 }
 
+// 층 라벨의 기술 이름. 가운뎃점으로 나눠 하나씩 알약으로 싼다.
+// 좁은 화면에서 줄이 나뉘어도 가운뎃점만 남는 줄바꿈이 생기지 않는다.
+function techHtml(tech) {
+  return tech
+    .split('·')
+    .map((t) => `<span class="tk">${t.trim()}</span>`)
+    .join('')
+}
+
 // 홈(index.md) — 책 표지 랜딩 페이지
 export function homeCoverMarkdown(book) {
   const c = book.cover
@@ -48,7 +57,7 @@ export function homeCoverMarkdown(book) {
     ? `\n    <div class="fc-book-diagram" aria-hidden="true">\n      ${c.diagram
         .map(
           (l) =>
-            `<div class="fc-layer"><span class="fc-plane"><i class="fc-side fc-side-l"></i><i class="fc-side fc-side-r"></i><i class="fc-top">${motifHtml(l.motif)}</i></span><span class="fc-layer-label"><span class="fc-layer-name">${l.name}</span><span class="fc-layer-tech">${l.tech}</span></span></div>`,
+            `<div class="fc-layer"><span class="fc-plane"><i class="fc-side fc-side-l"></i><i class="fc-side fc-side-r"></i><i class="fc-top">${motifHtml(l.motif)}</i></span><span class="fc-layer-label"><span class="fc-layer-name">${l.name}</span><span class="fc-layer-tech">${techHtml(l.tech)}</span></span></div>`,
         )
         .join('\n      ')}\n    </div>`
     : ''
@@ -89,7 +98,7 @@ export function pdfCoverHtml(book) {
     ? `\n    <div class="diagram">\n      ${c.diagram
         .map(
           (l) =>
-            `<div class="layer"><span class="plane"><i class="side side-l"></i><i class="side side-r"></i><i class="top">${motifHtml(l.motif)}</i></span><span class="label"><span class="name">${l.name}</span><span class="tech">${l.tech}</span></span></div>`,
+            `<div class="layer"><span class="plane"><i class="side side-l"></i><i class="side side-r"></i><i class="top">${motifHtml(l.motif)}</i></span><span class="label"><span class="name">${l.name}</span><span class="tech">${techHtml(l.tech)}</span></span></div>`,
         )
         .join('\n      ')}\n    </div>`
     : ''
@@ -171,14 +180,16 @@ export function pdfCoverHtml(book) {
     .m-table { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.9mm; width: 100%; border: 0.9mm solid #a78bfa; border-radius: 2.8mm; overflow: hidden; background: #a78bfa; }
     .m-th { height: 5.4mm; background: #6d28d9; }
     .m-td { height: 5.4mm; background: #fff; }
-    .label { display: flex; flex-direction: column; gap: 1mm; }
-    .layer .name { font-size: 13pt; font-weight: 700; color: #1a1a1a; }
-    .layer .tech { font-size: 9.5pt; font-weight: 700; letter-spacing: 0.15mm; color: var(--lc-tech); }
+    .label { display: flex; flex-direction: column; align-items: flex-start; gap: 1.6mm; }
+    .layer .name { font-size: 12pt; font-weight: 700; color: #5c5c5c; }
+    /* 기술 이름은 표지에서 가장 먼저 읽히게 층 이름보다 크게 키우고, 그 층의 옅은 색을
+       바탕에 깔아 알약으로 만든다. 흑백 인쇄에서도 바탕의 밝기 차이로 층이 구분된다. */
+    .layer .tech { display: flex; flex-wrap: wrap; gap: 1.5mm; }
+    .layer .tech .tk { padding: 0.6mm 2mm 1mm; border-radius: 1.5mm; background: var(--lc-bd); font-size: 18pt; font-weight: 700; line-height: 1.15; letter-spacing: 0.15mm; color: var(--lc-tech); }
     .pitch { margin: 9mm 0 7mm; padding: 0; list-style: none; font-size: 10.5pt; line-height: 1.95; font-weight: 600; color: #5c5c5c; word-break: keep-all; }
-    /* 불릿 세 개에 세 층의 색을 그대로 물려 표지 아래쪽까지 같은 팔레트가 이어지게 한다 */
-    .pitch li::before { content: ''; display: inline-block; width: 2.2mm; height: 2.2mm; margin: 0 3mm 0.3mm 0; border-radius: 50%; background: #d97706; }
-    .pitch li:nth-child(2)::before { background: #0891b2; }
-    .pitch li:nth-child(3)::before { background: #6d28d9; }
+    /* 세 줄 앞에는 터미널 프롬프트를 닮은 > 를 세운다. 색은 세 층을 구분하는 데만 쓰므로
+       불릿은 표지의 무채색 톤을 따른다(표지 글꼴이 D2Coding이라 프롬프트로 읽힌다) */
+    .pitch li::before { content: '>'; display: inline-block; margin-right: 2.4mm; font-weight: 700; color: #1a1a1a; }
     .bottom { display: flex; align-items: flex-end; justify-content: flex-end; margin-top: auto; padding-top: 5mm; border-top: 0.3mm solid #e6e6e6; }
     .author { font-size: 14pt; font-weight: 600; color: #1a1a1a; margin: 0 0 2mm; text-align: right; }
     .site { font-size: 8.5pt; color: #8a8a8a; margin: 0; text-align: right; }
