@@ -61,7 +61,7 @@ export default {
       ],
     },
     {
-      text: '2부 코딩 기초: 문법에서 첫 웹 앱까지',
+      text: '2부 웹 앱 코딩 기초: 문법에서 첫 앱까지',
       items: [
         { file: 'part2/html-hello.adoc', text: '6장 HTML 첫걸음: 파일 하나로 만드는 웹 문서' },
         { file: 'part2/css-hello.adoc', text: '7장 CSS 첫걸음: 색과 배치를 입히는 규칙' },
