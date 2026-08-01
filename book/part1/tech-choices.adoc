@@ -432,7 +432,7 @@ Flashcard가 직접 쓴 자바스크립트는 이런 브라우저 전용 API를 
 부수 효과로 보안 구조도 단순해진다.
 로그인 토큰이 브라우저의 자바스크립트에 노출되지 않고 서버만 다루게 되는데, 이 이점은 {ch-supabase-auth}에서 자세히 본다.
 
-화면을 이루는 HTML과 CSS는 {ch-html-css}에서, html/template으로 화면을 그리는 방법은 {ch-go-templates}에서, htmx로 부분 갱신을 붙이는 방법은 {ch-htmx}에서 전부 실제 코드로 다룬다.
+화면을 이루는 HTML과 CSS는 {ch-html-css}에서, html/template으로 화면을 그리는 방법은 {ch-go-templates}에서, htmx로 부분 갱신을 붙이는 방법은 {ch-htmx-hello}과 {ch-htmx}에서 전부 실제 코드로 다룬다.
 
 == 정리
 

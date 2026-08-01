@@ -80,7 +80,7 @@ export default {
       ],
     },
     {
-      text: '3부 앱 코드 해부: 데이터에서 화면까지',
+      text: '3부 완성본 앱 해부: 데이터에서 화면까지',
       items: [
         {
           file: 'part3/design-principles.adoc',
@@ -97,14 +97,14 @@ export default {
           text: '18장 핵심 로직 읽기: 간격 반복 알고리즘과 도메인 코드',
         },
         { file: 'part3/go-testing.adoc', text: '19장 Go 테스트와 품질 검사 도구' },
-        { file: 'part3/gin.adoc', text: '20장 Gin으로 만드는 HTTP API: 라우팅·바인딩·미들웨어' },
+        { file: 'part3/gin.adoc', text: '20장 Gin 깊이 보기: 완성본의 라우팅·바인딩·미들웨어' },
         { file: 'part3/app-assembly.adoc', text: '21장 앱을 조립하기: 계층 분리와 두 진입점' },
         {
           file: 'part3/html-css.adoc',
           text: '22장 화면의 구조: 템플릿 삼층과 스타일 시스템',
         },
         { file: 'part3/go-templates.adoc', text: '23장 html/template으로 만드는 화면' },
-        { file: 'part3/htmx.adoc', text: '24장 htmx: 자바스크립트 없이 만드는 동적 화면' },
+        { file: 'part3/htmx.adoc', text: '24장 htmx 실전 패턴: 조각 응답과 무상태 학습 화면' },
         {
           file: 'part3/app-tests.adoc',
           text: '25장 앱을 통째로 띄우는 테스트: 화면과 API를 한 번에 검증하기',

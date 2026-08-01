@@ -1,4 +1,4 @@
-= Gin으로 만드는 HTTP API: 라우팅·바인딩·미들웨어
+= Gin 깊이 보기: 완성본의 라우팅·바인딩·미들웨어
 
 {ch-code-map}에서 Flashcard 백엔드의 패키지 지도를 그렸고, {ch-go}에서는 그 위의 핵심 로직을 읽었다.
 이번 장에서는 HTTP API를 실제로 만드는 웹 프레임워크(web framework) Gin을 다룬다.
