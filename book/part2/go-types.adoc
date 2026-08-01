@@ -3,7 +3,7 @@
 {ch-go-hello}에서 다룬 값은 모두 낱개였다.
 글자 하나, 숫자 하나, 참거짓 하나다.
 그런데 실제로 프로그램이 다루는 것은 대개 묶음이다.
-카드 한 장에는 앞면과 뒷면과 틀린 횟수가 함께 있고, 덱 하나에는 카드가 여러 장 들어 있다.
+덱 하나에는 번호와 이름이 함께 있고, 카드 한 장에는 앞면과 뒷면이 함께 있다.
 
 이 장에서는 그 묶음을 다루는 문법을 익힌다.
 값 여러 개에 이름표를 붙여 한 덩어리로 묶는 구조체, 그 덩어리에 동작을 붙이는 메서드, 원본을 건네는 포인터, 같은 것을 여러 개 담는 슬라이스와 맵, 서로 다른 타입을 같은 코드로 다루는 인터페이스, 그리고 타입 자리를 나중에 채우는 제네릭이 차례로 나온다.
@@ -16,34 +16,41 @@
 
 === 타입을 선언한다
 
-카드 한 장을 프로그램에서 다룬다고 해 보자.
-앞면, 뒷면, 틀린 횟수를 변수 세 개로 따로 두면 카드가 두 장만 되어도 이름이 여섯 개로 늘고, 함수에 넘길 때마다 셋을 함께 들고 다녀야 한다.
+덱 하나를 프로그램에서 다룬다고 해 보자.
+번호와 이름을 변수 두 개로 따로 두면 덱이 두 개만 되어도 이름이 넷으로 늘고, 함수에 넘길 때마다 둘을 함께 들고 다녀야 한다.
 이럴 때 쓰는 것이 구조체다.
 
 [source,go]
 ----
-type Card struct {
-	Front string
-	Back  string
-	Wrong int
+type Deck struct {
+	ID   int64
+	Name string
 }
 ----
 
 `type 이름 struct { ... }`가 새 타입을 만드는 선언이다.
 중괄호 안에 담을 값마다 이름과 타입을 한 줄씩 적는데, 이 각각을 필드라고 부른다.
-이제 `Card`는 `string`이나 `int`처럼 하나의 타입이 되어, 변수에 담고, 함수에 넘기고, 반환값으로 돌려받을 수 있다.
+이제 `Deck`은 `string`이나 `int`처럼 하나의 타입이 되어, 변수에 담고, 함수에 넘기고, 반환값으로 돌려받을 수 있다.
+
+`int64`는 {ch-go-hello}에서 "특별한 이유가 없으면 `int`를 쓴다"며 이름만 스쳤던 그 변형으로, 크기를 8바이트로 못 박은 정수다.
+여기가 그 특별한 이유에 해당한다.
+데이터베이스가 행마다 붙여 주는 번호를 받아 오는 자리이고, 그 값을 읽어 오는 표준 라이브러리가 크기가 정해진 타입을 쓰기 때문이다({ch-go-sqlite}).
+
+이 `Deck`은 연습용으로 지어낸 것이 아니다.
+{ch-go-sqlite}에서 펼칠 최소 앱의 `store.go`에 그대로 들어 있는 구조체다.
+그 파일에는 필드 옆에 백틱으로 감싼 표기가 하나씩 더 붙어 있는데, 데이터를 JSON으로 내보낼 때 쓸 이름을 적어 둔 것이라 그 장에서 짚는다.
 
 .[용어 풀이] 구조체(struct)
 [NOTE]
 ====
 여러 값에 각각 이름표를 붙여 하나로 묶은 데이터 꾸러미다.
-카드 한 장의 상태를 "앞면·뒷면·틀린 횟수"로 따로 들고 다니는 대신, `Card`라는 상자 하나에 담아 함께 다룬다.
+덱 하나의 정보를 "번호·이름"으로 따로 들고 다니는 대신, `Deck`이라는 상자 하나에 담아 함께 다룬다.
 서류 양식의 빈칸들처럼 각 칸(필드)마다 이름과 담을 값의 종류가 정해져 있다.
 ====
 
 필드 이름이 대문자로 시작한 것에도 뜻이 있다.
 {ch-go-hello}에서 본 대로 대문자로 시작하는 이름은 패키지 밖으로 공개된다.
-`Front`를 소문자 `front`로 두면 이 패키지 안에서만 읽고 쓸 수 있다.
+`Name`을 소문자 `name`으로 두면 이 패키지 안에서만 읽고 쓸 수 있다.
 
 === 값을 만들고 필드를 읽고 쓴다
 
@@ -51,42 +58,44 @@ type Card struct {
 
 [source,go]
 ----
-c := Card{Front: "apple", Back: "사과"}
-fmt.Println(c.Front, c.Back, c.Wrong)
+d := Deck{Name: "토익 필수 단어"}
+fmt.Println(d.ID, d.Name)
 
-c.Wrong++
-fmt.Printf("%+v\n", c)
+d.Name = "토익 필수 단어 2026"
+fmt.Printf("%+v\n", d)
 ----
 
 [source,text]
 ----
-apple 사과 0
-{Front:apple Back:사과 Wrong:1}
+0 토익 필수 단어
+{ID:0 Name:토익 필수 단어 2026}
 ----
 
-`Card{Front: "apple", Back: "사과"}`가 구조체 값을 만드는 표기다.
+`Deck{Name: "토익 필수 단어"}`가 구조체 값을 만드는 표기다.
 필드 이름을 적고 콜론 뒤에 값을 준다.
-만든 값의 필드는 점을 찍어 읽고(`c.Front`), 같은 방식으로 고친다(`c.Wrong++`).
+만든 값의 필드는 점을 찍어 읽고(`d.Name`), 같은 방식으로 고친다(`d.Name = ...`).
 
 `%+v`는 구조체를 통째로 찍을 때 쓰는 자리 표시로, 필드 이름까지 함께 보여 준다.
 값이 어떻게 채워졌는지 확인하기 좋아서, 디버깅에서 자주 쓴다.
 
-여기서 `Wrong`을 지정하지 않았는데 0이 들어간 것을 눈여겨보자.
+여기서 `ID`를 지정하지 않았는데 0이 들어간 것을 눈여겨보자.
 {ch-go-hello}에서 본 제로값이 구조체에도 그대로 적용되어, 적지 않은 필드는 타입별 기본값으로 채워진다.
 아예 아무것도 지정하지 않아도 된다.
 
 [source,go]
 ----
-var empty Card
+var empty Deck
 fmt.Printf("%+v\n", empty)
 ----
 
 [source,text]
 ----
-{Front: Back: Wrong:0}
+{ID:0 Name:}
 ----
 
-문자열 두 개는 빈 문자열이고 정수는 0이다.
+정수는 0이고 문자열은 빈 문자열이다.
+번호가 0인 것에는 뜻이 있다.
+아직 저장하지 않은 덱에는 번호가 없고, 데이터베이스에 넣는 순간 번호가 붙기 때문이다({ch-go-sqlite}).
 {ch-go}에서 읽을 Flashcard의 학습 상태 구조체는 이 성질을 적극적으로 이용한다.
 "아직 한 번도 복습하지 않은 카드"의 연속 정답 횟수와 복습 간격이 마침 0이어서, 값을 채우지 않은 상태가 그대로 올바른 초기 상태가 된다.
 제로값이 곧 쓸 수 있는 초기 상태가 되도록 타입을 설계하는 것이 Go다운 방식이다.
@@ -97,40 +106,41 @@ fmt.Printf("%+v\n", empty)
 
 [source,go]
 ----
-func (c Card) Label() string {
-	return c.Front + " / " + c.Back
+func (d Deck) Label() string {
+	return fmt.Sprintf("%d번 덱: %s", d.ID, d.Name)
 }
 ----
 
 `func`와 함수 이름 사이에 괄호가 하나 더 있는 것이 보통 함수와 다르다.
-이 괄호에 적은 `(c Card)`를 리시버라고 하고, "이 함수는 `Card` 타입에 딸려 있으며 그 값을 `c`라는 이름으로 받는다"는 뜻이다.
+이 괄호에 적은 `(d Deck)`를 리시버라고 하고, "이 함수는 `Deck` 타입에 딸려 있으며 그 값을 `d`라는 이름으로 받는다"는 뜻이다.
 이렇게 타입에 딸린 함수를 메서드라고 부른다.
+몸통에 쓴 `fmt.Sprintf`는 {ch-go-hello}에서 본 `Printf`와 같은 자리 표시를 쓰되, 화면에 찍는 대신 완성된 문자열을 돌려주는 함수다.
 
 부를 때는 값 뒤에 점을 찍는다.
 `fmt.Println`에서 봤던 그 점과 같은 표기다.
 
 [source,go]
 ----
-c := Card{Front: "apple", Back: "사과"}
-fmt.Println(c.Label())
+d := Deck{ID: 3, Name: "토익 필수 단어"}
+fmt.Println(d.Label())
 ----
 
 [source,text]
 ----
-apple / 사과
+3번 덱: 토익 필수 단어
 ----
 
 .[용어 풀이] 메서드와 리시버(Method·Receiver)
 [NOTE]
 ====
 특정 타입에 딸린 함수를 메서드라고 하고, 함수 이름 앞 괄호에 적어 그 타입의 값을 건네받는 변수를 리시버라고 한다.
-`func (c Card) Label() string`은 "`Card` 값 하나를 `c`라는 이름으로 받아 일하는 `Label` 메서드"라고 읽는다.
+`func (d Deck) Label() string`은 "`Deck` 값 하나를 `d`라는 이름으로 받아 일하는 `Label` 메서드"라고 읽는다.
 설명서에 적힌 사용법이 아니라 물건에 직접 달린 버튼처럼, 값과 그 값을 다루는 동작을 한자리에 묶어 두는 장치다.
 {ch-gin}에서 HTTP 요청에 쓰는 "메서드"(GET, POST)는 이름만 같고 다른 것이다.
 ====
 
 메서드로 두면 좋은 점은 관련된 동작이 타입 옆에 모인다는 것이다.
-카드를 다루는 코드가 늘어날수록 `label(c)`, `isNew(c)`처럼 흩어진 함수보다 `c.Label()`, `c.IsNew()`가 찾기 쉽다.
+덱을 다루는 코드가 늘어날수록 `label(d)`, `isEmpty(d)`처럼 흩어진 함수보다 `d.Label()`, `d.IsEmpty()`가 찾기 쉽다.
 
 == 포인터: 원본을 건네는 방법
 
@@ -141,23 +151,23 @@ Go에서 함수에 값을 넘기면 그 값이 복사되어 전달된다.
 
 [source,go]
 ----
-func renameCopy(c Card) {
-	c.Front = "바뀐 앞면"
+func renameCopy(d Deck) {
+	d.Name = "바뀐 이름"
 }
 
 func main() {
-	c := Card{Front: "apple", Back: "사과"}
-	renameCopy(c)
-	fmt.Println(c.Front)
+	d := Deck{Name: "토익 필수 단어"}
+	renameCopy(d)
+	fmt.Println(d.Name)
 }
 ----
 
 [source,text]
 ----
-apple
+토익 필수 단어
 ----
 
-`renameCopy`가 고친 것은 복사본이라 원본은 `apple` 그대로다.
+`renameCopy`가 고친 것은 복사본이라 원본은 그대로다.
 원본을 고치게 하려면 값이 아니라 그 값이 놓인 자리를 알려 줘야 한다.
 그 자리를 담는 값이 포인터다.
 
@@ -171,29 +181,30 @@ apple
 
 문법은 기호 두 개가 전부다.
 `&x`는 변수 `x`의 주소를 얻고, 포인터 `p`가 있을 때 `*p`는 그 주소에 있는 값을 뜻한다.
-타입 이름 앞에 붙은 `*`(예: `*Card`)는 "그 타입의 값을 가리키는 포인터"라는 표기다.
+타입 이름 앞에 붙은 `*`(예: `*Deck`)는 "그 타입의 값을 가리키는 포인터"라는 표기다.
 
 [source,go]
 ----
-func rename(c *Card) {
-	c.Front = "바뀐 앞면"
+func rename(d *Deck) {
+	d.Name = "바뀐 이름"
 }
 
 func main() {
-	c := Card{Front: "apple", Back: "사과"}
-	rename(&c)
-	fmt.Println(c.Front)
+	d := Deck{Name: "토익 필수 단어"}
+	rename(&d)
+	fmt.Println(d.Name)
 }
 ----
 
 [source,text]
 ----
-바뀐 앞면
+바뀐 이름
 ----
 
-매개변수 타입이 `*Card`로 바뀌었고, 부를 때 `&c`로 주소를 넘겼다.
+매개변수 타입이 `*Deck`로 바뀌었고, 부를 때 `&d`로 주소를 넘겼다.
 이번에는 원본이 바뀌었다.
-`c.Front`를 읽고 쓸 때 `*`를 따로 붙이지 않은 것도 눈여겨보자.
+최소 앱의 덱 이름 바꾸기가 이런 모양으로 동작한다({ch-gin-hello}).
+`d.Name`을 읽고 쓸 때 `*`를 따로 붙이지 않은 것도 눈여겨보자.
 포인터를 통해 필드에 접근할 때는 Go가 알아서 주소를 따라가 주므로, 사람이 적어야 하는 곳은 주소를 얻는 `&` 쪽뿐이다.
 
 기본 자료형으로 보면 동작이 더 분명하다.
@@ -223,26 +234,25 @@ fmt.Println(n)
 
 [source,go]
 ----
-func (c *Card) MarkWrong() {
-	c.Wrong++
+func (d *Deck) Rename(name string) {
+	d.Name = name
 }
 
 func main() {
-	c := Card{Front: "apple", Back: "사과"}
-	c.MarkWrong()
-	c.MarkWrong()
-	fmt.Println(c.Wrong)
+	d := Deck{ID: 3, Name: "토익 필수 단어"}
+	d.Rename("토익 필수 단어 2026")
+	fmt.Println(d.Label())
 }
 ----
 
 [source,text]
 ----
-2
+3번 덱: 토익 필수 단어 2026
 ----
 
-리시버가 `(c Card)`가 아니라 `(c *Card)`이므로 `c.Wrong++`가 원본을 고친다.
+리시버가 `(d Deck)`가 아니라 `(d *Deck)`이므로 `d.Name = name`이 원본을 고친다.
 부르는 쪽 모양이 값 리시버일 때와 똑같다는 점도 눈여겨볼 만하다.
-`c`가 포인터가 아닌데도 `c.MarkWrong()`이라고 쓸 수 있는 것은, Go가 필요한 주소를 알아서 넘겨 주기 때문이다.
+`d`가 포인터가 아닌데도 `d.Rename(...)`이라고 쓸 수 있는 것은, Go가 필요한 주소를 알아서 넘겨 주기 때문이다.
 
 여기서 얻는 것은 편리함만이 아니다.
 포인터 리시버는 "이 메서드는 값을 바꾼다"는 신호가 되므로, 선언 한 줄만 봐도 그 메서드가 원본을 건드리는지 읽기만 하는지 알 수 있다.
@@ -254,7 +264,7 @@ func main() {
 
 [source,go]
 ----
-var missing *Card
+var missing *Deck
 fmt.Println(missing == nil)
 ----
 
@@ -264,7 +274,7 @@ true
 ----
 
 포인터의 제로값은 `nil`, 즉 아무 곳도 가리키지 않는 상태다.
-`Card` 값의 제로값은 "모든 칸이 빈 카드"이지만 `*Card`의 제로값은 "카드가 아예 없음"이라, 이 둘은 다른 상태를 표현한다.
+`Deck` 값의 제로값은 "모든 칸이 빈 덱"이지만 `*Deck`의 제로값은 "덱이 아예 없음"이라, 이 둘은 다른 상태를 표현한다.
 {ch-database-basics}에서 배울 데이터베이스의 NULL을 Go 쪽에서 받을 때 이 구별이 필요해진다.
 설명이 빈 문자열인 덱과 설명을 적지 않은 덱을 구별해야 하면 `string`이 아니라 `*string`으로 받는 식이고, {ch-go}에서 실제 코드로 확인한다.
 
@@ -392,45 +402,37 @@ fmt.Println(n, ok)
 
 == 인터페이스: 할 줄 아는 일로 묶는다
 
-지금까지 만든 `Card`와, 덱을 나타내는 다른 타입이 있다고 하자.
-둘 다 "화면에 읽어 줄 문장"을 내놓을 수 있다면, 그 문장을 받아 출력하는 코드는 상대가 카드인지 덱인지 몰라도 된다.
+지금까지 다룬 `Deck`과, 카드 한 장을 나타내는 다른 타입이 있다고 하자.
+둘 다 "화면에 읽어 줄 문장"을 내놓을 수 있다면, 그 문장을 받아 출력하는 코드는 상대가 덱인지 카드인지 몰라도 된다.
 이 "할 줄 아는 일의 목록"을 타입으로 적어 둔 것이 인터페이스다.
 
 [source,go]
 ----
-type Speaker interface {
-	Text() string
+type Labeler interface {
+	Label() string
 }
 ----
 
-`Speaker`는 "`Text()`라는 메서드가 있고 문자열을 돌려준다"는 조건 하나만 적어 둔 타입이다.
-이제 그 조건을 만족하는 타입을 두 개 만들어 보자.
+`Labeler`는 "`Label()`이라는 메서드가 있고 문자열을 돌려준다"는 조건 하나만 적어 둔 타입이다.
+`Deck`은 앞 절에서 만든 `Label` 메서드로 이 조건을 이미 만족한다.
+카드 쪽도 만들어 보자.
+앞뒷면을 담는 필드 이름은 최소 앱의 `Card` 구조체에서 그대로 가져왔다(실제 코드에는 카드 번호와 덱 번호를 담는 필드가 둘 더 있다).
 
 [source,go]
 ----
 type Card struct {
-	Front string
+	Text    string
+	Meaning string
 }
 
-func (c Card) Text() string {
-	return c.Front
-}
-
-type Deck struct {
-	Name  string
-	Count int
-}
-
-func (d Deck) Text() string {
-	return fmt.Sprintf("%s 덱, 카드 %d장", d.Name, d.Count)
+func (c Card) Label() string {
+	return c.Text + " / " + c.Meaning
 }
 ----
 
-`fmt.Sprintf`는 `Printf`와 같은 자리 표시를 쓰되 화면에 찍는 대신 완성된 문자열을 돌려주는 함수다.
-
 여기서 Go의 특징이 드러난다.
-`Card`와 `Deck` 어디에도 "나는 `Speaker`다"라고 적지 않았다.
-자바나 C#은 `implements Speaker`처럼 선언해야 하지만, Go는 메서드가 조건에 맞으면 그것으로 끝이다.
+`Deck`과 `Card` 어디에도 "나는 `Labeler`다"라고 적지 않았다.
+자바나 C#은 `implements Labeler`처럼 선언해야 하지만, Go는 메서드가 조건에 맞으면 그것으로 끝이다.
 이렇게 선언 없이 자동으로 만족하는 방식을 암묵적 구현이라고 부른다.
 
 .[용어 풀이] 인터페이스(interface)
@@ -446,23 +448,23 @@ Go에서는 "나는 이 인터페이스를 구현한다"고 선언할 필요가 
 
 [source,go]
 ----
-func announce(s Speaker) {
-	fmt.Println("읽어 줍니다:", s.Text())
+func announce(l Labeler) {
+	fmt.Println("읽어 줍니다:", l.Label())
 }
 
 func main() {
-	announce(Card{Front: "apple"})
-	announce(Deck{Name: "토익 필수 단어", Count: 8})
+	announce(Card{Text: "apple", Meaning: "사과"})
+	announce(Deck{ID: 3, Name: "토익 필수 단어"})
 }
 ----
 
 [source,text]
 ----
-읽어 줍니다: apple
-읽어 줍니다: 토익 필수 단어 덱, 카드 8장
+읽어 줍니다: apple / 사과
+읽어 줍니다: 3번 덱: 토익 필수 단어
 ----
 
-`announce`는 카드도 덱도 모르고, 오직 "`Text()`를 부를 수 있다"만 안다.
+`announce`는 카드도 덱도 모르고, 오직 "`Label()`을 부를 수 있다"만 안다.
 그래서 나중에 세 번째 타입이 생겨도 `announce`는 고칠 것이 없다.
 
 이 문법이 이 앱의 구조를 지탱한다.
