@@ -25,8 +25,8 @@
   <!-- tag::card-form[] -->
   <form class="row" method="post" action="/decks/{{.Deck.ID}}/cards"
         hx-post="/decks/{{.Deck.ID}}/cards" hx-target="#cards" hx-swap="beforeend">
-    <input class="field" name="front" placeholder="앞면" required>
-    <input class="field" name="back" placeholder="뒷면" required>
+    <input class="field" name="text" placeholder="앞면(원문)" required>
+    <input class="field" name="meaning" placeholder="뒷면(뜻)" required>
     <button class="button">카드 추가</button>
   </form>
   <!-- end::card-form[] -->

@@ -17,10 +17,10 @@ type Deck struct {
 
 // Card는 cards 테이블의 한 행이다.
 type Card struct {
-	ID     int64  `json:"id"`
-	DeckID int64  `json:"deck_id"`
-	Front  string `json:"front"`
-	Back   string `json:"back"`
+	ID      int64  `json:"id"`
+	DeckID  int64  `json:"deck_id"`
+	Text    string `json:"text"`
+	Meaning string `json:"meaning"`
 }
 
 // end::types[]
@@ -107,7 +107,7 @@ func (s *Store) GetDeck(id int64) (Deck, error) {
 // ListCards는 한 덱의 카드를 만든 순서대로 돌려준다.
 func (s *Store) ListCards(deckID int64) ([]Card, error) {
 	rows, err := s.db.Query(
-		"select id, deck_id, front, back from cards where deck_id = ? order by id",
+		"select id, deck_id, text, meaning from cards where deck_id = ? order by id",
 		deckID)
 	if err != nil {
 		return nil, err
@@ -117,7 +117,7 @@ func (s *Store) ListCards(deckID int64) ([]Card, error) {
 	var cards []Card
 	for rows.Next() {
 		var c Card
-		if err := rows.Scan(&c.ID, &c.DeckID, &c.Front, &c.Back); err != nil {
+		if err := rows.Scan(&c.ID, &c.DeckID, &c.Text, &c.Meaning); err != nil {
 			return nil, err
 		}
 		cards = append(cards, c)
@@ -129,10 +129,10 @@ func (s *Store) ListCards(deckID int64) ([]Card, error) {
 
 // tag::create-card[]
 // CreateCard는 카드 하나를 추가하고 저장된 행을 그대로 돌려준다.
-func (s *Store) CreateCard(deckID int64, front, back string) (Card, error) {
+func (s *Store) CreateCard(deckID int64, text, meaning string) (Card, error) {
 	res, err := s.db.Exec(
-		"insert into cards (deck_id, front, back) values (?, ?, ?)",
-		deckID, front, back)
+		"insert into cards (deck_id, text, meaning) values (?, ?, ?)",
+		deckID, text, meaning)
 	if err != nil {
 		return Card{}, err
 	}
@@ -140,7 +140,7 @@ func (s *Store) CreateCard(deckID int64, front, back string) (Card, error) {
 	if err != nil {
 		return Card{}, err
 	}
-	return Card{ID: id, DeckID: deckID, Front: front, Back: back}, nil
+	return Card{ID: id, DeckID: deckID, Text: text, Meaning: meaning}, nil
 }
 
 // end::create-card[]

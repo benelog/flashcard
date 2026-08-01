@@ -44,8 +44,8 @@ func TestDeckAndCardRoundTrip(t *testing.T) {
 	if err != nil {
 		t.Fatalf("ListCards: %v", err)
 	}
-	if len(cards) != 1 || cards[0].Front != "resilient" {
-		t.Errorf("ListCards = %+v, want one card with front resilient", cards)
+	if len(cards) != 1 || cards[0].Text != "resilient" {
+		t.Errorf("ListCards = %+v, want one card with text resilient", cards)
 	}
 
 	if err := store.DeleteCard(card.ID); err != nil {

@@ -14,8 +14,8 @@
   {{if .Card}}
   <!-- tag::study-card[] -->
   <details class="study">
-    <summary class="study-front">{{.Card.Front}}</summary>
-    <p class="study-back">{{.Card.Back}}</p>
+    <summary class="study-front">{{.Card.Text}}</summary>
+    <p class="study-back">{{.Card.Meaning}}</p>
   </details>
   <p class="study-nav">
     <span class="study-pos">{{.Pos}} / {{.Total}}</span>

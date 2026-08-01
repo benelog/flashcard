@@ -7,7 +7,7 @@ create table if not exists decks (
 create table if not exists cards (
     id      integer primary key autoincrement,
     deck_id integer not null references decks (id) on delete cascade,
-    front   text not null,
-    back    text not null
+    text    text not null,
+    meaning text not null
 );
 -- end::schema[]
