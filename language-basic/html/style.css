@@ -1,11 +1,11 @@
 :root {
-  --bg: #fafafa;
-  --fg: #171717;
+  --paper: #f7f8fa;
   --surface: #ffffff;
-  --border: #e5e5e5;
-  --muted: #737373;
-  --primary: #2563eb;
-  --radius: 0.75rem;
+  --ink: #1f2430;
+  --muted: #666677;
+  --line: #d8dce4;
+  --accent: #2456c8;
+  --radius: 0.5rem;
 }
 
 * {
@@ -14,43 +14,93 @@
 
 body {
   margin: 0 auto;
-  padding: 1rem;
-  max-width: 32rem;
-  background: var(--bg);
-  color: var(--fg);
+  max-width: 40rem;
+  padding: 1.5rem 1rem;
   font-family: system-ui, sans-serif;
   line-height: 1.6;
+  color: var(--ink);
+  background: var(--paper);
 }
 
-.link {
-  color: var(--primary);
+.title {
+  font-size: 1.4rem;
 }
 
-.muted {
-  color: var(--muted);
-  font-size: 0.875rem;
+.nav {
+  display: flex;
+  gap: 1rem;
 }
 
-.cards {
-  list-style: none;
-  margin: 0;
+.navlink {
+  color: var(--accent);
+}
+
+.list {
+  margin: 1rem 0;
   padding: 0;
+  list-style: none;
 }
 
-.card {
+.item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.6rem 0.8rem;
   margin-bottom: 0.5rem;
-  padding: 0.75rem 1rem;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
   background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+
+.item-empty {
+  padding: 0.6rem 0.2rem;
+  color: var(--muted);
+}
+
+.card-front {
+  font-weight: 600;
+}
+
+.card-back {
+  flex: 1;
+  color: var(--muted);
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.field {
+  flex: 1 1 8rem;
+  min-width: 0;
+  padding: 0.5rem 0.7rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  font: inherit;
+  color: var(--ink);
+  background: var(--surface);
+}
+
+.button {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: var(--radius);
+  background: var(--accent);
+  color: #fff;
+  font: inherit;
+  white-space: nowrap;
+  cursor: pointer;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #0a0a0a;
-    --fg: #f5f5f5;
-    --surface: #171717;
-    --border: #262626;
-    --muted: #a3a3a3;
+    --paper: #14161b;
+    --surface: #1f2430;
+    --ink: #e8eaf0;
+    --muted: #9aa0b0;
+    --line: #333a49;
+    --accent: #6f9bff;
   }
 }

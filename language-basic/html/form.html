@@ -8,14 +8,14 @@
 <body>
   <h1>카드 추가</h1>
 
-  <form method="post" action="/cards">
+  <form method="post" action="/decks/1/cards">
     <div>
-      <label for="front">앞면</label>
-      <input id="front" name="front" placeholder="apple" required>
+      <label for="text">앞면</label>
+      <input id="text" name="text" placeholder="apple" required>
     </div>
     <div>
-      <label for="back">뒷면</label>
-      <input id="back" name="back" required>
+      <label for="meaning">뒷면</label>
+      <input id="meaning" name="meaning" required>
     </div>
     <div>
       <label for="count">반복 횟수</label>
@@ -43,7 +43,7 @@
         <option value="back-front">뒷면 보고 앞면 맞히기</option>
       </select>
     </div>
-    <button type="submit">추가</button>
+    <button type="submit">카드 추가</button>
   </form>
 </body>
 </html>

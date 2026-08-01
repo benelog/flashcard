@@ -3,9 +3,9 @@
 <li class="item">
   <span class="card-front">{{.Text}}</span>
   <span class="card-back">{{.Meaning}}</span>
-  <button class="delete" hx-delete="/cards/{{.ID}}"
-          hx-target="closest li" hx-swap="outerHTML"
-          hx-confirm="이 카드를 지울까?">지우기</button>
+  <form method="post" action="/decks/{{.DeckID}}/cards/{{.ID}}/delete">
+    <button class="delete">지우기</button>
+  </form>
 </li>
 <!-- end::card-item[] -->
 {{end}}

@@ -1,5 +1,5 @@
 // flashcard-basic: 책 2부에서 다루는 최소 플래시카드 앱.
-// 덱과 카드 두 테이블만 두고, Gin + html/template + htmx + SQLite로 만든다.
+// 덱과 카드 두 테이블만 두고, Gin + html/template + SQLite로 만든다.
 package main
 
 import (

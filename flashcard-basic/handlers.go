@@ -15,9 +15,9 @@ func registerRoutes(r *gin.Engine, store *Store) {
 	r.POST("/decks", createDeck(store))
 	r.GET("/decks/:id", showCards(store))
 	r.POST("/decks/:id/rename", renameDeck(store))
-	r.DELETE("/decks/:id", deleteDeck(store))
+	r.POST("/decks/:id/delete", deleteDeck(store))
 	r.POST("/decks/:id/cards", createCard(store))
-	r.DELETE("/cards/:id", deleteCard(store))
+	r.POST("/decks/:id/cards/:cardID/delete", deleteCard(store))
 	r.GET("/decks/:id/study", showStudy(store))
 	r.GET("/api/decks", listDecksJSON(store))
 }
@@ -121,8 +121,7 @@ func deleteDeck(store *Store) gin.HandlerFunc {
 			c.String(http.StatusInternalServerError, err.Error())
 			return
 		}
-		// 본문 없는 200 응답. htmx가 덱 목록의 그 줄을 비운다.
-		c.Status(http.StatusOK)
+		c.Redirect(http.StatusSeeOther, "/")
 	}
 }
 
@@ -140,15 +139,8 @@ func createCard(store *Store) gin.HandlerFunc {
 			c.String(http.StatusBadRequest, "앞면과 뒷면을 모두 채운다")
 			return
 		}
-		card, err := store.CreateCard(id, text, meaning)
-		if err != nil {
+		if _, err := store.CreateCard(id, text, meaning); err != nil {
 			c.String(http.StatusInternalServerError, err.Error())
-			return
-		}
-		// htmx 요청이면 새 카드 한 조각만 돌려주고,
-		// 일반 폼 제출이면 카드 목록 화면으로 돌려보낸다.
-		if c.GetHeader("HX-Request") == "true" {
-			c.HTML(http.StatusOK, "card-item", card)
 			return
 		}
 		c.Redirect(http.StatusSeeOther, "/decks/"+c.Param("id"))
@@ -160,20 +152,19 @@ func createCard(store *Store) gin.HandlerFunc {
 // tag::delete-card[]
 func deleteCard(store *Store) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+		cardID, err := strconv.ParseInt(c.Param("cardID"), 10, 64)
 		if err != nil {
 			c.String(http.StatusBadRequest, "잘못된 카드 번호다")
 			return
 		}
-		if err := store.DeleteCard(id); errors.Is(err, ErrNotFound) {
+		if err := store.DeleteCard(cardID); errors.Is(err, ErrNotFound) {
 			c.String(http.StatusNotFound, "그런 카드가 없다")
 			return
 		} else if err != nil {
 			c.String(http.StatusInternalServerError, err.Error())
 			return
 		}
-		// 본문 없는 200 응답. htmx가 hx-target으로 지정한 요소를 빈 내용으로 바꾼다.
-		c.Status(http.StatusOK)
+		c.Redirect(http.StatusSeeOther, "/decks/"+c.Param("id"))
 	}
 }
 

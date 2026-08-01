@@ -3,36 +3,39 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>내 단어장</title>
+  <title>토익 필수 단어</title>
 </head>
 <body>
   <header>
-    <h1>내 단어장</h1>
+    <h1 class="title">토익 필수 단어</h1>
   </header>
 
-  <nav>
-    <a class="link" href="/">홈</a>
-    <a class="link" href="/decks">덱</a>
-    <a class="link" href="/stats">통계</a>
+  <nav class="nav">
+    <a class="navlink" href="/">덱 목록</a>
+    <a class="navlink" href="/decks/1/study">학습 시작</a>
   </nav>
 
   <main>
-    <section>
-      <h2>토익 필수 단어</h2>
-      <p class="muted">카드 3장</p>
+    <ul class="list">
+      <li class="item">
+        <span class="card-front">apple</span>
+        <span class="card-back">사과</span>
+      </li>
+      <li class="item">
+        <span class="card-front">banana</span>
+        <span class="card-back">바나나</span>
+      </li>
+      <li class="item">
+        <span class="card-front">cherry</span>
+        <span class="card-back">체리</span>
+      </li>
+    </ul>
 
-      <ul class="cards">
-        <li class="card"><strong>apple</strong> 사과</li>
-        <li class="card"><strong>banana</strong> 바나나</li>
-        <li class="card"><strong>cherry</strong> 체리</li>
-      </ul>
-
-      <a class="link" href="/decks/toeic">덱 자세히 보기</a>
-    </section>
+    <form class="row" method="post" action="/decks/1/cards">
+      <input class="field" name="text" placeholder="앞면(원문)">
+      <input class="field" name="meaning" placeholder="뒷면(뜻)">
+      <button class="button">카드 추가</button>
+    </form>
   </main>
-
-  <footer>
-    <p class="muted">혼자 쓰는 암기 카드 앱</p>
-  </footer>
 </body>
 </html>

@@ -35,7 +35,7 @@
 요구사항 장(`part1/requirements.adoc`)은 번호 없는 도입이 아니라 1부의 1장이다(2026-07-25 이관). 아키텍처 전체 그림은 계획을 다듬는 4장에 둔다.
 다섯 부 40장으로 나뉜다(2026-07-25 전면 재편, 같은 날 분량 균등화 재편과 도입·서문 재배치, 2026-07-31 3부 첫 장으로 설계 철학 장 추가, 2026-08-01 저장소 재편과 함께 2부에 최소 앱 세 장 추가).
 1부 **AI와 함께 시작하기**(1~5장)는 만들 것을 정하고 기술 선택과 에이전트 협업을 읽은 뒤 마지막에 도구를 설치해 완성본 앱을 내 컴퓨터에 띄우는 데까지,
-2부 **코딩 기초: 문법에서 첫 웹 앱까지**(6~13장)은 HTML·CSS, Go, SQL의 최소 문법을 연습용 예제(`language-basic/`)로 익히고, 이어서 최소 플래시카드 앱(`flashcard-basic/`)을 재료로 Go에서 SQLite 쓰기, Gin, htmx의 기초를 다룬다.
+2부 **코딩 기초: 문법에서 첫 웹 앱까지**(6~13장)은 HTML·CSS, Go, SQL의 최소 문법을 연습용 예제(`language-basic/`)로 익히고, 이어서 최소 플래시카드 앱(`flashcard-basic/`)을 재료로 Go에서 SQLite 쓰기, Gin, html/template의 기초를 다룬다.
 3부 **완성본 앱 해부**(14~26장)는 완성본 앱의 설계 원칙을 먼저 읽은 뒤 실제 코드를 데이터에서 화면 순으로 읽고 앱을 통째로 띄우는 테스트로 그 층들의 배선까지 확인하며,
 4부 **인터넷에 공개하기: 버전 관리에서 인증과 운영 데이터베이스까지**(27~35장)는 버전 관리·품질 게이트·배포·인증·운영 DB를,
 5부 **안정적으로 오래 운영하기**(36~40장)는 값 관리·PWA·캐시·무료 티어·다음 공부를 다룬다.
@@ -47,7 +47,7 @@
 
 언어 장은 **문법 먼저(2부), 앱 코드 나중(3부)** 순서로 짝지어 둔다.
 6·7장(HTML/CSS)과 8·9장(Go)은 앱과 분리된 연습용 예제(`language-basic/`)로 문법만 익힌다.
-11~13장은 완성본이 아니라 최소 앱(`flashcard-basic/`, 테이블 둘)을 재료로 database/sql·Gin·htmx의 기초 사용법만 익히고, 완성본의 구조와 문제 풀이는 3부가 맡는다.
+11~13장은 완성본이 아니라 최소 앱(`flashcard-basic/`, 테이블 둘)을 재료로 database/sql·Gin·html/template의 기초 사용법만 익히고, 완성본의 구조와 문제 풀이는 3부가 맡는다. 최소 앱에는 htmx도 자바스크립트도 없다(2026-08-01). 부분 갱신은 완성본을 해부하는 24장에서 처음 다룬다.
 완성본 앱의 클론·실행 체험은 5장에 두고, 그 원리 해부는 26장에 둔다.
 
 **3부는 문법을 다시 가르치지 않는다(2026-07-25 재편).**
@@ -80,7 +80,7 @@
 | 10 | 데이터베이스 기초: 테이블, SQL, 인덱스 | `part2/database-basics.adoc` |
 | 11 | database/sql 첫걸음: Go로 SQLite에 저장하고 꺼낸다 | `part2/go-sqlite.adoc` |
 | 12 | Gin 첫걸음: 저장한 데이터를 웹 화면으로 | `part2/gin-hello.adoc` |
-| 13 | htmx 첫걸음: 새로고침 없이 화면 일부만 바꾼다 | `part2/htmx-hello.adoc` |
+| 13 | html/template 첫걸음: 데이터를 화면에 채우고 조각으로 나눈다 | `part2/template-hello.adoc` |
 | 14 | 설계 철학: 이 앱을 지탱하는 다섯 가지 원칙 | `part3/design-principles.adoc` |
 | 15 | 데이터베이스 설계: 요구사항에서 테이블로 | `part3/database.adoc` |
 | 16 | 이 앱만의 설계 둘: 간격 반복 상태와 덱 주소 | `part3/domain-model.adoc` |
@@ -90,8 +90,8 @@
 | 20 | Gin 깊이 보기: 완성본의 라우팅·바인딩·미들웨어 | `part3/gin.adoc` |
 | 21 | 앱을 조립하기: 계층 분리와 두 진입점 | `part3/app-assembly.adoc` |
 | 22 | 화면의 구조: 템플릿 삼층과 스타일 시스템 | `part3/html-css.adoc` |
-| 23 | html/template으로 만드는 화면: 데이터 채우기와 자동 이스케이프 | `part3/go-templates.adoc` |
-| 24 | htmx 실전 패턴: 조각 응답과 무상태 학습 화면 | `part3/htmx.adoc` |
+| 23 | html/template 깊이 보기: 레이아웃 복제와 자동 이스케이프 | `part3/go-templates.adoc` |
+| 24 | htmx: 부분 갱신과 무상태 학습 화면 | `part3/htmx.adoc` |
 | 25 | 앱을 통째로 띄우는 테스트: 화면과 API를 한 번에 검증하기 | `part3/app-tests.adoc` |
 | 26 | 로컬 개발 환경: 무설정 실행의 원리와 개발 도구 | `part3/local-dev.adoc` |
 | 27 | Git: 개념과 브랜치 정책 | `part4/git.adoc` |
@@ -209,6 +209,7 @@ include::../../flashcard-advanced/internal/srs/srs.go[tag=grade]
 | `part2/css-hello.adoc` | CSS 선택자, rem, CSS 변수(커스텀 프로퍼티), 박스 모델, 플렉스박스와 그리드, 미디어 쿼리 |
 | `part2/go-hello.adoc` | 임포트, 표준 라이브러리, 타입 추론, 제로값, 예외, 다중 반환값과 에러 처리, 공개와 비공개 |
 | `part2/go-types.adoc` | 구조체, 메서드와 리시버, 포인터, 슬라이스와 맵, 인터페이스, 제네릭 |
+| `part2/template-hello.adoc` | 템플릿 엔진 |
 | `part2/database-basics.adoc` | 테이블·행·열, 정규화와 비정규화, 기본 키와 외래 키, SQL, 스키마, UUID, 제약, NULL, SQL 인젝션, 드라이버, 조인, 인증과 인가, 인덱스, 실행 계획 |
 | `part3/design-principles.adoc` | 관심사 분리, 단일 출처 |
 | `part3/database.adoc` | 엔티티, 잠금, 뷰, 트랜잭션, 원자적, slug |
@@ -218,7 +219,7 @@ include::../../flashcard-advanced/internal/srs/srs.go[tag=grade]
 | `part3/gin.adoc` | HTTP 요청과 응답, 라우터와 라우팅, 엔드포인트, 핸들러, 바인딩, 경로/쿼리 파라미터, 미들웨어, 팩토리 함수와 클로저 |
 | `part3/app-assembly.adoc` | 프로세스, 패닉, 의존성 주입, 모의 객체 |
 | `part3/html-css.adoc` | 상태(state) |
-| `part3/go-templates.adoc` | 템플릿 엔진, 파싱, SVG와 인라인, 이스케이프와 XSS, embed(Go), PRG 패턴, 플래시 메시지 |
+| `part3/go-templates.adoc` | 파싱, SVG와 인라인, 이스케이프와 XSS, embed(Go), PRG 패턴, 플래시 메시지 |
 | `part3/htmx.adoc` | AJAX(비동기 요청), DOM(문서 객체 모델), HTML 조각, hidden 필드, Web API(브라우저), data-* 속성, 이벤트 위임 |
 | `part3/app-tests.adoc` | 통합 테스트, 테스트 하네스, 구조체 임베딩 |
 | `part3/local-dev.adoc` | 코드 편집기와 확장, 언어 서버, 디버거와 중단점 |
@@ -238,14 +239,14 @@ include::../../flashcard-advanced/internal/srs/srs.go[tag=grade]
 | `appendix/alternatives.adoc` | NoSQL과 문서형 데이터베이스 |
 
 `part5/env-secrets.adoc`(36장)은 소유 상자가 없다(환경 변수·연결 문자열 상자는 34장 소유를 따른다).
-2부의 최소 앱 세 장(`part2/go-sqlite.adoc`·`part2/gin-hello.adoc`·`part2/htmx-hello.adoc`, 11~13장)도 소유 상자가 없다.
-이 장들이 쓰는 용어의 상자(핸들러·라우팅·미들웨어는 20장, AJAX·HTML 조각은 24장, 드라이버·SQL은 10장, 템플릿 엔진·PRG는 23장)는 그 용어를 깊이 다루는 장이 소유하고, 2부에서는 본문에서 한글(영문) 병기로 풀어쓴다.
+2부의 최소 앱 세 장 가운데 `part2/go-sqlite.adoc`·`part2/gin-hello.adoc`(11·12장)은 소유 상자가 없고, `part2/template-hello.adoc`(13장)은 템플릿 엔진 상자 하나만 갖는다.
+이 장들이 쓰는 나머지 용어의 상자(핸들러·라우팅·미들웨어는 20장, AJAX·HTML 조각·DOM은 24장, 드라이버·SQL은 10장, 파싱·PRG·플래시 메시지는 23장)는 그 용어를 깊이 다루는 장이 소유하고, 2부에서는 본문에서 한글(영문) 병기로 풀어쓴다.
 
 **동음이의어 주의.** 같은 말이 다른 뜻으로 쓰이는 곳은 그 자리에서 한 구절로 구분해 준다. 모르는 말은 독자가 멈추지만, 아는 줄 알았던 말은 조용히 오해로 굳는다.
 
 - **훅**: 28장의 훅은 Claude Code가 자동 실행하는 스크립트이고, React 같은 프런트엔드 프레임워크의 훅(상태 관리 함수)과는 다른 것이다(28장 상자에서 한 문장으로 짚는다).
 - **세션**: 네 가지 뜻으로 쓰인다. 4장은 Claude Code의 대화 단위, 23장은 카드 한 벌을 도는 한 번의 학습(`study_sessions`), 32장은 로그인 상태, 34장은 DB에 접속해 있는 연결 하나다. 23·32·34장에서 각각 다른 뜻임을 짚는다.
-- **컨텍스트**: 3장은 에이전트에게 건네는 대화 내용, 23장은 템플릿이 지금 보고 있는 데이터 한 덩어리다(23장에서 구분).
+- **컨텍스트**: 3장은 에이전트에게 건네는 대화 내용, 13장은 템플릿이 지금 보고 있는 데이터 한 덩어리다(13장에서 구분). 23장의 "컨텍스트 자동 이스케이프"는 또 다른 뜻으로, 값이 놓인 자리(본문·속성값·URL)를 가리킨다.
 - **커넥션 풀과 커넥션 풀러**: 이름이 한 글자 차이지만 다른 물건이다. 풀은 우리 서버가 자기 안에 쥐고 돌려쓰는 연결 묶음(pgxpool), 풀러는 DB 앞에 서서 중개하는 별도의 서버(Supavisor)다(34장 상자에서 구분).
 - **메서드**: 9장은 구조체에 딸린 함수(Go의 메서드), 20장은 HTTP 요청의 종류(GET, POST)다(9장 상자에서 구분).
 - **토큰**: 3장은 LLM이 글을 쪼개 세는 단위, 32장은 로그인 상태를 증명하는 문자열이다(32장 상자에서 구분).

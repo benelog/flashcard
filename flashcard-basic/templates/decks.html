@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>암기 카드</title>
   <link rel="stylesheet" href="/static/style.css">
-  <script src="/static/htmx.min.js" defer></script>
 </head>
 <body>
   <h1 class="title">내 덱</h1>
@@ -14,9 +13,9 @@
     {{range .Decks}}
     <li class="item">
       <a class="decklink" href="/decks/{{.ID}}">{{.Name}}</a>
-      <button class="delete" hx-delete="/decks/{{.ID}}"
-              hx-target="closest li" hx-swap="outerHTML"
-              hx-confirm="덱과 그 안의 카드가 모두 지워진다. 지울까?">지우기</button>
+      <form method="post" action="/decks/{{.ID}}/delete">
+        <button class="delete">지우기</button>
+      </form>
     </li>
     {{else}}
     <li class="item-empty">아직 덱이 없다. 아래에서 첫 덱을 만들어 보자.</li>

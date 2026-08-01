@@ -7,7 +7,7 @@
 - `book/`: 책 원고(AsciiDoc)와 빌드 설정. 집필 규약은 `book/CLAUDE.md`.
 - `book-template/`: 책 빌드 엔진(재사용 가능한 npm 패키지, 추후 별도 저장소로 분리 예정).
 - `flashcard-advanced/`: Vercel + Supabase에 배포하는 완성본 앱(Go 모듈 `github.com/benelog/flashcard`). 책 1부(첫 실행)와 3~5부·부록이 이 코드를 인용한다. 앱 지침은 `flashcard-advanced/CLAUDE.md`.
-- `flashcard-basic/`: 책 2부가 인용하는 최소 플래시카드 앱. Gin + html/template + htmx + SQLite, 테이블은 `decks`·`cards` 둘뿐이다. 완성본과 별개의 Go 모듈이다.
+- `flashcard-basic/`: 책 2부가 인용하는 최소 플래시카드 앱. Gin + html/template + SQLite, 테이블은 `decks`·`cards` 둘뿐이다. 자바스크립트가 한 줄도 없다(htmx는 완성본에만 있다). 완성본과 별개의 Go 모듈이다.
 - `language-basic/`: 2부 문법 입문 장(HTML·CSS·Go·SQL)의 연습용 예제 파일.
 
 원고는 코드를 베끼지 않고 `include::`로 인용한다. 그래서 코드에 `// tag::이름[]` … `// end::이름[]` 주석이 붙어 있는 곳이 있다. 지우거나 옮길 때 주의한다(자세한 규약은 `book/CLAUDE.md`). 태그를 지우거나 이름을 바꾸면 `cd book && npm run build`가 실패한다.

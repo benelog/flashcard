@@ -1,9 +1,17 @@
 /* flashcard-basic 스타일. 태그 대신 클래스로 고른다. */
 :root {
+  --paper: #f7f8fa;
+  --surface: #ffffff;
   --ink: #1f2430;
+  --muted: #666677;
   --line: #d8dce4;
   --accent: #2456c8;
-  --paper: #f7f8fa;
+  --danger: #aa3333;
+  --radius: 0.5rem;
+}
+
+* {
+  box-sizing: border-box;
 }
 
 body {
@@ -11,6 +19,7 @@ body {
   max-width: 40rem;
   padding: 1.5rem 1rem;
   font-family: system-ui, sans-serif;
+  line-height: 1.6;
   color: var(--ink);
   background: var(--paper);
 }
@@ -40,14 +49,14 @@ body {
   gap: 0.75rem;
   padding: 0.6rem 0.8rem;
   margin-bottom: 0.5rem;
-  background: #fff;
+  background: var(--surface);
   border: 1px solid var(--line);
-  border-radius: 0.5rem;
+  border-radius: var(--radius);
 }
 
 .item-empty {
   padding: 0.6rem 0.2rem;
-  color: #667;
+  color: var(--muted);
 }
 
 .decklink {
@@ -62,46 +71,56 @@ body {
 }
 
 .card-back {
-  color: #556;
   flex: 1;
+  color: var(--muted);
 }
 
 .delete {
   border: none;
   background: none;
-  color: #a33;
+  color: var(--danger);
+  font: inherit;
   cursor: pointer;
 }
 
 .row {
   display: flex;
+  flex-wrap: wrap;
   gap: 0.5rem;
 }
 
 .field {
-  flex: 1;
+  flex: 1 1 8rem;
+  min-width: 0;
   padding: 0.5rem 0.7rem;
   border: 1px solid var(--line);
-  border-radius: 0.5rem;
+  border-radius: var(--radius);
   font: inherit;
+  color: var(--ink);
+  background: var(--surface);
+}
+
+.field:focus {
+  outline: 2px solid var(--accent);
 }
 
 .button {
   display: inline-block;
   padding: 0.5rem 1rem;
   border: none;
-  border-radius: 0.5rem;
+  border-radius: var(--radius);
   background: var(--accent);
   color: #fff;
   font: inherit;
   text-decoration: none;
+  white-space: nowrap;
   cursor: pointer;
 }
 
 .study {
   margin: 1.5rem 0;
   padding: 1.2rem;
-  background: #fff;
+  background: var(--surface);
   border: 1px solid var(--line);
   border-radius: 0.75rem;
 }
@@ -117,7 +136,7 @@ body {
   content: " (눌러서 뒷면 보기)";
   font-size: 0.8rem;
   font-weight: 400;
-  color: #889;
+  color: var(--muted);
 }
 
 .study[open] .study-front::after {
@@ -136,5 +155,18 @@ body {
 }
 
 .study-pos {
-  color: #667;
+  color: var(--muted);
+}
+
+/* 어두운 테마: 변수 값만 갈아 끼운다. */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #14161b;
+    --surface: #1f2430;
+    --ink: #e8eaf0;
+    --muted: #9aa0b0;
+    --line: #333a49;
+    --accent: #6f9bff;
+    --danger: #ff8a8a;
+  }
 }

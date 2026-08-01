@@ -74,8 +74,8 @@ export default {
         },
         { file: 'part2/gin-hello.adoc', text: '12장 Gin 첫걸음: 저장한 데이터를 웹 화면으로' },
         {
-          file: 'part2/htmx-hello.adoc',
-          text: '13장 htmx 첫걸음: 새로고침 없이 화면 일부만 바꾼다',
+          file: 'part2/template-hello.adoc',
+          text: '13장 html/template 첫걸음: 데이터를 화면에 채우고 조각으로 나눈다',
         },
       ],
     },
@@ -105,9 +105,9 @@ export default {
         },
         {
           file: 'part3/go-templates.adoc',
-          text: '23장 html/template으로 만드는 화면: 데이터 채우기와 자동 이스케이프',
+          text: '23장 html/template 깊이 보기: 레이아웃 복제와 자동 이스케이프',
         },
-        { file: 'part3/htmx.adoc', text: '24장 htmx 실전 패턴: 조각 응답과 무상태 학습 화면' },
+        { file: 'part3/htmx.adoc', text: '24장 htmx: 부분 갱신과 무상태 학습 화면' },
         {
           file: 'part3/app-tests.adoc',
           text: '25장 앱을 통째로 띄우는 테스트: 화면과 API를 한 번에 검증하기',

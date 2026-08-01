@@ -58,13 +58,43 @@ func TestRenameAndDeleteDeckOverHTTP(t *testing.T) {
 		t.Errorf("rename missing deck = %d, want 404", w.Code)
 	}
 
-	if w := do(r, "DELETE", "/decks/1", nil); w.Code != http.StatusOK {
-		t.Errorf("DELETE /decks/1 = %d, want 200", w.Code)
+	if w := do(r, "POST", "/decks/1/delete", nil); w.Code != http.StatusSeeOther {
+		t.Errorf("POST /decks/1/delete = %d, want 303", w.Code)
 	}
 	if w := do(r, "GET", "/decks/1", nil); w.Code != http.StatusNotFound {
 		t.Errorf("GET /decks/1 after delete = %d, want 404", w.Code)
 	}
-	if w := do(r, "DELETE", "/decks/1", nil); w.Code != http.StatusNotFound {
-		t.Errorf("DELETE /decks/1 twice = %d, want 404", w.Code)
+	if w := do(r, "POST", "/decks/1/delete", nil); w.Code != http.StatusNotFound {
+		t.Errorf("POST /decks/1/delete twice = %d, want 404", w.Code)
+	}
+}
+
+func TestAddAndDeleteCardOverHTTP(t *testing.T) {
+	r := newTestApp(t)
+
+	if w := do(r, "POST", "/decks", url.Values{"name": {"기본 영단어"}}); w.Code != http.StatusSeeOther {
+		t.Fatalf("POST /decks = %d, want 303", w.Code)
+	}
+
+	form := url.Values{"text": {"apple"}, "meaning": {"사과"}}
+	if w := do(r, "POST", "/decks/1/cards", form); w.Code != http.StatusSeeOther {
+		t.Fatalf("POST /decks/1/cards = %d, want 303", w.Code)
+	}
+	if w := do(r, "GET", "/decks/1", nil); !strings.Contains(w.Body.String(), "apple") {
+		t.Errorf("GET /decks/1 does not show the new card: %d", w.Code)
+	}
+
+	if w := do(r, "POST", "/decks/1/cards", url.Values{"text": {"  "}, "meaning": {"사과"}}); w.Code != http.StatusBadRequest {
+		t.Errorf("card with blank text = %d, want 400", w.Code)
+	}
+
+	if w := do(r, "POST", "/decks/1/cards/1/delete", nil); w.Code != http.StatusSeeOther {
+		t.Errorf("POST /decks/1/cards/1/delete = %d, want 303", w.Code)
+	}
+	if w := do(r, "GET", "/decks/1", nil); strings.Contains(w.Body.String(), "apple") {
+		t.Errorf("deleted card still shown")
+	}
+	if w := do(r, "POST", "/decks/1/cards/1/delete", nil); w.Code != http.StatusNotFound {
+		t.Errorf("delete card twice = %d, want 404", w.Code)
 	}
 }

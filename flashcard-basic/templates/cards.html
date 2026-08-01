@@ -5,9 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{{.Deck.Name}}: 암기 카드</title>
   <link rel="stylesheet" href="/static/style.css">
-  <!-- tag::htmx-script[] -->
-  <script src="/static/htmx.min.js" defer></script>
-  <!-- end::htmx-script[] -->
 </head>
 <body>
   <h1 class="title">{{.Deck.Name}}</h1>
@@ -20,15 +17,16 @@
     <button class="button">이름 바꾸기</button>
   </form>
   <!-- tag::card-list[] -->
-  <ul id="cards" class="list">
+  <ul class="list">
     {{range .Cards}}
     {{template "card-item" .}}
+    {{else}}
+    <li class="item-empty">아직 카드가 없다. 아래에서 첫 카드를 추가해 보자.</li>
     {{end}}
   </ul>
   <!-- end::card-list[] -->
   <!-- tag::card-form[] -->
-  <form class="row" method="post" action="/decks/{{.Deck.ID}}/cards"
-        hx-post="/decks/{{.Deck.ID}}/cards" hx-target="#cards" hx-swap="beforeend">
+  <form class="row" method="post" action="/decks/{{.Deck.ID}}/cards">
     <input class="field" name="text" placeholder="앞면(원문)" required>
     <input class="field" name="meaning" placeholder="뒷면(뜻)" required>
     <button class="button">카드 추가</button>

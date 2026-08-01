@@ -6,13 +6,14 @@
 
 이 장에서 화면의 뼈대인 HTML을, {ch-css-hello}에서 겉모습을 입히는 CSS(Cascading Style Sheets)를 가장 단순한 예제로 익힌다.
 앱의 실제 화면 파일은 아직 열지 않는다.
-여기서 익힌 문법은 {ch-gin-hello·htmx-hello}에서 최소 앱의 화면을 만들며 곧바로 쓴다.
+여기서 익힌 문법은 {ch-gin-hello·template-hello}에서 최소 앱의 화면을 만들며 곧바로 쓴다.
 완성본 쪽은 {ch-html-css}에서 이 눈으로 실제 화면 파일을 읽고, {ch-go-templates}에서 Go 서버가 그 파일에 데이터를 채워 넣는 방법을, {ch-htmx}에서 화면 일부만 갈아 끼우는 실전 패턴을 다룬다.
 
 이 장에는 반가운 소식이 하나 있다.
 HTML은 컴파일러도 서버도 필요 없이, 브라우저만 있으면 된다.
 텍스트 파일 하나를 만들어 브라우저로 열면 그것이 곧 웹 페이지다.
-이 장의 예제도 모두 그렇게 확인할 수 있고, Flashcard 저장소에는 없는 연습용 코드다.
+이 장의 예제도 모두 그렇게 확인할 수 있는 연습용 코드다.
+다만 마지막 절의 카드 추가 폼만은 2부에서 만들 최소 앱에 그대로 얹을 것이라, 입력 칸 이름과 보낼 주소를 그 앱에 맞춰 두었다.
 
 == 첫 문서: 파일 하나를 브라우저로 연다
 
@@ -214,22 +215,23 @@ HTML은 `<!--`와 `-->`로 감싸고, CSS는 `/*`와 `*/`({ch-css-hello}), Go는
 
 [source,html]
 ----
-<p class="muted">카드 3장</p>
-<ul class="cards">
-  <li class="card">apple 사과</li>
-  <li class="card">banana 바나나</li>
+<ul class="list">
+  <li class="item">apple 사과</li>
+  <li class="item">banana 바나나</li>
 </ul>
+<p class="item-empty">아직 카드가 없다</p>
 ----
 
-`class="muted"`는 화면에 아무 변화도 주지 않는다.
+`class="item-empty"`는 화면에 아무 변화도 주지 않는다.
 {ch-css-hello}에서 CSS가 이 이름을 찾아 "흐리게"라는 규칙을 붙일 때 비로소 뜻이 생긴다.
 지금은 요소에 붙여 둔 이름표라고만 보면 된다.
+이 이름들도 카드 추가 폼처럼 최소 앱과 맞춰 둔 것이라, {ch-css-hello}와 {ch-template-hello}에서 같은 이름으로 다시 만난다.
 
 하나뿐인 요소를 콕 집어야 할 때는 `id`를 쓴다.
 
 [source,html]
 ----
-<input id="front" name="front">
+<input id="text" name="text">
 ----
 
 .[용어 풀이] class와 id
@@ -238,11 +240,11 @@ HTML은 `<!--`와 `-->`로 감싸고, CSS는 `/*`와 `*/`({ch-css-hello}), Go는
 요소에 붙이는 두 가지 이름표다.
 `class`는 같은 이름을 여러 요소에 붙일 수 있어 "이런 부류 전체"를 가리키고, `id`는 문서 안에서 하나뿐이어야 해서 "바로 그 요소 하나"를 가리킨다.
 학교로 치면 class는 같은 반 학생이 모두 다는 반 이름표, id는 학생마다 다른 학번이다.
-CSS는 이 이름표로 꾸밀 대상을 찾고, 요소끼리 연결할 때(`<label for="front">`)나 {ch-htmx-hello}에서 htmx가 화면의 어느 자리를 갈아 끼울지 정할 때도 id로 그 자리를 짚는다.
+CSS는 이 이름표로 꾸밀 대상을 찾고, 요소끼리 연결할 때(`<label for="text">`)나 {ch-htmx}에서 화면의 어느 자리를 갈아 끼울지 정할 때도 id로 그 자리를 짚는다.
 ====
 
 한 요소에 클래스를 여러 개 붙일 수도 있다.
-`class="card wrong"`처럼 공백으로 나열하면 두 이름표를 함께 단 것이고, 공통 모양은 `card`가, 틀린 카드에만 붙는 표시는 `wrong`이 맡는 식으로 나눠 쓴다.
+`class="item wrong"`처럼 공백으로 나열하면 두 이름표를 함께 단 것이고, 공통 모양은 `item`이, 틀린 카드에만 붙는 표시는 `wrong`이 맡는 식으로 나눠 쓴다.
 
 == 요소의 가족 관계
 
@@ -251,9 +253,9 @@ HTML은 태그가 태그를 품는 나무 모양의 구조다.
 
 [source,html]
 ----
-<ul class="cards">
-  <li class="card">apple 사과</li>
-  <li class="card">banana 바나나</li>
+<ul class="list">
+  <li class="item">apple 사과</li>
+  <li class="item">banana 바나나</li>
 </ul>
 ----
 
@@ -288,24 +290,27 @@ HTML은 태그가 태그를 품는 나무 모양의 구조라({ch-htmx}에서 �
 ====
 
 카드를 하나 추가하는 폼을 만들어 보자.
+여기서 만드는 폼은 연습으로 끝나지 않는다.
+{ch-template-hello}에서 최소 앱(`flashcard-basic/`)에 얹을 카드 추가 폼이 바로 이것이라, 입력 칸의 이름과 보낼 주소도 그 앱에 맞춰 둔다.
 
 [source,html]
 ----
-<form method="post" action="/cards">
-  <label for="front">앞면</label>
-  <input id="front" name="front" placeholder="apple" required>
+<form method="post" action="/decks/1/cards">
+  <label for="text">앞면</label>
+  <input id="text" name="text" placeholder="apple" required>
 
-  <label for="back">뒷면</label>
-  <input id="back" name="back" required>
+  <label for="meaning">뒷면</label>
+  <input id="meaning" name="meaning" required>
 
-  <button type="submit">추가</button>
+  <button type="submit">카드 추가</button>
 </form>
 ----
 
 `<form>`의 두 속성이 핵심이다.
 `action`은 어디로 보낼지(주소)이고, `method`는 어떻게 보낼지(HTTP 메서드)다.
+주소의 `1`은 카드를 담을 덱의 번호인데, 지금은 손으로 적었지만 최소 앱에서는 서버가 보고 있는 덱의 번호로 채워 넣는다({ch-gin-hello}).
 `method="post"`의 POST는 "새로 만들어 달라"는 요청이고, 이런 요청의 종류는 {ch-gin-hello}에서 처음 실제로 쓰고 {ch-gin}에서 자세히 다룬다.
-"추가" 버튼을 누르면 브라우저가 입력 값을 모아 `POST /cards` 요청을 보내고, 서버가 카드를 만든 뒤 새 화면으로 안내한다.
+"카드 추가" 버튼을 누르면 브라우저가 입력 값을 모아 `POST /decks/1/cards` 요청을 보내고, 서버가 카드를 만든 뒤 새 화면으로 안내한다.
 `method="get"`이면 값이 주소 뒤에 붙어 전달되며, 검색처럼 결과를 다시 찾아갈 수 있어야 하는 경우에 쓴다.
 
 `<input>`은 한 줄 입력 칸이다.
@@ -323,7 +328,7 @@ HTML은 태그가 태그를 품는 나무 모양의 구조라({ch-htmx}에서 �
 
 [source,html]
 ----
-<input type="text" name="front">
+<input type="text" name="text">
 <input type="number" name="count" min="1" max="100">
 <input type="file" name="file" accept=".csv">
 <input type="checkbox" name="shared" value="yes">
@@ -347,7 +352,9 @@ HTML은 태그가 태그를 품는 나무 모양의 구조라({ch-htmx}에서 �
 
 여기서 눈여겨볼 것은 이 모든 동작에 자바스크립트가 한 줄도 없다는 사실이다.
 값 모으기, 필수 검사, 파일 선택 창, 라디오 버튼 묶음이 전부 브라우저에 내장되어 있다.
-Flashcard가 화면 대부분을 폼으로 처리하는 이유가 여기 있고, 그 실물은 {ch-html-css}에서 확인한다.
+Flashcard가 화면 대부분을 폼으로 처리하는 이유가 여기 있다.
+최소 앱에서 폼으로 서버에 값을 보내는 것은 {ch-gin-hello}에서 덱 만들기로 처음 해 보고, 방금 만든 카드 추가 폼이 실제로 카드를 저장하는 것은 {ch-template-hello}에서 확인한다.
+완성본 앱의 폼은 {ch-html-css}에서 읽는다.
 
 ++++
 <div class="fc-shots">
