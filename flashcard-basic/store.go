@@ -103,6 +103,38 @@ func (s *Store) GetDeck(id int64) (Deck, error) {
 
 // end::get-deck[]
 
+// RenameDeck은 덱의 이름을 바꾼다. 그런 덱이 없으면 ErrNotFound를 돌려준다.
+func (s *Store) RenameDeck(id int64, name string) error {
+	res, err := s.db.Exec("update decks set name = ? where id = ?", name, id)
+	if err != nil {
+		return err
+	}
+	n, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if n == 0 {
+		return ErrNotFound
+	}
+	return nil
+}
+
+// DeleteDeck은 덱 하나를 지운다. on delete cascade로 그 덱의 카드도 함께 지워진다.
+func (s *Store) DeleteDeck(id int64) error {
+	res, err := s.db.Exec("delete from decks where id = ?", id)
+	if err != nil {
+		return err
+	}
+	n, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if n == 0 {
+		return ErrNotFound
+	}
+	return nil
+}
+
 // tag::list-cards[]
 // ListCards는 한 덱의 카드를 만든 순서대로 돌려준다.
 func (s *Store) ListCards(deckID int64) ([]Card, error) {

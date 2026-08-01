@@ -14,6 +14,8 @@ func registerRoutes(r *gin.Engine, store *Store) {
 	r.GET("/", showDecks(store))
 	r.POST("/decks", createDeck(store))
 	r.GET("/decks/:id", showCards(store))
+	r.POST("/decks/:id/rename", renameDeck(store))
+	r.DELETE("/decks/:id", deleteDeck(store))
 	r.POST("/decks/:id/cards", createCard(store))
 	r.DELETE("/cards/:id", deleteCard(store))
 	r.GET("/decks/:id/study", showStudy(store))
@@ -81,6 +83,48 @@ func showCards(store *Store) gin.HandlerFunc {
 }
 
 // end::show-cards[]
+
+func renameDeck(store *Store) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+		if err != nil {
+			c.String(http.StatusBadRequest, "잘못된 덱 번호다")
+			return
+		}
+		name := strings.TrimSpace(c.PostForm("name"))
+		if name == "" {
+			c.String(http.StatusBadRequest, "덱 이름이 비어 있다")
+			return
+		}
+		if err := store.RenameDeck(id, name); errors.Is(err, ErrNotFound) {
+			c.String(http.StatusNotFound, "그런 덱이 없다")
+			return
+		} else if err != nil {
+			c.String(http.StatusInternalServerError, err.Error())
+			return
+		}
+		c.Redirect(http.StatusSeeOther, "/decks/"+c.Param("id"))
+	}
+}
+
+func deleteDeck(store *Store) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+		if err != nil {
+			c.String(http.StatusBadRequest, "잘못된 덱 번호다")
+			return
+		}
+		if err := store.DeleteDeck(id); errors.Is(err, ErrNotFound) {
+			c.String(http.StatusNotFound, "그런 덱이 없다")
+			return
+		} else if err != nil {
+			c.String(http.StatusInternalServerError, err.Error())
+			return
+		}
+		// 본문 없는 200 응답. htmx가 덱 목록의 그 줄을 비운다.
+		c.Status(http.StatusOK)
+	}
+}
 
 // tag::create-card[]
 func createCard(store *Store) gin.HandlerFunc {

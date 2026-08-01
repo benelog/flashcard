@@ -15,6 +15,10 @@
     <a class="navlink" href="/">덱 목록</a>
     <a class="navlink" href="/decks/{{.Deck.ID}}/study">학습 시작</a>
   </p>
+  <form class="row" method="post" action="/decks/{{.Deck.ID}}/rename">
+    <input class="field" name="name" value="{{.Deck.Name}}" required>
+    <button class="button">이름 바꾸기</button>
+  </form>
   <!-- tag::card-list[] -->
   <ul id="cards" class="list">
     {{range .Cards}}

@@ -51,6 +51,7 @@ body {
 }
 
 .decklink {
+  flex: 1;
   color: var(--ink);
   font-weight: 600;
   text-decoration: none;

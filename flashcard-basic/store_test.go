@@ -63,3 +63,57 @@ func TestGetDeckNotFound(t *testing.T) {
 		t.Errorf("GetDeck(999) = %v, want ErrNotFound", err)
 	}
 }
+
+func TestRenameDeck(t *testing.T) {
+	store := newTestStore(t)
+
+	deckID, err := store.CreateDeck("기본 영단어")
+	if err != nil {
+		t.Fatalf("CreateDeck: %v", err)
+	}
+
+	if err := store.RenameDeck(deckID, "고급 영단어"); err != nil {
+		t.Fatalf("RenameDeck: %v", err)
+	}
+	deck, err := store.GetDeck(deckID)
+	if err != nil {
+		t.Fatalf("GetDeck: %v", err)
+	}
+	if deck.Name != "고급 영단어" {
+		t.Errorf("deck.Name = %q, want 고급 영단어", deck.Name)
+	}
+
+	if err := store.RenameDeck(999, "없는 덱"); !errors.Is(err, ErrNotFound) {
+		t.Errorf("RenameDeck(999) = %v, want ErrNotFound", err)
+	}
+}
+
+func TestDeleteDeckCascadesToCards(t *testing.T) {
+	store := newTestStore(t)
+
+	deckID, err := store.CreateDeck("기본 영단어")
+	if err != nil {
+		t.Fatalf("CreateDeck: %v", err)
+	}
+	if _, err := store.CreateCard(deckID, "resilient", "회복력 있는"); err != nil {
+		t.Fatalf("CreateCard: %v", err)
+	}
+
+	if err := store.DeleteDeck(deckID); err != nil {
+		t.Fatalf("DeleteDeck: %v", err)
+	}
+	if _, err := store.GetDeck(deckID); !errors.Is(err, ErrNotFound) {
+		t.Errorf("GetDeck after delete = %v, want ErrNotFound", err)
+	}
+	cards, err := store.ListCards(deckID)
+	if err != nil {
+		t.Fatalf("ListCards: %v", err)
+	}
+	if len(cards) != 0 {
+		t.Errorf("ListCards after deck delete = %+v, want empty", cards)
+	}
+
+	if err := store.DeleteDeck(deckID); !errors.Is(err, ErrNotFound) {
+		t.Errorf("DeleteDeck twice = %v, want ErrNotFound", err)
+	}
+}
