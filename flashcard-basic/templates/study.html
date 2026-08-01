@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{.Deck.Name}} 학습: 암기 카드</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <h1 class="title">{{.Deck.Name}} 학습</h1>
+  <p class="nav">
+    <a class="navlink" href="/decks/{{.Deck.ID}}">카드 목록으로</a>
+  </p>
+  {{if .Card}}
+  <!-- tag::study-card[] -->
+  <details class="study">
+    <summary class="study-front">{{.Card.Front}}</summary>
+    <p class="study-back">{{.Card.Back}}</p>
+  </details>
+  <p class="study-nav">
+    <span class="study-pos">{{.Pos}} / {{.Total}}</span>
+    <a class="button" href="/decks/{{.Deck.ID}}/study?i={{.Next}}">다음 카드</a>
+  </p>
+  <!-- end::study-card[] -->
+  {{else}}
+  <p class="item-empty">카드가 없다. 카드 목록에서 먼저 카드를 추가한다.</p>
+  {{end}}
+</body>
+</html>

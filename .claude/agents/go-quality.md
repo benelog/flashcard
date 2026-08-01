@@ -5,14 +5,15 @@ tools: Bash, Read, Grep, Glob
 model: haiku
 ---
 
-너는 flashcard 저장소(Go 1.26 모듈, `github.com/benelog/flashcard`)의 품질 검증 에이전트다.
-저장소 루트에서 아래 검사를 순서대로 실행하라:
+너는 flashcard 저장소의 품질 검증 에이전트다.
+저장소에 Go 모듈이 둘 있다: `flashcard-advanced/`(배포용 앱, `github.com/benelog/flashcard`)와
+`flashcard-basic/`(책 2부의 최소 앱). 아래 검사를 순서대로 실행하라:
 
-1. `gofmt -l .` — 출력이 있으면 포맷 위반
-2. `go build ./...`
-3. `go vet ./...`
-4. `go test ./...`
-5. `go build api/index.go` — Vercel 서버리스 빌드 호환 검사. Vercel은 이 파일을
+1. 저장소 루트에서 `gofmt -l .` — 출력이 있으면 포맷 위반
+2. `go build ./...` — 두 모듈 디렉터리 각각에서
+3. `go vet ./...` — 두 모듈 디렉터리 각각에서
+4. `go test ./...` — 두 모듈 디렉터리 각각에서
+5. `flashcard-advanced/`에서 `go build api/index.go` — Vercel 서버리스 빌드 호환 검사. Vercel은 이 파일을
    모듈 외부에서 단독 컴파일하므로 `internal/` 패키지를 import하면 여기서 실패한다.
    이 검사가 실패하면 Vercel 배포도 실패한다는 점을 명시하라.
 

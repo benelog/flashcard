@@ -1,0 +1,11 @@
+{{define "card-item"}}
+<!-- tag::card-item[] -->
+<li class="item">
+  <span class="card-front">{{.Front}}</span>
+  <span class="card-back">{{.Back}}</span>
+  <button class="delete" hx-delete="/cards/{{.ID}}"
+          hx-target="closest li" hx-swap="outerHTML"
+          hx-confirm="이 카드를 지울까?">지우기</button>
+</li>
+<!-- end::card-item[] -->
+{{end}}

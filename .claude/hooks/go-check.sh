@@ -10,15 +10,14 @@ case "$f" in
 esac
 [ -f "$f" ] || exit 0
 
-cd "${CLAUDE_PROJECT_DIR:-$(pwd)}" || exit 0
-
 gofmt -w "$f" 2>/dev/null
 
+# 저장소에 Go 모듈이 둘이다(flashcard-advanced, flashcard-basic).
+# 파일이 속한 디렉터리에서 vet을 돌리면 go가 알아서 그 모듈의 go.mod를 찾는다.
 dir=$(dirname "$f")
-rel=$(realpath --relative-to="$PWD" "$dir" 2>/dev/null) || rel="$dir"
-if ! out=$(go vet "./$rel" 2>&1); then
+if ! out=$(cd "$dir" && go vet . 2>&1); then
   {
-    echo "go vet failed for ./$rel:"
+    echo "go vet failed for $dir:"
     echo "$out"
   } >&2
   exit 2

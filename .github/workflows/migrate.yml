@@ -10,9 +10,9 @@ on:
   push:
     branches: [main, release]
     paths:
-      - 'internal/db/migrations/**'
-      - 'internal/db/migrate.go'
-      - 'cmd/migrate/**'
+      - 'flashcard-advanced/internal/db/migrations/**'
+      - 'flashcard-advanced/internal/db/migrate.go'
+      - 'flashcard-advanced/cmd/migrate/**'
       - '.github/workflows/migrate.yml'
   workflow_dispatch:
 
@@ -29,10 +29,11 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
         with:
-          go-version-file: go.mod
+          go-version-file: flashcard-advanced/go.mod
           cache: true
 
       - name: go run ./cmd/migrate
+        working-directory: flashcard-advanced
         env:
           MIGRATE_DATABASE_URL: ${{ github.ref_name == 'release' && secrets.PROD_MIGRATE_DATABASE_URL || secrets.DEV_MIGRATE_DATABASE_URL }}
         run: |

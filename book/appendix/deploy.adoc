@@ -1,0 +1,274 @@
+= 배포 준비: Supabase·Google·GitHub·Vercel 설정
+
+이 책의 배포는 세 곳의 웹 대시보드를 오간다.
+데이터베이스와 로그인을 맡는 Supabase, 소셜 로그인을 내주는 Google과 GitHub, 그리고 앱을 실제로 띄우는 Vercel이다.
+코드를 올려 둘 GitHub 저장소를 만들고 처음 push하는 절차도 이 부록에서 함께 다룬다.
+{ch-vercel}부터 {ch-env-secrets}까지는 이 구성이 왜 이렇게 짜였는지를 다뤘다.
+이 부록에서는 그 위에서 어느 화면의 무엇을 누르는지를, 실제 대시보드 화면과 함께 처음부터 끝까지 따라가 보겠다.
+
+`flashcard-advanced/DEPLOY.md`에도 같은 절차가 짧은 체크리스트로 정리되어 있다.
+이 부록이 화면과 배경을 곁들인 안내라면, `DEPLOY.md`는 익숙해진 뒤 빠르게 훑는 요약본이다.
+
+한 가지 미리 일러둘 것이 있다.
+대시보드의 메뉴 이름과 위치는 자주 바뀐다.
+이 부록의 화면은 2026년 7월 기준이고, 실제로 이 무렵에도 Google 콘솔의 메뉴 구조가 한 차례 바뀌었다.
+그러니 화면이 책과 다르면 메뉴 이름을 글자 그대로 찾기보다, "무엇을 어디에 등록하는가"라는 목적으로 되짚는 편이 안전하다.
+관문을 다루는 절 끝에는 그 목적을 한 줄로 남겨 두었다.
+
+== 로그인은 세 관문을 지난다
+
+설정에 앞서 로그인이 어떤 길을 지나는지부터 그려 두면, 나중에 막혔을 때 어느 화면을 열어야 할지 바로 안다.
+사용자가 "Google로 계속하기"를 누른 순간부터 앱으로 돌아오기까지, 요청은 세 관문을 지난다.
+
+첫째, 앱이 Supabase(GoTrue)에 "이 사용자를 Google로 로그인시켜 달라"고 넘긴다.
+둘째, Supabase가 사용자를 Google 로그인 화면으로 보낸다.
+셋째, Google이 인증을 마치면 Supabase를 거쳐 다시 앱의 `/auth/callback`으로 돌려보낸다.
+
+세 관문에는 저마다 지켜야 할 설정이 하나씩 있다.
+첫째 관문은 Supabase에서 그 프로바이더(provider, 로그인을 대신 처리해 주는 Google·GitHub 같은 서비스. 자세한 설명은 {ch-supabase-auth})가 켜져 있어야 지난다.
+둘째 관문은 Google 쪽에 "Supabase가 보낸 요청을 받아 준다"는 등록이 있어야 지난다.
+셋째 관문은 Supabase에 "이 앱 주소로 돌려보내도 된다"는 등록이 있어야 지난다.
+셋 중 하나라도 빠지면 로그인은 그 관문에서 멈춘다.
+그리고 관문마다 실패 증상이 다르기 때문에, 증상만 보고도 어느 설정이 빠졌는지 좁힐 수 있다.
+증상과 관문을 잇는 표는 이 부록 끝의 "로그인이 안 될 때"에 두었다.
+
+이제 관문 순서를 따라, 필요한 설정을 하나씩 채워 보겠다.
+
+== 1. Supabase 프로젝트 만들기
+
+먼저 데이터베이스와 로그인을 맡을 Supabase 프로젝트를 만든다.
+https://supabase.com[supabase.com]에서 무료 계정을 만들고 New project를 누른다.
+프로젝트 이름과 데이터베이스 비밀번호를 정하는 칸이 나오는데, 이 비밀번호는 나중에 연결 문자열에 들어가므로 안전한 곳에 적어 둔다.
+리전(region)은 East US (North Virginia)를 고른다.
+Vercel 함수가 기본으로 뜨는 리전(iad1)과 같은 곳이라야 앱과 DB가 가깝다.
+서울 리전을 고르면 함수와 DB가 지구 반대편에 놓여 매 요청이 느려지므로 피한다.
+
+프로젝트가 만들어지면 두 종류의 값을 꺼내 둔다.
+하나는 DB 연결 문자열이다.
+대시보드 위쪽의 Connect 버튼을 누르면 여러 문자열이 나오는데, 서버가 쓸 Transaction pooler(포트 6543)와 마이그레이션이 쓸 Session pooler(포트 5432)를 각각 복사한다.
+둘은 포트 번호가 다르고 쓰임도 다르다(이유는 {ch-supabase-db}).
+다른 하나는 API 값이다.
+Settings → API에서 Project URL과 anon(public) key를 복사한다.
+복사한 값들은 5절에서 Vercel에 환경 변수로 넣을 때 쓰니, 메모장 같은 곳에 잠시 모아 두되 남이 볼 수 있는 곳에는 올리지 않는다.
+
+이 책은 개발용과 운영용 DB를 완전히 나눠 쓴다({ch-supabase-db}).
+그러니 같은 방식으로 프로젝트를 하나 더 만들어, 한쪽은 운영용, 다른 한쪽은 개발용으로 삼는다.
+아래 로그인 설정도 두 프로젝트에 각각 해 주어야 한다.
+개발 프로젝트를 새로 만들면서 이 설정을 한쪽에만 하고 지나치기 쉬운데, 그것이 로그인 실패의 흔한 원인이다.
+
+== 2. OAuth 프로바이더 등록 (관문 1과 2)
+
+로그인 버튼 하나를 살리려면 두 곳에 등록이 필요하다.
+Google(또는 GitHub)에 "이 앱을 위해 로그인을 내준다"는 뜻으로 클라이언트를 만들고, 그 값을 Supabase에 넣어 프로바이더를 켠다.
+앞의 관문으로 보면, Supabase에 프로바이더를 켜는 것이 첫째 관문을, Google에 등록하는 것이 둘째 관문을 여는 일이다.
+
+=== Google 클라이언트 만들기
+
+https://console.cloud.google.com[console.cloud.google.com]에 들어간다.
+예전에는 "APIs & Services" 아래 OAuth consent screen과 Credentials로 나뉘어 있었지만, 지금은 *Google 인증 플랫폼(Google Auth Platform)* 이라는 곳으로 묶였다.
+왼쪽 메뉴가 개요·브랜딩·대상·클라이언트로 되어 있으면 제대로 찾아온 것이다.
+
+먼저 브랜딩(옛 OAuth consent screen에 해당)에서 사용자 유형을 External로 두고 앱 이름을 정한다.
+그다음 클라이언트 → 클라이언트 만들기로 가서 애플리케이션 유형을 웹 애플리케이션으로 고른다.
+여기서 가장 중요한 칸이 승인된 리디렉션 URI(Authorized redirect URIs)다.
+이 칸에는 앱 주소가 아니라 Supabase 주소를 넣는다.
+
+----
+https://<project-ref>.supabase.co/auth/v1/callback
+----
+
+`<project-ref>`는 각 Supabase 프로젝트를 가리키는 고유 식별자로, 1절에서 복사한 Project URL(`https://<project-ref>.supabase.co`)의 앞부분에 들어 있다.
+Google이 인증을 마치고 처음 돌려보내는 곳은 우리 앱이 아니라 Supabase이기 때문에, 여기 넣는 주소도 Supabase의 것이다.
+앱의 `/auth/callback`은 그다음 단계에서 Supabase가 부르는 두 번째 홉(hop, 중계 구간)이라, 이 칸에 넣지 않는다.
+이 둘을 헷갈려 앱 주소를 넣으면, 로그인 시도가 Google 화면에서 `redirect_uri_mismatch` 오류로 막힌다.
+
+++++
+<div class="fc-shots">
+
+![Google 인증 플랫폼의 웹 애플리케이션 클라이언트 상세 화면. 승인된 리디렉션 URI 칸에 Supabase 콜백 주소가 등록되어 있다](/screenshots/dash-google-client.png)
+
+</div>
+
+<p class="fc-caption">그림 11 Google 인증 플랫폼 클라이언트 상세. 승인된 리디렉션 URI에는 앱 주소가 아니라 Supabase 콜백 주소를 넣는다.</p>
+++++
+
+클라이언트를 만들면 Client ID와 Client Secret이 나온다(둘의 차이는 {ch-supabase-auth}).
+이 값을 Supabase로 가져간다.
+Supabase 대시보드에서 Authentication → Sign In / Providers를 열고, 목록에서 Google을 찾아 Client ID와 Secret을 넣은 뒤 사용 설정(Enable)한다.
+Secret은 Supabase 대시보드에만 두고 저장소나 코드에는 두지 않는다.
+혹시 Secret이 밖으로 드러났다면, 이 클라이언트 화면에서 새 Secret을 발급받아 Supabase에 다시 넣는다(옛 값은 그 즉시 무효가 된다).
+저장이 실제 로그인에 반영되기까지 몇 분 걸릴 수 있다.
+
+++++
+<div class="fc-shots">
+
+![Supabase Authentication의 Sign In / Providers 화면. Auth Providers 목록에 Email, Google, GitHub 등이 사용 설정 상태로 나열되어 있다](/screenshots/dash-providers.png)
+
+</div>
+
+<p class="fc-caption">그림 12 Supabase Sign In / Providers. 여기서 켠 프로바이더만 로그인에 쓸 수 있다. 개발·운영 프로젝트에 각각 켜 준다.</p>
+++++
+
+여기까지 하면 첫째 관문(프로바이더 켜기)과 둘째 관문(Google에 등록)이 열린다.
+이 프로바이더가 그 Supabase 프로젝트에서 꺼져 있으면, 로그인 시도가 `provider is not enabled`라는 응답에서 멈춘다.
+
+=== GitHub 클라이언트 만들기
+
+GitHub도 구조는 같다.
+https://github.com/settings/developers[github.com/settings/developers]에서 New OAuth App을 만들고, Authorization callback URL에 위와 똑같은 Supabase 콜백 주소를 넣는다.
+이름(Application name)과 홈페이지 주소(Homepage URL) 칸도 필수로 채워야 하는데, 앱 이름과 배포 주소를 적으면 되고, 로그인 동작에는 영향이 없다.
+발급된 Client ID와 Secret을 Supabase의 Sign In / Providers → GitHub에 넣고 사용 설정한다.
+
+=== 개발용은 클라이언트를 따로
+
+개발 프로젝트에도 같은 등록이 필요하다.
+한 클라이언트에 개발 프로젝트의 콜백 주소까지 함께 등록해 재사용해도 동작은 한다.
+다만 그러면 개발과 운영이 같은 Client ID와 Secret을 나눠 쓰게 된다.
+프로젝트마다 클라이언트를 따로 만들면 개발용 값을 개발 Supabase 프로젝트에만 넣어 둘 수 있어, 두 환경이 서로를 건드리지 않는다.
+목적(관문 1·2): 로그인에 쓸 프로바이더는 Supabase에서 켜 두고, 그 프로바이더에는 Supabase 콜백 주소를 등록해 둔다.
+
+== 3. 돌아올 주소 등록 (관문 3)
+
+이제 마지막 관문이다.
+Google이 인증을 마치면 Supabase를 거쳐 앱으로 돌아오는데, Supabase는 아무 주소로나 돌려보내지 않는다.
+미리 허락한 주소로만 보낸다.
+Supabase 대시보드에서 Authentication → URL Configuration을 연다.
+
+화면에는 칸이 둘 있다.
+하나는 Site URL, 다른 하나는 Redirect URLs다(옛 이름은 Additional Redirect URLs였다).
+Redirect URLs는 "돌아와도 되는 주소 목록"이다.
+앱이 로그인 때 넘기는 돌아올 주소(`https://<앱 주소>/auth/callback`)가 이 목록에 있어야 그 주소로 돌아온다.
+
+++++
+<div class="fc-shots">
+
+![Supabase Authentication의 URL Configuration 화면. 위쪽에 Site URL 칸, 아래쪽에 Redirect URLs 목록이 있다](/screenshots/dash-url-config.png)
+
+</div>
+
+<p class="fc-caption">그림 13 Supabase URL Configuration. Redirect URLs는 돌아와도 되는 주소 목록이고, Site URL은 그 목록에 맞는 게 없을 때의 기본값이다.</p>
+++++
+
+Site URL은 조금 다르다.
+Redirect URLs에 맞는 주소가 없을 때 Supabase가 대신 보내는 기본 주소다.
+그래서 이 값이 잘못되어 있으면 로그인이 조용히 엉뚱한 곳으로 샌다.
+실제로 이 책을 쓰는 동안, 개발 프로젝트의 Site URL이 로컬 작업용 `http://localhost:8080`으로 남아 있어서, 배포 사이트에서 로그인한 사용자가 로그인 끝에 `localhost:8080`으로 튕긴 일이 있었다.
+오류 메시지도 없이 주소만 바뀌어 원인을 짐작하기 어려웠다(전말은 저장소의 `notes/2026-07-login-outage.md`).
+
+그러니 두 칸을 이렇게 채운다.
+운영 프로젝트는 Site URL을 배포 주소(커스텀 도메인이 있으면 그 주소)로 두고, Redirect URLs에 그 주소의 `/auth/callback`을 넣는다.
+개발 프로젝트는 Site URL을 개발 배포의 고정 주소로 두고, Redirect URLs에 그 주소의 `/auth/callback`과 함께 `http://localhost:8080/auth/callback`을 넣는다.
+뒤엣것은 로컬에서 개발 DB에 붙어 로그인을 시험할 때 쓴다(`run_dev.sh`, {ch-env-secrets}).
+
+개발 배포 주소로는 배포마다 바뀌는 고유 URL이 아니라 고정된 대표 주소를 넣어야 한다.
+main 브랜치 프리뷰의 고정 별칭(`<앱>-git-main-<계정>.vercel.app`)이나, 프리뷰에 지정해 둔 대표 도메인(이 책에서는 `flashcard-dev.vercel.app`)이 그것이다.
+이 개발 배포 주소는 5절에서 Vercel 프로젝트를 만들어야 정해지므로, 아직 없다면 비워 두었다가 5절을 마친 뒤 이 화면으로 돌아와 채우면 된다.
+
+한 가지 주의가 있다.
+Redirect URLs의 기존 항목을 편집할 때, 값 중간에 새 주소를 붙여 넣어 두 주소가 한 줄로 뭉개지지 않게 한다.
+한 항목에는 완전한 주소 하나만 넣는다.
+목적(관문 3): 앱이 돌려받을 `/auth/callback` 주소를 Redirect URLs에 등록하고, Site URL도 그 배포 주소로 맞춰 둔다.
+
+== 4. GitHub에 저장소 만들고 올리기
+
+Vercel은 GitHub 저장소에서 코드를 가져가므로, 그 전에 내 컴퓨터의 저장소를 GitHub에 올려 둔다.
+{ch-git}에서 개념으로 정리한 첫 push를 여기서 실제로 한다.
+
+https://github.com[github.com]에서 무료 계정을 만들고, New repository로 빈 저장소를 만든다.
+저장소 이름만 정하면 되고, README 같은 파일을 추가하는 옵션은 모두 끈 채 비워 둔다.
+내 컴퓨터에 이미 코드와 이력이 있으므로, 원격은 빈 그릇이어야 한다.
+공개(Public)와 비공개(Private) 중 무엇을 골라도 {ch-env-secrets}의 규칙은 같다.
+비밀 값은 커밋하지 않는다.
+
+만들어진 저장소의 주소를 로컬 저장소에 원격으로 등록하고 push하는 명령은 에이전트에게 맡기면 된다.
+"이 저장소를 GitHub의 <주소>에 원격으로 등록하고 main을 push해 줘" 정도의 지시면 충분하다.
+첫 push에서는 "이 계정의 주인이 맞는가"를 확인하는 인증을 한 번 거친다.
+SSH 키를 등록하거나 액세스 토큰을 만들어 비밀번호 대신 쓰는 방식인데, 화면과 절차가 자주 바뀌므로 GitHub 공식 문서의 최신 안내를 따르는 편이 빠르다.
+막히면 그 화면의 문구를 에이전트에게 보여 주며 물어보는 것도 요령이다.
+
+push가 끝나면 {ch-git}의 브랜치 정책대로 운영용 release 브랜치를 만들어 함께 올려 둔다.
+이것도 "main에서 release 브랜치를 만들어 push해 줘"라고 지시하면 된다.
+
+== 5. Vercel에 올리고 환경을 나눈다
+
+로그인 배선과 저장소 준비가 끝났으니, 이제 앱을 Vercel에 올린다.
+https://vercel.com[vercel.com]에서 Add New Project로 저장소를 가져온다(import).
+Root Directory는 완성본 앱이 있는 `flashcard-advanced`로 지정한다.
+저장소 루트에는 책 원고와 연습용 코드도 함께 있으므로, 루트 그대로 두면 Vercel이 앱을 찾지 못한다.
+Framework Preset은 무엇으로 감지되든 상관없다.
+`vercel.json`의 `"framework": null`이 그 값을 덮어쓰기 때문이다({ch-vercel-config}).
+
+이 책의 브랜치 정책은 main을 개발용, release를 운영용으로 삼는다({ch-git}).
+그런데 Vercel은 처음에 main을 운영 브랜치로 잡아 둔다.
+그대로 두면 main에 푸시할 때마다 운영 도메인에 배포되어, 개발과 운영의 분리가 성립하지 않는다.
+그래서 Settings → Environments를 연다.
+이 화면은 Production, Preview, Development 세 환경이 각각 어느 브랜치를 따르고 어느 도메인을 쓰는지 한눈에 보여 준다.
+
+++++
+<div class="fc-shots">
+
+![Vercel 프로젝트 설정의 Environments 목록. Production이 release 브랜치와 운영 도메인에, Preview가 나머지 브랜치와 개발 도메인에 연결되어 있다](/screenshots/dash-vercel-environments.png)
+
+</div>
+
+<p class="fc-caption">그림 14 Vercel Environments. Production은 release, Preview는 나머지 브랜치를 따르도록 두어 개발 배포와 운영 배포를 구분한다.</p>
+++++
+
+Production을 열어 Branch Tracking의 브랜치 값을 main에서 release로 바꾼다.
+이제 release에 병합할 때만 운영에 배포되고, main에 푸시하면 프리뷰(개발 확인용) 배포가 된다.
+
+다음은 환경 변수다.
+1절에서 꺼내 둔 값(`DATABASE_URL`, `SUPABASE_URL`, `SUPABASE_ANON_KEY`)을 넣는데, 스코프를 나눠 넣는 것이 핵심이다.
+이름과 값의 짝은 이렇다.
+`DATABASE_URL`에는 Transaction pooler 연결 문자열(포트 6543)을, `SUPABASE_URL`에는 Project URL을, `SUPABASE_ANON_KEY`에는 anon(public) key를 넣는다.
+Production 스코프에는 운영 프로젝트 값을, Preview 스코프에는 개발 프로젝트 값을 넣는다(이유는 {ch-env-secrets}).
+이렇게 해야 개발 배포는 개발 DB에, 운영 배포는 운영 DB에 붙는다.
+세 번째 스코프인 Development 칸은 비워 둔다.
+이름만 보면 개발 값이 들어갈 자리 같지만, 이 스코프는 `vercel dev`라는 로컬 실행 명령이 읽는 자리라 이 책의 구성에서는 쓰이지 않는다({ch-vercel-config}).
+개발 값이 들어갈 곳은 Preview다.
+값은 각 환경 상세 화면의 Environment Variables 구역에서 넣거나, 왼쪽 메뉴 Environment Variables에서 한꺼번에 관리한다.
+
+++++
+<div class="fc-shots">
+
+![Vercel Production 환경의 Environment Variables 구역. DATABASE_URL, SUPABASE_URL, SUPABASE_ANON_KEY가 Production 스코프로 등록되어 있다](/screenshots/dash-vercel-envvars.png)
+
+</div>
+
+<p class="fc-caption">그림 15 Vercel 환경 변수. 같은 이름을 스코프별로 나눠, Production에는 운영 값, Preview에는 개발 값을 넣는다.</p>
+++++
+
+환경 변수는 다음 배포부터 적용된다.
+값을 바꿨다면 다시 푸시하거나 대시보드에서 Redeploy한다.
+
+마지막으로 프리뷰 배포에 하나 더 손볼 곳이 있다.
+Vercel은 프리뷰 배포를 기본으로 보호해, 팀 바깥에서는 열지 못하게 막아 둘 수 있다.
+이 보호가 켜져 있으면 로그인 시도가 앱에 닿기도 전에 Vercel 로그인 화면이 가로챈다.
+Settings → Deployment Protection → Vercel Authentication의 Require Log In을 꺼 두면 프리뷰를 공개로 열 수 있다(Hobby 플랜에서 가능).
+
+== 로그인이 안 될 때
+
+세 관문을 알아 두면, 실패 증상만 보고도 어느 설정이 빠졌는지 좁힐 수 있다.
+
+첫째, 로그인 버튼을 눌렀더니 Supabase 주소에서 `provider is not enabled`가 뜬다면, 그 프로젝트에서 프로바이더가 꺼진 것이다(관문 1).
+Sign In / Providers에서 켠다.
+개발 프로젝트를 새로 만들며 빠뜨리기 쉽다.
+
+둘째, Google이나 GitHub 화면에서 `redirect_uri_mismatch`가 뜬다면, 그 프로바이더에 Supabase 콜백이 등록되지 않은 것이다(관문 2).
+앱 주소가 아니라 Supabase 주소(`https://<project-ref>.supabase.co/auth/v1/callback`)를 등록한다.
+
+셋째, 로그인은 되는데 마지막에 엉뚱한 주소(예: `localhost:8080`)로 간다면, Redirect URLs에 그 배포의 `/auth/callback`이 없어 Site URL로 조용히 폴백된 것이다(관문 3).
+Redirect URLs와 Site URL을 함께 확인한다.
+
+이 밖에 두 가지가 더 있다.
+로그인이 실패하고 Vercel Logs에 `net/http: invalid header field value`가 보이면, 환경 변수 값에 줄바꿈(개행)이나 눈에 보이지 않는 제어 문자가 섞인 것이다(긴 키를 복사할 때 흔하다).
+값을 다시 한 줄로 입력한다.
+그리고 로그인 화면에서 5분 넘게 지체한 뒤 실패한다면, 로그인 확인용 임시 쿠키(`fc_pkce`, 300초)가 만료된 것이니 처음부터 다시 시도한다.
+
+== 정리
+
+로그인은 세 관문을 지나고, 관문마다 채워야 할 설정이 하나씩 있다.
+Supabase에서 프로바이더를 켜고, Google·GitHub에 Supabase 콜백을 등록하고, Supabase의 Redirect URLs에 앱의 콜백 주소를 등록하는 것이다.
+여기에 Vercel의 환경 분리(브랜치와 스코프)를 더하면, 개발과 운영이 각자의 DB와 도메인 위에서 따로 돈다.
+대시보드 메뉴 이름은 바뀌어도 이 세 관문과 환경 분리라는 뼈대는 오래간다.
+막히면 증상으로 관문을 짚고, 그 관문의 설정 하나를 확인하면 된다.

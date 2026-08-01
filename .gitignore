@@ -10,16 +10,18 @@
 /bin/
 
 # local mode sqlite database
-local-db/
+flashcard-advanced/local-db/
+flashcard-basic/flashcard.db*
+flashcard-basic/flashcard-basic
 
 # vercel
 .vercel
 
 # book (book-template 엔진 + VitePress)
-doc/node_modules/
-doc/.generated/
-doc/.vitepress/dist/
-doc/.vitepress/cache/
+book/node_modules/
+book/.generated/
+book/.vitepress/dist/
+book/.vitepress/cache/
 book-template/node_modules/
 
 .idea/

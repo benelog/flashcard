@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>암기 카드</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <h1 class="title">내 덱</h1>
+  <!-- tag::deck-list[] -->
+  <ul class="list">
+    {{range .Decks}}
+    <li class="item"><a class="decklink" href="/decks/{{.ID}}">{{.Name}}</a></li>
+    {{else}}
+    <li class="item-empty">아직 덱이 없다. 아래에서 첫 덱을 만들어 보자.</li>
+    {{end}}
+  </ul>
+  <!-- end::deck-list[] -->
+  <!-- tag::deck-form[] -->
+  <form class="row" method="post" action="/decks">
+    <input class="field" name="name" placeholder="새 덱 이름" required>
+    <button class="button">덱 만들기</button>
+  </form>
+  <!-- end::deck-form[] -->
+</body>
+</html>

@@ -4,10 +4,12 @@ on:
   push:
     branches: [main, release]
     paths-ignore:
-      - 'doc/**'
+      - 'book/**'
+      - 'book-template/**'
   pull_request:
     paths-ignore:
-      - 'doc/**'
+      - 'book/**'
+      - 'book-template/**'
   workflow_dispatch:
 
 concurrency:
@@ -22,7 +24,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
         with:
-          go-version-file: go.mod
+          go-version-file: flashcard-advanced/go.mod
           cache: true
 
       - name: gofmt
@@ -34,16 +36,33 @@ jobs:
             exit 1
           fi
 
-      - name: go build
+      - name: go build (flashcard-advanced)
+        working-directory: flashcard-advanced
         run: go build ./...
 
-      - name: go vet
+      - name: go vet (flashcard-advanced)
+        working-directory: flashcard-advanced
         run: go vet ./...
 
-      - name: go test
+      - name: go test (flashcard-advanced)
+        working-directory: flashcard-advanced
         run: go test ./...
 
+      - name: go build/vet/test (flashcard-basic)
+        working-directory: flashcard-basic
+        run: |
+          go build ./...
+          go vet ./...
+          go test ./...
+
+      - name: go build/vet (language-basic 예제)
+        working-directory: language-basic/go
+        run: |
+          go build ./...
+          go vet ./...
+
       - name: Vercel 호환 검사 (api/ 는 internal/ 을 import 할 수 없다)
+        working-directory: flashcard-advanced
         run: |
           if grep -rq 'benelog/flashcard/internal' api/; then
             echo "api/ 가 internal/ 패키지를 import 합니다. pkg/ 로 옮기세요."

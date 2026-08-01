@@ -1,0 +1,263 @@
+= Go에서 SQLite 쓰기: database/sql로 저장하고 꺼낸다
+
+{ch-database-basics}에서는 sqlite3 프롬프트에 SQL 문장을 손으로 쳐서 표를 만들고 행을 넣었다.
+그런데 앱의 서버 옆에는 프롬프트 앞에 앉아 문장을 쳐 줄 사람이 없다.
+사용자가 덱을 만들 때마다 insert 문장을 데이터베이스에 보내는 것은 Go 코드가 할 일이다.
+이번 장에서는 {ch-go-hello}·{ch-go-types}에서 익힌 Go와 {ch-database-basics}에서 익힌 SQL을 잇는다.
+sqlite3에 치던 그 문장들을 Go 프로그램이 실행하게 만드는 것이다.
+
+이 장부터 2부의 남은 세 장은 저장소의 `flashcard-basic/` 디렉터리에 있는 최소 플래시카드 앱을 재료로 쓴다.
+{ch-first-run}에서 띄워 본 완성본(`flashcard-advanced/`)에서 배포·인증·간격 반복을 걷어 내고 웹 앱의 뼈대만 남긴 앱이다.
+테이블은 `decks`와 `cards` 둘뿐이고, 로그인이 없으며, 데이터는 현재 디렉터리의 `flashcard.db` 파일 하나에 저장된다.
+그 폴더에서 `go run .`을 실행하면 `http://localhost:8080`에서 열린다.
+완성본의 구조와 문제 풀이를 해부하는 일은 3부의 몫이고, 2부에서는 이 작은 앱으로 기초 사용법만 익힌다.
+
+이 장의 담당은 그중 데이터 층, 파일로는 `flashcard-basic/store.go` 하나다.
+저장한 데이터를 웹 화면으로 보여 주는 일은 {ch-gin-hello}에서, 화면 일부만 갈아 끼우는 일은 {ch-htmx-hello}에서 이어 간다.
+
+== database/sql과 드라이버
+
+Go 표준 라이브러리에는 데이터베이스를 상대하는 창구인 `database/sql` 패키지가 있다.
+이름처럼 특정 제품이 아니라 SQL 데이터베이스 일반을 다루는 패키지라서, 연결을 열고 문장을 실행하고 결과를 받아 오는 방법이 어느 데이터베이스든 같다.
+SQLite든 PostgreSQL이든 코드의 모양은 그대로 두고, 각 데이터베이스와 대화하는 세부는 드라이버({ch-database-basics}에서 본 그 연결 부품)가 맡는다.
+Flashcard 완성본이 로컬에서는 SQLite로, 운영에서는 PostgreSQL로 도는 것도 이 구조 덕분이다({ch-supabase-db}).
+
+flashcard-basic이 쓰는 SQLite 드라이버는 modernc.org/sqlite다.
+SQLite 자체는 C 언어로 만들어진 라이브러리인데, 이 드라이버는 그 코드를 Go로 통째로 옮긴 순수 Go 구현이라 C 컴파일러 없이 `go build` 하나로 빌드가 끝난다.
+
+드라이버를 코드에 들이는 방법이 조금 별나다.
+`flashcard-basic/store.go`의 임포트 목록에서 발췌한 두 줄이다.
+
+[source,go]
+----
+	"database/sql"
+
+	_ "modernc.org/sqlite"
+----
+
+임포트 경로 앞의 밑줄 `_`는 "이 패키지의 이름을 코드에서 직접 쓰지는 않지만, 불러오기는 하라"는 표기다.
+{ch-go-hello}에서 쓰지 않을 반환값을 `_`로 버린 것과 같은 밑줄이다.
+이름도 쓰지 않을 패키지를 왜 불러올까.
+Go는 패키지를 불러오는 순간 그 패키지의 초기화 코드를 실행하는데, 드라이버는 그 초기화에서 "나는 sqlite라는 이름의 드라이버다"라고 `database/sql`에 자신을 등록한다.
+불러오는 행위 자체가 목적인, 부수 효과를 위한 임포트다.
+이렇게 등록된 이름을 잠시 뒤 `sql.Open`의 첫 인자로 다시 만난다.
+
+== 연결 열기와 스키마 적용
+
+먼저 표의 틀이다.
+{ch-database-basics}에서 손으로 쳤던 것과 같은 `create table` 문장이 `flashcard-basic/schema.sql`에 들어 있다.
+
+[source,sql]
+----
+include::../../flashcard-basic/schema.sql[tag=schema]
+----
+
+덱 표와 카드 표, 그리고 카드가 소속 덱을 가리키는 외래 키(`references`)와 덱을 지우면 카드도 따라 지워지는 `on delete cascade`까지 앞 장에서 본 그대로다.
+다른 것은 기본 키다.
+완성본은 UUID 문자열을 쓰지만, 이 앱의 `id`는 `integer primary key autoincrement`, 즉 행을 넣을 때마다 데이터베이스가 1, 2, 3으로 번호를 매겨 주는 정수 순번이다.
+서버가 하나뿐인 최소 앱에서는 이쪽이 단순하다(완성본이 UUID를 고른 이유는 {ch-database}에서 따진다).
+그리고 `if not exists`가 붙어 있어 이 파일은 몇 번을 다시 실행해도 안전한데, 이 성질을 곧 코드가 이용한다.
+
+이 스키마 파일을 Go 코드로 가져오는 일은 `flashcard-basic/store.go`의 다음 두 줄이 한다.
+
+[source,go]
+----
+//go:embed schema.sql
+var schemaSQL string
+----
+
+`//go:embed`는 주석처럼 생겼지만 컴파일러가 읽는 지시다.
+빌드할 때 `schema.sql` 파일의 내용을 통째로 이 변수에 담아 실행 파일 안에 품는다.
+덕분에 실행 파일을 어디로 가져가도 스키마 파일을 따로 챙길 필요가 없다.
+파일을 실행 파일에 품는 이 장치(embed)는 {ch-go-templates}에서 자세히 다룬다.
+
+이제 연결을 열고 스키마를 적용하는 코드다.
+같은 `flashcard-basic/store.go`에서 인용한다.
+
+[source,go]
+----
+include::../../flashcard-basic/store.go[tag=open]
+----
+
+`Store`는 데이터베이스 연결 하나를 감싼 구조체이고, 앞으로 볼 함수들은 모두 이 구조체의 메서드({ch-go-types})다.
+`sql.Open`의 첫 인자 `"sqlite"`가 아까 드라이버가 등록해 둔 이름이고, 둘째 인자가 열 파일의 경로다.
+경로 뒤에 `?`로 이어 붙인 `_pragma=foreign_keys(1)`은 연결 옵션이다.
+SQLite는 옛 버전과의 호환 때문에 외래 키 검사가 꺼진 채로 출발하므로, 연결할 때마다 이렇게 켜 줘야 `references` 선언이 실제로 일한다.
+
+연결이 열리면 `db.Exec(schemaSQL)`로 스키마 파일을 통째로 실행한다.
+`create table if not exists`라서 데이터베이스 파일이 방금 새로 만들어졌으면 표가 생기고, 이미 표가 있으면 조용히 넘어간다.
+그 결과 이 앱에는 데이터베이스 설치도 별도의 준비 절차도 없다.
+서버를 켜면 파일이 없으면 만들어지고 표까지 준비된다.
+{ch-first-run}에서 완성본을 처음 실행했을 때 아무 준비 없이 `flashcard.db`가 생긴 것도 같은 방식이었다.
+
+== 행을 Go 값으로
+
+표에 담긴 행을 Go 코드로 가져오면 무엇이 될까.
+{ch-go-types}에서 익힌 구조체다.
+`flashcard-basic/store.go`의 타입 선언이다.
+
+[source,go]
+----
+include::../../flashcard-basic/store.go[tag=types]
+----
+
+구조체 하나가 테이블 하나와, 필드 하나가 열 하나와 짝을 이룬다.
+`Deck.Name`이 `decks.name`이고 `Card.DeckID`가 `cards.deck_id`다.
+id를 담는 필드가 `int64`인 것은 `database/sql`이 정수 id를 이 타입으로 돌려주기 때문이다.
+필드 뒤에 붙은 `` `json:"id"` `` 같은 문자열은 이 구조체를 JSON으로 내보낼 때 쓸 이름표인데, 화면 대신 JSON으로 답하는 API를 만들 때 쓰인다.
+지금은 없는 것으로 보고 지나가도 되고, 이런 꼬리표(구조체 태그)의 정체는 {ch-go}에서 다룬다.
+
+앞으로 볼 함수는 모두 이 두 구조체를 주고받는다.
+데이터베이스에서 꺼낸 행은 구조체가 되어 나오고, 저장할 값은 인자로 들어가 행이 된다.
+
+== 넣기: Exec와 자리표시자
+
+덱 하나를 추가하는 함수다.
+`flashcard-basic/store.go`에서 인용한다.
+
+[source,go]
+----
+include::../../flashcard-basic/store.go[tag=create-deck]
+----
+
+`s.db.Exec`가 결과 행을 돌려받을 필요가 없는 문장을 실행하는 메서드다.
+insert, update, delete가 여기에 해당한다.
+첫 인자가 SQL 문장이고, 문장 속 `?` 자리마다 뒤따르는 인자가 순서대로 들어간다.
+{ch-database-basics}에서 배운 그 자리표시자다.
+사용자가 입력한 덱 이름을 문장에 이어 붙이지 않고 별도 인자로 넘기므로, 이름에 SQL 조각이 섞여 있어도 값 하나로만 취급된다.
+"SQL은 반드시 자리표시자로"라는 철칙이 Go 코드에서는 이 모양이 된다.
+
+문장에 `id`가 없는데도 새 행은 id를 받는다.
+`autoincrement` 열이라 데이터베이스가 번호를 매기기 때문이고, 방금 매겨진 번호를 알려 주는 것이 `res.LastInsertId()`다.
+호출한 쪽은 이 id로 방금 만든 덱의 화면으로 이동하거나 그 덱에 카드를 이어서 넣는다.
+카드를 추가하는 `CreateCard`도 같은 모양인데, 자리표시자가 셋(`deck_id`, `front`, `back`)으로 늘고, 방금 받은 id까지 채운 `Card` 구조체를 통째로 돌려주는 것만 다르다.
+
+에러 처리도 눈에 익은 리듬이다.
+함수를 부르고 바로 다음 줄에서 `err`부터 확인하는 {ch-go-hello}의 그 두 줄이 데이터베이스 코드에서도 그대로 반복된다.
+
+== 한 행 꺼내기: QueryRow와 Scan
+
+id로 덱 하나를 찾아오는 함수다.
+`flashcard-basic/store.go`에서 인용한다.
+
+[source,go]
+----
+include::../../flashcard-basic/store.go[tag=get-deck]
+----
+
+`QueryRow`는 결과가 한 행뿐인 조회에 쓴다.
+돌아온 행을 Go 값으로 옮기는 것이 `Scan`이다.
+`&d.ID`처럼 필드의 포인터({ch-go-types})를 넘기면 select 문장의 열 순서대로 값이 그 자리에 채워진다.
+select에 적은 열 순서와 `Scan`에 넘긴 순서가 어긋나면 값이 엉뚱한 필드로 들어가므로, 이 둘은 늘 나란히 놓고 맞춘다.
+
+이 함수의 절반은 "없을 때"를 다루는 데 쓰였다.
+조건에 맞는 행이 없으면 `database/sql`은 `sql.ErrNoRows`라는 에러를 돌려주는데, 이 함수는 그것을 그대로 흘려보내지 않고 이 앱의 에러인 `ErrNotFound`로 바꿔 돌려준다.
+`ErrNotFound`는 `store.go` 첫머리에 한 번 선언해 둔 값이다.
+
+[source,go]
+----
+var ErrNotFound = errors.New("not found")
+----
+
+바꿔 돌려주는 이유는 부르는 쪽의 사정에 있다.
+"찾는 덱이 없다"는 이 앱의 일상적인 상황이고, 화면을 만드는 쪽은 그 사실만 알면 404 응답을 만들 수 있다.
+`sql.ErrNoRows`를 그대로 내보내면 store를 부르는 모든 코드가 `database/sql`의 사정까지 알아야 한다.
+이렇게 약속된 상황을 나타내려고 미리 만들어 두고 `errors.Is`로 알아보는 에러 값을 센티널 에러라 부르는데, 완성본의 에러 설계와 함께 {ch-go}에서 자세히 다룬다.
+
+== 여러 행 꺼내기: Query와 rows
+
+한 덱의 카드를 전부 가져오는 함수다.
+`flashcard-basic/store.go`에서 인용한다.
+
+[source,go]
+----
+include::../../flashcard-basic/store.go[tag=list-cards]
+----
+
+결과가 여러 행일 때는 `QueryRow` 대신 `Query`를 쓴다.
+돌아오는 `rows`는 결과 전체를 담은 목록이 아니라, 결과 위를 한 행씩 전진하는 읽기 창이다.
+`rows.Next()`가 다음 행으로 전진하며 행이 남아 있으면 `true`를 돌려주므로, {ch-go-hello}에서 본 조건 반복 `for`에 그대로 끼우면 "행이 있는 동안 반복"이 된다.
+회차마다 `Scan`으로 행 하나를 `Card` 구조체에 옮기고, `append`({ch-go-types})로 슬라이스에 쌓는다.
+
+새 문법이 하나 있다.
+`defer rows.Close()`의 `defer`는 "이 일을 지금 하지 말고, 이 함수가 끝날 때 하라"는 예약이다.
+읽기 창은 다 쓰면 닫아서 자원을 돌려줘야 하는데, 함수를 빠져나가는 길은 정상 반환과 중간의 `return`들로 여러 갈래다.
+닫는 일을 `defer`로 예약해 두면 어느 길로 나가든 빠짐없이 닫힌다.
+그래서 여는 데 성공한 직후에 예약해 두는 것이 관례다.
+
+마지막 줄의 `rows.Err()`도 빠뜨리기 쉬운 마무리다.
+반복 도중 읽기에 문제가 생기면 `rows.Next()`는 에러를 돌려줄 자리가 없어 그냥 `false`로 반복을 끝낸다.
+그래서 반복이 끝난 뒤 끝까지 잘 읽어서 끝난 것인지를 따로 물어야 하고, 그 물음이 `rows.Err()`다.
+
+덱 목록을 가져오는 `ListDecks`도 표와 열만 다를 뿐 이 모양 그대로다.
+`Query`, `defer rows.Close()`, `rows.Next()` 반복, `Scan`, 마지막 `rows.Err()` 확인.
+여러 행을 읽는 `database/sql` 코드는 어디서나 이 다섯 박자로 돈다.
+
+== 지우기: RowsAffected로 확인한다
+
+카드 하나를 지우는 함수다.
+`flashcard-basic/store.go`에서 인용한다.
+
+[source,go]
+----
+include::../../flashcard-basic/store.go[tag=delete-card]
+----
+
+지우는 문장도 `Exec`로 실행한다.
+다른 것은 결과 확인이다.
+{ch-database-basics}에서 고치거나 지운 뒤에는 몇 행이 영향을 받았는지가 돌아온다고 했는데, 그 숫자를 꺼내는 것이 `res.RowsAffected()`다.
+delete는 조건에 맞는 행이 없어도 에러 없이 성공하므로, 이 숫자가 0인지 확인해야 "지울 카드가 애초에 없었다"를 알 수 있다.
+이 함수는 그 경우에 앞서 만든 `ErrNotFound`를 돌려준다.
+없는 카드를 찾는 것과 없는 카드를 지우는 것이 같은 에러로 표현되니, 부르는 쪽은 어느 쪽이든 같은 방법으로 404 응답을 만들면 된다.
+
+이 최소 앱에는 고치는 기능이 없지만, update 문장을 다루는 방법도 같다.
+`Exec`로 실행하고 `RowsAffected`로 고쳐진 행이 있었는지 확인하는, 방금 본 모양 그대로다.
+
+== 직접 확인: 테스트가 대신 돌려 본다
+
+이 함수들이 정말 도는지는 어떻게 확인할까.
+sqlite3로 `flashcard.db`를 열어 눈으로 볼 수도 있지만, 이 앱에는 자동으로 확인하는 코드가 이미 있다.
+`flashcard-basic/store_test.go`는 임시 폴더에 새 데이터베이스 파일을 만들고, 덱을 만들고, 카드를 넣고, 목록으로 꺼내고, 지우고, 한 번 더 지워서 `ErrNotFound`가 나오는 것까지 이 장의 함수를 전부 부른다.
+`flashcard-basic/` 폴더에서 한 줄이면 돈다.
+
+[source,shell]
+----
+go test ./...
+----
+
+임시 폴더를 쓰므로 몇 번을 돌려도 내 `flashcard.db`는 건드리지 않는다.
+테스트 코드를 읽고 쓰는 문법은 {ch-go-testing}의 몫이니, 지금은 저장하고 꺼내는 왕복이 검증되어 있다는 사실만 챙겨 두면 된다.
+
+== 에이전트 활용 아이디어
+
+데이터베이스를 다루는 코드를 에이전트에게 맡길 때는 기존 함수를 본보기로 지목하는 것이 요령이다.
+"덱 이름을 바꾸는 UpdateDeck을 store.go에 추가하되, DeleteCard처럼 RowsAffected를 확인해 ErrNotFound를 돌려주라"처럼 따를 모양을 짚어 주면, 에러 번역과 자리표시자 같은 이 파일의 규칙이 새 코드에도 이어진다.
+테스트까지 한 지시로 묶어 "store_test.go에 검증도 추가하고 `go test ./...`가 통과하는 것까지 확인해 달라"고 하면, 결과를 말 대신 실행으로 받는다.
+
+지침 파일에 못 박아 둘 규칙도 있다.
+"SQL에 값을 이어 붙이지 말고 반드시 자리표시자를 쓰라", "rows를 열면 `defer rows.Close()`와 마지막 `rows.Err()` 확인을 빠뜨리지 말라"를 `CLAUDE.md`에 적어 두면, 이 장의 다섯 박자에서 벗어난 코드가 처음부터 만들어지지 않는다.
+에이전트가 쓴 코드를 리뷰할 때도 이 목록이 점검표가 된다.
+
+sqlite3 프롬프트는 에이전트의 결과를 대조하는 도구로도 쓸 만하다.
+에이전트가 만든 함수를 실행해 본 뒤 "sqlite3로 flashcard.db를 열어 방금 넣은 행을 select로 보여 달라"고 시키면, Go 코드가 실제로 남긴 데이터가 눈앞에 놓인다.
+{ch-database-basics}에서 익힌 프롬프트가 이 장부터는 검증 도구가 된다.
+
+== 정리
+
+첫째, `database/sql`은 어느 SQL 데이터베이스든 같은 방법으로 다루는 표준 창구이고, 데이터베이스별 세부는 드라이버가 맡는다.
+드라이버는 `_ "modernc.org/sqlite"`처럼 밑줄 임포트로 불러와 등록만 시킨다.
+
+둘째, 연결은 `sql.Open`으로 열고, `//go:embed`로 실행 파일에 품은 `schema.sql`을 `Exec`로 실행해 표를 준비한다.
+`create table if not exists` 덕분에 서버를 켜는 것만으로 데이터베이스가 준비된다.
+
+셋째, 넣기·고치기·지우기는 `Exec`로 실행한다.
+값은 반드시 자리표시자 `?`로 넘기고, 새 행의 번호는 `LastInsertId`로, 영향을 받은 행 수는 `RowsAffected`로 받는다.
+
+넷째, 한 행은 `QueryRow`와 `Scan`으로 구조체에 옮기고, 여러 행은 `Query`, `defer rows.Close()`, `rows.Next()` 반복, `Scan`, `rows.Err()`의 다섯 박자로 읽는다.
+
+다섯째, `sql.ErrNoRows` 같은 라이브러리의 에러는 store 안에서 `ErrNotFound`로 바꿔 돌려준다.
+덕분에 store를 부르는 쪽은 `database/sql`을 몰라도 "없다"는 상황을 다룰 수 있다.
+
+이제 덱과 카드를 저장하고 꺼내는 바닥이 놓였다.
+다음 {ch-gin-hello}에서는 이 함수들을 웹 서버에 연결한다.
+브라우저가 주소를 요청하면 store에서 꺼낸 덱과 카드가 HTML 화면이 되어 돌아가는, 웹 앱다운 왕복을 처음 완성해 보자.

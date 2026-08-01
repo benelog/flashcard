@@ -4,7 +4,7 @@ on:
   push:
     branches: [main]
     paths:
-      - 'doc/**'
+      - 'book/**'
       - 'book-template/**'
       - '.github/workflows/book.yml'
   workflow_dispatch:
@@ -29,25 +29,25 @@ jobs:
           cache: npm
           cache-dependency-path: |
             book-template/package-lock.json
-            doc/package-lock.json
+            book/package-lock.json
       - name: Install engine dependencies
         run: npm ci
         working-directory: book-template
       - name: Install book dependencies
         run: npm ci
-        working-directory: doc
+        working-directory: book
       - name: Build book (adoc → md → VitePress)
         run: npm run build
-        working-directory: doc
+        working-directory: book
       - name: Install Korean fonts for PDF rendering
         run: sudo apt-get update && sudo apt-get install -y fonts-noto-cjk
       - name: Export PDF
         run: npm run pdf
-        working-directory: doc
+        working-directory: book
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: doc/.vitepress/dist
+          path: book/.vitepress/dist
 
   deploy:
     needs: build

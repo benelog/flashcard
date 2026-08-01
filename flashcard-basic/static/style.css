@@ -1,0 +1,139 @@
+/* flashcard-basic 스타일. 태그 대신 클래스로 고른다. */
+:root {
+  --ink: #1f2430;
+  --line: #d8dce4;
+  --accent: #2456c8;
+  --paper: #f7f8fa;
+}
+
+body {
+  margin: 0 auto;
+  max-width: 40rem;
+  padding: 1.5rem 1rem;
+  font-family: system-ui, sans-serif;
+  color: var(--ink);
+  background: var(--paper);
+}
+
+.title {
+  font-size: 1.4rem;
+}
+
+.nav {
+  display: flex;
+  gap: 1rem;
+}
+
+.navlink {
+  color: var(--accent);
+}
+
+.list {
+  margin: 1rem 0;
+  padding: 0;
+  list-style: none;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.6rem 0.8rem;
+  margin-bottom: 0.5rem;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 0.5rem;
+}
+
+.item-empty {
+  padding: 0.6rem 0.2rem;
+  color: #667;
+}
+
+.decklink {
+  color: var(--ink);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.card-front {
+  font-weight: 600;
+}
+
+.card-back {
+  color: #556;
+  flex: 1;
+}
+
+.delete {
+  border: none;
+  background: none;
+  color: #a33;
+  cursor: pointer;
+}
+
+.row {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.field {
+  flex: 1;
+  padding: 0.5rem 0.7rem;
+  border: 1px solid var(--line);
+  border-radius: 0.5rem;
+  font: inherit;
+}
+
+.button {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 0.5rem;
+  background: var(--accent);
+  color: #fff;
+  font: inherit;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.study {
+  margin: 1.5rem 0;
+  padding: 1.2rem;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 0.75rem;
+}
+
+.study-front {
+  font-size: 1.3rem;
+  font-weight: 700;
+  cursor: pointer;
+  list-style: none;
+}
+
+.study-front::after {
+  content: " (눌러서 뒷면 보기)";
+  font-size: 0.8rem;
+  font-weight: 400;
+  color: #889;
+}
+
+.study[open] .study-front::after {
+  content: "";
+}
+
+.study-back {
+  margin: 0.8rem 0 0;
+  font-size: 1.1rem;
+}
+
+.study-nav {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.study-pos {
+  color: #667;
+}
