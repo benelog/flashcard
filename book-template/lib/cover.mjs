@@ -206,7 +206,7 @@ export function pdfTocHtml(chapters, startPages) {
     html, body { margin: 0; padding: 0; }
     body { font-family: 'Noto Serif KR', serif; color: #1c1c1e; }
     h1 { font-family: 'Noto Sans KR', sans-serif; font-size: 21pt; font-weight: 700; margin: 6mm 0 12mm; }
-    .part { font-family: 'Noto Sans KR', sans-serif; font-size: 11.5pt; font-weight: 700; color: #33436e; margin: 9mm 0 2.5mm; }
+    .part { font-family: 'Noto Sans KR', sans-serif; font-size: 11.5pt; font-weight: 700; color: #2b2b2b; margin: 9mm 0 2.5mm; }
     .row { display: flex; align-items: baseline; font-size: 11pt; line-height: 2.2; word-break: keep-all; }
     .row .t { padding-right: 3mm; }
     .row .dots { flex: 1; border-bottom: 1px dotted #b3b3b8; transform: translateY(-1.5mm); }

@@ -61,7 +61,7 @@ export default {
       ],
     },
     {
-      text: '2부 세 언어 첫걸음과 첫 웹 앱',
+      text: '2부 코딩 첫걸음: 문법에서 첫 웹 앱까지',
       items: [
         { file: 'part2/html-hello.adoc', text: '6장 HTML 첫걸음: 파일 하나로 만드는 웹 문서' },
         { file: 'part2/css-hello.adoc', text: '7장 CSS 첫걸음: 색과 배치를 입히는 규칙' },
@@ -113,7 +113,7 @@ export default {
       ],
     },
     {
-      text: '4부 세상에 공개하기',
+      text: '4부 인터넷에 공개하기: 버전 관리에서 배포와 인증까지',
       items: [
         { file: 'part4/git.adoc', text: '27장 Git: 개념과 브랜치 정책' },
         { file: 'part4/quality-gates.adoc', text: '28장 품질 게이트: 훅과 서브에이전트' },
