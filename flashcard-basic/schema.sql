@@ -10,4 +10,6 @@ create table if not exists cards (
     text    text not null,
     meaning text not null
 );
+
+create index if not exists cards_deck_idx on cards (deck_id);
 -- end::schema[]

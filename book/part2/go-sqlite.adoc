@@ -52,7 +52,7 @@ Go는 패키지를 불러오는 순간 그 패키지의 초기화 코드를 실�
 include::../../flashcard-basic/schema.sql[tag=schema]
 ----
 
-덱 표와 카드 표, 그리고 카드가 소속 덱을 가리키는 외래 키(`references`)와 덱을 지우면 카드도 따라 지워지는 `on delete cascade`까지 앞 장에서 본 그대로다.
+덱 표와 카드 표, 카드가 소속 덱을 가리키는 외래 키(`references`)와 덱을 지우면 카드도 따라 지워지는 `on delete cascade`, 그리고 카드를 덱으로 찾는 마지막 줄의 인덱스까지 앞 장에서 본 그대로다.
 다른 것은 기본 키다.
 완성본은 UUID 문자열을 쓰지만, 이 앱의 `id`는 `integer primary key autoincrement`, 즉 행을 넣을 때마다 데이터베이스가 1, 2, 3으로 번호를 매겨 주는 정수 순번이다.
 서버가 하나뿐인 최소 앱에서는 이쪽이 단순하다(완성본이 UUID를 고른 이유는 {ch-database}에서 따진다).
