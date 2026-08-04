@@ -128,21 +128,39 @@ export function pdfCoverHtml(book) {
        윗면은 가로로 긴 직사각형을 rotate(45deg)로 세워 scaleY(0.45)로 눕힌 평행사변형,
        좌우 옆면은 그 아래 두 변에 맞춰 skewY(±24.228deg)로 기울인 직사각형이다
        (눕힌 뒤 변의 기울기가 0.45 = tan 24.228°).
-       윗면은 실제 요소(.top)라 안에 각 층의 그림(motif)을 담고, 그림도 함께 눕는다. */
-    .diagram { flex: none; margin: 8mm 0 0; }
-    .layer { position: relative; display: flex; align-items: center; gap: 8.5mm; height: 49mm; }
-    .layer + .layer { margin-top: -6.7mm; }
-    .layer:nth-child(1) { z-index: 3; }
-    .layer:nth-child(2) { z-index: 2; }
-    .layer:nth-child(3) { z-index: 1; }
-    .plane { position: relative; flex: none; width: 101mm; height: 100%;
-      filter: drop-shadow(0 3mm 4mm rgba(0, 0, 0, 0.16));
+       윗면은 실제 요소(.top)라 안에 각 층의 그림(motif)을 담고, 그림도 함께 눕는다.
+
+       그림 전체는 기계 분해 조립도(exploded view)의 관례를 따른다. 세 판은 흩어진 부품이
+       아니라 한 덩어리를 축을 따라 뽑아낸 것이므로, 판 뒤에 조립축(파선)을 세우고
+       판마다 라벨로 지시선을 뻗는다. 홈의 표지 카드와 같은 그림이다(theme/custom.css). */
+    .diagram { position: relative; flex: none; margin: 3mm 0 0; --pw: 101mm; }
+    /* 조립축. 판이 덮지 않는 판과 판 사이에서만 드러나고, 위아래로 조금 비어져 나온다 */
+    .diagram::before { content: ''; position: absolute; z-index: 0; left: calc(var(--pw) / 2);
+      top: -2.5mm; bottom: -3.5mm; width: 0.5mm; margin-left: -0.25mm;
+      background: repeating-linear-gradient(#c4c4c4 0 1.8mm, transparent 1.8mm 4mm); }
+    .layer { position: relative; display: flex; align-items: center; gap: 10mm; height: 47.3mm;
       --sw: 84mm;                                          /* 윗면 직사각형 가로 */
       --sh: 52.5mm;                                        /* 세로: 가로와 16:10(모니터 비율) */
-      --t: 5.6mm;                                          /* 판 두께 */
+      --t: 6mm;                                            /* 판 두께 */
       --dw: calc((var(--sw) + var(--sh)) * 0.3536);        /* 윗면 반너비 */
       --dh: calc((var(--sw) + var(--sh)) * 0.1591);        /* 윗면 반높이 */
       --ldrop: calc((var(--sh) - var(--sw)) * 0.1591);     /* 왼쪽 꼭짓점의 중심 대비 높이 */
+      --rv: calc(0mm - var(--ldrop) - var(--t) / 2);       /* 오른쪽 꼭짓점의 행 중심 대비 높이 */
+      --lead: 10.5mm;                                      /* 지시선 길이(판과 라벨 사이 간격보다 조금 길다) */
+    }
+    /* 판끼리는 뾰족한 앞뒤 귀에서만 겹치고, 한가운데는 조립축이 한 마디 넘게 드러난다 */
+    .layer + .layer { margin-top: 1mm; }
+    .layer:nth-child(1) { z-index: 3; }
+    .layer:nth-child(2) { z-index: 2; }
+    .layer:nth-child(3) { z-index: 1; }
+    /* 지시선과 그 끝의 점. 판의 오른쪽 꼭짓점에서 라벨까지 뻗어 라벨이 어느 판의 것인지 묶는다.
+       색은 그 층의 짙은 옆면 색이라, 여기서도 색은 층을 구분하는 데만 쓴다. */
+    .layer::before, .layer::after { content: ''; position: absolute; z-index: 0;
+      left: calc(var(--pw) - 1.5mm); top: calc(50% + var(--rv)); background: var(--lc-r); }
+    .layer::before { width: var(--lead); height: 0.6mm; margin-top: -0.3mm; }
+    .layer::after { width: 2.5mm; height: 2.5mm; margin: -1.25mm 0 0 -1.25mm; border-radius: 50%; }
+    .plane { position: relative; z-index: 1; flex: none; width: var(--pw); height: 100%;
+      filter: drop-shadow(0 3mm 4mm rgba(0, 0, 0, 0.16));
     }
     .top {
       position: absolute; z-index: 1; left: 50%; top: calc(50% - var(--t) / 2);
@@ -182,13 +200,17 @@ export function pdfCoverHtml(book) {
     .m-table { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.9mm; width: 100%; border: 0.9mm solid #a78bfa; border-radius: 2.8mm; overflow: hidden; background: #a78bfa; }
     .m-th { height: 5.4mm; background: #6d28d9; }
     .m-td { height: 5.4mm; background: #fff; }
-    .label { display: flex; flex-direction: column; align-items: flex-start; gap: 1.6mm; }
+    /* 행의 한가운데가 아니라 지시선이 나오는 오른쪽 꼭짓점 높이에 맞춘다 */
+    .label { position: relative; z-index: 1; top: var(--rv);
+      display: flex; flex-direction: column; align-items: flex-start; gap: 1.6mm; }
     .layer .name { font-size: 12pt; font-weight: 700; color: #5c5c5c; }
     /* 기술 이름은 표지에서 가장 먼저 읽히게 층 이름보다 크게 키우고, 그 층의 옅은 색을
        바탕에 깔아 알약으로 만든다. 흑백 인쇄에서도 바탕의 밝기 차이로 층이 구분된다. */
     .layer .tech { display: flex; flex-wrap: wrap; gap: 1.5mm; }
     .layer .tech .tk { padding: 0.6mm 2mm 1mm; border-radius: 1.5mm; background: var(--lc-bd); font-size: 18pt; font-weight: 700; line-height: 1.15; letter-spacing: 0.15mm; color: var(--lc-tech); }
-    .pitch { margin: 9mm 0 7mm; padding: 0; list-style: none; font-size: 10.5pt; line-height: 1.95; font-weight: 600; color: #5c5c5c; word-break: keep-all; }
+    /* 이 책이 무엇을 해 주는지 밝히는 세 줄이라 표지에서 제목 다음으로 오래 읽힌다.
+       부제와 크기가 같으면 부제가 넷으로 늘어난 것처럼 보이므로 한 단계만 작게 둔다. */
+    .pitch { margin: 10mm 0 7mm; padding: 0; list-style: none; font-size: 12pt; line-height: 1.95; font-weight: 600; color: #5c5c5c; word-break: keep-all; }
     /* 세 줄 앞에는 터미널 프롬프트를 닮은 > 를 세운다. 색은 세 층을 구분하는 데만 쓰므로
        불릿은 표지의 무채색 톤을 따른다(표지 글꼴이 D2Coding이라 프롬프트로 읽힌다) */
     .pitch li::before { content: '>'; display: inline-block; margin-right: 2.4mm; font-weight: 700; color: #1a1a1a; }

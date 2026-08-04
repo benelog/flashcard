@@ -23,6 +23,9 @@
 - 로컬 확인: 저장소 루트의 `./run_book.sh`(의존성 설치까지 알아서 하고 http://localhost:5173/flashcard/ 를 띄운다). 손으로 하려면 `cd book-template && npm install`(최초 한 번) 후 `cd book && npm install && npm run dev` / 빌드 검증: `./run_book.sh build`(= `cd book && npm run build`, 깨진 링크 포함 검증)
 - 테마: `book-template/theme/custom.css` — 본문 명조(Noto Serif KR)·제목 고딕, 행간 2.05·양쪽 정렬, 인쇄용 CSS 포함. 한글 폰트가 없는 CI 러너 대비로 웹폰트 폴백을 둔다.
 - 표지 글꼴만 예외로 D2Coding이다(홈의 표지 카드와 PDF 표지). 폰트 파일과 라이선스·재생성 방법은 `book/public/fonts/`, `@font-face` 선언은 `book-template/lib/fonts.mjs`에 있다. 표지 바탕은 흰색·회색·검정으로 두고 색은 세 층을 구분하는 데만 쓴다(화면=HTML의 주황, 로직=Go의 시안, 데이터=보라).
+- 표지 그림은 세 층을 쌓은 아이소메트릭 판이고, **기계 분해 조립도(exploded view)의 관례**를 따른다(2026-08-05 정리). 판 뒤에 조립축을 파선으로 세워 세 판이 흩어진 부품이 아니라 한 덩어리를 축을 따라 뽑아낸 것임을 보이고, 판마다 오른쪽 꼭짓점에서 라벨로 지시선과 점을 뻗어 어느 라벨이 어느 판의 것인지 묶는다. 이 책이 완성본 앱을 층으로 뜯어 읽는 순서와 같은 그림이라 골랐다. 조립축이 드러나려면 판 사이가 벌어져 있어야 하므로, 판끼리는 뾰족한 앞뒤 귀에서만 겹치게 쌓는다. 조립축과 지시선은 무채색·층 색만 쓰므로 위의 색 규칙을 그대로 지킨다.
+- 홈 표지(`book-template/theme/custom.css`의 "홈 — 책 표지" 절)와 PDF 표지(`book-template/lib/cover.mjs`)는 단위만 다르고(px/mm) 같은 그림이다. **한쪽을 고치면 다른 쪽도 같이 고친다.** 판 치수는 `--sw`·`--sh`·`--t`에서 나머지가 계산되므로 이 셋만 맞추면 된다.
+- 표지를 고쳤으면 `npm run og`로 OG 이미지를 다시 만들고 `npm run build`를 한 번 더 돌린다(빌드 결과에 담기는 것은 재생성한 파일이다). OG 이미지는 홈 표지의 제목부터 첫 판까지를 잘라 쓰므로 표지 구성이 바뀌면 잘리는 자리도 바뀐다.
 - 이북 뷰어 레이아웃: `book-template/theme/Layout.vue`(DefaultTheme 확장). 목차는 왼쪽 하나뿐(오른쪽 아웃라인 없음), 상단 바 "목차" 버튼으로 접기/펼치기, 본문은 회색 배경 위 페이지 카드, 상단 읽기 진행 바, 좌우 화살표와 ←/→ 키로 장 이동. 홈(책 표지 랜딩)은 `book.config.mjs`의 cover 데이터에서 생성된다(홈 원고 파일은 없다).
 - PDF: `npm run pdf`(`book-template/lib/pdf.mjs`)가 표지·차례를 만들고 빌드 결과를 장 순서대로 인쇄해 `flashcard-book.pdf` 한 권으로 병합한다. CI(`book.yml`)가 매 배포마다 재생성한다.
 - 배포: GitHub Pages (https://benelog.github.io/flashcard/). `.github/workflows/book.yml`이 `book/**`·`book-template/**` 변경 push 시 자동 배포한다.

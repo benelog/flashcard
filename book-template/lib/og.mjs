@@ -17,19 +17,24 @@ export async function exportOg(root, book) {
     await page.goto(`http://127.0.0.1:${port}${book.base}`, { waitUntil: 'networkidle0' })
     await page.evaluateHandle('document.fonts.ready')
 
-    // 표지 카드 위쪽(라벨·제목·부제)을 1200:630 비율로 자를 영역을 계산한다.
+    // 표지 카드 위쪽(제목·부제·그림의 첫 판)을 1200:630 비율로 자를 영역을 계산한다.
+    // 아래 경계를 첫 판에 맞춰, 판이나 라벨이 가로로 잘린 채 걸리지 않게 한다.
+    // 가로는 카드가 여백까지 통째로 들어가는 폭 밑으로는 내려가지 않는다(제목이 잘린다).
     const clip = await page.evaluate(() => {
       document.querySelector('.VPNav')?.remove()
+      // 자를 영역이 카드보다 넓으므로 옆에 놓인 책 설명·버튼이 화면에 걸린다. 먼저 걷어 낸다
+      // (카드 위치가 달라지므로 크기를 재기 전에 지운다).
+      document.querySelector('.fc-home-side')?.remove()
       const card = document.querySelector('.fc-book').getBoundingClientRect()
-      const sub = document.querySelector('.fc-book-subtitle').getBoundingClientRect()
+      const first = document.querySelector('.fc-layer').getBoundingClientRect()
       const pad = 18
-      const height = sub.bottom + pad - (card.top - pad)
-      const width = (height * 1200) / 630
+      const block = first.bottom + pad * 2 - (card.top - pad) // 제목부터 첫 판까지의 높이
+      const width = Math.max(card.width + pad * 2, (block * 1200) / 630)
       return {
-        x: card.left - (width - card.width) / 2,
+        x: card.left + card.width / 2 - width / 2,
         y: card.top - pad,
         width,
-        height,
+        height: (width * 630) / 1200,
       }
     })
 
