@@ -65,6 +65,7 @@ templates/          새 저장소용 참고 파일(GitHub Actions 워크플로, 
          { text: '읽기 시작', link: 'start', brand: true }, // start|pdf|repo|URL
          { text: 'PDF 다운로드', link: 'pdf' },
        ],
+       licenseHtml: '© 2026 지은이. <a href="...">CC BY-NC-SA 4.0</a>', // 생략 가능, 홈 버튼 아래 작은 글씨
      },
      toc: [
        {

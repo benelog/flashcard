@@ -1045,6 +1045,27 @@
   justify-content: center;
 }
 
+/* 라이선스 표기. 버튼 아래 작은 글씨로, 본문 흐름을 방해하지 않게 둔다 */
+.fc-home-license {
+  max-width: 560px;
+  margin: -14px 0 0;
+  text-align: center;
+  font-size: 12.5px;
+  line-height: 1.8;
+  color: var(--vp-c-text-3);
+  word-break: keep-all;
+}
+
+.fc-home-license a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.fc-home-license a:hover {
+  color: var(--vp-c-text-1);
+}
+
 /* 가로가 넉넉한 화면에서는 표지와 설명을 좌우로 나란히 놓아 폭을 넓게 쓴다 */
 @media (min-width: 1024px) {
   .fc-home {
@@ -1065,6 +1086,10 @@
 
   .fc-home-actions {
     justify-content: flex-start;
+  }
+
+  .fc-home-license {
+    text-align: left;
   }
 }
 

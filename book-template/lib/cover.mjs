@@ -70,6 +70,8 @@ export function homeCoverMarkdown(book) {
         `    <a class="fc-btn${a.brand ? ' brand' : ''}" href="${actionHref(book, a.link)}">${a.text}</a>`,
     )
     .join('\n')
+  // 라이선스 표기는 선택 사항이다. 설정에 있으면 버튼 아래 작은 글씨로 붙인다
+  const license = c.licenseHtml ? `\n    <p class="fc-home-license">${c.licenseHtml}</p>` : ''
   return `---
 layout: page
 sidebar: false
@@ -85,7 +87,7 @@ sidebar: false
     <p class="fc-home-desc">${c.homeDesc}</p>
     <div class="fc-home-actions">
 ${actions}
-    </div>
+    </div>${license}
   </div>
 </div>
 `

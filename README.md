@@ -16,6 +16,20 @@
 최소 앱은 [flashcard-basic/README.md](./flashcard-basic/README.md)에,
 연습용 예제는 [language-basic/README.md](./language-basic/README.md)에 있다.
 
+## 라이선스
+
+디렉터리에 따라 다르다.
+
+| 대상 | 라이선스 |
+|---|---|
+| `book/`의 책 원고 | [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/deed.ko) ([전문](./book/LICENSE)) |
+| 그 밖의 모든 코드(`book-template/`, `flashcard-advanced/`, `flashcard-basic/`, `language-basic/`, 루트 스크립트) | [MIT](./LICENSE) |
+
+책 원고는 저작자를 표시하면 자유롭게 공유·변형할 수 있지만, 원본과 그 파생물 모두 상업적으로 이용할 수 없고 파생물은 같은 조건으로 배포해야 한다.
+코드는 상업적 이용을 포함해 자유롭게 쓸 수 있다.
+
+© 2026 Sanghyuk Jung
+
 ## 책 보기
 
 배포본은 https://benelog.github.io/flashcard/ 에서 읽을 수 있다.
