@@ -9,7 +9,7 @@
 | `book/` | 책 원고(AsciiDoc)와 빌드 설정 |
 | `book-template/` | 책 빌드 엔진(재사용 가능한 npm 패키지) |
 | `flashcard-advanced/` | Vercel + Supabase에 배포하는 완성본 앱(책 3~5부가 인용) |
-| `flashcard-basic/` | 책 2부가 인용하는 최소 플래시카드 앱(Gin + htmx + SQLite, 테이블 둘) |
+| `flashcard-basic/` | 책 2부가 인용하는 최소 플래시카드 앱(Gin + html/template + SQLite, 테이블 둘, 자바스크립트 없음) |
 | `language-basic/` | 2부 문법 입문 장의 연습용 예제(HTML·CSS·Go·SQL) |
 
 완성본 앱의 소개·실행·배포는 [flashcard-advanced/README.md](./flashcard-advanced/README.md)에,
@@ -27,6 +27,9 @@
 
 책 원고는 저작자를 표시하면 자유롭게 공유·변형할 수 있지만, 원본과 그 파생물 모두 상업적으로 이용할 수 없고 파생물은 같은 조건으로 배포해야 한다.
 코드는 상업적 이용을 포함해 자유롭게 쓸 수 있다.
+
+원고의 저작권은 저자에게 있다. 종이책 출판을 비롯한 상업적 이용이 필요하면 [이슈](https://github.com/benelog/flashcard/issues)로 저자에게 문의하면 된다.
+기여를 보낼 때의 라이선스 조건은 [CONTRIBUTING.md](./CONTRIBUTING.md)에 있다.
 
 © 2026 Sanghyuk Jung
 

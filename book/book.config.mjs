@@ -36,7 +36,7 @@ export default {
       { text: 'GitHub 저장소', link: 'repo' },
     ],
     licenseHtml:
-      '© 2026 정상혁. 이 책의 원고는 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.ko" target="_blank" rel="license noopener">CC BY-NC-SA 4.0</a>, 예제 코드는 <a href="https://github.com/benelog/flashcard/blob/main/LICENSE" target="_blank" rel="license noopener">MIT</a> 라이선스로 공개합니다. 출처를 밝히면 원고를 자유롭게 공유하고 고칠 수 있지만, 원고와 그 파생물을 상업적으로 이용할 수는 없습니다.',
+      '© 2026 정상혁. 원고는 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.ko" target="_blank" rel="license noopener">CC BY-NC-SA 4.0</a>, 예제 코드는 <a href="https://github.com/benelog/flashcard/blob/main/LICENSE" target="_blank" rel="license noopener">MIT</a> 라이선스로 공개합니다. 출처를 밝히면 원고를 자유롭게 공유하고 고칠 수 있지만, 원고와 그 파생물을 상업적으로 이용할 수는 없습니다. 종이책 출판 등 상업적 이용은 <a href="https://github.com/benelog/flashcard/issues" target="_blank" rel="noopener">저자에게 문의</a>해 주세요.',
   },
   toc: [
     {
