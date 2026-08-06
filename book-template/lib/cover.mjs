@@ -54,7 +54,7 @@ export function homeCoverMarkdown(book) {
   const c = book.cover
   const start = book.base + firstRoute(book)
   const diagram = c.diagram?.length
-    ? `\n    <div class="fc-book-diagram" aria-hidden="true">\n      ${c.diagram
+    ? `\n    <div class="fc-book-diagram" aria-hidden="true">\n      <i class="fc-axis"></i>\n      ${c.diagram
         .map(
           (l) =>
             `<div class="fc-layer"><span class="fc-plane"><i class="fc-side fc-side-l"></i><i class="fc-side fc-side-r"></i><i class="fc-top">${motifHtml(l.motif)}</i></span><span class="fc-layer-label"><span class="fc-layer-name">${l.name}</span><span class="fc-layer-tech">${techHtml(l.tech)}</span></span></div>`,
@@ -97,7 +97,7 @@ ${actions}
 export function pdfCoverHtml(book) {
   const c = book.cover
   const diagram = c.diagram?.length
-    ? `\n    <div class="diagram">\n      ${c.diagram
+    ? `\n    <div class="diagram">\n      <i class="axis"></i>\n      ${c.diagram
         .map(
           (l) =>
             `<div class="layer"><span class="plane"><i class="side side-l"></i><i class="side side-r"></i><i class="top">${motifHtml(l.motif)}</i></span><span class="label"><span class="name">${l.name}</span><span class="tech">${techHtml(l.tech)}</span></span></div>`,
@@ -131,13 +131,33 @@ export function pdfCoverHtml(book) {
        윗면은 실제 요소(.top)라 안에 각 층의 그림(motif)을 담고, 그림도 함께 눕는다.
 
        그림 전체는 기계 분해 조립도(exploded view)의 관례를 따른다. 세 판은 흩어진 부품이
-       아니라 한 덩어리를 축을 따라 뽑아낸 것이므로, 판 뒤에 조립축(파선)을 세우고
+       아니라 한 덩어리를 축을 따라 뽑아낸 것이므로, 판 뒤에 조립축(일점쇄선)을 세우고
+       그 양 끝에 안쪽을 가리키는 화살촉을 달아 도로 합쳐지는 방향을 밝힌다.
        판마다 라벨로 지시선을 뻗는다. 홈의 표지 카드와 같은 그림이다(theme/custom.css). */
-    .diagram { position: relative; flex: none; margin: 3mm 0 0; --pw: 101mm; }
-    /* 조립축. 판이 덮지 않는 판과 판 사이에서만 드러나고, 위아래로 조금 비어져 나온다 */
-    .diagram::before { content: ''; position: absolute; z-index: 0; left: calc(var(--pw) / 2);
-      top: -2.5mm; bottom: -3.5mm; width: 0.5mm; margin-left: -0.25mm;
-      background: repeating-linear-gradient(#c4c4c4 0 1.8mm, transparent 1.8mm 4mm); }
+    .diagram { position: relative; flex: none; margin: 3mm 0 0; --pw: 101mm;
+      --axis-c: #8a8a8a;                                   /* 축은 무채색이다. 색은 층을 구분하는 데만 쓴다 */
+      --axis-arrow: 3.5mm;                                 /* 화살촉 길이 */
+      --axis-unit: 9.66mm;                                 /* 쇄선 한 마디. 판 한 줄 간격(47.3+1mm)의 1/5 */
+    }
+    /* 조립축. 기계 도면이 축을 그릴 때 쓰는 일점쇄선(긴 선과 점이 번갈아 오는 선)이다.
+       그냥 파선이면 칸을 나누는 구분선으로 읽히지만, 이 무늬는 부품이 이 선을 따라
+       하나로 합쳐진다는 뜻으로 읽힌다. 축은 대부분 판에 가려 네 군데에서만 드러나므로
+       (판 위, 판 사이 둘, 판 아래), 무늬를 0.5mm 밀어 네 군데 모두에 긴 선과 점이
+       잘리지 않고 온전히 들어앉게 한다. */
+    .axis { position: absolute; z-index: 0; left: calc(var(--pw) / 2);
+      top: -4.5mm; bottom: -4mm; width: 0.5mm; margin-left: -0.25mm;
+      background-image: repeating-linear-gradient(var(--axis-c) 0 4.5mm, transparent 4.5mm 6mm,
+        var(--axis-c) 6mm 7mm, transparent 7mm var(--axis-unit));
+      background-position: 0 0.5mm; }
+    /* 축 양 끝의 화살촉. 서로를 향해 안쪽을 가리켜 세 판이 이 축을 따라 도로 한 덩어리가
+       된다고 말한다. 세 판이 흩어진 셋이 아니라 앱 하나라는 것이 이 그림의 요지다.
+       축의 맨 끝이 아니라 안쪽 끝(5mm)에 두어 촉이 첫 판과 마지막 판에 닿게 하고,
+       그 바깥으로 쇄선을 한 마디 남긴다. 촉만 덩그러니 있으면 선의 끝으로 읽히지 않는다. */
+    .axis::before, .axis::after { content: ''; position: absolute; left: 50%;
+      width: 0; height: 0; margin-left: -1.5mm;
+      border-left: 1.5mm solid transparent; border-right: 1.5mm solid transparent; }
+    .axis::before { top: 5mm; border-top: var(--axis-arrow) solid var(--axis-c); }
+    .axis::after { bottom: 5mm; border-bottom: var(--axis-arrow) solid var(--axis-c); }
     .layer { position: relative; display: flex; align-items: center; gap: 10mm; height: 47.3mm;
       --sw: 84mm;                                          /* 윗면 직사각형 가로 */
       --sh: 52.5mm;                                        /* 세로: 가로와 16:10(모니터 비율) */
@@ -150,9 +170,9 @@ export function pdfCoverHtml(book) {
     }
     /* 판끼리는 뾰족한 앞뒤 귀에서만 겹치고, 한가운데는 조립축이 한 마디 넘게 드러난다 */
     .layer + .layer { margin-top: 1mm; }
-    .layer:nth-child(1) { z-index: 3; }
-    .layer:nth-child(2) { z-index: 2; }
-    .layer:nth-child(3) { z-index: 1; }
+    .layer:nth-of-type(1) { z-index: 3; }
+    .layer:nth-of-type(2) { z-index: 2; }
+    .layer:nth-of-type(3) { z-index: 1; }
     /* 지시선과 그 끝의 점. 판의 오른쪽 꼭짓점에서 라벨까지 뻗어 라벨이 어느 판의 것인지 묶는다.
        색은 그 층의 짙은 옆면 색이라, 여기서도 색은 층을 구분하는 데만 쓴다. */
     .layer::before, .layer::after { content: ''; position: absolute; z-index: 0;
@@ -175,9 +195,9 @@ export function pdfCoverHtml(book) {
     /* 표지 바탕은 무채색이고, 색은 층을 구분하는 데만 쓴다.
        화면은 HTML의 주황, 로직은 Go의 시안, 데이터는 깊은 곳에 쌓아 두는 보라다.
        짙은 옆면의 밝기가 아래로 갈수록 낮아져 흑백 인쇄에서도 층의 순서가 남는다. */
-    .layer:nth-child(1) { --lc-l: #fcd34d; --lc-r: #f59e0b; --lc-bd: #fae3ab; --lc-tech: #b45309; }
-    .layer:nth-child(2) { --lc-l: #22d3ee; --lc-r: #0891b2; --lc-bd: #b3e7f2; --lc-tech: #0e7490; }
-    .layer:nth-child(3) { --lc-l: #a78bfa; --lc-r: #6d28d9; --lc-bd: #d5cbfd; --lc-tech: #5b21b6; }
+    .layer:nth-of-type(1) { --lc-l: #fcd34d; --lc-r: #f59e0b; --lc-bd: #fae3ab; --lc-tech: #b45309; }
+    .layer:nth-of-type(2) { --lc-l: #22d3ee; --lc-r: #0891b2; --lc-bd: #b3e7f2; --lc-tech: #0e7490; }
+    .layer:nth-of-type(3) { --lc-l: #a78bfa; --lc-r: #6d28d9; --lc-bd: #d5cbfd; --lc-tech: #5b21b6; }
     /* 윗면 그림: 간소화한 앱 화면 */
     .m-screen { display: flex; flex-direction: column; justify-content: center; gap: 2.5mm; width: 100%; }
     .m-topbar { height: 2.9mm; width: 45%; border-radius: 1.5mm; background: #e6e6e6; }
@@ -210,7 +230,7 @@ export function pdfCoverHtml(book) {
     .layer .tech .tk { padding: 0.6mm 2mm 1mm; border-radius: 1.5mm; background: var(--lc-bd); font-size: 18pt; font-weight: 700; line-height: 1.15; letter-spacing: 0.15mm; color: var(--lc-tech); }
     /* 이 책이 무엇을 해 주는지 밝히는 세 줄이라 표지에서 제목 다음으로 오래 읽힌다.
        부제와 크기가 같으면 부제가 넷으로 늘어난 것처럼 보이므로 한 단계만 작게 둔다. */
-    .pitch { margin: 10mm 0 7mm; padding: 0; list-style: none; font-size: 12pt; line-height: 1.95; font-weight: 600; color: #5c5c5c; word-break: keep-all; }
+    .pitch { margin: 10mm 0 7mm; /* 조립축이 이 여백 안으로 비어져 나온다 */ padding: 0; list-style: none; font-size: 12pt; line-height: 1.95; font-weight: 600; color: #5c5c5c; word-break: keep-all; }
     /* 세 줄 앞에는 터미널 프롬프트를 닮은 > 를 세운다. 색은 세 층을 구분하는 데만 쓰므로
        불릿은 표지의 무채색 톤을 따른다(표지 글꼴이 D2Coding이라 프롬프트로 읽힌다) */
     .pitch li::before { content: '>'; display: inline-block; margin-right: 2.4mm; font-weight: 700; color: #1a1a1a; }
