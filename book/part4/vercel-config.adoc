@@ -282,7 +282,7 @@ Flashcard의 엔드포인트는 전부 짧은 CRUD라 제한 근처에도 가지
 개발용 프로젝트도 하나 더 만드는데, 그 이유와 구성은 {ch-supabase-db}의 몫이다.
 
 둘째, 데이터베이스 마이그레이션(migration)을 실행한다.
-빈 데이터베이스에 {ch-database}에서 설계한 테이블을 만들어 앱이 쓸 수 있는 형태로 맞춰 두는 작업이고, 그 도구와 절차는 {ch-migrations}에서 자세히 다룬다.
+빈 데이터베이스에 {ch-database-design}에서 설계한 테이블을 만들어 앱이 쓸 수 있는 형태로 맞춰 두는 작업이고, 그 도구와 절차는 {ch-migrations}에서 자세히 다룬다.
 `go run ./cmd/migrate`가 그 스키마를 Supabase의 PostgreSQL에 적용한다.
 손으로 실행하는 것은 프로젝트를 처음 만들 때 한 번뿐이고, 그다음부터는 스키마 파일이 바뀐 커밋마다 {ch-migrations}의 `migrate.yml`이 브랜치가 정한 DB에 대신 적용한다.
 

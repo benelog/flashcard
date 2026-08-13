@@ -88,17 +88,17 @@ export default {
           file: 'part3/design-principles.adoc',
           text: '14장 설계 철학: 이 앱을 지탱하는 다섯 가지 원칙',
         },
-        { file: 'part3/database.adoc', text: '15장 데이터베이스 설계: 요구사항에서 테이블로' },
+        { file: 'part3/database-design.adoc', text: '15장 데이터베이스 설계: 요구사항에서 테이블로' },
         { file: 'part3/domain-model.adoc', text: '16장 이 앱만의 설계 둘: 간격 반복 상태와 덱 주소' },
         {
           file: 'part3/code-map.adoc',
           text: '17장 코드는 어디에 있는가: 패키지 지도와 의존 방향',
         },
         {
-          file: 'part3/go.adoc',
+          file: 'part3/core-logic.adoc',
           text: '18장 핵심 로직 읽기: 간격 반복 알고리즘과 이 앱이 푸는 문제들',
         },
-        { file: 'part3/go-testing.adoc', text: '19장 함수 하나씩 검증하기: 단위 테스트와 품질 검사 도구' },
+        { file: 'part3/unit-tests.adoc', text: '19장 함수 하나씩 검증하기: 단위 테스트와 품질 검사 도구' },
         { file: 'part3/gin.adoc', text: '20장 Gin 깊이 보기: 완성본의 라우팅·바인딩·미들웨어' },
         { file: 'part3/app-assembly.adoc', text: '21장 앱을 조립하기: 계층 분리와 두 진입점' },
         {
@@ -106,7 +106,7 @@ export default {
           text: '22장 화면의 구조: 템플릿 삼층과 스타일 시스템',
         },
         {
-          file: 'part3/go-templates.adoc',
+          file: 'part3/html-template.adoc',
           text: '23장 html/template 깊이 보기: 레이아웃 복제와 자동 이스케이프',
         },
         { file: 'part3/htmx.adoc', text: '24장 htmx: 부분 갱신과 무상태 학습 화면' },

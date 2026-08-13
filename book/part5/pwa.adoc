@@ -51,7 +51,7 @@
 ====
 
 첫째 조건은 Vercel이 해결해 주므로, Flashcard는 둘째 조건을 `manifest.webmanifest`로, 마지막 조건을 `sw.js`로 충족한다.
-두 파일 모두 `internal/web/static/`에 있는 평범한 정적 파일이고, {ch-go-templates}에서 본 embed로 Go 바이너리에 담겨 다른 정적 자산과 같은 경로로 서빙된다.
+두 파일 모두 `internal/web/static/`에 있는 평범한 정적 파일이고, {ch-html-template}에서 본 embed로 Go 바이너리에 담겨 다른 정적 자산과 같은 경로로 서빙된다.
 
 == manifest.webmanifest: 설치 화면을 결정하는 파일
 

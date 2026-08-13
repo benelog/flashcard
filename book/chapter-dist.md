@@ -268,3 +268,4 @@ PWA 쪽만 6.5 대 17.2로 기울었다.
 **파일 이름도 하나 바꿨다.** `part3/go-basics.adoc` → `part3/code-map.adoc`.
 "Go 기초"라는 이름이 새 내용과 어긋나서인데, `{ch-go-basics}` 토큰 21곳을 함께 옮겼다.
 `{ch-go}`(32곳)와 `{ch-html-css}`(20곳)는 장이 다루는 코드 영역이 그대로여서 파일 이름을 유지했다.
+(이후 2026-08-14에 파일 이름과 장 제목의 어긋남을 다시 정리하며 `go.adoc` → `core-logic.adoc`, `go-testing.adoc` → `unit-tests.adoc`, `go-templates.adoc` → `html-template.adoc`, `database.adoc` → `database-design.adoc`으로 바꿨다. `html-css.adoc`은 제목이 "화면의 구조"로 바뀌었어도 다루는 것이 여전히 이 앱의 HTML·CSS라 유지했다.)

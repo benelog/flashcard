@@ -127,7 +127,7 @@ include::../../flashcard-advanced/internal/auth/jwt.go[tag=parse-claims]
 `WithExpirationRequired`는 `exp` 클레임이 아예 없는, 영원히 유효한 토큰을 거부한다.
 
 검증을 통과하면 `sub` 클레임이 사용자 식별자다.
-이 값은 Supabase `auth.users` 테이블의 UUID이고, {ch-database}에서 설계한 `profiles.id`가 이 값을 그대로 쓴다.
+이 값은 Supabase `auth.users` 테이블의 UUID이고, {ch-database-design}에서 설계한 `profiles.id`가 이 값을 그대로 쓴다.
 인증 시스템의 사용자와 우리 스키마의 사용자가 같은 키로 이어지는 접점이다.
 
 이 함수를 부르는 곳은 둘이다.

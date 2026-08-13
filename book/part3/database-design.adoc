@@ -209,7 +209,7 @@ join card_srs s on s.card_id = c.id;
 
 스마트 덱은 카드 ID 목록이 아니라 규칙(JSON 텍스트)만 저장하고, 학습을 시작하는 순간 규칙을 쿼리로 변환해 실행하므로 항상 최신 상태다.
 그 쿼리의 대상이 `cards_with_stats` 뷰(view)로, 카드 내용과 SRS 상태를 조인하고 시도 횟수(`attempts`)와 오답률(`error_rate`)을 파생 컬럼으로 계산해 둔다.
-"오답률 0.4 이상" 같은 규칙 조건과 store 계층(DB를 읽고 쓰는 Go 코드로, {ch-go}과 {ch-app-assembly}에서 다룬다)의 카드 조회가 모두 이 뷰 하나를 바라보므로, 오답률 계산식이 한 곳에만 존재한다.
+"오답률 0.4 이상" 같은 규칙 조건과 store 계층(DB를 읽고 쓰는 Go 코드로, {ch-core-logic}과 {ch-app-assembly}에서 다룬다)의 카드 조회가 모두 이 뷰 하나를 바라보므로, 오답률 계산식이 한 곳에만 존재한다.
 
 .[용어 풀이] 뷰(View)
 [NOTE]

@@ -106,15 +106,15 @@ JS 문법을 다른 장에 흩어 놓지 않는다.
 | 12 | Gin 첫걸음: 저장한 데이터를 웹 화면으로 | `part2/gin-hello.adoc` |
 | 13 | html/template 첫걸음: 데이터를 화면에 채우고 조각으로 나눈다 | `part2/template-hello.adoc` |
 | 14 | 설계 철학: 이 앱을 지탱하는 다섯 가지 원칙 | `part3/design-principles.adoc` |
-| 15 | 데이터베이스 설계: 요구사항에서 테이블로 | `part3/database.adoc` |
+| 15 | 데이터베이스 설계: 요구사항에서 테이블로 | `part3/database-design.adoc` |
 | 16 | 이 앱만의 설계 둘: 간격 반복 상태와 덱 주소 | `part3/domain-model.adoc` |
 | 17 | 코드는 어디에 있는가: 패키지 지도와 의존 방향 | `part3/code-map.adoc` |
-| 18 | 핵심 로직 읽기: 간격 반복 알고리즘과 이 앱이 푸는 문제들 | `part3/go.adoc` |
-| 19 | 함수 하나씩 검증하기: 단위 테스트와 품질 검사 도구 | `part3/go-testing.adoc` |
+| 18 | 핵심 로직 읽기: 간격 반복 알고리즘과 이 앱이 푸는 문제들 | `part3/core-logic.adoc` |
+| 19 | 함수 하나씩 검증하기: 단위 테스트와 품질 검사 도구 | `part3/unit-tests.adoc` |
 | 20 | Gin 깊이 보기: 완성본의 라우팅·바인딩·미들웨어 | `part3/gin.adoc` |
 | 21 | 앱을 조립하기: 계층 분리와 두 진입점 | `part3/app-assembly.adoc` |
 | 22 | 화면의 구조: 템플릿 삼층과 스타일 시스템 | `part3/html-css.adoc` |
-| 23 | html/template 깊이 보기: 레이아웃 복제와 자동 이스케이프 | `part3/go-templates.adoc` |
+| 23 | html/template 깊이 보기: 레이아웃 복제와 자동 이스케이프 | `part3/html-template.adoc` |
 | 24 | htmx: 부분 갱신과 무상태 학습 화면 | `part3/htmx.adoc` |
 | 25 | 앱을 통째로 띄우는 테스트: 화면과 API를 한 번에 검증하기 | `part3/app-tests.adoc` |
 | 26 | 로컬 개발 환경: 무설정 실행의 원리와 개발 도구 | `part3/local-dev.adoc` |
@@ -140,7 +140,7 @@ JS 문법을 다른 장에 흩어 놓지 않는다.
 **장 번호는 본문에 직접 쓰지 않는다(2026-07-25 도입).**
 다른 장을 가리킬 때는 `{ch-파일명}` 토큰을 쓴다(`{ch-gin}` → "20장", 파일 이름은 확장자·디렉터리 없이).
 빌드가 `book.config.mjs`의 toc 항목 제목에서 라벨을 읽어 치환하므로, 장을 늘리거나 빼거나 재배열할 때 고칠 곳은 toc 하나다(사이드바·PDF 차례·아웃라인·본문 참조·제목 번호가 전부 toc에서 파생된다).
-이웃 장 묶음은 `{ch-go-hello·go-types}`("8·9장"), 범위는 `{ch-database~code-map}`("15~17장")로 쓴다.
+이웃 장 묶음은 `{ch-go-hello·go-types}`("8·9장"), 범위는 `{ch-database-design~code-map}`("15~17장")로 쓴다.
 원고 제목 줄에도 번호를 쓰지 않는다(`= Gin 깊이 보기`처럼 쓰면 빌드가 toc 라벨을 붙인다).
 toc에 없는 장을 가리키는 토큰은 `book build`가 파일:줄 번호와 함께 에러로 잡는다.
 예외 셋: 코드 블록 안 생략 주석의 장 번호, 이 파일(book/CLAUDE.md)의 표와 동음이의어 절, 그리고 "N부" 참조는 손으로 맞춘다.
@@ -237,14 +237,14 @@ include::../../flashcard-advanced/internal/srs/srs.go[tag=grade]
 | `part2/template-hello.adoc` | 템플릿 엔진 |
 | `part2/database-basics.adoc` | 테이블·행·열, 정규화와 비정규화, 기본 키와 외래 키, SQL, 스키마, UUID, 제약, NULL, SQL 인젝션, 드라이버, 조인, 인증과 인가, 인덱스, 실행 계획 |
 | `part3/design-principles.adoc` | 관심사 분리, 단일 출처 |
-| `part3/database.adoc` | 엔티티, 잠금, 뷰, 트랜잭션, 원자적, slug |
+| `part3/database-design.adoc` | 엔티티, 잠금, 뷰, 트랜잭션, 원자적, slug |
 | `part3/code-map.adoc` | 모듈과 패키지 |
-| `part3/go.adoc` | 생성자, 순수 함수, 에러 래핑과 센티널 에러, 구조체 태그, 직렬화와 역직렬화 |
-| `part3/go-testing.adoc` | 플래그, 테이블 주도 테스트, 경쟁 상태, 픽스처, 포매터와 정적 분석 (세로 정렬은 상자 없이 본문 절로 다룬다) |
+| `part3/core-logic.adoc` | 생성자, 순수 함수, 에러 래핑과 센티널 에러, 구조체 태그, 직렬화와 역직렬화 |
+| `part3/unit-tests.adoc` | 플래그, 테이블 주도 테스트, 경쟁 상태, 픽스처, 포매터와 정적 분석 (세로 정렬은 상자 없이 본문 절로 다룬다) |
 | `part3/gin.adoc` | HTTP 요청과 응답, 라우터와 라우팅, 엔드포인트, 핸들러, 바인딩, 경로/쿼리 파라미터, 미들웨어, 팩토리 함수와 클로저 |
 | `part3/app-assembly.adoc` | 프로세스, 패닉, 의존성 주입, 모의 객체 |
 | `part3/html-css.adoc` | 상태(state) |
-| `part3/go-templates.adoc` | 파싱, SVG와 인라인, 이스케이프와 XSS, embed(Go), PRG 패턴, 플래시 메시지 |
+| `part3/html-template.adoc` | 파싱, SVG와 인라인, 이스케이프와 XSS, embed(Go), PRG 패턴, 플래시 메시지 |
 | `part3/htmx.adoc` | AJAX(비동기 요청), DOM(문서 객체 모델), HTML 조각, hidden 필드, Web API(브라우저), data-* 속성, 이벤트 위임 |
 | `part3/app-tests.adoc` | 통합 테스트, 테스트 하네스, 구조체 임베딩 |
 | `part3/local-dev.adoc` | 코드 편집기와 확장, 언어 서버, 디버거와 중단점 |
