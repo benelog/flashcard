@@ -9,6 +9,7 @@
 - `flashcard-advanced/`: Vercel + Supabase에 배포하는 완성본 앱(Go 모듈 `github.com/benelog/flashcard`). 책 1부(첫 실행)와 3~5부·부록이 이 코드를 인용한다. 앱 지침은 `flashcard-advanced/CLAUDE.md`.
 - `flashcard-basic/`: 책 2부가 인용하는 최소 플래시카드 앱. Gin + html/template + SQLite, 테이블은 `decks`·`cards` 둘뿐이다. 자바스크립트가 한 줄도 없다(htmx는 완성본에만 있다). 완성본과 별개의 Go 모듈이다.
 - `language-basic/`: 2부 문법 입문 장(HTML·CSS·Go·SQL)의 연습용 예제 파일.
+- `flashcard-cli/`: 완성본 앱의 JSON API를 부르는 CLI(cobra + Bubble Tea). 책과 무관하며, 서버 모듈을 import하지 않고 JSON 계약만 본다. 별개의 Go 모듈이다.
 
 원고는 코드를 베끼지 않고 `include::`로 인용한다. 그래서 코드에 `// tag::이름[]` … `// end::이름[]` 주석이 붙어 있는 곳이 있다. 지우거나 옮길 때 주의한다(자세한 규약은 `book/CLAUDE.md`). 태그를 지우거나 이름을 바꾸면 `cd book && npm run build`가 실패한다.
 
@@ -20,9 +21,10 @@
 
 ## 검증
 
-Go 모듈이 둘이므로 각 디렉터리에서 따로 돌린다.
+Go 모듈이 셋이므로 각 디렉터리에서 따로 돌린다.
 
 - `cd flashcard-advanced && go build ./... && go vet ./... && go test ./...`
 - `cd flashcard-basic && go build ./... && go vet ./... && go test ./...`
+- `cd flashcard-cli && go build ./... && go vet ./... && go test ./...`
 - gofmt는 훅이 자동 적용한다(`.claude/hooks/go-check.sh`).
 - 책이 인용하는 코드를 건드렸으면 `cd book && npm run build`까지 돌린다(인용이 깨졌는지 여기서 잡힌다).
