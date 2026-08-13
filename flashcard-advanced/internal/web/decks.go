@@ -57,10 +57,16 @@ func (w *Web) deckPage(c *gin.Context) {
 		w.failPage(c, err)
 		return
 	}
+	story, err := w.store.DeckStory(ctx, userID, deck.ID)
+	if err != nil {
+		w.failPage(c, err)
+		return
+	}
 	w.render(c, http.StatusOK, "deck", deck.Name, gin.H{
-		"Deck":     deck,
-		"Cards":    cards,
-		"ShareURL": w.shareURL(c, deck),
+		"Deck":      deck,
+		"Cards":     cards,
+		"ShareURL":  w.shareURL(c, deck),
+		"StoryHTML": markdownHTML(model.OrEmpty(story)),
 	})
 }
 

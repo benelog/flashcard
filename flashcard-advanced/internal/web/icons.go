@@ -34,6 +34,7 @@ var icons = map[string]string{
 	"bookmark":   `<path d="M6 3h12v18l-6-4-6 4z"/><path d="M12 7v6M9 10h6"/>`,
 	"book":       `<path d="M4 5a2 2 0 0 1 2-2h14v18H6a2 2 0 0 0-2 2z"/><path d="M20 17H6a2 2 0 0 0-2 2"/>`,
 	"volume":     `<path d="M11 5L6 9H3v6h3l5 4z"/><path d="M15 9a4 4 0 0 1 0 6"/><path d="M17.5 6.5a8 8 0 0 1 0 11"/>`,
+	"eye":        `<path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6z"/><circle cx="12" cy="12" r="3"/>`,
 	"copy":       `<rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/>`,
 }
 

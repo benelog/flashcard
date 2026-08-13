@@ -30,6 +30,11 @@ type Store interface {
 	DeleteDeck(ctx context.Context, userID, deckID uuid.UUID) error
 	// end::store-head[]
 
+	// 스토리는 덱의 소개 글(마크다운 원문)이다. 본문이 길 수 있어 Deck 행에
+	// 싣지 않고 필요한 화면에서만 따로 읽고 쓴다.
+	DeckStory(ctx context.Context, userID, deckID uuid.UUID) (*string, error)
+	UpdateDeckStory(ctx context.Context, userID, deckID uuid.UUID, story *string) error
+
 	ListCards(ctx context.Context, userID, deckID uuid.UUID) ([]Card, error)
 	GetCard(ctx context.Context, userID, cardID uuid.UUID) (Card, error)
 	CreateCard(ctx context.Context, userID uuid.UUID, in CardInput) (Card, error)

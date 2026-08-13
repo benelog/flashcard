@@ -119,6 +119,25 @@ func (s *Store) UpdateDeck(ctx context.Context, userID, deckID uuid.UUID, name *
 	return s.GetDeck(ctx, userID, deckID)
 }
 
+// DeckStory는 덱의 스토리 원문(마크다운)을 읽는다. 없으면 nil이다.
+func (s *Store) DeckStory(ctx context.Context, userID, deckID uuid.UUID) (*string, error) {
+	var story *string
+	err := s.db.QueryRowContext(ctx,
+		`select story from decks where user_id = ? and id = ?`,
+		userID.String(), deckID.String()).Scan(&story)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, model.ErrNotFound
+	}
+	return story, err
+}
+
+func (s *Store) UpdateDeckStory(ctx context.Context, userID, deckID uuid.UUID, story *string) error {
+	return requireRowAffected(s.db.ExecContext(ctx,
+		`update decks set story = ?, updated_at = ?
+		 where user_id = ? and id = ?`,
+		story, fmtTime(time.Now()), userID.String(), deckID.String()))
+}
+
 // tag::delete-deck[]
 func (s *Store) DeleteDeck(ctx context.Context, userID, deckID uuid.UUID) error {
 	return requireRowAffected(s.db.ExecContext(ctx,

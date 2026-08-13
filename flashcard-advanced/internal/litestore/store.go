@@ -53,7 +53,28 @@ func Open(path string) (*Store, error) {
 		db.Close()
 		return nil, fmt.Errorf("apply schema: %w", err)
 	}
+	// 옛 파일 보정: create table if not exists는 이미 있는 테이블에 새 열을 더해
+	// 주지 않는다. 스키마에 열이 나중에 추가되면(Postgres의 add column
+	// 마이그레이션에 대응) 여기서도 한 줄씩 보정해야 기존 로컬 DB 파일이 계속
+	// 열린다.
+	if err := ensureColumn(db, "decks", "story", "text"); err != nil {
+		db.Close()
+		return nil, fmt.Errorf("upgrade schema: %w", err)
+	}
 	return &Store{db: db}, nil
+}
+
+// ensureColumn은 테이블에 열이 없으면 더한다. SQLite에는 add column if not
+// exists가 없어 pragma_table_info로 직접 확인한다.
+func ensureColumn(db *sql.DB, table, column, decl string) error {
+	var n int
+	err := db.QueryRow(
+		`select count(*) from pragma_table_info(?) where name = ?`, table, column).Scan(&n)
+	if err != nil || n > 0 {
+		return err
+	}
+	_, err = db.Exec(fmt.Sprintf(`alter table %s add column %s %s`, table, column, decl))
+	return err
 }
 
 func (s *Store) Close() error {

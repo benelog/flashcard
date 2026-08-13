@@ -101,3 +101,21 @@ func (s *Store) DeleteDeck(ctx context.Context, userID, deckID uuid.UUID) error 
 	return requireRowAffected(s.pool.Exec(ctx,
 		`delete from decks where user_id = $1 and id = $2`, userID, deckID))
 }
+
+// DeckStory는 덱의 스토리 원문(마크다운)을 읽는다. 없으면 nil이다.
+func (s *Store) DeckStory(ctx context.Context, userID, deckID uuid.UUID) (*string, error) {
+	var story *string
+	err := s.pool.QueryRow(ctx,
+		`select story from decks where user_id = $1 and id = $2`, userID, deckID).Scan(&story)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, model.ErrNotFound
+	}
+	return story, err
+}
+
+func (s *Store) UpdateDeckStory(ctx context.Context, userID, deckID uuid.UUID, story *string) error {
+	return requireRowAffected(s.pool.Exec(ctx,
+		`update decks set story = $3, updated_at = now()
+		 where user_id = $1 and id = $2`,
+		userID, deckID, story))
+}

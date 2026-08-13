@@ -72,7 +72,7 @@ func TestSharedSQLConstantsStayInSync(t *testing.T) {
 // 목록이다. 다음은 정당한 이유로 넣지 않는다.
 //   - 시각·id를 Go에서 만들어 바인딩하는 litestore와 DB 기본값(now(),
 //     gen_random_uuid())에 맡기는 pgstore가 다른 메서드: insertCard, UpdateDeck,
-//     UpdateCard, RecordReview, CreateSession, FinishSession, ShareDeck,
+//     UpdateDeckStory, UpdateCard, RecordReview, CreateSession, FinishSession, ShareDeck,
 //     GetOrCreateProfile, UpdateProfile(pg는 returning, lite는 재조회),
 //     CreateDeck·ImportSharedDeck(seq 채번 방식이 다름), CreateSmartDeck
 //   - 문장을 동적으로 조립해 리터럴 대조가 성립하지 않는 메서드: CardsByRule,
@@ -81,7 +81,7 @@ func TestSharedSQLConstantsStayInSync(t *testing.T) {
 //   - SQL이 공유 상수뿐이라 상수 대조가 대신 지키는 메서드: GetSharedDeck
 //     (sharedDeckSelect + sharedDeckBySlug)
 var identicalQueryFuncs = []string{
-	"ListDecks", "GetDeck", "GetDeckBySlug", "DeckIDBySlug", "DeleteDeck",
+	"ListDecks", "GetDeck", "GetDeckBySlug", "DeckIDBySlug", "DeleteDeck", "DeckStory",
 	"ListCards", "GetCard", "DeleteCard", "BulkCreateCards", "DueCards", "DueCount",
 	"UnshareDeck", "ListSharedDecks", "GetSharedDeckCards",
 	"ListSmartDecks", "DeleteSmartDeck",

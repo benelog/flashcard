@@ -1,0 +1,89 @@
+package app
+
+import (
+	"net/http"
+	"net/url"
+	"testing"
+)
+
+// 덱 스토리: 마크다운으로 쓰는 덱 소개 글의 저장·렌더링·미리 보기를 확인한다.
+
+func TestStorySaveAndRender(t *testing.T) {
+	a := newTestApp(t)
+	slug := a.makeDeck("비즈니스 미팅")
+
+	// 스토리가 없으면 덱 화면에 쓰기 진입점만 보인다.
+	rec := a.get("/decks/" + slug)
+	mustStatus(t, rec, http.StatusOK)
+	mustContain(t, rec, "스토리 쓰기")
+	mustNotContain(t, rec, "스토리 읽기")
+
+	// 마크다운을 저장하면 덱 화면으로 돌아간다.
+	rec = a.postForm("/decks/"+slug+"/story", url.Values{
+		"story": {"# 회의록\n**Sarah:** Let's kick off the meeting."},
+	})
+	if loc := mustRedirect(t, rec); loc != "/decks/"+slug {
+		t.Fatalf("redirect = %q, want %q", loc, "/decks/"+slug)
+	}
+
+	// 덱 화면이 변환된 HTML을 그린다.
+	rec = a.get("/decks/" + slug)
+	mustContain(t, rec, "<h1>회의록</h1>")
+	mustContain(t, rec, "<strong>Sarah:</strong>")
+	mustContain(t, rec, "스토리 수정")
+
+	// 편집 화면은 변환 전의 원문을 그대로 담는다.
+	rec = a.get("/decks/" + slug + "/story")
+	mustStatus(t, rec, http.StatusOK)
+	mustContain(t, rec, "# 회의록")
+
+	// 빈 제출은 스토리를 지운다.
+	mustRedirect(t, a.postForm("/decks/"+slug+"/story", url.Values{"story": {"  "}}))
+	rec = a.get("/decks/" + slug)
+	mustContain(t, rec, "스토리 쓰기")
+	if story := a.deckStory(slug); story != nil {
+		t.Fatalf("story = %q, want nil after clearing", *story)
+	}
+}
+
+// 원문에 섞인 생 HTML은 goldmark가 지운다(html.WithUnsafe를 켜지 않으므로).
+// 스토리는 사용자 입력이 그대로 화면에 실리는 자리라 이 동작이 안전망이다.
+func TestStoryStripsRawHTML(t *testing.T) {
+	a := newTestApp(t)
+	slug := a.makeDeck("악성 입력")
+
+	mustRedirect(t, a.postForm("/decks/"+slug+"/story", url.Values{
+		"story": {"<script>alert('xss')</script>\n\n안전한 문단"},
+	}))
+	rec := a.get("/decks/" + slug)
+	mustStatus(t, rec, http.StatusOK)
+	mustNotContain(t, rec, "<script>alert")
+	mustContain(t, rec, "안전한 문단")
+}
+
+func TestStoryPreviewRendersWithoutSaving(t *testing.T) {
+	a := newTestApp(t)
+	slug := a.makeDeck("미리 보기")
+
+	rec := a.postHTMX("/decks/"+slug+"/story/preview", url.Values{
+		"story": {"인사는 **bold**하게"},
+	})
+	mustStatus(t, rec, http.StatusOK)
+	mustContain(t, rec, "<strong>bold</strong>")
+
+	// 미리 보기는 저장하지 않는다.
+	if story := a.deckStory(slug); story != nil {
+		t.Fatalf("story = %q, want nil after preview only", *story)
+	}
+
+	// 빈 원문의 미리 보기는 안내 문구다.
+	rec = a.postHTMX("/decks/"+slug+"/story/preview", url.Values{"story": {""}})
+	mustContain(t, rec, "미리 볼 내용이 없어요")
+}
+
+func TestStoryOfMissingDeckIs404(t *testing.T) {
+	a := newTestApp(t)
+	mustStatus(t, a.get("/decks/zzzz/story"), http.StatusNotFound)
+	mustStatus(t, a.postForm("/decks/zzzz/story", url.Values{"story": {"x"}}), http.StatusNotFound)
+	mustStatus(t, a.postHTMX("/decks/zzzz/story/preview", url.Values{"story": {"x"}}), http.StatusNotFound)
+}

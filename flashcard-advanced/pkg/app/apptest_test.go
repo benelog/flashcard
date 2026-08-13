@@ -254,6 +254,17 @@ func (a *app) deck(slug string) model.Deck {
 	return deck
 }
 
+// deckStory는 저장소에서 덱의 스토리 원문을 바로 읽는다. 화면에는 변환된
+// HTML만 실리므로 원문 검증은 이 함수로 한다.
+func (a *app) deckStory(slug string) *string {
+	a.t.Helper()
+	story, err := a.store.DeckStory(a.t.Context(), a.userID, a.deck(slug).ID)
+	if err != nil {
+		a.t.Fatalf("deck story %q: %v", slug, err)
+	}
+	return story
+}
+
 // cards는 저장소에서 덱의 카드를 바로 읽는다. 렌더링된 화면으로는 할 수 없는
 // 검증(id, SRS 상태)용이다.
 func (a *app) cards(deckSlug string) []model.Card {

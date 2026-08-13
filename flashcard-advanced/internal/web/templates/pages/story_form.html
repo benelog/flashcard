@@ -1,0 +1,29 @@
+{{define "content"}}
+{{$f := .Data}}
+<header class="row">
+  <a class="btn btn-icon" href="/decks/{{$f.Slug}}" aria-label="뒤로">{{icon "chev-left"}}</a>
+  <h1 class="truncate title-sm fill">{{$f.DeckName}} 스토리</h1>
+</header>
+
+<form method="post" action="/decks/{{$f.Slug}}/story" class="stack-lg">
+  <label class="field">
+    <span class="field-label">본문 (마크다운)</span>
+    <textarea name="story" rows="14" class="story-input"
+      placeholder="이 덱의 카드들이 나온 이야기를 적어 보세요.
+
+# 비즈니스 미팅
+**Sarah:** Let's kick off the meeting.
+**Tom:** Sounds good."
+    >{{$f.Story}}</textarea>
+  </label>
+  <p class="tiny faint">마크다운 문법을 쓸 수 있어요: # 제목, **굵게**, - 목록, &gt; 인용.</p>
+  <div class="row">
+    <button type="button" class="btn btn-outline fill"
+      hx-post="/decks/{{$f.Slug}}/story/preview" hx-include="closest form"
+      hx-target="#story-preview" hx-swap="innerHTML">{{icon "eye"}} 미리 보기</button>
+    <button class="btn btn-primary fill">저장</button>
+  </div>
+</form>
+
+<div id="story-preview"></div>
+{{end}}

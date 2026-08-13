@@ -172,6 +172,36 @@ func TestSQLitePortHasColumnsAddedByMigrations(t *testing.T) {
 	}
 }
 
+// 이 스키마보다 앞서 만들어진 로컬 DB 파일은 create ... if not exists가
+// 건너뛰므로, 나중에 추가된 열은 Open의 ensureColumn이 보정한다. 그 보정이
+// 실제로 동작하는지 옛 파일을 흉내 내어 확인한다.
+func TestOpenAddsColumnsToOldFiles(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "old.db")
+	s, err := Open(path)
+	if err != nil {
+		t.Fatalf("open sqlite: %v", err)
+	}
+	// story 열이 생기기 전의 파일처럼 만든다.
+	if _, err := s.db.Exec(`alter table decks drop column story`); err != nil {
+		t.Fatalf("drop column: %v", err)
+	}
+	s.Close()
+
+	s, err = Open(path)
+	if err != nil {
+		t.Fatalf("reopen sqlite: %v", err)
+	}
+	defer s.Close()
+	var n int
+	if err := s.db.QueryRow(
+		`select count(*) from pragma_table_info('decks') where name = 'story'`).Scan(&n); err != nil {
+		t.Fatalf("check column: %v", err)
+	}
+	if n != 1 {
+		t.Error("reopening an old file did not add the decks.story column")
+	}
+}
+
 // schema.sql은 어느 마이그레이션까지 반영했는지를 첫머리에 적어 둔다. 새
 // 마이그레이션을 넣고 이 표식을 갱신하지 않으면 여기서 걸린다.
 func TestSQLitePortRecordsLatestMigration(t *testing.T) {

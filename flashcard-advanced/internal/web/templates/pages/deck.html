@@ -16,6 +16,9 @@
 
 <div class="row deck-actions">
   <a class="btn btn-outline" href="/decks/{{$deck.Slug}}/cards/new">{{icon "plus"}} 카드 추가</a>
+  {{if not .Data.StoryHTML}}
+    <a class="btn btn-outline" href="/decks/{{$deck.Slug}}/story">{{icon "book"}} 스토리 쓰기</a>
+  {{end}}
   <a class="btn btn-outline" href="/decks/{{$deck.Slug}}/export">{{icon "download"}} CSV 내보내기</a>
   {{if $deck.ShareSlug}}
     <button class="btn btn-outline btn-share-ok" data-copy="{{.Data.ShareURL}}">
@@ -30,6 +33,16 @@
     </form>
   {{end}}
 </div>
+
+{{/* 스토리: 카드들이 나온 맥락을 담은 마크다운 글. 길 수 있으므로
+     details/summary로 접어 둔다. reveal과 달리 펼친 뒤에도 다시 접을 수 있다. */}}
+{{if .Data.StoryHTML}}
+<details class="story">
+  <summary class="tile-dashed">{{icon "book"}} 스토리 읽기</summary>
+  <div class="story-body tile">{{.Data.StoryHTML}}</div>
+  <a class="btn btn-outline story-edit" href="/decks/{{$deck.Slug}}/story">{{icon "pencil"}} 스토리 수정</a>
+</details>
+{{end}}
 
 {{/* CSV 업로드: details/summary로 자바스크립트 없이 여닫는다. */}}
 <details class="reveal">

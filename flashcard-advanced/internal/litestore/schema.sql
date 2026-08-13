@@ -1,9 +1,12 @@
 -- 로컬 단일 사용자 모드를 위한 internal/db/migrations/*.up.sql의 SQLite 포팅본.
 -- 멱등 스크립트 하나로 합쳐 두었다(create ... if not exists).
 --
--- Ported through: 000004_deck_seq
+-- Ported through: 000005_deck_story
 -- 새 마이그레이션을 여기 옮긴 뒤 위 줄도 함께 고친다. schema_test.go가 이 표식과
 -- 마이그레이션 디렉터리를 대조해, 옮기는 것을 잊으면 테스트로 알려 준다.
+-- 기존 테이블에 열을 더하는 마이그레이션이면 store.go의 ensureColumn 호출도
+-- 한 줄 더한다. create ... if not exists는 이미 있는 로컬 DB 파일에 새 열을
+-- 만들어 주지 않기 때문이다.
 --
 -- 방언 대응: uuid -> text(Go에서 생성), timestamptz -> 고정 폭 UTC 형식의
 -- text(timeLayout 참고), jsonb -> text(JSON), text[] -> text(JSON 배열),
@@ -23,6 +26,7 @@ create table if not exists decks (
   user_id text not null references profiles(id) on delete cascade,
   name text not null,
   description text,
+  story text,
   share_slug text,
   shared_at text,
   seq integer not null unique,

@@ -685,6 +685,139 @@ details.reveal[open] > summary {
   flex-wrap: wrap;
 }
 
+/* ---------- 덱 스토리 (마크다운 본문) ---------- */
+
+details.story > summary {
+  list-style: none;
+  cursor: pointer;
+}
+
+details.story > summary::-webkit-details-marker {
+  display: none;
+}
+
+/* 상태 선택자: 펼침 여부를 summary 모양에 전달한다. reveal과 달리 summary를
+   남겨 두어 본문을 다시 접을 수 있다. */
+
+details.story[open] > summary {
+  border-style: solid;
+  color: var(--fg);
+  margin-bottom: 0.5rem;
+}
+
+.story-edit {
+  margin-top: 0.5rem;
+}
+
+/* 편집 화면의 원문 입력. 마크다운 기호가 눈에 들어오게 고정폭으로 쓴다. */
+
+.story-input {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  line-height: 1.6;
+}
+
+/* 마크다운이 만든 HTML에는 클래스를 붙일 방법이 없어, 이 블록만 예외로 자손
+   선택자로 요소를 고른다. .story-body 아래로만 한정되므로 다른 화면의 태그
+   변경에는 영향받지 않는다. */
+
+.story-body {
+  font-size: 0.9375rem;
+  line-height: 1.7;
+  overflow-wrap: break-word;
+}
+
+.story-body h1,
+.story-body h2,
+.story-body h3,
+.story-body h4 {
+  margin: 1.25em 0 0.5em;
+  font-weight: 600;
+  color: var(--fg);
+}
+
+.story-body h1 {
+  font-size: 1.125rem;
+}
+
+.story-body h2 {
+  font-size: 1rem;
+}
+
+.story-body h3,
+.story-body h4 {
+  font-size: 0.9375rem;
+}
+
+.story-body > :first-child {
+  margin-top: 0;
+}
+
+.story-body > :last-child {
+  margin-bottom: 0;
+}
+
+.story-body p {
+  margin: 0.75em 0;
+}
+
+.story-body ul,
+.story-body ol {
+  margin: 0.75em 0;
+  padding-left: 1.25rem;
+}
+
+.story-body blockquote {
+  margin: 0.75em 0;
+  padding-left: 0.75rem;
+  border-left: 3px solid var(--border);
+  color: var(--muted);
+}
+
+.story-body code {
+  font-size: 0.875em;
+  background: color-mix(in srgb, var(--fg) 7%, transparent);
+  border-radius: 0.25rem;
+  padding: 0.125rem 0.375rem;
+}
+
+.story-body pre {
+  overflow-x: auto;
+  background: color-mix(in srgb, var(--fg) 7%, transparent);
+  border-radius: 0.5rem;
+  padding: 0.75rem;
+}
+
+.story-body pre code {
+  background: none;
+  padding: 0;
+}
+
+.story-body a {
+  color: var(--primary);
+  text-decoration: underline;
+}
+
+.story-body img {
+  max-width: 100%;
+}
+
+.story-body hr {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 1em 0;
+}
+
+.story-body table {
+  border-collapse: collapse;
+  margin: 0.75em 0;
+}
+
+.story-body th,
+.story-body td {
+  border: 1px solid var(--border);
+  padding: 0.375rem 0.625rem;
+}
+
 /* ---------- 학습(플래시카드) ---------- */
 
 .study-head {
