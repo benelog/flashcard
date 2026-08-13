@@ -54,10 +54,10 @@ export function homeCoverMarkdown(book) {
   const c = book.cover
   const start = book.base + firstRoute(book)
   const diagram = c.diagram?.length
-    ? `\n    <div class="fc-book-diagram" aria-hidden="true">\n      <i class="fc-axis"></i>\n      ${c.diagram
+    ? `\n    <div class="fc-book-diagram" aria-hidden="true">\n      <i class="fc-axis"></i>\n      <i class="fc-axis fc-axis-over"></i>\n      ${c.diagram
         .map(
-          (l) =>
-            `<div class="fc-layer"><span class="fc-plane"><i class="fc-side fc-side-l"></i><i class="fc-side fc-side-r"></i><i class="fc-top">${motifHtml(l.motif)}</i></span><span class="fc-layer-label"><span class="fc-layer-name">${l.name}</span><span class="fc-layer-tech">${techHtml(l.tech)}</span></span></div>`,
+          (l, i) =>
+            `<div class="fc-layer"><span class="fc-plane"><i class="fc-side fc-side-l"></i><i class="fc-side fc-side-r"></i><i class="fc-top">${motifHtml(l.motif)}</i></span><span class="fc-layer-label"><span class="fc-layer-name"><i class="fc-layer-no">${i + 1}</i>${l.name}</span><span class="fc-layer-tech">${techHtml(l.tech)}</span></span></div>`,
         )
         .join('\n      ')}\n    </div>`
     : ''
@@ -97,10 +97,10 @@ ${actions}
 export function pdfCoverHtml(book) {
   const c = book.cover
   const diagram = c.diagram?.length
-    ? `\n    <div class="diagram">\n      <i class="axis"></i>\n      ${c.diagram
+    ? `\n    <div class="diagram">\n      <i class="axis"></i>\n      <i class="axis axis-over"></i>\n      ${c.diagram
         .map(
-          (l) =>
-            `<div class="layer"><span class="plane"><i class="side side-l"></i><i class="side side-r"></i><i class="top">${motifHtml(l.motif)}</i></span><span class="label"><span class="name">${l.name}</span><span class="tech">${techHtml(l.tech)}</span></span></div>`,
+          (l, i) =>
+            `<div class="layer"><span class="plane"><i class="side side-l"></i><i class="side side-r"></i><i class="top">${motifHtml(l.motif)}</i></span><span class="label"><span class="name"><i class="no">${i + 1}</i>${l.name}</span><span class="tech">${techHtml(l.tech)}</span></span></div>`,
         )
         .join('\n      ')}\n    </div>`
     : ''
@@ -135,7 +135,8 @@ export function pdfCoverHtml(book) {
        그 양 끝에 안쪽을 가리키는 화살촉을 달아 도로 합쳐지는 방향을 밝힌다.
        판마다 라벨로 지시선을 뻗는다. 홈의 표지 카드와 같은 그림이다(theme/custom.css). */
     .diagram { position: relative; flex: none; margin: 3mm 0 0; --pw: 101mm;
-      --axis-c: #8a8a8a;                                   /* 축은 무채색이다. 색은 층을 구분하는 데만 쓴다 */
+      --axis-c: #757575;                                   /* 축은 무채색이다. 색은 층을 구분하는 데만 쓴다 */
+      --axis-ghost: 0.4;                                   /* 판 위를 지나는 축의 진하기(아래 .axis-over) */
       --axis-arrow: 3.5mm;                                 /* 화살촉 길이 */
       --axis-unit: 9.66mm;                                 /* 쇄선 한 마디. 판 한 줄 간격(47.3+1mm)의 1/5 */
     }
@@ -158,6 +159,11 @@ export function pdfCoverHtml(book) {
       border-left: 1.5mm solid transparent; border-right: 1.5mm solid transparent; }
     .axis::before { top: 5mm; border-top: var(--axis-arrow) solid var(--axis-c); }
     .axis::after { bottom: 5mm; border-bottom: var(--axis-arrow) solid var(--axis-c); }
+    /* 같은 축을 판 위에 한 번 더 옅게 그린다. 도면의 중심선은 부품에 가려지지 않고 그 위를
+       지나며, 그래야 떨어져 있는 세 판이 한 축에 꿰여 있다고 읽힌다. 판 뒤의 축만 있으면
+       판 사이 틈에 낀 짧은 토막 넷으로 보인다. 화살촉은 뒤의 축이 이미 그렸으므로 지운다. */
+    .axis-over { z-index: 4; opacity: var(--axis-ghost); }
+    .axis-over::before, .axis-over::after { content: none; }
     .layer { position: relative; display: flex; align-items: center; gap: 10mm; height: 47.3mm;
       --sw: 84mm;                                          /* 윗면 직사각형 가로 */
       --sh: 52.5mm;                                        /* 세로: 가로와 16:10(모니터 비율) */
@@ -223,7 +229,14 @@ export function pdfCoverHtml(book) {
     /* 행의 한가운데가 아니라 지시선이 나오는 오른쪽 꼭짓점 높이에 맞춘다 */
     .label { position: relative; z-index: 1; top: var(--rv);
       display: flex; flex-direction: column; align-items: flex-start; gap: 1.6mm; }
-    .layer .name { font-size: 12pt; font-weight: 700; color: #5c5c5c; }
+    .layer .name { display: flex; align-items: center; font-size: 12pt; font-weight: 700; color: #5c5c5c; }
+    /* 부품 번호. 조립도는 부품마다 번호를 동그라미에 담아 지시선 끝에 달고, 부품 목록이 그
+       번호로 부품을 가리킨다. 지시선 끝의 라벨 머리에 두어 이 라벨이 판 하나를 가리키는
+       부품 항목으로 읽히게 한다. 테두리는 그 층의 짙은 옆면 색이다. */
+    .layer .no { display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box;
+      flex: none; width: 5mm; height: 5mm; margin-right: 1.8mm;
+      border: 0.35mm solid var(--lc-r); border-radius: 50%; background: #fff;
+      font-size: 9pt; font-style: normal; font-weight: 700; line-height: 1; color: var(--lc-tech); }
     /* 기술 이름은 표지에서 가장 먼저 읽히게 층 이름보다 크게 키우고, 그 층의 옅은 색을
        바탕에 깔아 알약으로 만든다. 흑백 인쇄에서도 바탕의 밝기 차이로 층이 구분된다. */
     .layer .tech { display: flex; flex-wrap: wrap; gap: 1.5mm; }

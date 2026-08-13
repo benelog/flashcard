@@ -667,7 +667,12 @@
   display: flex;
   flex-direction: column;
   width: min(420px, 88vw);
-  aspect-ratio: 7 / 10;
+  /* 책 표지의 비율은 7:10이다. 다만 이것을 aspect-ratio로 못 박으면 좁은 화면에서
+     카드만 줄고 제목·그림·특징 세 줄의 높이는 그만큼 줄지 않아, overflow: hidden에
+     저자 이름이 잘렸다(390px 이하에서 잘렸다). 그래서 7:10을 높이의 하한으로만 두고
+     내용이 더 길면 카드가 세로로 늘어나게 한다. 넓은 화면에서는 내용이 이 하한에 꼭
+     맞아(420×600) 예전과 같은 비율로 보인다. */
+  min-height: calc(min(420px, 88vw) * 10 / 7);
   padding: 30px 32px 26px;
   box-sizing: border-box;
   border: 1px solid #e0e0e0;
@@ -740,7 +745,8 @@
   margin: 6px 0 0;
   flex: none;
   --pw: 203px; /* 판 하나가 차지하는 상자의 가로. 조립축을 그 한가운데 세운다 */
-  --axis-c: #8a8a8a; /* 축은 무채색이다. 색은 층을 구분하는 데만 쓴다 */
+  --axis-c: #757575; /* 축은 무채색이다. 색은 층을 구분하는 데만 쓴다 */
+  --axis-ghost: 0.4; /* 판 위를 지나는 축의 진하기(아래 .fc-axis-over) */
   --axis-arrow: 7px; /* 화살촉 길이 */
   /* 쇄선 한 마디. 판 한 줄의 간격(.fc-layer 높이 95px + 판 사이 2px)의 1/5이라,
      판과 판 사이로 드러나는 두 틈에 늘 같은 무늬가 온다 */
@@ -799,6 +805,21 @@
 .fc-axis::after {
   bottom: 10px;
   border-bottom: var(--axis-arrow) solid var(--axis-c);
+}
+
+/* 같은 축을 판 위에 한 번 더 그린다. 도면의 중심선은 부품에 가려지지 않고 그 위를 지나며,
+   그래야 떨어져 있는 세 판이 한 축에 꿰여 있다고 읽힌다. 판 뒤의 축만 있으면 판 사이
+   틈에 낀 짧은 토막 넷으로 보여 축이라는 뜻이 전달되지 않았다.
+   판 위에서는 옅게 깔아 판에 담긴 그림을 가리지 않는다(틈에서는 뒤의 축이 그대로 진하다).
+   화살촉은 뒤의 축이 이미 그렸으므로 여기서는 지운다. */
+.fc-axis-over {
+  z-index: 4;
+  opacity: var(--axis-ghost);
+}
+
+.fc-axis-over::before,
+.fc-axis-over::after {
+  content: none;
 }
 
 .fc-layer {
@@ -1055,9 +1076,34 @@
 }
 
 .fc-layer-name {
+  display: flex;
+  align-items: center;
   font-size: 12.5px;
   font-weight: 700;
   color: #5c5c5c;
+}
+
+/* 부품 번호. 조립도는 부품마다 번호를 동그라미에 담아 지시선 끝에 달고, 부품 목록이
+   그 번호로 부품을 가리킨다. 지시선 끝의 라벨 머리에 두어 이 라벨이 판 하나를 가리키는
+   부품 항목으로 읽히게 한다. 번호는 위에서부터 1·2·3이고, 테두리 색은 그 층의 짙은
+   옆면 색이라 여기서도 색은 층을 구분하는 데만 쓴다. */
+.fc-layer-no {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  flex: none;
+  width: 15px;
+  height: 15px;
+  margin-right: 5px;
+  border: 1.2px solid var(--lc-r);
+  border-radius: 50%;
+  background: #fff;
+  font-size: 9.5px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--lc-tech);
 }
 
 /* 기술 이름은 표지에서 가장 먼저 읽히게 층 이름보다 크게 키우고, 그 층의 옅은 색을
@@ -1327,6 +1373,14 @@
 
   .fc-layer-name {
     font-size: 11px;
+  }
+
+  .fc-layer-no {
+    width: 13px;
+    height: 13px;
+    margin-right: 4px;
+    border-width: 1px;
+    font-size: 8.5px;
   }
 
   .fc-layer-tech .tk {
