@@ -12,6 +12,8 @@
 이제 {ch-supabase-auth}에서 쿠키에 담아 온 토큰을 검증하는 코드를 파헤쳐 보자.
 JWT(JSON Web Token)를 일상어로 옮기면, 소지자가 누구이고 언제까지 유효한지를 적고 위조를 막는 서명을 붙인 디지털 출입증이다.
 기술적으로는 헤더·페이로드·서명 세 부분을 점으로 이은 문자열이고, 페이로드에는 사용자 ID(`sub`), 만료 시각(`exp`) 같은 클레임(claim)이 들어 있다.
+실물은 `eyJhbGciOi...` 같은 글자들이 점 두 개로 세 토막으로 끊긴 모양이다.
+앞의 두 토막은 암호가 아니라 그저 읽을 수 있게 부호화해 둔 JSON이라 토큰을 주운 사람도 내용은 읽을 수 있고, 비밀은 마지막 토막인 서명에만 있어 내용을 고쳐 쓰지는 못한다.
 검증의 핵심은 "이 토큰을 정말 Supabase가 발급했는가"를 서명으로 확인하는 것이다.
 
 .[용어 풀이] JWT(JSON Web Token)
@@ -85,8 +87,9 @@ func keyfuncFor(jwksURL, secret string) (jwt.Keyfunc, error) {
 위쪽 분기는 공유 시크릿(HS256) 폴백(fallback)이다.
 이 분기는 옛 Supabase 프로젝트를 위한 예비 경로라, 처음 읽을 때는 건너뛰어도 된다.
 JWKS 엔드포인트가 없는 구형 Supabase 프로젝트는 대칭 키(HS256)로 서명하므로, 그런 환경에서는 환경 변수 `SUPABASE_JWT_SECRET`을 설정해 이 분기를 탄다.
-이때 서명 방식이 HMAC인지 명시적으로 확인하는 부분이 중요하다.
-공격자가 공개키를 HMAC 시크릿인 척 쓰도록 헤더의 `alg`를 바꿔치기하는 알고리즘 혼동(algorithm confusion) 공격을 차단하는 코드다.
+이 예비 경로에도 안전장치가 하나 붙어 있다는 것만 보고 넘어가면 된다.
+누구나 구할 수 있는 공개키를 비밀 열쇠인 척 쓰게 만들려고 토큰 머리의 서명 방식 표기(`alg`)를 바꿔치기하는 수법이 있는데, 이를 알고리즘 혼동(algorithm confusion) 공격이라 부른다.
+서명 방식이 HMAC이 맞는지 명시적으로 확인하는 코드가 그 바꿔치기를 막는다.
 
 === 왜 공유 시크릿이 아닌가
 
@@ -122,7 +125,9 @@ include::../../flashcard-advanced/internal/auth/jwt.go[tag=parse-claims]
 ----
 
 옵션 세 개가 각각 한 가지 공격 경로를 막는다.
-`WithValidMethods`는 허용 알고리즘을 화이트리스트로 고정해 `alg: none` 같은 우회를 차단한다.
+`WithValidMethods`는 받아들일 서명 방식을 미리 정한 목록으로 고정한다.
+토큰 머리에는 어떤 방식으로 서명했는지가 적혀 있는데, 이를 "서명 없음"(`alg: none`)으로 고쳐 놓고 검증하는 쪽이 그 말을 믿어 주기를 노리는 수법이 있다.
+받아들일 방식을 우리가 먼저 정해 두면 토큰이 뭐라고 주장하든 소용이 없다.
 `WithAudience("authenticated")`는 Supabase가 로그인 사용자에게 발급한 토큰만 받는다는 뜻으로, 익명 토큰이나 다른 용도의 토큰을 거른다.
 `WithExpirationRequired`는 `exp` 클레임이 아예 없는, 영원히 유효한 토큰을 거부한다.
 
@@ -133,6 +138,8 @@ include::../../flashcard-advanced/internal/auth/jwt.go[tag=parse-claims]
 이 함수를 부르는 곳은 둘이다.
 {ch-gin}에서 본 JSON API용 `parseUserID`는 `sub`만 꺼내 사용자 ID를 돌려주고, 웹 계층용 `ParseUser`는 화면에 표시할 이메일 클레임까지 함께 돌려준다.
 {ch-supabase-auth}에서 `withUser`가 쿠키에서 꺼낸 토큰을 건네던 것이 뒤쪽이다.
+그 `ParseUser`가 다음 코드다.
+자기가 검사 규칙을 따로 갖지 않고 앞의 `parseClaims`에 검증을 맡긴 뒤, 돌려받은 클레임에서 사용자 ID와 이메일만 꺼내 준다.
 
 [source,go]
 ----

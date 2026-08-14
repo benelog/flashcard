@@ -253,14 +253,14 @@ include::../../flashcard-advanced/internal/model/card.go[tag=sort-by-id-order]
 행이 없을 수도 있고 연결이 끊길 수도 있는데, 그 실패를 어떻게 알리느냐에 따라 드라이버의 사정이 화면까지 새어 나올 수 있다.
 
 Flashcard의 답은 경계에서 번역하는 것이다.
-`internal/model/model.go`에 "요청한 행이 없다"를 뜻하는 값 하나를 두고,
+먼저 `internal/model/model.go`에 "요청한 행이 없다"를 뜻하는 값 하나를 만들어 둔다.
 
 [source,go]
 ----
 include::../../flashcard-advanced/internal/model/model.go[tag=not-found]
 ----
 
-저장소가 드라이버의 에러를 그 값으로 바꿔 돌려준다.
+그리고 저장소가 드라이버의 에러를 이 값으로 바꿔 돌려준다.
 `internal/pgstore/decks.go`의 조회 코드다.
 
 [source,go]
@@ -353,7 +353,8 @@ CSV 파일로 한꺼번에 들어오고, 다시 CSV로 나간다.
 === 같은 단어를 두 장 만들지 않기
 
 CSV로 카드를 대량 등록할 때 "hello"와 " Hello "를 다른 카드로 취급하면 같은 단어가 두 장 생긴다.
-`internal/pgstore/cards.go`의 `BulkCreateCards`는 카드 텍스트를 비교용 열쇠로 정규화해 이 문제를 막는다.
+`internal/pgstore/cards.go`의 `BulkCreateCards`는 카드 텍스트의 표기를 하나로 통일한 비교용 열쇠를 만들어 이 문제를 막는다.
+이런 통일도 "정규화"라고 부르는데, {ch-database-basics}에서 표를 나눠 중복을 없애던 그 정규화와는 이름만 같은 다른 일이다.
 
 [source,go]
 ----
@@ -367,6 +368,8 @@ include::../../flashcard-advanced/internal/pgstore/cards.go[tag=dedup-key]
 사용자에게는 "카드 40장을 등록했고 3장은 중복이라 건너뛰었다"는 결과가 돌아간다.
 
 이미 있는 카드와 비교하는 데는 맵을 쓴다.
+아래 세 조각은 한 함수 안에서 차례로 하는 일이다.
+빈 맵을 만들고, 이미 저장된 카드의 열쇠를 미리 채워 넣고, 새로 등록하는 카드의 열쇠도 그때그때 표시해 두는 순서다.
 
 [source,go]
 ----

@@ -89,7 +89,8 @@ Go 템플릿은 값이 비어 있으면(빈 문자열, 0, nil) 거짓으로 친�
 그래서 `{{if .Card}}`는 "카드가 담겨 있으면"이라고 읽힌다.
 
 비교가 필요하면 함수 꼴로 쓴다.
-`{{if gt .Total 0}}`은 "`Total`이 0보다 크면"이다.
+이 문법에는 `>`나 `==` 같은 기호 연산자가 없어서, 비교도 이름 붙은 함수로 적고 비교할 값 둘을 그 뒤에 나란히 놓는다.
+`{{if gt .Total 0}}`은 "`Total`이 0보다 크면"이고, 여기서 `Total`은 뒤의 학습 화면에서 핸들러가 넘겨줄 카드 총수다.
 `gt`(greater than), `lt`(less than), `eq`(equal), `and`, `not` 같은 비교와 논리 연산을 모두 "함수 이름 뒤에 인자"로 적는 것이 이 문법의 특징이다.
 
 === range로 목록 돌기
@@ -145,7 +146,8 @@ include::../../flashcard-basic/templates/cards.html[tag=card-list]
 include::../../flashcard-basic/templates/card-item.html[tag=card-item]
 ----
 
-이 파일 전체는 `{{define "card-item"}}`과 `{{end}}`로 감싸여 있다.
+위 코드는 그 파일의 가운데 토막만 인용한 것이다.
+실제 파일은 `{{define "card-item"}}`으로 시작해 `{{end}}`로 닫히고, 그 사이에 위의 카드 한 줄이 들어 있다.
 `{{define "이름"}}`은 템플릿 덩어리에 이름을 붙이는 문법이고, `{{template "이름" 데이터}}`는 그 이름의 덩어리를 이 자리에 그려 넣으라는 호출이다.
 함수를 정의하고 호출하는 관계와 같다.
 
@@ -196,6 +198,7 @@ POST 처리를 마치면 화면을 직접 그리는 대신 GET 주소로 돌려�
 덱 번호가 함께 있으니 삭제한 뒤 어느 화면으로 돌려보낼지도 경로만 보면 알 수 있다.
 
 핸들러도 그만큼 단순하다.
+경로에서 카드 번호를 꺼내 지우고, 번호가 이상하거나 그런 카드가 없으면 그 사실을 알리는 응답을 보내고, 성공하면 그 덱의 카드 목록 화면으로 돌려보낸다.
 
 [source,go]
 ----
@@ -245,6 +248,9 @@ include::../../flashcard-basic/handlers.go[tag=show-study]
 ----
 include::../../flashcard-basic/templates/study.html[tag=study-card]
 ----
+
+`{{.Pos}} / {{.Total}}`은 지금이 몇 번째 카드인지 보여 주는 표시다.
+핸들러가 순번에 1을 더한 `Pos`와 카드 총수 `Total`을 함께 넘겨 둔 덕분에 이 두 자리가 채워진다.
 
 `details`와 `summary`는 브라우저에 내장된 접기·펼치기 요소다.
 `summary`(앞면)를 누르면 `details`가 열리며 안에 있던 `p`(뒷면)가 나타나고, 다시 누르면 접힌다.

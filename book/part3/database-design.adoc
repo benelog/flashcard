@@ -28,6 +28,7 @@
 둘째, 카드의 묶음인 *덱*과 학습 단위인 *카드*가 있다 → `decks`, `cards`. 태그는 카드의 속성으로 본다.
 
 셋째, 카드마다 *간격 반복 상태*(다음 복습 시각, 용이도 등)가 있다 → `card_srs`.
+용이도는 그 카드가 얼마나 쉽게 외워지는지 나타내는 숫자인데, 이런 숫자들이 무엇을 기억하는지는 다음 {ch-domain-model}에서 알고리즘과 함께 읽는다.
 
 넷째, 학습은 *세션* 단위로 진행되고, 세션 안에서 카드 한 장에 매긴 판정 하나하나가 *복습 기록*이다 → `study_sessions`, `review_logs`.
 
@@ -93,7 +94,8 @@ create table if not exists cards (
 SQLite에는 배열이나 JSON 전용 타입이 없어 text에 담지만, 운영 PostgreSQL에는 배열 타입(`text[]`)과 JSON을 이해하는 전용 타입(jsonb)이 있다.
 
 `cards`에 `deck_id`뿐 아니라 `user_id`도 중복해 둔 점도 설계 결정이다.
-덱을 거치지 않고 "이 사용자의 모든 카드"를 자주 조회하기 때문에(due 큐, 스마트 덱), 조인을 한 단계 줄이려는 실용적 비정규화(denormalization, {ch-database-basics})다.
+덱을 거치지 않고 "이 사용자의 모든 카드"를 자주 조회하기 때문에, 조인을 한 단계 줄이려는 실용적 비정규화(denormalization, {ch-database-basics})다.
+{ch-requirements}에서 본 "오늘 복습" 목록(이 책이 앞으로 due 큐라고 부르는 그것)과 스마트 덱이 그런 조회다.
 
 카드 종류 `card_type`이 네 값 중 하나만 갖도록 지키는 `check` 제약은 뒤의 제약 절에서 짚고, `decks`의 `share_slug`·`shared_at`·`seq`가 받치는 덱 공유와 URL slug 설계는 다음 {ch-domain-model}에서 다룬다.
 
@@ -298,11 +300,17 @@ func insertCard(ctx context.Context, tx *sql.Tx, userID uuid.UUID, in model.Card
 
 앞 절에서 말한 `card_srs` 행 생성(`card_id`, `user_id`, `due_at`만 넣는 insert)도 이 함수 안에 있다.
 
+함수의 첫 두 인자는 이 책에서 처음 보는 것들이다.
+`ctx`는 요청 하나의 수명을 담아 함수에서 함수로 전달되는 컨텍스트(context)로, 사용자가 화면을 닫아 요청이 끊기면 진행 중인 질의도 함께 멈추라는 신호를 나른다({ch-gin}에서 다시 본다).
+{ch-template-hello}에서 템플릿이 보고 있는 데이터를 부르던 "컨텍스트"와는 이름만 같은 다른 것이다.
+`tx`는 여러 SQL 문장을 전부 되거나 전부 안 되게 하나로 묶는 트랜잭션의 값인데, 다음 {ch-domain-model}에서 제대로 다룬다.
+
 물론 UUID가 공짜는 아니다.
 운영 PostgreSQL의 uuid 전용 타입은 값을 16바이트로 저장하지만, 전용 타입이 없는 SQLite에서는 36자 텍스트로 저장돼 자리를 더 차지한다.
 또 값이 무작위라서 새 행이 인덱스의 정렬 순서상 매번 다른 위치에 꽂힌다.
 서류를 정렬된 서류철 맨 뒤에 계속 붙이는 대신 매번 중간을 벌려 끼워 넣는 셈이다.
-그래서 행이 빠르게 대량으로 쌓이는 작업에서는 순번 키보다 불리하다(B-tree 인덱스의 삽입 지역성 문제).
+그래서 행이 빠르게 대량으로 쌓이는 작업에서는 순번 키보다 불리하다.
+인덱스가 값을 정렬해 보관하는 구조({ch-database-basics}에서 본 B-tree)라서 생기는 일이고, 끼워 넣을 자리가 매번 흩어지면 그만큼 손이 더 간다.
 빠르게 쌓이고 외부에 노출되지 않는 `review_logs`에 autoincrement 순번을 쓴 이유가 여기에 있다.
 "노출되는 것은 UUID, 내부 대량 로그는 순번"이라는 이원 전략이다.
 운영 스키마도 같은 전략인데, 그쪽은 uuid 타입에 `gen_random_uuid()` 기본값, 순번에는 identity 컬럼이라는 전용 장치가 있다는 점만 다르다.

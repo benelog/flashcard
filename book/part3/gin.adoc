@@ -95,6 +95,7 @@ API란 이런 엔드포인트들이 모인 창구 목록인 셈이다.
 
 `r.Group`의 두 번째 인자부터는 미들웨어를 가변 인자(필요한 개수만큼 이어 붙일 수 있는 인자)로 받는다.
 `pub` 그룹의 세 번째 인자처럼 이름 없이 그 자리에서 만든 익명 함수(anonymous function)를 즉석에서 미들웨어로 끼워 넣을 수도 있다.
+브라우저와 우리 서버 사이에는 응답을 잠시 보관해 두었다가 같은 주소의 다음 요청에 대신 돌려주는 중간 서버가 놓일 수 있는데, 여러 사람의 요청이 함께 지나므로 공유 캐시(shared cache)라고 부른다.
 여기서는 응답이 Authorization 헤더에 따라 달라지므로, 공유 캐시가 로그인 사용자의 응답을 익명 방문자의 요청에 재사용하지 않도록 `Cache-Control: no-store`를 일괄로 붙였다.
 이 헤더가 없다면, 어떤 로그인 사용자에게 "내 덱" 표시가 붙어 나간 공유 덱 목록을 중간 캐시 서버가 저장해 뒀다가 다른 방문자에게 그대로 보여 주는 사고가 날 수 있다.
 
@@ -122,7 +123,9 @@ include::../../flashcard-advanced/internal/handlers/handlers.go[tag=healthz]
 ----
 
 `c.JSON`은 인자를 JSON으로 직렬화하고 Content-Type 헤더와 상태 코드를 설정한다.
-`gin.H`는 `map[string]any`의 별칭으로, 이것을 쓰면 일회성 응답 객체를 만들 때 구조체를 따로 선언하지 않아도 된다.
+Content-Type은 지금 보내는 본문이 어떤 형식인지 받는 쪽에 알리는 헤더로, 여기에는 "이것은 JSON이다"가 적힌다.
+`gin.H`는 문자열을 열쇠로 쓰고 값에는 아무 타입이나 담는 맵 `map[string]any`({ch-go-types})에 붙여 둔 짧은 별명(별칭)이다.
+이것을 쓰면 일회성 응답 객체를 만들 때 구조체를 따로 선언하지 않아도 된다.
 
 .[용어 풀이] 바인딩(Binding)
 [NOTE]
@@ -154,6 +157,7 @@ include::../../flashcard-advanced/internal/handlers/decks.go[tag=get-deck]
 
 라우트의 `:slug` 자리에 매칭된 값을 `c.Param("slug")`로 꺼낸다.
 `c.Request.Context()`로 표준 `context.Context`를 꺼내 스토어 계층에 넘기는 것도 눈여겨보자.
+이름은 닮았지만 `gin.Context`와는 다른 물건으로, "이 일은 그만해도 된다"는 취소 소식을 함수에서 함수로 실어 나르도록 Go 표준 라이브러리가 정해 둔 값이다({ch-database-design}의 저장소 코드에서 `ctx`로 스쳤던 그것이다).
 클라이언트가 요청을 중단하면 이 컨텍스트가 취소되어 진행 중인 DB 쿼리도 함께 중단된다.
 
 쿼리 파라미터는 `c.Query`로 읽는다.
@@ -177,8 +181,9 @@ if raw := c.Query("dueBefore"); raw != "" {
 "없으면 기본값, 있으면 검증"은 선택적 쿼리 파라미터를 다루는 전형적인 패턴이다.
 
 JSON이 아닌 응답도 가능하다.
-`internal/handlers/cards.go`의 CSV 내보내기 핸들러 `ExportDeck`은 파일 만들기를 `internal/cardcsv`에 맡기면서, `gin.Context`가 감싸고 있는 응답 스트림 `c.Writer`를 그대로 넘긴다.
-받은 쪽은 Content-Type 헤더를 지정한 뒤 표준 라이브러리의 `csv.Writer`를 그 스트림에 연결해 쓴다.
+응답은 한 번에 완성해 보내는 대신 물줄기처럼 조금씩 흘려보낼 수도 있는데, 그 물길(스트림)이 `gin.Context`가 감싸고 있는 `c.Writer`다.
+`internal/handlers/cards.go`의 CSV 내보내기 핸들러 `ExportDeck`은 파일 만들기를 `internal/cardcsv`에 맡기면서 이 `c.Writer`를 그대로 넘긴다.
+받은 쪽은 Content-Type 헤더를 지정한 뒤 표준 라이브러리의 `csv.Writer`를 그 물길에 연결해 카드를 한 줄씩 적어 보내므로, 서버가 CSV 전체를 메모리에 쌓아 둘 필요가 없다.
 프레임워크를 쓰더라도 표준 인터페이스로 내려가는 통로가 열려 있다는 점은 Gin의 장점이다.
 
 == 요청 바인딩과 검증
@@ -194,6 +199,7 @@ include::../../flashcard-advanced/internal/handlers/decks.go[tag=create-deck]
 ----
 
 요청 본문 전용 타입은 핸들러 안의 익명 구조체(anonymous struct)로 선언했다.
+이름을 붙이지 않고 필요한 자리에서 곧바로 만들어 쓰는 구조체로, `var body struct { ... }` 한 줄이 타입 선언과 변수 선언을 겸한다.
 이 필드 조합을 다른 곳에서 쓸 일이 없으므로 패키지 수준 타입으로 승격하지 않은 것이다.
 
 Gin에는 `BindJSON`과 `ShouldBindJSON` 두 계열이 있다.

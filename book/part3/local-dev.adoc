@@ -13,6 +13,8 @@
 
 출발점은 {ch-code-map}에서 읽었던 `internal/config/config.go`다.
 이 코드는 `DATABASE_URL`이 있으면 운영과 같은 PostgreSQL 구성을, 없으면 SQLite 파일과 로컬 인증이라는 기본값을 채운다.
+`DATABASE_URL`은 코드 안에 적힌 값이 아니라 프로그램을 실행할 때 바깥에서 건네주는 환경 변수({ch-first-run}에서 로컬 모드의 규약으로 봤던 그 설정값)다.
+코드의 `os.Getenv("이름")`이 그 값을 꺼내 읽는 함수이고, 로컬에서는 아무도 이 값을 건네지 않아 빈 문자열이 되므로 아래 분기가 로컬 모드를 고른다.
 
 [source,go]
 ----
@@ -76,6 +78,9 @@ func Open(path string) (*Store, error) {
 }
 ----
 
+파일 경로의 물음표 뒤에 붙은 긴 글자들은 SQLite에 함께 거는 세 가지 주문이다.
+외래 키 제약을 실제로 검사하고({ch-database-basics}), 파일이 잠겨 있으면 5초까지 기다렸다가 포기하고, 쓰기 기록을 별도 파일에 먼저 남기는 방식(WAL)으로 돌아 읽기와 쓰기가 서로를 막지 않게 하라는 뜻이다.
+{ch-first-run}에서 본 `-wal` 파일이 세 번째 주문의 산물이다.
 스키마의 모든 문장이 `if not exists` 꼴이라 몇 번을 켜도 이미 있는 테이블은 건드리지 않고, 파일을 바이너리에 함께 굽는 embed({ch-html-template}) 덕에 스키마 파일을 따로 배포할 일도 없다.
 
 인증 쪽 분기는 `internal/auth/local.go`에 있다.
@@ -187,7 +192,8 @@ VS Code는 이 목록을 읽고 "이 저장소가 권장하는 확장이 있습�
 
 `editor.formatOnSave`가 켜져 있고 `[go]` 블록이 포매터를 Go 확장으로 지정하므로, Go 파일을 저장하는 순간 gofmt가 돌아 {ch-unit-tests}에서 본 세로 정렬이 자동으로 맞춰진다.
 `source.organizeImports`는 저장할 때 쓰지 않는 import를 지우고 남은 것을 표준 순서로 정렬한다.
-Go는 쓰지 않는 import를 컴파일 에러로 처리하므로, 이 한 줄이 "빌드는 되는데 import만 어긋난" 상태를 아예 만들지 않는다.
+Go는 쓰지 않는 import가 하나라도 남아 있으면 컴파일을 거부한다.
+코드 몇 줄을 지우다 그 줄만 쓰던 import가 남는 일은 흔한데, 이 설정이 저장하는 순간 그것을 걷어 내므로 빌드가 그 이유로 멈춰 서는 일 자체가 사라진다.
 `go.vetOnSave`를 `package`로 두면 저장할 때마다 그 파일이 속한 패키지에 `go vet`이 돌아, {ch-unit-tests}에서 본 정적 분석이 편집 중에 밑줄로 나타난다.
 
 .[용어 풀이] 언어 서버(Language Server)
