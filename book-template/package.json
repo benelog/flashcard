@@ -19,6 +19,7 @@
   "dependencies": {
     "chokidar": "^4.0.3",
     "downdoc": "1.1.0-stable",
+    "markdown-it-footnote": "^4.0.0",
     "pdf-lib": "^1.17.1",
     "puppeteer-core": "^25.3.0",
     "vitepress": "^1.6.3"

@@ -162,6 +162,54 @@ function restore(md) {
   return out.join('\n')
 }
 
+// footnote:[본문] 매크로를 markdown-it-footnote 표기로 바꾼다.
+// downdoc은 이 매크로를 몰라 그대로 통과시키므로(안의 링크 매크로만 변환된다),
+// 본문 자리에는 참조([^n])를 남기고 정의는 문서 끝에 모은다.
+function convertFootnotes(md, file) {
+  const notes = []
+  const out = []
+  let fence = false
+  for (const line of md.split('\n')) {
+    if (/^```/.test(line)) {
+      fence = !fence
+      out.push(line)
+      continue
+    }
+    if (fence || !line.includes('footnote:[')) {
+      out.push(line)
+      continue
+    }
+    let rest = line
+    let converted = ''
+    let idx
+    while ((idx = rest.indexOf('footnote:[')) !== -1) {
+      // 각주 본문 안의 마크다운 링크([표시](주소))가 대괄호를 품으므로 짝을 세어 닫는 자리를 찾는다
+      const start = idx + 'footnote:['.length
+      let depth = 1
+      let end = -1
+      for (let i = start; i < rest.length; i++) {
+        if (rest[i] === '[') depth++
+        else if (rest[i] === ']' && --depth === 0) {
+          end = i
+          break
+        }
+      }
+      if (end === -1) {
+        throw new Error(`${file} footnote:[…]는 한 줄 안에서 닫혀야 한다: ${line.trim()}`)
+      }
+      notes.push(rest.slice(start, end))
+      converted += rest.slice(0, idx) + `[^${notes.length}]`
+      rest = rest.slice(end + 1)
+    }
+    out.push(converted + rest)
+  }
+  if (notes.length) {
+    out.push('')
+    notes.forEach((text, i) => out.push(`[^${i + 1}]: ${text}`))
+  }
+  return out.join('\n')
+}
+
 function sanityCheck(source, md, file) {
   const problems = []
   if (/<dl><dt>|<\/dd><\/dl>/.test(md)) {
@@ -182,7 +230,7 @@ function sanityCheck(source, md, file) {
 }
 
 export function convertAdoc(source, file = '(unknown)', { lineNumbers } = {}) {
-  const md = restore(downdoc(protect(source, file, lineNumbers)))
+  const md = convertFootnotes(restore(downdoc(protect(source, file, lineNumbers))), file)
   sanityCheck(source, md, file)
   return md.endsWith('\n') ? md : md + '\n'
 }

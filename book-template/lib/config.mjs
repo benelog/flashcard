@@ -1,6 +1,7 @@
 // book.config.mjs 하나를 VitePress 설정으로 펼친다.
 // 소비자의 .vitepress/config.ts는 이 함수를 부르는 몇 줄짜리 심(shim)이면 된다.
 import { defineConfig } from 'vitepress'
+import footnote from 'markdown-it-footnote'
 import { FONT_URL, coverFontFaceCss } from './fonts.mjs'
 import { firstRoute, sidebar } from './toc.mjs'
 
@@ -15,6 +16,8 @@ export function defineBookConfig(book) {
     cleanUrls: true,
     markdown: {
       config(md) {
+        // 원고의 footnote:[…]가 변환된 [^n] 표기를 각주로 렌더링한다
+        md.use(footnote)
         // 인라인 코드의 {{ }}가 Vue 보간으로 해석되지 않게 v-pre를 붙인다.
         // (Go 템플릿 문법 `{{.Title}}` 같은 표기가 본문에 자주 나온다)
         md.renderer.rules.code_inline = (tokens, idx, _options, _env, self) => {

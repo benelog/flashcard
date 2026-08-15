@@ -81,6 +81,21 @@
   font-size: 0.85em;
 }
 
+/* 각주 — footnote:[…] 매크로가 모이는 장 끝 목록(markdown-it-footnote) */
+.vp-doc .footnotes {
+  font-size: 0.85rem;
+}
+
+.vp-doc .footnotes p {
+  color: var(--vp-c-text-2);
+  line-height: 1.8;
+}
+
+.vp-doc .footnote-ref a {
+  font-weight: 600;
+  text-decoration: none;
+}
+
 /* ──────────────────────────────────────────────────────────────
    이북 뷰어 레이아웃
    목차는 왼쪽 하나만 남기고(오른쪽 아웃라인 제거), 본문은
