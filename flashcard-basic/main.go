@@ -16,6 +16,9 @@ func main() {
 	}
 	defer store.Close()
 
+	// Gin은 기본이 디버그 모드다. 디버그 모드는 HTML 응답을 만들 때마다
+	// 템플릿 파일을 다시 읽으므로, 시작할 때 한 번만 읽는 릴리스 모드로 바꾼다.
+	gin.SetMode(gin.ReleaseMode)
 	r := gin.Default()
 	r.LoadHTMLGlob("templates/*.html")
 	r.Static("/static", "./static")

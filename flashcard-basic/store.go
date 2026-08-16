@@ -55,7 +55,6 @@ func OpenStore(path string) (*Store, error) {
 
 func (s *Store) Close() error { return s.db.Close() }
 
-// tag::list-decks[]
 // ListDecks는 모든 덱을 만든 순서대로 돌려준다.
 func (s *Store) ListDecks() ([]Deck, error) {
 	rows, err := s.db.Query("select id, name from decks order by id")
@@ -74,8 +73,6 @@ func (s *Store) ListDecks() ([]Deck, error) {
 	}
 	return decks, rows.Err()
 }
-
-// end::list-decks[]
 
 // tag::create-deck[]
 // CreateDeck은 덱 하나를 추가하고 새 행의 id를 돌려준다.
@@ -178,9 +175,11 @@ func (s *Store) CreateCard(deckID int64, text, meaning string) (Card, error) {
 // end::create-card[]
 
 // tag::delete-card[]
-// DeleteCard는 카드 하나를 지운다. 지운 행이 없으면 ErrNotFound를 돌려준다.
-func (s *Store) DeleteCard(id int64) error {
-	res, err := s.db.Exec("delete from cards where id = ?", id)
+// DeleteCard는 한 덱의 카드 하나를 지운다.
+// 그 덱에 그런 카드가 없으면 ErrNotFound를 돌려준다.
+func (s *Store) DeleteCard(deckID, cardID int64) error {
+	res, err := s.db.Exec(
+		"delete from cards where id = ? and deck_id = ?", cardID, deckID)
 	if err != nil {
 		return err
 	}

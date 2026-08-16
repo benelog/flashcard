@@ -48,10 +48,13 @@ func TestDeckAndCardRoundTrip(t *testing.T) {
 		t.Errorf("ListCards = %+v, want one card with text resilient", cards)
 	}
 
-	if err := store.DeleteCard(card.ID); err != nil {
+	if err := store.DeleteCard(999, card.ID); !errors.Is(err, ErrNotFound) {
+		t.Errorf("DeleteCard in wrong deck = %v, want ErrNotFound", err)
+	}
+	if err := store.DeleteCard(deckID, card.ID); err != nil {
 		t.Fatalf("DeleteCard: %v", err)
 	}
-	if err := store.DeleteCard(card.ID); !errors.Is(err, ErrNotFound) {
+	if err := store.DeleteCard(deckID, card.ID); !errors.Is(err, ErrNotFound) {
 		t.Errorf("DeleteCard twice = %v, want ErrNotFound", err)
 	}
 }

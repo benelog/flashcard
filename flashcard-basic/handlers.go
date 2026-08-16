@@ -96,10 +96,12 @@ func renameDeck(store *Store) gin.HandlerFunc {
 			c.String(http.StatusBadRequest, "덱 이름이 비어 있다")
 			return
 		}
-		if err := store.RenameDeck(id, name); errors.Is(err, ErrNotFound) {
+		err = store.RenameDeck(id, name)
+		if errors.Is(err, ErrNotFound) {
 			c.String(http.StatusNotFound, "그런 덱이 없다")
 			return
-		} else if err != nil {
+		}
+		if err != nil {
 			c.String(http.StatusInternalServerError, err.Error())
 			return
 		}
@@ -114,10 +116,12 @@ func deleteDeck(store *Store) gin.HandlerFunc {
 			c.String(http.StatusBadRequest, "잘못된 덱 번호다")
 			return
 		}
-		if err := store.DeleteDeck(id); errors.Is(err, ErrNotFound) {
+		err = store.DeleteDeck(id)
+		if errors.Is(err, ErrNotFound) {
 			c.String(http.StatusNotFound, "그런 덱이 없다")
 			return
-		} else if err != nil {
+		}
+		if err != nil {
 			c.String(http.StatusInternalServerError, err.Error())
 			return
 		}
@@ -152,15 +156,22 @@ func createCard(store *Store) gin.HandlerFunc {
 // tag::delete-card[]
 func deleteCard(store *Store) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+		if err != nil {
+			c.String(http.StatusBadRequest, "잘못된 덱 번호다")
+			return
+		}
 		cardID, err := strconv.ParseInt(c.Param("cardID"), 10, 64)
 		if err != nil {
 			c.String(http.StatusBadRequest, "잘못된 카드 번호다")
 			return
 		}
-		if err := store.DeleteCard(cardID); errors.Is(err, ErrNotFound) {
+		err = store.DeleteCard(id, cardID)
+		if errors.Is(err, ErrNotFound) {
 			c.String(http.StatusNotFound, "그런 카드가 없다")
 			return
-		} else if err != nil {
+		}
+		if err != nil {
 			c.String(http.StatusInternalServerError, err.Error())
 			return
 		}

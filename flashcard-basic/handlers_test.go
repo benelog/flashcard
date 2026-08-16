@@ -22,13 +22,8 @@ func newTestApp(t *testing.T) *gin.Engine {
 }
 
 func do(r *gin.Engine, method, path string, form url.Values) *httptest.ResponseRecorder {
-	var body *strings.Reader
-	if form != nil {
-		body = strings.NewReader(form.Encode())
-	} else {
-		body = strings.NewReader("")
-	}
-	req := httptest.NewRequest(method, path, body)
+	// form이 nil이면 Encode가 빈 문자열을 돌려주므로 본문 없는 요청이 된다.
+	req := httptest.NewRequest(method, path, strings.NewReader(form.Encode()))
 	if form != nil {
 		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	}
@@ -88,6 +83,9 @@ func TestAddAndDeleteCardOverHTTP(t *testing.T) {
 		t.Errorf("card with blank text = %d, want 400", w.Code)
 	}
 
+	if w := do(r, "POST", "/decks/999/cards/1/delete", nil); w.Code != http.StatusNotFound {
+		t.Errorf("delete card in wrong deck = %d, want 404", w.Code)
+	}
 	if w := do(r, "POST", "/decks/1/cards/1/delete", nil); w.Code != http.StatusSeeOther {
 		t.Errorf("POST /decks/1/cards/1/delete = %d, want 303", w.Code)
 	}
