@@ -121,7 +121,8 @@ Vercel 함수의 진입점 `api/index.go`가 부르는 `pkg/app`의 `Engine()`�
 == 같은 설계, 더 풍부한 타입
 
 {ch-database-design}에서 한 설계(일곱 테이블, 외래 키와 cascade, 조회 패턴에서 역산한 인덱스)는 PostgreSQL에서도 그대로고, 바뀌는 것은 표현이다.
-SQLite는 타입의 가짓수를 최소로 줄인 대신 어디서나 도는 쪽을 택한 DB라 {ch-database-design}의 스키마는 많은 것을 `text` 열에 눌러 담았는데, PostgreSQL은 그 자리마다 전용 타입을 내준다.
+SQLite는 타입의 가짓수를 최소로 줄인 대신 어디서나 도는 쪽을 택한 DB라, {ch-database-design}의 스키마는 많은 것을 `text` 열에 눌러 담았다.
+PostgreSQL은 그 자리마다 전용 타입을 내준다.
 
 아래 표가 그 대응이다.
 오른쪽 이름들이 낯설어도 지금 외울 필요는 없고, 표 아래에서 하나씩 풀어 나간다.
@@ -167,31 +168,35 @@ create table cards (
 카드의 두 열이 `text`·`meaning`이 아니라 `front_text`·`back_text`라는 첫 이름으로 등장하는데, 이 이름이 왜 바뀌었는지는 {ch-migrations}의 마이그레이션에서 확인한다.
 
 `settings`의 `jsonb`는 JSON을 문자열이 아니라 파싱된 이진 형태로 저장하는 타입으로, 넣을 때 문법이 검증되고 내부 필드 조회와 인덱스도 가능하다.
-`card_type`은 {ch-database-design}에서 `check` 제약으로 흉내 냈던 값 목록이 enum 타입이 된 모습으로, 타입 자체가 문서가 되고 저장 공간도 작지만, 값 목록을 바꾸는 일이 데이터 수정이 아니라 틀을 고치는 DDL이 되고 특히 값 제거는 불가능에 가깝다는 대가가 있다.
+`card_type`은 {ch-database-design}에서 `check` 제약으로 흉내 냈던 값 목록이 enum 타입이 된 모습이다.
+타입 자체가 문서가 되고 저장 공간도 작지만, 값 목록을 바꾸는 일이 데이터 수정이 아니라 틀을 고치는 DDL이 되고 특히 값 제거는 불가능에 가깝다는 대가가 있다.
 이 비용도 {ch-migrations}에서 실제 사례로 확인한다.
 
 === 기본 키: 데이터베이스가 UUID를 만든다
 
 `profiles.id`에는 `default`가 없다.
 이 값은 DB가 만들지 않고 Supabase Auth가 발급한 사용자 UUID를 그대로 받아 쓰기 때문이다.
-{ch-token-verification}에서 본 JWT의 사용자 식별자(`sub` 클레임)가 바로 이 값이라, 인증의 식별자와 앱 데이터의 식별자가 일치해 조인 없이 토큰의 사용자 ID로 바로 조회할 수 있다.
+{ch-token-verification}에서 본 JWT의 사용자 식별자(`sub` 클레임)가 바로 이 값이라, 인증의 식별자와 앱 데이터의 식별자가 일치해 조인 없이 토큰의 사용자 ID로 곧장 조회할 수 있다.
 로컬 모드에서는 고정 로컬 사용자의 ID 하나가 이 자리를 채우고 있었다.
 
 나머지 테이블의 `id`는 `default gen_random_uuid()`로 DB가 직접 만든다.
 SQLite에는 UUID 타입도 생성 함수도 없어 Go 코드가 만들어 넣었지만, PostgreSQL에서는 스키마가 스스로 해결한다.
 
 UUID를 기본 키로 삼은 이유를 다시 짚어 두자.
-순번 키는 값 자체가 정보를 누설해서, `/cards/42` 같은 URL은 전체 카드 수를 드러내고 이웃 ID를 추측하게 만들지만 UUID는 추측이 불가능하다.
+순번 키는 값 자체가 정보를 누설해서, `/cards/42` 같은 URL은 전체 카드 수를 드러내고 이웃 ID를 추측하게 만든다.
+UUID는 추측이 불가능하다.
 값이 전역에서 유일하므로 로컬 SQLite의 행을 운영 DB로 옮기는 것 같은 환경 간 이동에서도 충돌 걱정이 없고, Supabase Auth의 사용자 식별자가 UUID라서 `profiles.id`와 자연스럽게 이어진다.
 
 물론 공짜는 아니다.
 UUID는 16바이트로 bigint의 두 배 크기이고, 값이 무작위라서 새 행이 인덱스의 정렬 순서상 매번 다른 위치에 꽂혀 빠르게 대량으로 쌓이는 작업에 불리하다.
-그래서 빠르게 쌓이고 외부에 노출되지 않는 `review_logs`에는 순번 키(`bigint generated always as identity`)를 써서 "노출되는 것은 UUID, 내부 대량 로그는 순번"이라는 이원 전략을 취했고, {ch-database-design}의 SQLite에서는 `integer primary key autoincrement`가 그 자리를 맡았다.
+그래서 빠르게 쌓이고 외부에 노출되지 않는 `review_logs`에는 순번 키(`bigint generated always as identity`)를 써서 "노출되는 것은 UUID, 내부 대량 로그는 순번"이라는 이원 전략을 취했다.
+{ch-database-design}의 SQLite에서는 `integer primary key autoincrement`가 그 자리를 맡았다.
 
 === 시간대를 품은 타임스탬프
 
 모든 시각 컬럼은 `timestamp`가 아니라 `timestamptz`(timestamp with time zone)다.
-`timestamptz`는 값을 UTC 기준 절대 시각으로 저장하고 조회하는 쪽 접속(세션)에 설정된 시간대에 따라 변환해 보여 주는 반면, `timestamp`는 시간대 정보가 없는 벽시계 값이라 서버·클라이언트·DB의 시간대가 어긋나는 순간 버그의 온상이 된다.
+`timestamptz`는 값을 UTC 기준 절대 시각으로 저장하고, 조회하는 쪽 접속(세션)에 설정된 시간대에 따라 변환해 보여 준다.
+반면 `timestamp`는 시간대 정보가 없는 벽시계 값이라, 서버·클라이언트·DB의 시간대가 어긋나는 순간 같은 값이 읽는 쪽마다 다른 시각으로 해석된다.
 PostgreSQL 커뮤니티가 입을 모아 "항상 timestamptz를 써라"라고 권고하는 이유다.
 {ch-database-design}의 SQLite에는 시간 타입 자체가 없어 고정 폭 UTC 문자열로 저장하고 문자열 비교가 곧 시간 비교가 되게 맞췄는데, 그 수공업이 여기서는 타입 하나로 끝난다.
 
@@ -200,7 +205,8 @@ PostgreSQL 커뮤니티가 입을 모아 "항상 timestamptz를 써라"라고 �
 
 === 배열과 GIN 인덱스
 
-카드의 태그는 `text[]` 배열 컬럼이고, 스마트 덱의 태그 규칙은 `tags && $2`라는 배열 겹침(overlap) 연산으로 태그가 하나라도 겹치는 카드를 찾으며, 이 연산을 000001의 `create index cards_tags_gin on cards using gin (tags)` 인덱스가 받친다.
+카드의 태그는 `text[]` 배열 컬럼이고, 스마트 덱의 태그 규칙은 `tags && $2`라는 배열 겹침(overlap) 연산으로 태그가 하나라도 겹치는 카드를 찾는다.
+이 연산을 000001의 `create index cards_tags_gin on cards using gin (tags)` 인덱스가 받친다.
 {ch-database-basics}에서 본 B-tree 인덱스는 한 칸에 값 하나가 든 경우를 정렬해 찾는 구조라 배열 안의 개별 원소는 훑지 못하므로, 배열 컬럼에는 GIN(Generalized Inverted Index) 인덱스를 건다.
 
 .[용어 풀이] GIN 인덱스(Generalized Inverted Index)
@@ -224,7 +230,8 @@ SQLite 구현은 배열 타입이 없으니 태그를 JSON 배열 문자열로 �
 
 `go.mod`의 DB 관련 의존성은 세 개로, PostgreSQL 드라이버 `github.com/jackc/pgx/v5`, SQLite 드라이버 `modernc.org/sqlite`, 그리고 {ch-migrations}에서 볼 마이그레이션 도구 `github.com/golang-migrate/migrate/v4`다.
 로컬 모드의 litestore가 쓰는 `modernc.org/sqlite`는 Go 표준 `database/sql` 인터페이스에 꽂는 드라이버였다.
-Go에서 PostgreSQL에 접속하는 정석도 같은 `database/sql`에 드라이버를 꽂는 방식이고 오랫동안 `lib/pq`가 그 자리를 지켰지만, `lib/pq`는 유지보수 모드로 전환되었고 프로젝트 스스로 pgx로 갈아탈 것을 권한다.
+Go에서 PostgreSQL에 접속하는 정석도 같은 `database/sql`에 드라이버를 꽂는 방식이고, 오랫동안 `lib/pq`가 그 자리를 지켰다.
+그러나 `lib/pq`는 유지보수 모드로 전환되었고, 프로젝트 스스로 pgx로 갈아탈 것을 권한다.
 
 pgx는 PostgreSQL 전용 드라이버로, 표준 인터페이스를 거치지 않는 자체 API를 제공한다.
 Postgres의 타입과 프로토콜을 직접 다루므로 성능이 좋고, 커넥션 풀(`pgxpool`)이 내장되어 있으며, 무엇보다 쿼리 실행 모드를 세밀하게 제어할 수 있다.
@@ -334,7 +341,8 @@ func Pool(ctx context.Context, databaseURL string) (*pgxpool.Pool, error) {
 Vercel 무료 티어의 함수 리전 선택지가 제한적이어서 함수를 서울로 옮기는 길이 막혀 있으니, DB를 함수 곁으로 보내는 것이 남은 최선이다.
 
 물론 사용자→함수 구간의 태평양 횡단 180ms는 남지만, 요청당 한 번뿐인 비용이고 정적 자산은 CDN 엣지가 사용자 가까이에서 응답하므로 첫 화면 로딩은 리전과 무관하게 빠르다.
-쓰는 플랫폼이 서울 리전 함수를 지원한다면 함수와 DB를 모두 서울에 두는 것이 정답으로, 콜로케이션(colocation)의 원칙은 "함수를 어디에 두든, DB는 반드시 그 옆에"이다.
+쓰는 플랫폼이 서울 리전 함수를 지원한다면 함수와 DB를 모두 서울에 두는 것이 정답이다.
+콜로케이션(colocation)의 원칙은 "함수를 어디에 두든, DB는 반드시 그 옆에"이다.
 
 .[용어 풀이] 콜로케이션(Colocation)
 [NOTE]

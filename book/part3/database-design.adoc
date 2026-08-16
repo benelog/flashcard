@@ -97,7 +97,7 @@ SQLite에는 배열이나 JSON 전용 타입이 없어 text에 담지만, 운영
 덱을 거치지 않고 "이 사용자의 모든 카드"를 자주 조회하기 때문에, 조인을 한 단계 줄이려는 실용적 비정규화(denormalization, {ch-database-basics})다.
 {ch-requirements}에서 본 "오늘 복습" 목록(이 책이 앞으로 due 큐라고 부르는 그것)과 스마트 덱이 그런 조회다.
 
-카드 종류 `card_type`이 네 값 중 하나만 갖도록 지키는 `check` 제약은 뒤의 제약 절에서 짚고, `decks`의 `share_slug`·`shared_at`·`seq`가 받치는 덱 공유와 URL slug 설계는 다음 {ch-domain-model}에서 다룬다.
+카드 종류 `card_type`이 네 값 중 하나만 받도록 지키는 `check` 제약은 뒤의 제약 절에서 짚고, `decks`의 `share_slug`·`shared_at`·`seq`가 받치는 덱 공유와 URL slug 설계는 다음 {ch-domain-model}에서 다룬다.
 
 === 카드와 SRS 상태의 분리
 
@@ -177,7 +177,8 @@ create table if not exists review_logs (
 스마트 덱으로 시작한 세션은 그 시점의 규칙을 `smart_rule`에 JSON 텍스트 스냅숏으로 남겨, 규칙이 나중에 수정되거나 삭제돼도 "그때 무엇을 학습했는지"가 보존된다.
 
 `review_logs`는 판정 한 번이 행 하나인 순수 추가(append) 테이블로, `result`는 맞음/틀림, `is_retry`는 재도전 라운드 여부다.
-{ch-requirements}에서 정리했듯 재도전 라운드의 판정은 기록만 남기고 SRS에는 반영하지 않는데, 그 구분이 컬럼 하나로 스키마에 새겨져 있어, 정답률을 세는 통계 쿼리가 `is_retry = 0` 조건으로 첫 판정만 골라낸다.
+{ch-requirements}에서 정리했듯 재도전 라운드의 판정은 기록만 남기고 SRS에는 반영하지 않는다.
+그 구분이 컬럼 하나로 스키마에 새겨져 있어, 정답률을 세는 통계 쿼리가 `is_retry = 0` 조건으로 첫 판정만 골라낸다.
 `completed`·`result`·`is_retry`가 모두 integer인 것도 SQLite의 사정이다.
 boolean 전용 타입이 없어 참/거짓을 0과 1로 담는다(운영 PostgreSQL에는 boolean 타입이 있다).
 
@@ -256,7 +257,7 @@ func ruleQuery(r smartrules.Rule, now time.Time) (sql string, args []any) {
 그 전에 위 스키마에서 눈치챘을 특징 하나를 짚고 가자.
 열 타입이 text, integer, real 세 가지뿐이다.
 SQLite의 타입 체계는 이렇게 단출해서 uuid도, 타임스탬프도, 배열도, enum도 전용 타입이 없다.
-그래서 이 스키마의 상당 부분은 "전용 타입이 없는 자리에 설계 의도를 어떻게 담는가"에 대한 답이기도 하다.
+그래서 이 스키마의 상당 부분은 "전용 타입이 없는 자리에 설계 의도를 어떻게 담는가"의 답이기도 하다.
 
 === 기본 키 전략: UUID를 text에 담는다
 
@@ -328,7 +329,8 @@ func insertCard(ctx context.Context, tx *sql.Tx, userID uuid.UUID, in model.Card
 덱을 지웠다고 그 덱으로 학습했던 세션 기록까지 지우는 것은 통계 요구사항에 어긋나므로, 기록은 남기되 참조만 끊는다.
 그래서 두 열은 비워 둘 수 있게, 즉 {ch-database-basics}에서 본 NULL을 허용하게 선언했다.
 
-cascade는 편리한 만큼 파괴력도 커서, 의도치 않은 연쇄 삭제가 무섭다면 `on delete restrict`로 막고 애플리케이션에서 명시적으로 지우는 보수적 대안도 있다.
+cascade는 편리한 만큼 파괴력도 크다.
+의도치 않은 연쇄 삭제가 무섭다면 `on delete restrict`로 막고 애플리케이션에서 명시적으로 지우는 보수적 대안도 있다.
 이 앱은 소유 계층이 단순하고 깊이가 얕아 cascade의 이득이 위험보다 크다고 판단했다.
 
 한 가지 SQLite만의 함정이 있다.
@@ -390,7 +392,8 @@ create index if not exists smart_decks_user_idx on smart_decks (user_id);
 SQLite도 PostgreSQL도 외래 키에 인덱스를 자동으로 만들지 않으므로 이는 설계자가 챙겨야 할 몫이다.
 
 거꾸로 말하면 여기 없는 인덱스도 의도다.
-`cards.text`에 인덱스가 없는 것은 카드 본문 검색 기능이 아직 없기 때문으로, 인덱스는 쓰기마다 유지 비용을 내는 자료구조라 조회 요구 없이 미리 만드는 것은 손해다.
+`cards.text`에 인덱스가 없는 것은 카드 본문 검색 기능이 아직 없기 때문이다.
+인덱스는 쓰기마다 유지 비용을 내는 자료구조라 조회 요구 없이 미리 만드는 것은 손해다.
 태그 검색을 받치는 인덱스도 없는데, 앞서 본 `json_each` 검색은 한 사람의 카드 수백~수천 장 규모에서는 인덱스 없이도 충분히 빠르다.
 운영 PostgreSQL 스키마는 같은 자리에 배열 열 전용의 GIN(역색인) 인덱스를 걸어 태그 검색을 받친다.
 

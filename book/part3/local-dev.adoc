@@ -193,7 +193,7 @@ VS Code는 이 목록을 읽고 "이 저장소가 권장하는 확장이 있습�
 `editor.formatOnSave`가 켜져 있고 `[go]` 블록이 포매터를 Go 확장으로 지정하므로, Go 파일을 저장하는 순간 gofmt가 돌아 {ch-unit-tests}에서 본 세로 정렬이 자동으로 맞춰진다.
 `source.organizeImports`는 저장할 때 쓰지 않는 import를 지우고 남은 것을 표준 순서로 정렬한다.
 Go는 쓰지 않는 import가 하나라도 남아 있으면 컴파일을 거부한다.
-코드 몇 줄을 지우다 그 줄만 쓰던 import가 남는 일은 흔한데, 이 설정이 저장하는 순간 그것을 걷어 내므로 빌드가 그 이유로 멈춰 서는 일 자체가 사라진다.
+코드 몇 줄을 지우다 그 줄만 쓰던 import가 남는 일은 흔한데, 저장하는 순간 이 설정이 그것을 걷어 내므로 빌드가 그 이유로 멈춰 서는 일 자체가 사라진다.
 `go.vetOnSave`를 `package`로 두면 저장할 때마다 그 파일이 속한 패키지에 `go vet`이 돌아, {ch-unit-tests}에서 본 정적 분석이 편집 중에 밑줄로 나타난다.
 
 .[용어 풀이] 언어 서버(Language Server)
@@ -309,7 +309,8 @@ Go의 디버거는 델브(Delve)이고, 실행 파일 이름은 `dlv`다.
 무설정 실행과 커밋된 에디터 설정에도 대가가 있다.
 
 첫째, 로컬 모드는 운영과 다른 데이터베이스 엔진 위에서 돈다.
-`internal/litestore`는 `internal/pgstore`와 같은 인터페이스를 SQLite 방언으로 다시 구현한 것이라 같은 기능을 두 벌 유지하는 비용이 들고, PostgreSQL에만 있는 기능({ch-supabase-db}에서 다룰 RLS와 태그 검색용 GIN 인덱스)은 로컬 모드에 없으므로 로컬에서 통과했다고 운영에서도 똑같이 동작한다는 보장은 없다.
+`internal/litestore`는 `internal/pgstore`와 같은 인터페이스를 SQLite 방언으로 다시 구현한 것이라 같은 기능을 두 벌 유지하는 비용이 든다.
+PostgreSQL에만 있는 기능({ch-supabase-db}에서 다룰 RLS와 태그 검색용 GIN 인덱스)은 로컬 모드에 없으므로, 로컬에서 통과했다고 운영에서도 똑같이 동작한다는 보장은 없다.
 그 대가로 계정도 네트워크도 없는 실행을 얻었고, 남는 간극은 {ch-supabase-db}에서 개발용 PostgreSQL을 연결해 메운다.
 
 둘째, `.vscode/`는 VS Code에 맞춘 설정이라 다른 에디터를 쓰는 사람에게는 도움이 되지 않는다.
