@@ -49,7 +49,7 @@ DB는 환경마다 완전히 분리되어 있다.
 - Postgres 스키마의 단일 소스는 `internal/db/migrations/*.up.sql`(golang-migrate, 바이너리에 embed). 새 변경은 항상 새 번호의 up/down 쌍을 추가한다. 기존 파일은 고치지 않는다.
 - 적용은 `cmd/migrate`가 한다. `.github/workflows/migrate.yml`이 **스키마 SQL이 바뀐 푸시에만** 자동 실행한다: main → dev DB, release → 운영 DB.
 - local에서 dev DB에 미리 적용해 보려면 `./migrate_dev.sh`. 운영 DB에는 수동으로 적용하지 않는다.
-- 마이그레이션과 Vercel 배포는 서로를 기다리지 않는다. 컬럼 삭제·이름 변경은 배포 순서에 상관없이 안전하도록 세 단계(추가 → 코드 전환 → 제거)로 나눈다.
+- 마이그레이션과 Vercel 배포는 서로를 기다리지 않는다. 칼럼 삭제·이름 변경은 배포 순서에 상관없이 안전하도록 세 단계(추가 → 코드 전환 → 제거)로 나눈다.
 - SQLite(`internal/litestore/schema.sql`)는 위 마이그레이션을 손으로 옮긴 포팅본이다. Postgres 마이그레이션을 추가하면 **같은 커밋에서 이 파일도 함께 고쳐야** 두 환경이 어긋나지 않는다.
   - 잊으면 `internal/litestore/schema_test.go`가 잡는다(새 테이블·새 뷰·새 열, 그리고 파일 첫머리의 `Ported through:` 표식을 대조한다). 옮긴 뒤 그 표식도 최신 마이그레이션 이름으로 고친다.
 

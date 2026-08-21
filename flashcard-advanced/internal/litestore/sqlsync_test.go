@@ -35,7 +35,7 @@ func normalizeSQL(s string) string {
 }
 
 // 같은 이름의 SQL 상수는 자리표시자만 빼고 같아야 한다. 같은 이름은 같은 일을
-// 한다는 뜻이기 때문이다(CLAUDE.md의 대칭 규칙). 컬럼을 한쪽 select 목록에만
+// 한다는 뜻이기 때문이다(CLAUDE.md의 대칭 규칙). 칼럼을 한쪽 select 목록에만
 // 더하는 실수가 여기서 잡힌다.
 func TestSharedSQLConstantsStayInSync(t *testing.T) {
 	lite := stringConsts(t, ".")

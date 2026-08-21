@@ -374,7 +374,7 @@ func Engine() (*gin.Engine, error) {
 상태의 원본은 전부 PostgreSQL에 있기 때문이다.
 
 같은 엔진을 로컬 개발 서버도 사용한다.
-아래 코드는 {ch-app-assembly}에서 본 로컬 진입점의 뼈대로, `DATABASE_URL`이 설정된 PostgreSQL 모드에서는 Vercel과 같은 `app.Engine()`을 그대로 부른다.
+아래 코드는 {ch-app-assembly}에서 본 로컬 진입점의 기본 구조로, `DATABASE_URL`이 설정된 PostgreSQL 모드에서는 Vercel과 같은 `app.Engine()`을 그대로 부른다.
 
 `cmd/server/main.go` (발췌):
 
@@ -382,7 +382,7 @@ func Engine() (*gin.Engine, error) {
 ----
 	var engine *gin.Engine
 	if cfg.Driver == "sqlite" {
-		// ... 로컬 모드: litestore를 열어 app.New로 조립한다 (18장)
+		// ... 로컬 모드: litestore를 열어 app.New로 조립한다 (21장)
 	} else {
 		engine, err = app.Engine()
 		if err != nil {
@@ -469,7 +469,7 @@ func (w *Web) registerStatic(r *gin.Engine) {
 }
 ----
 
-`Cache-Control: public, max-age=3600`은 브라우저에게 이 응답을 한 시간 동안 다시 묻지 말고 재사용하라는 지시다.
+`Cache-Control: public, max-age=3600`은 브라우저에 이 응답을 한 시간 동안 다시 묻지 말고 재사용하라는 지시다.
 같은 사용자가 페이지를 오가는 동안 CSS와 자바스크립트 요청은 브라우저 캐시에서 해결되고, 함수까지 오는 정적 자산 요청은 사용자당 한 시간에 한 번꼴로 줄어든다.
 
 한 시간과 1년 중 어느 쪽을 줄지는 지문(fingerprint)이 있는지로 정한다.
@@ -479,7 +479,6 @@ func (w *Web) registerStatic(r *gin.Engine) {
 지문이 붙은 주소의 응답은 영원히 같은 내용이므로 다시 물을 이유가 없다.
 지문을 만드는 코드와, 이 장치가 없을 때 어떤 사고가 나는지는 {ch-caching}에서 다룬다.
 거기서 볼 서비스 워커는 이 위에 캐시를 한 겹 더 얹는다.
-
 
 == 에이전트 활용 아이디어
 

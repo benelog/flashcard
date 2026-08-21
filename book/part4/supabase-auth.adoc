@@ -206,7 +206,7 @@ Supabase 문서와 튜토리얼 대부분은 브라우저에서 supabase-js를 �
 
 눈여겨볼 것은 두 가지다.
 첫째, 프로바이더(Google/GitHub)와 직접 마주 보는 쪽은 GoTrue다.
-동의 화면 왕복과 프로바이더별 응답 차이는 모두 Supabase가 흡수하고, 우리 서버는 GoTrue하고만 대화한다.
+동의 화면 왕복과 프로바이더별 응답 차이는 모두 Supabase가 흡수하고, 우리 서버는 GoTrue와만 대화한다.
 둘째, 토큰이 오가는 ⑤는 서버와 GoTrue 사이의 통신이다.
 브라우저가 받는 것은 리다이렉트 지시와 쿠키뿐이고, 토큰의 실물은 브라우저 스크립트가 읽을 수 있는 어디에도 나타나지 않는다.
 
@@ -422,7 +422,7 @@ func setCookie(c *gin.Context, name, value string, maxAge int) {
 Vercel의 프록시(방문자의 요청을 먼저 받아 함수에 전달하는 중계 서버) 뒤에서는 `X-Forwarded-Proto` 헤더로 원래 요청이 HTTPS였는지 판별한다.
 
 셋째, `SameSite=Lax`는 교차 사이트 요청 위조(CSRF)를 막는다.
-Lax는 다른 사이트에서 출발한 POST 요청에 쿠키를 싣지 않으므로, Flashcard처럼 데이터를 바꾸는 모든 요청이 POST인 앱에서는 이 한 줄이 CSRF 방어의 뼈대가 된다.
+Lax는 다른 사이트에서 출발한 POST 요청에 쿠키를 싣지 않으므로, Flashcard처럼 데이터를 바꾸는 모든 요청이 POST인 앱에서는 이 한 줄이 CSRF 방어의 핵심이 된다.
 
 .[용어 풀이] CSRF(교차 사이트 요청 위조, Cross-Site Request Forgery)
 [NOTE]
