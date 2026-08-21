@@ -2,10 +2,6 @@
   "skillOverrides": {
     "drawio": "on"
   },
-  "enabledPlugins": {
-    "frontend-design@claude-plugins-official": true,
-    "gopls-lsp@claude-plugins-official": true
-  },
   "hooks": {
     "PostToolUse": [
       {
@@ -20,5 +16,18 @@
         ]
       }
     ]
+  },
+  "enabledPlugins": {
+    "frontend-design@claude-plugins-official": true,
+    "gopls-lsp@claude-plugins-official": true,
+    "korean-tech-writing@korean-tech-writing": true
+  },
+  "extraKnownMarketplaces": {
+    "korean-tech-writing": {
+      "source": {
+        "source": "github",
+        "repo": "benelog/korean-tech-writing"
+      }
+    }
   }
 }
