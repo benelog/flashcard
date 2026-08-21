@@ -229,7 +229,7 @@ include::../../flashcard-advanced/internal/srs/srs.go[tag=grade]
 
 | 파일 | 소유 용어 |
 |---|---|
-| `part1/requirements.adoc` | API, CSV, 호스팅, 무료 티어, PostgreSQL, 프런트엔드와 백엔드, PWA |
+| `part1/requirements.adoc` | API, CSV, 마크다운, 호스팅, 무료 티어, PostgreSQL, 프런트엔드와 백엔드, PWA |
 | `part1/tech-choices.adoc` | 기술 스택, 데이터베이스, 서버, 서버리스, 상주 서버, 바이너리, 컴파일/인터프리터 언어, 런타임, 정적/동적 타입, 프레임워크와 라이브러리, 의존성, 관계형 데이터베이스, SPA |
 | `part1/instructing.adoc` | 아키텍처 |
 | `part1/claude-code.adoc` | LLM, AI 코딩 에이전트와 도구 호출 루프, 컨텍스트와 토큰, 세션, 프롬프트, 프로젝트 지침(CLAUDE.md), 디렉터리와 프로젝트 루트, 스킬 |

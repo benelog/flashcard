@@ -11,6 +11,8 @@ import (
 	"github.com/yuin/goldmark/renderer/html"
 )
 
+// tag::markdown-engine[]
+
 // 덱 스토리의 마크다운을 서버에서 HTML로 바꾼다. 브라우저에 마크다운
 // 라이브러리를 들이지 않기 위한 것으로, 미리 보기도 같은 함수를 htmx로 부른다.
 //
@@ -22,6 +24,8 @@ var markdownEngine = goldmark.New(
 	goldmark.WithExtensions(extension.GFM),
 	goldmark.WithRendererOptions(html.WithHardWraps()),
 )
+
+// end::markdown-engine[]
 
 // markdownHTML은 마크다운 원문을 신뢰할 수 있는 HTML 조각으로 바꾼다.
 // 비어 있으면 빈 조각이다.

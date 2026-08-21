@@ -58,7 +58,7 @@ require (
 `internal/srs` 패키지를 쓰려면 `import "github.com/benelog/flashcard/internal/srs"`라고 쓴다.
 경로가 GitHub 주소와 같은 이유는 Go가 별도의 중앙 패키지 저장소 없이 소스 저장소 URL을 그대로 패키지 좌표로 쓰기 때문이다.
 
-`require` 블록에는 JWT 검증(keyfunc, golang-jwt), 웹 프레임워크(gin), DB 드라이버(pgx, sqlite), 덱 스토리의 마크다운을 HTML로 바꾸는 변환기(goldmark) 등 직접 의존성 여덟 개뿐이다.
+`require` 블록에는 JWT 검증(keyfunc, golang-jwt), 웹 프레임워크(gin), DB 드라이버(pgx, sqlite), 덱 스토리의 마크다운을 HTML로 바꾸는 변환기(goldmark, {ch-html-template}) 등 직접 의존성 여덟 개뿐이다.
 웹 서버 하나에 바깥에서 가져온 코드가 여덟 꾸러미뿐이라는 사실이 {ch-go-hello}에서 말한 표준 라이브러리의 두꺼움을 숫자로 보여 준다.
 이 목록이 짧다는 것은 {ch-tech-choices}에서 세운 "관리할 것이 적은가"라는 기준이 코드에 남긴 흔적이기도 하다.
 
