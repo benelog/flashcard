@@ -165,7 +165,10 @@ include::../../flashcard-advanced/internal/handlers/decks.go[tag=get-deck]
 
 [source,go]
 ----
-dueBefore := time.Now()
+// 기본 만기 창은 방문자(?tz=) 시간대의 오늘 끝. 홈 화면 배지와 같은 수가
+// 나오게 하기 위해서다.
+_, loc := clientLocation(c)
+dueBefore := study.EndOfDay(time.Now(), loc)
 if raw := c.Query("dueBefore"); raw != "" {
 	t, err := time.Parse(time.RFC3339, raw)
 	if err != nil {
@@ -177,7 +180,8 @@ if raw := c.Query("dueBefore"); raw != "" {
 // ... 스토어 조회 후 c.JSON으로 {"count": n} 응답
 ----
 
-파라미터가 없으면 현재 시각을 기본값으로 쓰고, 있으면 RFC3339(`2026-07-12T09:00:00Z`처럼 날짜와 시각을 적는 국제 표준 표기) 형식으로 파싱하되 실패 시 400으로 응답한다.
+파라미터가 없으면 방문자의 시간대에서 오늘이 끝나는 시각을 기본값으로 쓴다(`clientLocation`이 `tz`라는 또 다른 쿼리 파라미터에서 방문자의 시간대를 읽는다).
+파라미터가 있으면 RFC3339(`2026-07-12T09:00:00Z`처럼 날짜와 시각을 적는 국제 표준 표기) 형식으로 파싱하되 실패 시 400으로 응답한다.
 "없으면 기본값, 있으면 검증"은 선택적 쿼리 파라미터를 다루는 전형적인 패턴이다.
 
 JSON이 아닌 응답도 가능하다.

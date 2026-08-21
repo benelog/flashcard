@@ -1,7 +1,7 @@
 # Flashcard 완성본 앱(flashcard-advanced) 지침
 
 Vercel + Supabase에 배포하는 완성본 앱이다. 아래 경로는 모두 이 디렉터리(`flashcard-advanced/`) 기준이다.
-저장소 공통 규칙(브랜치 정책, 두 모듈 검증, 책 인용 태그)은 루트 `CLAUDE.md`에 있다.
+저장소 공통 규칙(브랜치 정책, 세 모듈 검증, 책 인용 태그)은 루트 `CLAUDE.md`에 있다.
 
 ## 구조
 

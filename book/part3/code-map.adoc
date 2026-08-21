@@ -4,7 +4,7 @@
 이제 저장소를 열어 코드를 읽을 차례인데, 그 전에 지도가 한 장 필요하다.
 
 파일이 열 개, 백 개로 늘면 "이 문법이 무슨 뜻인가"보다 "이 코드가 왜 여기 있는가"가 어려워지기 때문이다.
-Flashcard의 Go 코드는 파일 예순 남짓, 패키지 열넷이다.
+Flashcard의 Go 코드는 파일 일흔 남짓, 패키지 열넷이다.
 그 정도 규모에서도 처음 여는 사람이 길을 잃지 않으려면 디렉터리마다 맡은 일이 정해져 있어야 하고, 패키지 사이의 의존이 한 방향으로만 흘러야 한다.
 
 이 장은 그 지도를 그린다.
@@ -21,6 +21,7 @@ Flashcard의 Go 코드는 파일 예순 남짓, 패키지 열넷이다.
 
 Go의 코드 단위는 패키지(Package)이고, 패키지들을 버전 관리하는 단위가 모듈(Module)이다.
 Flashcard는 모듈 하나에 패키지 열넷이 들어 있는 단일 저장소다.
+이 열넷은 실행 파일을 만드는 명령 진입점 둘(`cmd/` 아래의 `main` 패키지)을 빼고 센 숫자다.
 
 .[용어 풀이] 모듈과 패키지
 [NOTE]
@@ -47,6 +48,7 @@ require (
 	github.com/golang-migrate/migrate/v4 v4.19.1
 	github.com/google/uuid v1.6.0
 	github.com/jackc/pgx/v5 v5.10.0
+	github.com/yuin/goldmark v1.8.5
 	modernc.org/sqlite v1.53.0
 )
 // ... 간접(indirect) 의존성 생략
@@ -56,8 +58,8 @@ require (
 `internal/srs` 패키지를 쓰려면 `import "github.com/benelog/flashcard/internal/srs"`라고 쓴다.
 경로가 GitHub 주소와 같은 이유는 Go가 별도의 중앙 패키지 저장소 없이 소스 저장소 URL을 그대로 패키지 좌표로 쓰기 때문이다.
 
-`require` 블록에는 JWT 검증(keyfunc, golang-jwt), 웹 프레임워크(gin), DB 드라이버(pgx, sqlite) 등 직접 의존성 일곱 개뿐이다.
-웹 서버 하나에 바깥에서 가져온 코드가 일곱 꾸러미뿐이라는 사실이 {ch-go-hello}에서 말한 표준 라이브러리의 두꺼움을 숫자로 보여 준다.
+`require` 블록에는 JWT 검증(keyfunc, golang-jwt), 웹 프레임워크(gin), DB 드라이버(pgx, sqlite), 덱 스토리의 마크다운을 HTML로 바꾸는 변환기(goldmark) 등 직접 의존성 여덟 개뿐이다.
+웹 서버 하나에 바깥에서 가져온 코드가 여덟 꾸러미뿐이라는 사실이 {ch-go-hello}에서 말한 표준 라이브러리의 두꺼움을 숫자로 보여 준다.
 이 목록이 짧다는 것은 {ch-tech-choices}에서 세운 "관리할 것이 적은가"라는 기준이 코드에 남긴 흔적이기도 하다.
 
 === 디렉터리마다 맡은 일이 있다
@@ -354,7 +356,7 @@ SQLite 쪽만 저장소를 여기서 열어 넘기고, PostgreSQL 쪽은 여는 
 
 == 정리
 
-첫째, Flashcard는 모듈 하나에 패키지 열넷이고 바깥 의존성은 일곱 꾸러미뿐이다.
+첫째, Flashcard는 모듈 하나에 패키지 열넷이고 바깥 의존성은 여덟 꾸러미뿐이다.
 `go.mod`의 모듈 이름이 곧 임포트 주소의 접두어가 된다.
 
 둘째, 디렉터리마다 맡은 일이 정해져 있다.

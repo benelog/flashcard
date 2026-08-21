@@ -4,9 +4,9 @@
 이 장에서는 그 눈으로 Flashcard의 실제 화면을 읽는데, 문법을 다시 설명하지는 않는다.
 연습용 예제와 실제 앱의 차이는 문법이 아니라 규모와 조직이기 때문이다.
 
-화면이 열두어 장이 되면 질문이 달라진다.
+화면이 열세 장이 되면 질문이 달라진다.
 같은 상단 바와 하단 탭을 화면마다 한 벌씩 적을 것인가, 색을 바꾸려면 몇 군데를 고쳐야 하는가, 새 화면을 하나 더할 때 무엇을 복사하고 무엇을 물려받을 것인가.
-스타일시트가 1,000줄이 되면 여기에 하나가 더 붙는다.
+스타일시트가 1,100줄이 되면 여기에 하나가 더 붙는다.
 템플릿에서 태그를 하나 바꿨을 때 스타일이 조용히 풀리는 일을 어떻게 막을 것인가.
 
 이 장은 그 답들을 읽는다.
@@ -41,7 +41,7 @@ internal/web/templates/
 
 이 배치의 값어치는 화면을 하나 더할 때 드러난다.
 새 화면을 만들려면 `pages/`에 파일 하나를 쓰면 되고, 상단 바나 하단 탭은 한 줄도 적지 않는다.
-반대로 하단 탭에 항목을 하나 더하려면 `layout.html` 한 곳만 고치면 열두 화면에 함께 반영된다.
+반대로 하단 탭에 항목을 하나 더하려면 `layout.html` 한 곳만 고치면 열세 화면에 함께 반영된다.
 
 세 층을 실제로 이어 붙이는 것은 Go의 html/template이고, 그 문법과 조립 코드는 {ch-html-template}의 주제다.
 이 장에서는 각 층에 무엇이 들어 있는지를 읽는다.
@@ -107,6 +107,7 @@ internal/web/templates/
 
 [source,html]
 ----
+  <!-- ... 로그인 화면만 겉틀 없이 그리는 분기 생략 ... -->
   <div class="frame">
     <header class="topbar">
       {{if .LoggedIn}}<a class="brand" href="/">{{template "logo"}} Flashcard</a>
@@ -137,7 +138,7 @@ internal/web/templates/
 셋 다 `<div>`로 만들어도 화면은 똑같이 나오지만, 이름 있는 태그를 쓰면 화면 낭독기가 `<nav>`를 만나 "여기는 이동 메뉴"라고 알려 줄 수 있다.
 검색 엔진도 `<main>` 안을 본문으로 대접한다.
 {ch-html-hello}에서 본 시맨틱 마크업의 값어치가 이 파일에서는 하나 더 있다.
-겉틀 하나가 열두 화면의 구조를 정하므로, 여기서 태그를 제대로 골라 두면 그 이득이 앱 전체에 한 번에 적용된다.
+겉틀 하나가 열세 화면의 구조를 정하므로, 여기서 태그를 제대로 골라 두면 그 이득이 앱 전체에 한 번에 적용된다.
 
 하단 탭의 `active` 클래스는 서버가 붙인다.
 `{{if eq .Path "/"}} active{{end}}`는 지금 보고 있는 주소가 홈이면 그 탭에만 `active`를 덧붙이라는 뜻이다.
@@ -216,12 +217,14 @@ Flashcard의 폼에서 볼 것은 폼 문법이 아니라, 자바스크립트를
 [source,html]
 ----
   <div class="type-pills">
-    <label><input class="pill-radio" type="radio" name="card_type" value="word" {{if eq $f.CardType "word"}}checked{{end}}><span class="pill-label">단어</span></label>
-    <label><input class="pill-radio" type="radio" name="card_type" value="sentence" {{if eq $f.CardType "sentence"}}checked{{end}}><span class="pill-label">문장</span></label>
-    <!-- ... 숙어·개념 선택지 생략 ... -->
+    {{range cardTypes}}
+    <label><input class="pill-radio" type="radio" name="card_type" value="{{.}}" {{if eq $f.CardType .}}checked{{end}}><span class="pill-label">{{typeLabel .}}</span></label>
+    {{end}}
   </div>
 ----
 
+라디오 버튼 네 개를 하나하나 적는 대신, `{{range cardTypes}}` 반복 하나가 네 종류(단어·문장·숙어·개념)만큼 같은 모양의 버튼을 찍어 낸다.
+`cardTypes`와 코드를 한글 라벨로 바꾸는 `typeLabel`은 서버가 템플릿에 빌려준 함수인데, 그 빌려주는 장치는 {ch-html-template}에서 다룬다.
 `name`이 같은 라디오 버튼들은 한 묶음이 되어 그중 하나만 선택된다.
 그런데 실제 화면에는 동그란 라디오 버튼이 보이지 않고 알약 모양의 선택 버튼만 있다.
 라디오 버튼은 CSS로 숨기고 함께 묶인 `<span>`을 알약처럼 꾸민 것인데, 그 방법은 이 장의 마지막 절에서 본다.
@@ -255,7 +258,7 @@ Flashcard의 폼에서 볼 것은 폼 문법이 아니라, 자바스크립트를
 
 == 스타일시트 한 파일을 조직하는 규칙
 
-Flashcard의 스타일은 `internal/web/static/app.css` 한 파일, 1,000줄 남짓이 전부다.
+Flashcard의 스타일은 `internal/web/static/app.css` 한 파일, 1,100줄 남짓이 전부다.
 전처리기도 프레임워크도 없고, 사람이 쓴 원본을 브라우저가 읽을 형태로 한 번 변환해 두는 준비 과정(빌드 단계)도 없다.
 파일을 고치고 화면을 새로 고치면 그것이 곧 결과다.
 그 대신 파일 하나가 커져도 읽고 고칠 수 있도록 규칙 네 가지를 지킨다.
@@ -286,7 +289,7 @@ Flashcard의 스타일은 `internal/web/static/app.css` 한 파일, 1,000줄 남
 ----
 
 이렇게 이름 붙여 둔 색과 치수를 디자인 토큰(design token)이라고 부른다.
-아래의 1,000줄은 색을 직접 적는 대신 `var(--bg)`처럼 이 이름을 꺼내 쓴다.
+아래의 1,100줄은 색을 직접 적는 대신 `var(--bg)`처럼 이 이름을 꺼내 쓴다.
 주 색상을 바꿀 때 `--primary` 한 줄만 고치면 버튼과 링크와 진행 막대가 한꺼번에 바뀌고, 잠시 뒤에 볼 다크 모드도 이 목록 덕분에 거저 얻는다.
 
 이름을 짓는 기준은 쓰임이지 색깔이 아니다.
@@ -389,7 +392,7 @@ CSS에서 요소를 고르는 방법은 여럿인데, 그중 자손 선택자는
 ----
 
 사용자가 운영체제에서 어두운 테마를 고르면 이 블록 안의 값들이 앞의 목록을 덮어쓴다.
-바뀌는 것은 변수 값 열댓 개뿐이고, `background: var(--bg)`라고 적어 둔 1,000줄의 규칙들은 한 줄도 손대지 않는다.
+바뀌는 것은 변수 값 열댓 개뿐이고, `background: var(--bg)`라고 적어 둔 1,100줄의 규칙들은 한 줄도 손대지 않는다.
 
 변수 없이 다크 모드를 만들려면 색을 쓰는 규칙마다 어두운 버전을 한 벌씩 더 써야 하고, 색 하나를 빠뜨리면 어두운 배경에 검은 글자 같은 사고가 난다.
 디자인 토큰을 앞에 모아 둔 보상이 여기서 돌아온다.

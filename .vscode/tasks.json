@@ -5,6 +5,7 @@
       "label": "go: build",
       "type": "shell",
       "command": "go build ./...",
+      "options": { "cwd": "${workspaceFolder}/flashcard-advanced" },
       "group": "build",
       "problemMatcher": ["$go"]
     },
@@ -12,6 +13,7 @@
       "label": "go: test",
       "type": "shell",
       "command": "go test ./...",
+      "options": { "cwd": "${workspaceFolder}/flashcard-advanced" },
       "group": "test",
       "problemMatcher": ["$go"]
     },
@@ -19,6 +21,7 @@
       "label": "go: vet",
       "type": "shell",
       "command": "go vet ./...",
+      "options": { "cwd": "${workspaceFolder}/flashcard-advanced" },
       "problemMatcher": ["$go"]
     },
     {

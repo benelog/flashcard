@@ -142,19 +142,19 @@ HTML 폼이 스스로 보낼 수 있는 메서드는 GET과 POST 둘뿐이었는
 func (w *Web) deleteCard(c *gin.Context) {
 	// ... 카드 ID를 읽어 삭제하고, 실패하면 에러 화면을 낸다 ...
 	// htmx가 목록의 해당 <li>를 지우도록 빈 본문을 돌려준다.
-	if c.GetHeader("HX-Request") != "" {
+	if isHTMX(c) {
 		c.Status(http.StatusOK)
 		return
 	}
-	setFlash(c, "info", "카드를 삭제했어요")
+	setFlash(c, flashInfo, "카드를 삭제했어요")
 	redirectBack(c, "/decks")
 }
 ----
 
-여기서 `HX-Request`가 처음 나왔다.
-htmx는 자신이 보내는 모든 요청에 이 이름의 HTTP 헤더를 붙인다.
+여기서 `isHTMX`가 처음 나왔다.
+요청에 `HX-Request` 헤더가 있는지 확인하는 한 줄짜리 헬퍼(`internal/web/web.go`)인데, htmx는 자신이 보내는 모든 요청에 이 이름의 HTTP 헤더를 붙인다.
 헤더는 요청과 응답의 본문과는 별도로 딸려 가는 부가 정보 칸이다.
-핸들러는 이 헤더가 있으면 본문 없는 200 응답을 돌려주는데, 성공 응답에 본문이 없으면 htmx는 대상을 빈 내용으로 바꾼다.
+핸들러는 이 헤더가 있으면, 즉 `isHTMX`가 참이면 본문 없는 200 응답을 돌려주는데, 성공 응답에 본문이 없으면 htmx는 대상을 빈 내용으로 바꾼다.
 `outerHTML`이라 요소 자체가 빈 것으로 바뀌므로 그 카드 줄이 화면에서 사라진다.
 데이터베이스의 삭제와 화면의 삭제가 요청 한 번으로 함께 끝났다.
 
@@ -436,9 +436,10 @@ htmx의 요청도 결국 브라우저를 통하므로 리다이렉트를 따라�
 ----
 func (w *Web) deleteDeck(c *gin.Context) {
 	// ... 덱 삭제와 에러 처리 ...
-	setFlash(c, "info", "덱을 삭제했어요")
-	// htmx 요청이면 HX-Redirect로, 일반 폼이면 303으로 이동한다.
-	if c.GetHeader("HX-Request") != "" {
+	setFlash(c, flashInfo, "덱을 삭제했어요")
+	// 삭제한 덱의 화면에 머물 수 없으므로 목록으로 보낸다. htmx 요청은 조각만
+	// 갈아 끼우므로 이동을 HX-Redirect 헤더로 지시해야 한다.
+	if isHTMX(c) {
 		c.Header("HX-Redirect", "/decks")
 		c.Status(http.StatusOK)
 		return

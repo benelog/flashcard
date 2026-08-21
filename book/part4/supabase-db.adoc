@@ -87,7 +87,7 @@ type Store interface {
 
 	ListDecks(ctx context.Context, userID uuid.UUID) ([]Deck, error)
 	CreateDeck(ctx context.Context, userID uuid.UUID, name string, description *string) (Deck, error)
-	// ... (덱·카드·세션·공유·스마트 덱·통계에 걸쳐 모두 32개 메서드)
+	// ... (덱·카드·세션·공유·스마트 덱·통계에 걸쳐 모두 34개 메서드)
 
 	DailyStats(ctx context.Context, userID uuid.UUID, tz string, days int) ([]DailyStat, error)
 }

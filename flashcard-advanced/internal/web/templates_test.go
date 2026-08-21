@@ -15,7 +15,7 @@ func TestTemplatesParse(t *testing.T) {
 
 	expected := []string{
 		"home", "decks", "deck", "card_form", "study", "study_direction",
-		"stats", "settings", "shared", "shared_deck", "login", "error",
+		"stats", "settings", "shared", "shared_deck", "story_form", "login", "error",
 	}
 	for _, name := range expected {
 		if _, ok := w.pages[name]; !ok {

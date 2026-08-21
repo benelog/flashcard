@@ -12,14 +12,14 @@ Go 표준 라이브러리 html/template이 HTML 양식에 데이터를 채워 �
 
 문법은 다시 설명하지 않는다.
 점 하나가 지금 보고 있는 데이터라는 것, `{{if}}`와 `{{range}}`가 갈래와 반복을 만든다는 것, `{{define}}`으로 조각에 이름을 붙여 `{{template}}`으로 불러 쓴다는 것까지 {ch-template-hello}에서 최소 앱으로 익혔다.
-이 장은 그 문법 위에서, 화면 열두 장과 조각 여럿을 거느린 앱이 템플릿을 어떻게 조직하는지를 읽는다.
+이 장은 그 문법 위에서, 화면 열세 장과 조각 여럿을 거느린 앱이 템플릿을 어떻게 조직하는지를 읽는다.
 페이지마다 같은 레이아웃을 씌우면서 이름 충돌을 피하는 Clone 패턴, 함수를 빌려주는 FuncMap, 사용자 입력을 안전하게 다루는 자동 이스케이프, 템플릿을 실행 파일에 싣는 embed, 그리고 페이지 핸들러의 흐름과 템플릿 테스트까지 차례로 짚는다.
 
 == 완성본의 템플릿 지도
 
 먼저 파일 구성이다.
 Flashcard의 템플릿은 `internal/web/templates/` 아래에 있고, 세 갈래로 나뉜다.
-페이지 파일 12개(`pages/*.html`), 모든 페이지가 공유하는 공통 레이아웃 1개(`layout.html`), 여러 페이지가 나눠 쓰는 조각 3개(`partials/*.html`)가 전부다.
+페이지 파일 13개(`pages/*.html`), 모든 페이지가 공유하는 공통 레이아웃 1개(`layout.html`), 여러 페이지가 나눠 쓰는 조각 4개(`partials/*.html`)가 전부다.
 {ch-template-hello}의 최소 앱이 화면 파일 셋과 조각 하나였던 것과 비교하면 수가 늘었을 뿐 종류는 같다.
 달라진 것은 이 파일들을 엮는 방식이고, 그 방식이 이 장의 내용이다.
 
@@ -32,7 +32,7 @@ Flashcard는 의존성이 늘지 않고 자동 이스케이프가 기본인 표�
 == 레이아웃과 조각: 공통 마크업은 한 번만 쓴다
 
 홈, 덱 목록, 통계, 설정 어느 페이지를 열어도 상단 바와 하단 내비게이션은 같다.
-페이지 파일마다 이 공통 마크업을 복사해 두면 고칠 때마다 12곳을 손봐야 하므로, 공통 마크업은 `layout.html` 한 파일에만 쓰고 페이지는 저마다의 본문만 쓴다.
+페이지 파일마다 이 공통 마크업을 복사해 두면 고칠 때마다 13곳을 손봐야 하므로, 공통 마크업은 `layout.html` 한 파일에만 쓰고 페이지는 저마다의 본문만 쓴다.
 
 === 액자와 그림: layout이 content를 불러들인다
 
@@ -79,14 +79,14 @@ HTML 문서의 기본 구조를 갖추고, 본문 자리에서 `content`라는 �
 ----
 
 `{{template "content" .}}`의 마지막 점은 "지금 내가 보고 있는 데이터를 그대로 넘겨준다"는 뜻이다.
-그리고 `pages/` 아래의 페이지 파일 12개가 전부 `{{define "content"}}`로 시작한다.
+그리고 `pages/` 아래의 페이지 파일 13개가 전부 `{{define "content"}}`로 시작한다.
 레이아웃이 액자라면 각 페이지는 액자에 끼우는 그림이고, `content`라는 이름이 끼우는 자리다.
-최소 앱에서는 화면 파일마다 `<!doctype html>`부터 다시 적었는데, 화면이 열둘로 늘면 그 반복이 상단 바 한 줄을 고치려고 파일 열두 개를 여는 일이 된다.
+최소 앱에서는 화면 파일마다 `<!doctype html>`부터 다시 적었는데, 화면이 열셋으로 늘면 그 반복이 상단 바 한 줄을 고치려고 파일 열세 개를 여는 일이 된다.
 
 === base를 복제하는 이유: Clone 패턴
 
 여기서 문제가 하나 생긴다.
-템플릿 집합 하나 안에서 같은 이름은 하나만 존재할 수 있는데, 페이지 파일 12개가 전부 `content`라는 이름을 쓴다.
+템플릿 집합 하나 안에서 같은 이름은 하나만 존재할 수 있는데, 페이지 파일 13개가 전부 `content`라는 이름을 쓴다.
 
 여기서 파싱(parsing)이라는 말이 나온다.
 
@@ -205,8 +205,9 @@ html/template은 `{{.Meaning}}` 같은 자리 표시의 값을 내보낼 때 위
 "컨텍스트" 자동 이스케이프라는 이름에는 이유가 있다.
 여기서 컨텍스트는 값이 놓인 자리, 즉 문맥을 뜻한다.
 같은 값이라도 HTML의 어느 자리에 들어가느냐에 따라 위험한 문자가 다르기 때문에, html/template은 파싱하면서 각 자리 표시가 본문인지, 속성값인지, URL인지 파악해 두고 자리마다 맞는 이스케이프를 적용한다.
-덱 목록 화면의 한 줄에도 세 문맥이 다 나온다.
-`{{.Name}}`(본문)에는 태그 문자를 막는 HTML 이스케이프가, `data-tts="{{.TextTTS}}"`(속성값)에는 따옴표를 벗어나지 못하게 하는 속성 이스케이프가, `href="/decks/{{.Slug}}"`(URL)에는 주소로 쓰기에 안전하게 만드는 URL 인코딩이 적용된다.
+덱 목록 화면의 한 줄에는 그중 둘이 나온다.
+`{{.Name}}`(본문)에는 태그 문자를 막는 HTML 이스케이프가, `href="/decks/{{.Slug}}"`(URL)에는 주소로 쓰기에 안전하게 만드는 URL 인코딩이 적용된다.
+학습 화면 조각의 발음 듣기 버튼 `data-tts="{{$.TextTTS}}"`(속성값)에는 따옴표를 벗어나지 못하게 하는 속성 이스케이프가 적용된다.
 템플릿을 쓰는 사람은 세 자리를 똑같이 `{{...}}`로 쓸 뿐이고, 구분은 엔진이 한다.
 
 === 이스케이프에 맡긴 결정: 스마트 덱 규칙 JSON
@@ -356,8 +357,7 @@ w.render(c, http.StatusOK, "home", "Flashcard", gin.H{
 func (w *Web) createDeck(c *gin.Context) {
 	name := strings.TrimSpace(c.PostForm("name"))
 	if name == "" {
-		setFlash(c, "error", "덱 이름을 입력해주세요")
-		c.Redirect(http.StatusSeeOther, "/decks")
+		redirectWithFlash(c, flashError, "덱 이름을 입력해주세요", "/decks")
 		return
 	}
 	deck, err := w.store.CreateDeck(c.Request.Context(), auth.UserID(c), name, nil)
@@ -371,6 +371,7 @@ func (w *Web) createDeck(c *gin.Context) {
 
 `c.PostForm("name")`은 폼의 `<input name="name">` 값을 꺼낸다.
 {ch-gin}의 JSON 바인딩과 하는 일은 같고, 데이터가 JSON 본문 대신 폼 인코딩으로 온다는 점만 다르다.
+검증에 실패한 경로가 부르는 `redirectWithFlash`는 안내 문구를 남기고 목록으로 이동시키는 헬퍼인데, 그 속은 다음 소절에서 연다.
 
 주목할 부분은 성공했을 때 `render`가 아니라 `c.Redirect`를 부른다는 것이다.
 {ch-gin-hello·template-hello}에서 최소 앱의 폼들이 저장을 마치고 303으로 답하던 그 모양이고, 이름과 사연을 여기서 붙인다.
@@ -405,7 +406,8 @@ Flashcard는 수명이 짧은 쿠키로 이 틈을 잇는다.
 PRG 패턴에서 POST가 남긴 말을 리다이렉트 건너편 화면까지 전하는 통로여서, 웹 프레임워크 대부분이 같은 이름의 기능을 갖추고 있다.
 ====
 
-다음 코드는 안내 문구를 쿠키에 적어 남기는 `setFlash`와, 다음 요청에서 그것을 꺼내 읽고 곧바로 지우는 `takeFlash`다.
+다음 코드는 안내 문구를 쿠키에 적어 남기는 `setFlash`, 그것을 남긴 뒤 곧장 303으로 보내는 `redirectWithFlash`, 다음 요청에서 그 문구를 꺼내 읽고 곧바로 지우는 `takeFlash`다.
+`createDeck`의 검증 실패 경로가 불렀던 것이 이 `redirectWithFlash`이고, 종류를 날 문자열 대신 `flashInfo`·`flashError` 상수로 받아 오타를 막는다.
 
 `internal/web/cookies.go`:
 
@@ -413,8 +415,22 @@ PRG 패턴에서 POST가 남긴 말을 리다이렉트 건너편 화면까지 �
 ----
 // 플래시 메시지는 짧은 수명의 쿠키로 리다이렉트 한 번을 살아남는다.
 
+// 플래시 종류. 템플릿이 이 값을 그대로 CSS 클래스로 쓴다.
+const (
+	flashInfo  = "info"
+	flashError = "error"
+)
+
 func setFlash(c *gin.Context, kind, message string) {
 	setCookie(c, flashCookie, kind+"|"+message, 60)
+}
+
+// redirectWithFlash는 모든 폼 핸들러가 공유하는 PRG(Post/Redirect/Get)
+// 마무리다. 한 번짜리 메시지를 남기고 303으로 보내므로 새로고침해도 폼이
+// 다시 제출되지 않는다.
+func redirectWithFlash(c *gin.Context, kind, message, path string) {
+	setFlash(c, kind, message)
+	c.Redirect(http.StatusSeeOther, path)
 }
 
 // takeFlash는 대기 중인 플래시 메시지를 읽고 지운다.
@@ -426,7 +442,7 @@ func takeFlash(c *gin.Context) (kind, message string) {
 	clearCookie(c, flashCookie)
 	kind, message, ok := strings.Cut(raw, "|")
 	if !ok {
-		return "info", raw
+		return flashInfo, raw
 	}
 	return kind, message
 }
@@ -446,7 +462,7 @@ func takeFlash(c *gin.Context) (kind, message string) {
 그래서 템플릿에도 테스트를 둔다.
 파싱은 `New`가 내부(`parseTemplates`)에서 `template.Must`로 검증하므로 `New`를 호출하는 것만으로 전체 템플릿의 문법 검사가 되고, 렌더링은 대표 데이터를 넣어 실제로 그려 본다.
 `template.Must`는 파싱이 실패하면 그 자리에서 패닉을 일으키고, 테스트 안에서 난 패닉은 그 테스트의 실패로 기록되기 때문이다.
-`internal/web/templates_test.go`는 페이지 파일 12개가 모두 파싱됐는지 확인하고, 가장 복잡한 학습 화면 조각을 국면(phase)마다 실제로 렌더링해 본다.
+`internal/web/templates_test.go`는 페이지 파일 13개가 모두 파싱됐는지 확인하고, 가장 복잡한 학습 화면 조각을 국면(phase)마다 실제로 렌더링해 본다.
 
 [source,go]
 ----
@@ -499,10 +515,10 @@ func TestTemplatesParse(t *testing.T) {
 
 == 정리
 
-이번 장에서는 {ch-template-hello}에서 익힌 템플릿 문법 위에서, 화면 열두 장짜리 앱이 템플릿을 조직하는 방법을 살펴봤다.
+이번 장에서는 {ch-template-hello}에서 익힌 템플릿 문법 위에서, 화면 열세 장짜리 앱이 템플릿을 조직하는 방법을 살펴봤다.
 
 구조는 액자와 그림이다.
-`layout.html`이 페이지 본문(`content`)을 감싸고, 페이지 파일 12개가 같은 이름을 쓰는 데서 오는 충돌은 base를 페이지마다 복제하는 Clone 패턴으로 풀었으며, 템플릿에 부족한 계산력은 FuncMap으로 메웠다.
+`layout.html`이 페이지 본문(`content`)을 감싸고, 페이지 파일 13개가 같은 이름을 쓰는 데서 오는 충돌은 base를 페이지마다 복제하는 Clone 패턴으로 풀었으며, 템플릿에 부족한 계산력은 FuncMap으로 메웠다.
 컨텍스트 자동 이스케이프는 사용자 입력의 XSS를 기본값으로 막고 본문·속성·URL 문맥을 스스로 구분한다.
 스마트 덱 규칙 JSON의 인코딩을 템플릿에 맡긴 결정과 `template.HTML`이라는 예외의 문을 개발자 통제 값에만 여는 규칙도 짚었다.
 템플릿과 정적 자산은 embed로 실행 파일에 실려, 로컬과 배포 환경이 같은 자산을 본다.

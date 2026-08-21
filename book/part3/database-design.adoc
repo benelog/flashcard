@@ -56,6 +56,7 @@ create table if not exists decks (
   user_id text not null references profiles(id) on delete cascade,
   name text not null,
   description text,
+  story text,
   share_slug text,
   shared_at text,
   seq integer not null unique,

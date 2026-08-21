@@ -14,7 +14,9 @@
 
   "search.exclude": {
     "**/node_modules": true,
-    "doc/.vitepress/dist": true
+    "book/.vitepress/dist": true,
+    "book/.vitepress/cache": true,
+    "book/.generated": true
   },
 
   "files.insertFinalNewline": true,

@@ -6,7 +6,8 @@
       "type": "go",
       "request": "launch",
       "mode": "debug",
-      "program": "${workspaceFolder}/cmd/server"
+      "program": "${workspaceFolder}/flashcard-advanced/cmd/server",
+      "cwd": "${workspaceFolder}/flashcard-advanced"
     },
     {
       "name": "Go: 현재 파일의 패키지 테스트",

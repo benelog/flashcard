@@ -31,7 +31,7 @@ Flashcard 백엔드는 HTTP 관심사와 데이터 접근을 다른 패키지로
 [source,go]
 ----
 include::../../flashcard-advanced/internal/model/store.go[tag=store-head]
-	// ... 카드·세션·공유·스마트 덱·통계 메서드 생략 (모두 합해 32개)
+	// ... 덱 스토리·카드·세션·공유·스마트 덱·통계 메서드 생략 (모두 합해 34개)
 }
 
 // internal/model/model.go

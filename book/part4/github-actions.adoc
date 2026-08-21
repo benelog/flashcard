@@ -91,7 +91,7 @@ Flashcard는 화면까지 Go 서버가 렌더링하므로({ch-html-template}) �
 == ci.yml 해부
 
 저장소의 `.github/workflows/ci.yml` 전문이다.
-두 브랜치에 코드가 도착하거나 풀 리퀘스트가 갱신될 때 깨어나, 포맷 검사부터 Vercel 호환 검사까지 다섯 스텝을 순서대로 돌리는 파일이다.
+두 브랜치에 코드가 도착하거나 풀 리퀘스트가 갱신될 때 깨어나, gofmt·빌드·정적 분석·테스트·Vercel 호환의 다섯 가지 검사를 순서대로 돌리는 파일이다.
 
 [source,yaml]
 ----
@@ -157,8 +157,9 @@ Go 버전을 워크플로에 적어 넣는 대신 `go.mod`에서 읽게 했다.
 `go.mod`의 `go 1.26.4` 한 줄이 로컬과 CI가 함께 참조하는 단일 출처(single source of truth)가 되므로, Go를 올릴 때 고칠 곳이 한 군데다.
 `cache: true`는 모듈 다운로드 결과를 캐싱해 두 번째 실행부터 시간을 줄인다.
 
-이 저장소에는 Go 모듈이 둘 있다(완성본 앱 `flashcard-advanced/`와 2부의 최소 앱 `flashcard-basic/`).
-그래서 빌드·vet·테스트 스텝은 `working-directory`로 어느 모듈에서 돌지를 정해 두 모듈을 각각 검사한다.
+이 저장소에는 Go 모듈이 셋 있다(완성본 앱 `flashcard-advanced/`, 2부의 최소 앱 `flashcard-basic/`, 완성본의 JSON API를 부르는 명령줄 도구 `flashcard-cli/`).
+그래서 빌드·vet·테스트 스텝은 `working-directory`로 어느 모듈에서 돌지를 정해 세 모듈을 각각 검사한다.
+2부 문법 장의 연습용 Go 예제(`language-basic/go`)도 같은 방식으로 빌드와 vet을 돌려, 컴파일이 깨진 예제가 책에 실리지 않게 한다.
 
 === gofmt: 고치지 않고 고발한다
 

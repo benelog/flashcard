@@ -28,10 +28,11 @@
 
 == golang-migrate와 버전 관리
 
-`internal/db/migrations/` 디렉터리에는 `000001_init`부터 `000004_deck_seq`까지 네 버전이 있고, 버전마다 적용(up)과 되돌리기(down) 스크립트가 쌍을 이뤄 모두 여덟 파일이다.
+`internal/db/migrations/` 디렉터리에는 `000001_init`부터 `000005_deck_story`까지 다섯 버전이 있고, 버전마다 적용(up)과 되돌리기(down) 스크립트가 쌍을 이뤄 모두 열 파일이다.
+가장 최근의 `000005_deck_story`는 덱에 이야기 글을 담는 `story` 칼럼을 더한 변경이다.
 파일명의 앞자리 숫자가 버전이라, 어떤 환경이든 "현재 버전에서 최신 버전까지의 up을 순서대로 실행"하는 것만으로 같은 스키마에 도달한다.
 덕분에 스키마의 버전 관리를 코드와 같은 git 저장소에서 하게 된다.
-로컬 모드의 `schema.sql`이 이 네 마이그레이션을 모두 적용한 결과를 SQLite 방언으로 눌러 담은 한 장이라는 사실도 이제 말할 수 있다.
+로컬 모드의 `schema.sql`이 이 다섯 마이그레이션을 모두 적용한 결과를 SQLite 방언으로 눌러 담은 한 장이라는 사실도 이제 말할 수 있다.
 그래서 PostgreSQL 마이그레이션을 추가하면 같은 커밋에서 `internal/litestore/schema.sql`도 함께 고쳐야, 로컬 모드와 운영이 같은 스키마 위에서 돈다.
 
 실행 도구는 golang-migrate 라이브러리다.
@@ -73,7 +74,7 @@ golang-migrate는 `schema_migrations` 테이블에 현재 버전을 기록해 �
 "지금 이 DB가 몇 번 버전인가"를 어디에 적어 두느냐가 이 방식의 심장이다.
 golang-migrate는 대상 DB에 `schema_migrations`라는 테이블을 스스로 만들고, 거기에 행 하나만 유지한다.
 열은 둘로, 마지막으로 적용된 버전 번호(`version`)와 그 적용이 끝까지 성공했는지를 나타내는 참·거짓 값(`dirty`)이다.
-개발 DB에 네 마이그레이션을 모두 적용한 뒤 이 테이블을 조회하면 `version`은 4, `dirty`는 거짓이다.
+개발 DB에 다섯 마이그레이션을 모두 적용한 뒤 이 테이블을 조회하면 `version`은 5, `dirty`는 거짓이다.
 
 이 한 줄을 읽고 쓰는 절차가 `m.Up()`의 전부다.
 첫째, 권고 잠금을 잡는다.
@@ -126,7 +127,8 @@ IPv4로 접속되면서 세션도 유지되는 주소를 고르는 것이 요점
 
 == 사례로 보는 스키마 진화
 
-Flashcard는 초기 스키마 이후 세 번의 변경을 겪었고 그 이력이 그대로 마이그레이션 파일로 남아 있으니, 요구사항 변화가 마이그레이션으로 이어진 세 사례를 순서대로 보자.
+Flashcard는 초기 스키마 이후 네 번의 변경을 겪었고 그 이력이 그대로 마이그레이션 파일로 남아 있다.
+그 가운데 사례 셋을 골라, 요구사항 변화가 마이그레이션으로 이어진 과정을 순서대로 보자.
 
 === 사례 1: 덱 공유 기능 추가
 
@@ -247,35 +249,7 @@ alter table decks add constraint decks_seq_key unique (seq);
 
 [source,yaml]
 ----
-on:
-  push:
-    branches: [main, release]
-    paths:
-      - 'internal/db/migrations/**'
-      - 'internal/db/migrate.go'
-      - 'cmd/migrate/**'
-      - '.github/workflows/migrate.yml'
-  workflow_dispatch:
-
-concurrency:
-  group: migrate-${{ github.ref }}
-  cancel-in-progress: false
-
-jobs:
-  migrate:
-    name: ${{ github.ref_name == 'release' && '운영' || 'dev' }} DB 마이그레이션
-    runs-on: ubuntu-latest
-    steps:
-      # ... (checkout, setup-go)
-      - name: go run ./cmd/migrate
-        env:
-          MIGRATE_DATABASE_URL: ${{ github.ref_name == 'release' && secrets.PROD_MIGRATE_DATABASE_URL || secrets.DEV_MIGRATE_DATABASE_URL }}
-        run: |
-          if [ -z "$MIGRATE_DATABASE_URL" ]; then
-            echo "${{ github.ref_name }} 브랜치에 해당하는 마이그레이션 시크릿이 비어 있습니다."
-            exit 1
-          fi
-          go run ./cmd/migrate
+include::../../.github/workflows/migrate.yml[]
 ----
 
 네 곳을 차례로 보자.
@@ -283,6 +257,7 @@ jobs:
 첫째, `paths` 필터가 여기서는 시간을 아끼는 장치가 아니라 안전장치다.
 필터가 없으면 스키마와 무관한 커밋마다 운영 데이터베이스에 접속을 열게 된다.
 바꿀 것이 없으니 결과는 같지만, 아무 일도 하지 않기 위해 운영 DB의 문을 하루에도 몇 번씩 여는 구성은 사고의 여지만 늘린다.
+마이그레이션 코드가 완성본 앱 디렉터리 아래에 있으므로 `paths`의 경로마다 `flashcard-advanced/` 접두사가 붙고, 실행 스텝도 `working-directory`로 그 디렉터리에 들어가서 돈다.
 목록에 워크플로 파일 자신(`.github/workflows/migrate.yml`)이 들어 있는 것도 눈여겨보자.
 이 워크플로를 고친 커밋에서는 고친 결과가 실제로 도는지 확인할 수 있어야 한다.
 
@@ -299,7 +274,8 @@ jobs:
 
 넷째, 시크릿이 비어 있으면 곧바로 실패시킨다.
 등록되지 않은 시크릿을 참조하면 GitHub는 오류 대신 빈 문자열을 건네주므로, 이 검사가 없으면 워크플로는 "연결 문자열이 없다"는 뜻 모를 오류를 뱉거나 엉뚱한 곳에 접속을 시도한다.
-빈 값을 이른 단계에서 명시적인 실패로 바꾸는 이 세 줄은, {ch-supabase-db}에서 본 서버의 기동 시점 설정 검사와 같은 발상이다.
+빈 값을 이른 단계에서 명시적인 실패로 바꾸는 이 검사는, {ch-supabase-db}에서 본 서버의 기동 시점 설정 검사와 같은 발상이다.
+오류 문구가 시크릿을 등록할 화면과 이름까지 안내하므로, 처음 설정하는 사람이 로그만 보고도 다음에 할 일을 안다.
 
 접속 정보 두 벌은 앞 절에서 말한 저장소 시크릿 `DEV_MIGRATE_DATABASE_URL`과 `PROD_MIGRATE_DATABASE_URL`이고, 값은 각각 개발·운영 Supabase 프로젝트의 연결 문자열이다.
 이 문자열이 왜 평소 API가 쓰는 것과 다른 포트여야 하는지는 앞의 direct 연결 절에서 봤다.
