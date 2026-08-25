@@ -13,6 +13,7 @@
 flashcard-advanced/local-db/
 flashcard-basic/flashcard.db*
 flashcard-basic/flashcard-basic
+flashcard-cli/flashcard-cli
 
 # vercel
 .vercel
