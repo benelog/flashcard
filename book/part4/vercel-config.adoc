@@ -102,7 +102,7 @@ AI 에이전트와 함께 개발하는 프로젝트에서 이 검사는 특히 �
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": null,
   "regions": ["iad1"],
-  "ignoreCommand": "git diff --quiet ${VERCEL_GIT_PREVIOUS_SHA:-HEAD^} HEAD -- .",
+  "ignoreCommand": "git diff --quiet ${VERCEL_GIT_PREVIOUS_SHA:-HEAD^} HEAD -- . || exit 1",
   "rewrites": [{ "source": "/(.*)", "destination": "/api/index" }]
 }
 ----
@@ -140,8 +140,12 @@ Vercel이 검사하는 것은 push에 담긴 커밋 전부가 아니라 그중 �
 
 `:-` 뒤의 값은 환경 변수가 비어 있을 때 대신 쓸 값을 정하는 셸 문법이다.
 그 브랜치의 첫 배포라 성공 이력이 없으면 예전처럼 ``HEAD^``와 견준다.
-Vercel이 저장소를 얕게 복제(shallow clone)해 그 커밋이 없을 때는 `git diff` 자체가 실패하는데, 종료 코드가 0이 아니므로 빌드는 그대로 진행된다.
-어느 쪽으로 어긋나도 결론이 "일단 배포한다"인 것이 이 표현식의 안전장치다.
+
+끝에 붙인 `|| exit 1`은 종료 코드를 0과 1 둘로만 맞춘다.
+Vercel은 이 명령이 0(건너뛴다) 아니면 1(배포한다)을 낸다고 보지만, `git diff`는 그 둘 말고 오류 코드도 낸다.
+Vercel은 저장소를 얕게 복제(shallow clone)하므로 마지막 성공 배포가 오래된 커밋이면 복제본에 그 커밋이 없고, 견줄 대상을 찾지 못한 `git diff`는 오류로 끝난다.
+`|| exit 1`을 붙여 두면 변경이 없을 때만 0이 나가고 나머지는 전부 1로 모인다.
+결론이 언제나 0 아니면 "일단 배포한다"인 것이 이 표현식의 안전장치다.
 
 남은 것은 `regions`다.
 
