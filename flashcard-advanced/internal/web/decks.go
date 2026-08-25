@@ -62,11 +62,22 @@ func (w *Web) deckPage(c *gin.Context) {
 		w.failPage(c, err)
 		return
 	}
+	// 읽기 속도는 스토리를 읽어 줄 때만 쓰므로, 스토리가 있을 때만 프로필을 읽는다.
+	ttsRate := defaultTtsRate
+	if story != nil {
+		profile, err := w.store.GetOrCreateProfile(ctx, userID, "")
+		if err != nil {
+			w.failPage(c, err)
+			return
+		}
+		ttsRate = settingsFrom(profile).TtsRate
+	}
 	w.render(c, http.StatusOK, "deck", deck.Name, gin.H{
 		"Deck":      deck,
 		"Cards":     cards,
 		"ShareURL":  w.shareURL(c, deck),
 		"StoryHTML": markdownHTML(model.OrEmpty(story)),
+		"TtsRate":   ttsRate,
 	})
 }
 

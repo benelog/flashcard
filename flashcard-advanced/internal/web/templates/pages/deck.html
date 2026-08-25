@@ -39,8 +39,14 @@
 {{if .Data.StoryHTML}}
 <details class="story">
   <summary class="tile-dashed">{{icon "book"}} 스토리 읽기</summary>
-  <div class="story-body tile">{{.Data.StoryHTML}}</div>
-  <a class="btn btn-outline story-edit" href="/decks/{{$deck.Slug}}/story">{{icon "pencil"}} 스토리 수정</a>
+  <div id="story-body" class="story-body tile">{{.Data.StoryHTML}}</div>
+  <div class="row story-actions">
+    <button type="button" class="btn btn-outline"
+      data-tts-story="story-body" data-tts-rate="{{.Data.TtsRate}}">
+      {{icon "volume"}} <span class="tts-play">듣기</span><span class="tts-stop">멈춤</span>
+    </button>
+    <a class="btn btn-outline" href="/decks/{{$deck.Slug}}/story">{{icon "pencil"}} 스토리 수정</a>
+  </div>
 </details>
 {{end}}
 

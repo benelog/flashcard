@@ -81,6 +81,33 @@ func TestStoryPreviewRendersWithoutSaving(t *testing.T) {
 	mustContain(t, rec, "미리 볼 내용이 없어요")
 }
 
+// 스토리에도 듣기 버튼이 붙는다. 읽기 속도는 설정에 저장된 값을 따른다.
+func TestStoryHasTTSButton(t *testing.T) {
+	a := newTestApp(t)
+	slug := a.makeDeck("듣기")
+
+	// 스토리가 없으면 듣기 버튼도 없다.
+	mustNotContain(t, a.get("/decks/"+slug), `data-tts-story`)
+
+	mustRedirect(t, a.postForm("/decks/"+slug+"/story", url.Values{
+		"story": {"Let's kick off the meeting."},
+	}))
+	rec := a.get("/decks/" + slug)
+	mustContain(t, rec, `data-tts-story="story-body"`)
+	mustContain(t, rec, `data-tts-rate="0.9"`) // 기본 읽기 속도
+
+	mustRedirect(t, a.postForm("/settings", url.Values{
+		"display_name": {"듣기"},
+		"tts_rate":     {"0.6"},
+		"daily_goal":   {"20"},
+	}))
+	mustContain(t, a.get("/decks/"+slug), `data-tts-rate="0.6"`)
+
+	// 미리 보기도 저장 전에 들어볼 수 있다.
+	rec = a.postHTMX("/decks/"+slug+"/story/preview", url.Values{"story": {"Hello."}})
+	mustContain(t, rec, `data-tts-story="story-preview-body"`)
+}
+
 func TestStoryOfMissingDeckIs404(t *testing.T) {
 	a := newTestApp(t)
 	mustStatus(t, a.get("/decks/zzzz/story"), http.StatusNotFound)

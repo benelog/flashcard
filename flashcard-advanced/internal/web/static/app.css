@@ -705,8 +705,24 @@ details.story[open] > summary {
   margin-bottom: 0.5rem;
 }
 
-.story-edit {
+.story-actions {
   margin-top: 0.5rem;
+}
+
+/* 스토리 듣기 버튼: 읽는 동안 라벨이 "멈춤"으로 바뀐다.
+   상태 선택자: app.js가 버튼에 data-playing을 붙이면 두 라벨이 뒤바뀐다.
+   부모의 상태가 자식의 표시를 정하는 구조라 클래스로 대체할 수 없다. */
+
+.tts-stop {
+  display: none;
+}
+
+[data-playing] .tts-play {
+  display: none;
+}
+
+[data-playing] .tts-stop {
+  display: inline;
 }
 
 /* 편집 화면의 원문 입력. 마크다운 기호가 눈에 들어오게 고정폭으로 쓴다. */

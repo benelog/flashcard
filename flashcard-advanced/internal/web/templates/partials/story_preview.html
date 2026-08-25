@@ -3,7 +3,12 @@
      실행 대상(.)은 이미 변환된 template.HTML이다. */}}
 {{define "story_preview"}}
 {{if .}}
-<div class="story-body tile">{{.}}</div>
+<div id="story-preview-body" class="story-body tile">{{.}}</div>
+<div class="row story-actions">
+  <button type="button" class="btn btn-outline" data-tts-story="story-preview-body">
+    {{icon "volume"}} <span class="tts-play">듣기</span><span class="tts-stop">멈춤</span>
+  </button>
+</div>
 {{else}}
 <p class="tiny faint">미리 볼 내용이 없어요.</p>
 {{end}}
