@@ -45,6 +45,36 @@ type reviewedMsg struct {
 
 type finishedMsg struct{ err error }
 
+// String은 세션 결과를 한두 줄로 요약한다. 명령 모드는 화면을 닫은 뒤 찍고,
+// 메뉴 모드는 내용 칸에 넣는다.
+func (s Summary) String() string {
+	graded := s.Correct + s.Wrong
+	var lines []string
+	if !s.Finished {
+		lines = append(lines, fmt.Sprintf("중간에 마쳤습니다 (%d/%d장 채점).", graded, s.Total))
+	}
+	if graded > 0 {
+		lines = append(lines, fmt.Sprintf("맞힘 %d · 틀림 %d", s.Correct, s.Wrong))
+	}
+	return strings.Join(lines, "\n")
+}
+
+// StartAndRun은 세션을 만들고 학습 화면을 돌린 뒤 결과 요약을 돌려준다.
+func StartAndRun(ctx context.Context, c *api.Client, req api.SessionRequest, title string) (string, error) {
+	started, err := c.StartSession(ctx, req)
+	if err != nil {
+		return "", err
+	}
+	if len(started.Cards) == 0 {
+		return "낼 카드가 없습니다.", nil
+	}
+	sum, err := Run(c, title, started)
+	if err != nil {
+		return "", err
+	}
+	return sum.String(), nil
+}
+
 // Run은 학습 화면을 띄우고 세션이 끝날 때까지 돈다. 중간에 그만두면
 // completed=false로, 끝까지 하면 true로 서버에 세션 종료를 알린다.
 func Run(client *api.Client, title string, started api.StartedSession) (Summary, error) {

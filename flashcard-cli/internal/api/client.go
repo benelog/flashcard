@@ -75,6 +75,9 @@ func apiError(res *http.Response) error {
 	return fmt.Errorf("서버 응답 %d", res.StatusCode)
 }
 
+// BaseURL은 이 클라이언트가 부르는 서버 주소다. 화면에 보여 줄 때 쓴다.
+func (c *Client) BaseURL() string { return c.baseURL }
+
 func (c *Client) Healthz(ctx context.Context) error {
 	return c.do(ctx, http.MethodGet, "/api/healthz", nil, nil)
 }
