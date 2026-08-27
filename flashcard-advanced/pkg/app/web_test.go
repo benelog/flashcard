@@ -345,6 +345,42 @@ func TestShareAndImportSharedDeck(t *testing.T) {
 	mustStatus(t, a.get("/shared/"+shareSlug), http.StatusNotFound)
 }
 
+// 덱 이름은 만든 뒤에도 고칠 수 있다. 슬러그는 덱의 일련번호에서 나오므로
+// 이름을 바꿔도 주소와 공유 링크는 그대로다.
+func TestRenameDeck(t *testing.T) {
+	a := newTestApp(t)
+	slug := a.makeDeck("Verbs")
+	a.makeCard(slug, "run", "달리다")
+	mustRedirect(t, a.postForm("/decks/"+slug+"/share", nil))
+	shareSlug := *a.deck(slug).ShareSlug
+
+	rec := a.postForm("/decks/"+slug+"/rename", url.Values{"name": {"  동사 모음  "}})
+	if loc := mustRedirect(t, rec); loc != "/decks/"+slug {
+		t.Fatalf("redirect = %q, want %q", loc, "/decks/"+slug)
+	}
+	if got := a.deck(slug).Name; got != "동사 모음" {
+		t.Errorf("name = %q, want %q (앞뒤 공백은 잘라야 한다)", got, "동사 모음")
+	}
+
+	// 이름을 바꿔도 카드와 공유 링크는 그대로다.
+	if got := a.cards(slug); len(got) != 1 {
+		t.Errorf("cards = %d, want 1", len(got))
+	}
+	if got := *a.deck(slug).ShareSlug; got != shareSlug {
+		t.Errorf("share slug = %q, want %q", got, shareSlug)
+	}
+	mustContain(t, a.get("/decks/"+slug), "동사 모음")
+	mustContain(t, a.get("/shared/"+shareSlug), "동사 모음")
+
+	// 빈 이름은 거절하고 원래 이름을 지킨다.
+	mustRedirect(t, a.postForm("/decks/"+slug+"/rename", url.Values{"name": {"   "}}))
+	if got := a.deck(slug).Name; got != "동사 모음" {
+		t.Errorf("name = %q, want unchanged after blank rename", got)
+	}
+
+	mustStatus(t, a.postForm("/decks/zzzz/rename", url.Values{"name": {"x"}}), http.StatusNotFound)
+}
+
 // tag::htmx-redirect[]
 func TestDeleteDeckRemovesItsCards(t *testing.T) {
 	a := newTestApp(t)

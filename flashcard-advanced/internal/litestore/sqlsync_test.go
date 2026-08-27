@@ -83,7 +83,7 @@ func TestSharedSQLConstantsStayInSync(t *testing.T) {
 var identicalQueryFuncs = []string{
 	"ListDecks", "GetDeck", "GetDeckBySlug", "DeckIDBySlug", "DeleteDeck", "DeckStory",
 	"ListCards", "GetCard", "DeleteCard", "BulkCreateCards", "DueCards", "DueCount",
-	"UnshareDeck", "ListSharedDecks", "GetSharedDeckCards",
+	"UnshareDeck", "ListSharedDecks", "GetSharedDeckCards", "SharedDeckStory",
 	"ListSmartDecks", "DeleteSmartDeck",
 }
 

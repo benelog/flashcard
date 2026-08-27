@@ -12,6 +12,22 @@
 <p class="small flat">{{orEmpty $deck.Description}}</p>
 {{end}}
 
+{{/* 주인이 쓴 스토리. 덱 화면과 같은 방식으로 접어 두되, 스토리 링크
+     (?story=1)로 들어온 사람에게는 서버가 open을 붙여 펼친 채로 보여 준다.
+     자바스크립트 없이 주소만으로 상태가 정해진다. */}}
+{{if .Data.StoryHTML}}
+<details class="story" {{if .Data.StoryOpen}}open{{end}}>
+  <summary class="tile-dashed">{{icon "book"}} 스토리 읽기</summary>
+  <div id="story-body" class="story-body tile">{{.Data.StoryHTML}}</div>
+  <div class="row story-actions">
+    <button type="button" class="btn btn-outline"
+      data-tts-story="story-body" data-tts-rate="{{.Data.TtsRate}}">
+      {{icon "volume"}} <span class="tts-play">듣기</span><span class="tts-stop">멈춤</span>
+    </button>
+  </div>
+</details>
+{{end}}
+
 {{if .LoggedIn}}
 <form method="post" action="/shared/{{.Data.Slug}}/import" class="stack">
   <button class="btn btn-primary btn-big">{{icon "download"}} 내 덱으로 가져오기</button>

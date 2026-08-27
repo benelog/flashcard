@@ -115,6 +115,16 @@ func (s *Store) GetSharedDeckCards(ctx context.Context, slug string) ([]model.Sh
 	return collect(rows, scanSharedCard)
 }
 
+func (s *Store) SharedDeckStory(ctx context.Context, slug string) (*string, error) {
+	var story *string
+	err := s.db.QueryRowContext(ctx,
+		`select story from decks where share_slug = ?`, slug).Scan(&story)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, model.ErrNotFound
+	}
+	return story, err
+}
+
 func scanSharedCard(r rowScanner) (model.SharedCard, error) {
 	var c model.SharedCard
 	var tags string

@@ -55,6 +55,9 @@ type Store interface {
 	ListSharedDecks(ctx context.Context, viewerID uuid.UUID) ([]SharedDeckSummary, error)
 	GetSharedDeck(ctx context.Context, viewerID uuid.UUID, slug string) (SharedDeckSummary, error)
 	GetSharedDeckCards(ctx context.Context, slug string) ([]SharedCard, error)
+	// SharedDeckStory는 공유 슬러그만으로 스토리 원문을 읽는다. 보는 이는
+	// 주인이 아니므로 userID로 가리는 DeckStory를 쓸 수 없다.
+	SharedDeckStory(ctx context.Context, slug string) (*string, error)
 	ImportSharedDeck(ctx context.Context, viewerID uuid.UUID, slug string) (Deck, error)
 
 	ListSmartDecks(ctx context.Context, userID uuid.UUID) ([]SmartDeck, error)

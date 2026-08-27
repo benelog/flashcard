@@ -77,10 +77,20 @@ func (w *Web) sharedDeckPage(c *gin.Context) {
 		w.failPage(c, err)
 		return
 	}
+	story, err := w.store.SharedDeckStory(ctx, slug)
+	if err != nil {
+		w.failPage(c, err)
+		return
+	}
 	w.render(c, http.StatusOK, "shared_deck", deck.Name, gin.H{
 		"Slug":  slug,
 		"Deck":  deck,
 		"Cards": cards,
+		// 스토리 링크(?story=1)로 들어온 사람에게는 접힌 채로 두지 않는다.
+		"StoryHTML": markdownHTML(model.OrEmpty(story)),
+		"StoryOpen": c.Query("story") == "1",
+		// 보는 이는 로그인하지 않았을 수도 있어 프로필을 읽지 않는다.
+		"TtsRate": defaultTtsRate,
 	})
 }
 

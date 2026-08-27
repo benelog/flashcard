@@ -60,6 +60,7 @@ func (w *Web) Register(r *gin.Engine) {
 		app.GET("/decks", w.decksPage)
 		app.POST("/decks", w.createDeck)
 		app.GET("/decks/:slug", w.deckPage)
+		app.POST("/decks/:slug/rename", w.renameDeck)
 		app.POST("/decks/:slug/delete", w.deleteDeck)
 		app.GET("/decks/:slug/story", w.storyEditPage)
 		app.POST("/decks/:slug/story", w.saveStory)

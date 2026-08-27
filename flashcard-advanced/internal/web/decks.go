@@ -44,6 +44,26 @@ func (w *Web) createDeck(c *gin.Context) {
 	c.Redirect(http.StatusSeeOther, "/decks/"+deck.Slug)
 }
 
+// renameDeck은 덱 이름만 바꾼다. URL 슬러그는 덱의 일련번호에서 나오므로
+// 이름을 바꿔도 그대로고, 공유 링크(share_slug)도 따로 있어 영향을 받지 않는다.
+func (w *Web) renameDeck(c *gin.Context) {
+	deckID, ok := w.deckIDFromPath(c)
+	if !ok {
+		return
+	}
+	name := strings.TrimSpace(c.PostForm("name"))
+	if name == "" {
+		redirectWithFlash(c, flashError, "덱 이름을 입력해주세요", "/decks/"+c.Param("slug"))
+		return
+	}
+	// description에 nil을 주면 저장소가 기존 값을 그대로 둔다.
+	if _, err := w.store.UpdateDeck(c.Request.Context(), auth.UserID(c), deckID, &name, nil); err != nil {
+		w.failPage(c, err)
+		return
+	}
+	redirectWithFlash(c, flashInfo, "덱 이름을 바꿨어요", "/decks/"+c.Param("slug"))
+}
+
 func (w *Web) deckPage(c *gin.Context) {
 	userID := auth.UserID(c)
 	ctx := c.Request.Context()
@@ -72,12 +92,20 @@ func (w *Web) deckPage(c *gin.Context) {
 		}
 		ttsRate = settingsFrom(profile).TtsRate
 	}
+	shareURL := w.shareURL(c, deck)
+	// 스토리 링크는 같은 공유 페이지를 스토리가 펼쳐진 상태로 연다. 스토리가
+	// 없으면 펼칠 것이 없으므로 만들지 않는다.
+	storyShareURL := ""
+	if shareURL != "" && story != nil {
+		storyShareURL = shareURL + "?story=1"
+	}
 	w.render(c, http.StatusOK, "deck", deck.Name, gin.H{
-		"Deck":      deck,
-		"Cards":     cards,
-		"ShareURL":  w.shareURL(c, deck),
-		"StoryHTML": markdownHTML(model.OrEmpty(story)),
-		"TtsRate":   ttsRate,
+		"Deck":          deck,
+		"Cards":         cards,
+		"ShareURL":      shareURL,
+		"StoryShareURL": storyShareURL,
+		"StoryHTML":     markdownHTML(model.OrEmpty(story)),
+		"TtsRate":       ttsRate,
 	})
 }
 
