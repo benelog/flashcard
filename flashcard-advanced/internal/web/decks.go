@@ -92,20 +92,14 @@ func (w *Web) deckPage(c *gin.Context) {
 		}
 		ttsRate = settingsFrom(profile).TtsRate
 	}
-	shareURL := w.shareURL(c, deck)
-	// 스토리 링크는 같은 공유 페이지를 스토리가 펼쳐진 상태로 연다. 스토리가
-	// 없으면 펼칠 것이 없으므로 만들지 않는다.
-	storyShareURL := ""
-	if shareURL != "" && story != nil {
-		storyShareURL = shareURL + "?story=1"
-	}
+	// 공유 링크는 하나뿐이다. 받는 사람 화면에서 스토리가 펼쳐진 채로 열리므로
+	// 스토리만 가리키는 별도 링크가 필요 없다.
 	w.render(c, http.StatusOK, "deck", deck.Name, gin.H{
-		"Deck":          deck,
-		"Cards":         cards,
-		"ShareURL":      shareURL,
-		"StoryShareURL": storyShareURL,
-		"StoryHTML":     markdownHTML(model.OrEmpty(story)),
-		"TtsRate":       ttsRate,
+		"Deck":      deck,
+		"Cards":     cards,
+		"ShareURL":  w.shareURL(c, deck),
+		"StoryHTML": markdownHTML(model.OrEmpty(story)),
+		"TtsRate":   ttsRate,
 	})
 }
 

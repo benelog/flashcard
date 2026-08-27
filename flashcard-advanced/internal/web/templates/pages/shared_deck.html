@@ -12,12 +12,13 @@
 <p class="small flat">{{orEmpty $deck.Description}}</p>
 {{end}}
 
-{{/* 주인이 쓴 스토리. 덱 화면과 같은 방식으로 접어 두되, 스토리 링크
-     (?story=1)로 들어온 사람에게는 서버가 open을 붙여 펼친 채로 보여 준다.
-     자바스크립트 없이 주소만으로 상태가 정해진다. */}}
+{{/* 주인이 쓴 스토리. 덱 화면과 같이 펼친 채로 열고, summary로 접는다.
+     링크 하나로 스토리까지 보이므로 스토리 전용 주소가 따로 없다. */}}
 {{if .Data.StoryHTML}}
-<details class="story" {{if .Data.StoryOpen}}open{{end}}>
-  <summary class="tile-dashed">{{icon "book"}} 스토리 읽기</summary>
+<details class="story" open>
+  <summary class="tile-dashed">{{icon "book"}}
+    <span class="story-more">스토리 읽기</span><span class="story-less">스토리 접기</span>
+  </summary>
   <div class="row story-toolbar">
     <button type="button" class="btn btn-outline"
       data-tts-story="story-body" data-tts-rate="{{.Data.TtsRate}}">

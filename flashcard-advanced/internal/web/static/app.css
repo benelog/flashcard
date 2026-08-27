@@ -760,13 +760,30 @@ details.story > summary::-webkit-details-marker {
   display: none;
 }
 
-/* 상태 선택자: 펼침 여부를 summary 모양에 전달한다. reveal과 달리 summary를
-   남겨 두어 본문을 다시 접을 수 있다. */
+/* 스토리는 펼친 채로 열리고, summary가 접는 단추를 겸한다. 접었을 때만
+   보이는 라벨과 펼쳤을 때만 보이는 라벨을 함께 담아 둔다. */
+
+.story-less {
+  display: none;
+}
+
+/* 상태 선택자: 펼침 여부를 summary의 모양과 두 라벨에 전달한다. reveal과 달리
+   summary를 남겨 두어 본문을 다시 접을 수 있다. 부모의 상태가 자식의 표시를
+   정하는 구조라 클래스로 대체할 수 없다. */
 
 details.story[open] > summary {
   border-style: solid;
   color: var(--fg);
+  padding: 0.75rem 1rem;
   margin-bottom: 0.5rem;
+}
+
+details.story[open] .story-more {
+  display: none;
+}
+
+details.story[open] .story-less {
+  display: inline;
 }
 
 /* 편집 화면 미리 보기의 듣기 버튼. 본문 아래에 붙는다. */

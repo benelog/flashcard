@@ -108,42 +108,38 @@ func TestStoryHasTTSButton(t *testing.T) {
 	mustContain(t, rec, `data-tts-story="story-preview-body"`)
 }
 
-// 공유 덱을 보는 사람도 스토리를 읽고 들을 수 있다. 스토리 링크(?story=1)로
-// 들어오면 서버가 details에 open을 붙여 펼친 채로 그린다.
-func TestSharedDeckStoryAndOpenLink(t *testing.T) {
+// 공유 덱을 보는 사람도 스토리를 읽고 들을 수 있다. 공유 링크 하나로 스토리가
+// 펼쳐진 채로 열리므로 스토리 전용 주소는 없다.
+func TestSharedDeckStory(t *testing.T) {
 	a := newTestApp(t)
 	slug := a.makeDeck("공유 스토리")
 	a.makeCard(slug, "run", "달리다")
 	mustRedirect(t, a.postForm("/decks/"+slug+"/share", nil))
 	shareSlug := *a.deck(slug).ShareSlug
 
-	// 스토리가 없으면 공유 화면에 스토리 자리도, 스토리 링크 복사 버튼도 없다.
+	// 스토리가 없으면 공유 화면에 스토리 자리가 없다.
 	mustNotContain(t, a.get("/shared/"+shareSlug), "스토리 읽기")
-	mustNotContain(t, a.get("/decks/"+slug), "스토리 링크 복사")
 
 	mustRedirect(t, a.postForm("/decks/"+slug+"/story", url.Values{
 		"story": {"# 달리기\nLet's go for a **run**."},
 	}))
 
-	// 그냥 공유 링크로 들어오면 접힌 채로 보인다.
+	// 공유 링크로 들어오면 스토리가 펼쳐진 채로 보인다.
 	rec := a.get("/shared/" + shareSlug)
 	mustStatus(t, rec, http.StatusOK)
-	mustContain(t, rec, "<h1>달리기</h1>")
-	mustContain(t, rec, `data-tts-story="story-body"`)
-	mustNotContain(t, rec, `<details class="story" open>`)
-
-	// 스토리 링크로 들어오면 펼쳐진 채로 보인다.
-	rec = a.get("/shared/" + shareSlug + "?story=1")
-	mustStatus(t, rec, http.StatusOK)
 	mustContain(t, rec, `<details class="story" open>`)
+	mustContain(t, rec, "<h1>달리기</h1>")
 	mustContain(t, rec, "<strong>run</strong>")
+	mustContain(t, rec, `data-tts-story="story-body"`)
 
-	// 덱 주인 화면에는 그 링크를 복사하는 버튼이 생긴다.
-	mustContain(t, a.get("/decks/"+slug), "/shared/"+shareSlug+"?story=1")
+	// 덱 주인 화면에도 공유 링크는 하나뿐이다.
+	rec = a.get("/decks/" + slug)
+	mustContain(t, rec, "/shared/"+shareSlug)
+	mustNotContain(t, rec, "스토리 링크 복사")
 
-	// 공유를 풀면 스토리 링크도 함께 죽는다.
+	// 공유를 풀면 링크가 죽는다.
 	mustRedirect(t, a.postForm("/decks/"+slug+"/unshare", nil))
-	mustStatus(t, a.get("/shared/"+shareSlug+"?story=1"), http.StatusNotFound)
+	mustStatus(t, a.get("/shared/"+shareSlug), http.StatusNotFound)
 }
 
 func TestStoryOfMissingDeckIs404(t *testing.T) {
