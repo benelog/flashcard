@@ -18,13 +18,13 @@
 {{if .Data.StoryHTML}}
 <details class="story" {{if .Data.StoryOpen}}open{{end}}>
   <summary class="tile-dashed">{{icon "book"}} 스토리 읽기</summary>
-  <div id="story-body" class="story-body tile">{{.Data.StoryHTML}}</div>
-  <div class="row story-actions">
+  <div class="row story-toolbar">
     <button type="button" class="btn btn-outline"
       data-tts-story="story-body" data-tts-rate="{{.Data.TtsRate}}">
       {{icon "volume"}} <span class="tts-play">듣기</span><span class="tts-stop">멈춤</span>
     </button>
   </div>
+  <div id="story-body" class="story-body tile">{{.Data.StoryHTML}}</div>
 </details>
 {{end}}
 

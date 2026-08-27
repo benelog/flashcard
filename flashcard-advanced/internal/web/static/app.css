@@ -293,6 +293,14 @@ main.with-nav {
   color: var(--faint);
 }
 
+/* 되돌릴 수 없는 아이콘 버튼(덱 삭제). 평소엔 다른 아이콘과 같은 회색이고
+   가리키거나 초점이 갔을 때만 빨강으로 알린다. */
+
+.btn-icon-danger:hover,
+.btn-icon-danger:focus-visible {
+  color: var(--red);
+}
+
 /* 상단 바 버튼은 본문 버튼보다 작다 */
 
 .btn-sm {
@@ -685,6 +693,62 @@ details.reveal[open] > summary {
   flex-wrap: wrap;
 }
 
+/* 상태 선택자: CSV 가져오기는 이 줄 안의 details다. 펼치면 파일 입력이
+   들어갈 자리가 필요해 줄 전체를 차지한다(마지막 항목이라 아래로 떨어진다).
+   details의 열림 상태가 자기 폭을 정하는 구조라 클래스로 대체할 수 없다. */
+
+.deck-action-reveal[open] {
+  flex: 1 0 100%;
+}
+
+.csv-form {
+  margin-top: 0.25rem;
+}
+
+.csv-note {
+  margin: 0.375rem 0 0;
+}
+
+.share-note {
+  margin: 0;
+}
+
+/* ---------- 덱 상세 제목 줄 ---------- */
+
+/* 이름 수정 폼이 제목 줄 아래에 겹쳐 열린다. 그 기준점이 되는 상자다. */
+
+.deck-head {
+  position: relative;
+}
+
+.rename-toggle {
+  list-style: none;
+}
+
+.rename-toggle::-webkit-details-marker {
+  display: none;
+}
+
+/* 상태 선택자: 펼침 여부를 연필 버튼 색에 전달한다. 여는 장치가 summary
+   자신이라 클래스로 대체할 수 없다. */
+
+details.rename[open] > summary {
+  color: var(--primary);
+}
+
+.rename-form {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  right: 0;
+  left: 0;
+  z-index: 20;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  padding: 0.75rem;
+  box-shadow: 0 0.5rem 1.5rem rgb(0 0 0 / 12%);
+}
+
 /* ---------- 덱 스토리 (마크다운 본문) ---------- */
 
 details.story > summary {
@@ -705,8 +769,17 @@ details.story[open] > summary {
   margin-bottom: 0.5rem;
 }
 
+/* 편집 화면 미리 보기의 듣기 버튼. 본문 아래에 붙는다. */
+
 .story-actions {
   margin-top: 0.5rem;
+}
+
+/* 덱 화면·공유 덱 화면의 듣기·수정 버튼. 본문 위에 두어 스토리가 길어도
+   스크롤하지 않고 누른다. */
+
+.story-toolbar {
+  margin-bottom: 0.5rem;
 }
 
 /* 스토리 듣기 버튼: 읽는 동안 라벨이 "멈춤"으로 바뀐다.
