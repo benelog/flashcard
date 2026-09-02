@@ -81,13 +81,15 @@ func keyfuncFor(jwksURL, secret string) (jwt.Keyfunc, error) {
 ----
 
 기본 경로는 아래쪽 JWKS 분기다.
-`github.com/MicahParks/keyfunc/v3` 라이브러리가 JWKS 문서를 내려받아 캐시하고 주기적으로 갱신하며, 토큰 헤더의 키 ID(`kid`)에 맞는 공개키를 골라 준다.
+`github.com/MicahParks/keyfunc/v3` 라이브러리가 JWKS 문서를 내려받아 캐시하고 라이브러리 기본값인 1시간마다 다시 내려받으며(`jwkset`의 `RefreshInterval`), 토큰 헤더의 키 ID(`kid`)에 맞는 공개키를 골라 준다.
 패키지 전역 변수 `jwks`를 `sync.Once`로 한 번만 초기화하는 것은 {ch-vercel-config}에서 본 서버리스 함수의 생명주기 때문이다.
 웜 인스턴스는 여러 요청을 처리하므로, JWKS 클라이언트를 재사용하면 첫 요청 이후에는 네트워크 조회 없이 검증할 수 있다.
 
 위쪽 분기는 공유 시크릿(HS256) 폴백(fallback)이다.
-이 분기는 옛 Supabase 프로젝트를 위한 예비 경로라, 처음 읽을 때는 건너뛰어도 된다.
-JWKS 엔드포인트가 없는 구형 Supabase 프로젝트는 대칭 키(HS256)로 서명하므로, 그런 환경에서는 환경 변수 `SUPABASE_JWT_SECRET`을 설정해 이 분기를 탄다.
+이 분기는 비대칭 키로 옮기기 전의 Supabase 프로젝트를 위한 예비 경로라, 처음 읽을 때는 건너뛰어도 된다.
+Supabase는 2025년 7월에 비대칭 서명 키 체계를 내놓았고, 2025년 10월 1일부터 새 프로젝트는 비대칭 키로 서명한다footnote:[Supabase 블로그 "Introducing JWT Signing Keys"(2025-07-14). https://supabase.com/blog/jwt-signing-keys[Introducing JWT Signing Keys]].
+그 전에 만든 프로젝트는 대시보드의 JWT Signing Keys 화면에서 이관하기 전까지 공유 시크릿(HS256)으로 서명하므로, 그런 프로젝트에서는 환경 변수 `SUPABASE_JWT_SECRET`을 설정해 이 분기를 탄다.
+내 프로젝트가 어느 쪽인지도 같은 화면에서 확인한다.
 이 예비 경로에도 안전장치가 하나 붙어 있다는 것만 보고 넘어가면 된다.
 누구나 구할 수 있는 공개키를 비밀 열쇠인 척 쓰게 만들려고 토큰 머리의 서명 방식 표기(`alg`)를 바꿔치기하는 수법이 있는데, 이를 알고리즘 혼동(algorithm confusion) 공격이라 부른다.
 서명 방식이 HMAC이 맞는지 명시적으로 확인하는 코드가 그 바꿔치기를 막는다.
@@ -165,7 +167,7 @@ include::../../flashcard-advanced/internal/auth/jwt.go[tag=parse-user]
 
 여기까지 읽고 나면 이 앱에 인증 경로가 둘 있다는 사실이 보인다.
 HTML 페이지는 쿠키로, `/api/*`의 JSON API는 Bearer 헤더로 신원을 밝힌다.
-JSON API는 {ch-gin}에서 만든 그대로이고, PWA의 서비스 워커나 외부 스크립트처럼 화면 없이 API만 부르는 호출자를 위해 남아 있다.
+JSON API는 {ch-gin}에서 만든 그대로이고, 저장소에 함께 있는 명령줄 도구(`flashcard-cli/`)나 외부 스크립트처럼 화면 없이 API만 부르는 호출자를 위해 남아 있다.
 
 둘은 같은 Gin 엔진에 등록되고 같은 검증 코드를 쓴다.
 `internal/web/routes.go`의 라우트 등록부에서 페이지 쪽 구성을 발췌한다.

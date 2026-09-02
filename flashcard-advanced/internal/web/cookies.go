@@ -31,7 +31,7 @@ const (
 )
 
 const (
-	refreshMaxAge   = 30 * 24 * 60 * 60  // Supabase 기본 refresh 유효 기간과 맞춘다
+	refreshMaxAge   = 30 * 24 * 60 * 60  // 이 앱이 정한 리프레시 쿠키 수명. Supabase 토큰 자체는 회전만 하고 기본 설정에서는 만료되지 않는다
 	dirCookieMaxAge = 180 * 24 * 60 * 60 // 지난번에 고른 학습 방향은 오래 기억해 둔다
 	emailKey        = "web.email"
 )

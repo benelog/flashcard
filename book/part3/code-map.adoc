@@ -58,7 +58,8 @@ require (
 `internal/srs` 패키지를 쓰려면 `import "github.com/benelog/flashcard/internal/srs"`라고 쓴다.
 경로가 GitHub 주소와 같은 이유는 Go가 별도의 중앙 패키지 저장소 없이 소스 저장소 URL을 그대로 패키지 좌표로 쓰기 때문이다.
 
-`require` 블록에는 JWT 검증(keyfunc, golang-jwt), 웹 프레임워크(gin), DB 드라이버(pgx, sqlite), 덱 스토리의 마크다운을 HTML로 바꾸는 변환기(goldmark, {ch-html-template}) 등 직접 의존성 여덟 개뿐이다.
+`require` 블록에 적힌 직접 의존성은 여덟 개뿐이다.
+JWT 검증(keyfunc, golang-jwt), 웹 프레임워크(gin), 마이그레이션 실행기(migrate, {ch-migrations}), UUID 생성(uuid), DB 드라이버(pgx, sqlite), 덱 스토리의 마크다운을 HTML로 바꾸는 변환기(goldmark, {ch-html-template})다.
 웹 서버 하나에 바깥에서 가져온 코드가 여덟 꾸러미뿐이라는 사실이 {ch-go-hello}에서 말한 표준 라이브러리의 두꺼움을 숫자로 보여 준다.
 이 목록이 짧다는 것은 {ch-tech-choices}에서 세운 "관리할 것이 적은가"라는 기준이 코드에 남긴 흔적이기도 하다.
 
@@ -94,8 +95,8 @@ flashcard/
 
 첫째, 최상위 세 디렉터리의 역할이 다르다.
 `cmd/`는 실행 진입점, 즉 `main` 패키지를 두는 곳으로 디렉터리 하나가 실행 파일 하나에 대응한다.
-`internal/`에는 이 앱의 코드가 거의 전부 들어 있다.
-`pkg/`에는 패키지가 하나뿐인데, 그 사연은 잠시 뒤에 밝힌다.
+`internal/`에는 이 앱의 코드가 거의 전부 들어 있어서, 테스트 파일을 뺀 Go 코드 6,700줄 남짓 가운데 6,500줄 남짓(97%)이 여기 있다.
+`pkg/`에는 패키지가 하나뿐인데, 그 사연은 이 절 끝의 "internal이 막고 Vercel이 밀어낸 pkg"에서 밝힌다.
 
 둘째, `internal/` 아래 패키지 이름이 곧 그 패키지가 아는 것의 범위다.
 `srs`는 간격 반복 계산만 알고 데이터베이스를 모른다.
@@ -191,8 +192,8 @@ Flashcard는 켜질 때 두 가지를 정한다.
 
 === 설정 한 덩어리가 모드를 정한다
 
-`internal/config/config.go`는 환경 변수 몇 개를 읽어 설정 꾸러미 하나를 채우는, 그 일만 하는 60여 줄짜리 파일이다.
-서버가 일을 하려면 데이터베이스 주소나 접속을 허용할 웹 주소 같은 값이 필요한데, 이런 값은 코드에 직접 적어 두는 대신 프로그램이 실행되는 환경에 맡겨 두었다가 시작할 때 읽어 온다.
+`internal/config/config.go`는 환경 변수 여덟 개(`DATABASE_URL`, `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_JWKS_URL`, `SUPABASE_JWT_SECRET`, `PORT`, `VERCEL`, `SQLITE_PATH`)를 읽어 설정 꾸러미 하나를 채우는, 그 일만 하는 60여 줄짜리 파일이다.
+서버가 일을 하려면 데이터베이스 주소나 로그인을 맡긴 Supabase의 주소 같은 값이 필요한데, 이런 값은 코드에 직접 적어 두는 대신 프로그램이 실행되는 환경에 맡겨 두었다가 시작할 때 읽어 온다.
 
 파일 앞부분은 그 값들을 담을 그릇이다.
 

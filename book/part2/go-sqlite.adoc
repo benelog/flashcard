@@ -24,7 +24,7 @@ Flashcard 완성본이 로컬에서는 SQLite로, 운영에서는 PostgreSQL로 
 
 flashcard-basic이 쓰는 SQLite 드라이버는 modernc.org/sqlite다.
 SQLite 자체는 C 언어로 만들어진 라이브러리인데, 이 드라이버는 그 코드를 Go로 통째로 옮긴 순수 Go 구현이라 C 컴파일러 없이 `go build` 하나로 빌드가 끝난다.
-다른 드라이버들은 C로 된 원본을 함께 컴파일하므로 C 컴파일러라는 도구를 따로 깔아야 하고, 그 준비가 운영체제마다 달라 어긋나기 쉽다.
+또 다른 드라이버인 mattn/go-sqlite3는 C로 된 원본을 cgo로 함께 컴파일하므로 `CGO_ENABLED=1`에 gcc가 깔려 있어야 하고, 윈도우에서는 TDM-GCC 같은 gcc 툴체인을 따로 설치해야 하는 등 그 준비가 운영체제마다 다르다footnote:[go-sqlite3 README의 빌드 요구 사항 https://github.com/mattn/go-sqlite3[mattn/go-sqlite3]].
 Go 코드만 있는 이 드라이버는 Go가 깔린 컴퓨터라면 어디서든 그대로 돈다.
 
 드라이버를 코드에 들이는 방법이 조금 별나다.
@@ -106,7 +106,7 @@ include::../../flashcard-basic/store.go[tag=types]
 구조체 하나가 테이블 하나와, 필드 하나가 열 하나와 짝을 이룬다.
 `Deck.Name`이 `decks.name`이고 `Card.DeckID`가 `cards.deck_id`다.
 카드의 원문과 뜻을 담는 열 이름 `text`·`meaning`은 완성본과 같은 이름이라, 3부에서 완성본의 스키마를 읽을 때에도 같은 이름으로 나온다.
-id를 담는 필드가 `int64`인 것은 `database/sql`이 정수 id를 이 타입으로 돌려주기 때문이다.
+id를 담는 필드가 `int64`인 것은 새 행의 번호를 알려 주는 `database/sql`의 `res.LastInsertId()`가 이 타입으로 돌려주기 때문이다(다음 절에서 만난다).
 필드 뒤에 붙은 `` `json:"id"` `` 같은 문자열은 이 구조체를 JSON으로 내보낼 때 쓸 이름표인데, 화면 대신 JSON으로 답하는 API를 만들 때 쓰인다.
 지금은 없는 것으로 보고 지나가도 되고, 이런 꼬리표(구조체 태그)의 정체는 {ch-core-logic}에서 다룬다.
 
