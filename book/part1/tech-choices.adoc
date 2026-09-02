@@ -466,7 +466,7 @@ Go의 균질한 스타일과 빠른 빌드, 컴파일 시점의 타입 검증, G
 | 계층 | 선택 | 결정적 이유 | 검토한 대안 | 사용법
 
 | 데이터베이스 | SQLite(로컬)·PostgreSQL(4부 운영) | 관계·제약·트랜잭션, 파일 하나로 시작해 무료 관리형 티어로 | 문서형 NoSQL, 한 데이터베이스로 통일하기 | {ch-database-basics·database-design}
-| 백엔드 언어 | Go | 균질한 스타일·컴파일 시점 검증·작은 메모리와 단일 바이너리 | Node.js, Python, JVM | {ch-go-hello·go-types}, {ch-code-map~unit-tests}
+| 백엔드 언어 | Go | 균질한 스타일·컴파일 시점 검증·작은 메모리와 단일 바이너리 | Node.js, Python, JVM | {ch-go-hello·go-types}, {ch-code-map}, {ch-core-logic~unit-tests}
 | 웹 프레임워크 | Gin | 반복 코드 위임, 가장 넓은 사용자층 | net/http, chi, Echo | {ch-gin}
 | 화면 렌더링 | 서버 렌더링(html/template) + htmx | 언어 하나·툴체인 없음, 필요한 곳만 부분 갱신 | SPA(React·Vue·Svelte), 순수 폼 제출만 | {ch-html-css~htmx}
 |===

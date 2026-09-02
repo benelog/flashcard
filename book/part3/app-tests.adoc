@@ -1,6 +1,6 @@
 = 앱을 통째로 띄우는 테스트: 화면과 API를 한 번에 검증하기
 
-3부에서 우리는 데이터가 앉는 테이블({ch-database-design})에서 출발해 Go 코드({ch-code-map~core-logic})와 요청을 받는 라우터({ch-gin})를 지나 화면({ch-html-css~htmx})까지 한 층씩 올라왔다.
+3부에서 우리는 코드의 지도({ch-code-map})를 들고 데이터가 앉는 테이블({ch-database-design})에서 출발해 Go 코드({ch-core-logic})와 요청을 받는 라우터({ch-gin})를 지나 화면({ch-html-css~htmx})까지 한 층씩 올라왔다.
 층마다 코드가 설계대로 생겼다는 것은 확인했다.
 그런데 층이 각각 옳다는 것과 이어 붙였을 때 옳다는 것은 다른 이야기다.
 

@@ -88,12 +88,12 @@ export default {
           file: 'part3/design-principles.adoc',
           text: '14장 설계 철학: 이 앱을 지탱하는 다섯 가지 원칙',
         },
-        { file: 'part3/database-design.adoc', text: '15장 데이터베이스 설계: 요구사항에서 테이블로' },
-        { file: 'part3/domain-model.adoc', text: '16장 이 앱만의 설계 둘: 간격 반복 상태와 덱 주소' },
         {
           file: 'part3/code-map.adoc',
-          text: '17장 코드는 어디에 있는가: 패키지 지도와 의존 방향',
+          text: '15장 코드는 어디에 있는가: 패키지 지도와 의존 방향',
         },
+        { file: 'part3/database-design.adoc', text: '16장 데이터베이스 설계: 요구사항에서 테이블로' },
+        { file: 'part3/domain-model.adoc', text: '17장 이 앱만의 설계 둘: 간격 반복 상태와 덱 주소' },
         {
           file: 'part3/core-logic.adoc',
           text: '18장 핵심 로직 읽기: 간격 반복 알고리즘과 이 앱이 푸는 문제들',
@@ -135,12 +135,12 @@ export default {
           text: '34장 Supabase 데이터베이스: 커넥션 풀러와 개발·운영 분리',
         },
         { file: 'part4/migrations.adoc', text: '35장 마이그레이션: 운영 중에 스키마를 고친다' },
+        { file: 'part4/env-secrets.adoc', text: '36장 환경 변수와 시크릿: 개발과 운영, 두 벌이 된 값' },
       ],
     },
     {
       text: '5부 안정적으로 오래 운영하기',
       items: [
-        { file: 'part5/env-secrets.adoc', text: '36장 환경 변수와 시크릿: 개발과 운영, 두 벌이 된 값' },
         { file: 'part5/pwa.adoc', text: '37장 PWA: 설치되는 앱으로 만들기' },
         { file: 'part5/caching.adoc', text: '38장 캐시와 서비스 워커: 무엇을 저장하고 언제 버리는가' },
         { file: 'part5/free-tier.adoc', text: '39장 무료 티어 운영: 무엇이 앱을 가장 먼저 멈추는가' },
