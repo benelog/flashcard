@@ -38,7 +38,7 @@ include::../../flashcard-advanced/internal/model/store.go[tag=store-head]
 var ErrNotFound = errors.New("not found")
 ----
 
-둘째는 그 계약만 품고 다니는 `Handlers`다.
+둘째는 그 계약을 필드로 지닌 `Handlers`다.
 어떤 데이터베이스가 들어올지는 모르고 계약만 안다.
 
 [source,go]
@@ -78,7 +78,7 @@ func New(pool *pgxpool.Pool) *Store {
 [NOTE]
 ====
 어떤 부품이 필요한 쪽이 그 부품을 스스로 만들지 않고, 밖에서 완성된 것을 건네받아 쓰는 조립 방식이다.
-핸들러가 자기 안에서 PostgreSQL 스토어를 직접 만들어 버리면 그 핸들러는 영영 PostgreSQL에 묶이지만, 밖에서 만들어 넣어 주면 무엇을 넣느냐에 따라 상대가 바뀐다.
+핸들러가 자기 안에서 PostgreSQL 스토어를 직접 만들어 버리면 그 핸들러는 영영 PostgreSQL 전용이 되지만, 밖에서 만들어 넣어 주면 무엇을 넣느냐에 따라 상대가 바뀐다.
 전동 드릴이 날을 몸에 붙박아 두지 않고 밖에서 끼우게 만들어 둔 것과 같다.
 자바의 Spring처럼 이 주입을 자동으로 해 주는 프레임워크도 있지만, 이 앱처럼 부품이 넷뿐이면 생성자 함수에 손으로 건네는 것으로 충분하다.
 ====

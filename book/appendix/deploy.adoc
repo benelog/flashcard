@@ -68,7 +68,7 @@ Google(또는 GitHub)에 "이 앱을 위해 로그인을 내준다"는 뜻으로
 === Google 클라이언트 만들기
 
 https://console.cloud.google.com[console.cloud.google.com]에 들어간다.
-예전에는 "APIs & Services" 아래 OAuth consent screen과 Credentials로 나뉘어 있었지만, 지금은 *Google 인증 플랫폼(Google Auth Platform)* 이라는 곳으로 묶였다.
+예전에는 "APIs & Services" 아래 OAuth consent screen과 Credentials로 나뉘어 있었지만, 지금은 *Google 인증 플랫폼(Google Auth Platform)* 이라는 곳 하나로 합쳐졌다.
 Google 계정으로 처음 들어가면 이 메뉴 대신 클라우드 프로젝트를 만들라는 안내가 먼저 나온다.
 화면 위쪽의 프로젝트 선택 칸에서 새 프로젝트를 만들고 이름을 정한다(Supabase 프로젝트와는 별개이고, 이름은 아무래도 좋다).
 프로젝트가 선택된 상태라야 아래의 메뉴들이 나타난다.

@@ -305,7 +305,7 @@ func insertCard(ctx context.Context, tx *sql.Tx, userID uuid.UUID, in model.Card
 함수의 첫 두 인자는 이 책에서 처음 보는 것들이다.
 `ctx`는 요청 하나의 수명을 담아 함수에서 함수로 전달되는 컨텍스트(context)로, 사용자가 화면을 닫아 요청이 끊기면 진행 중인 질의도 함께 멈추라는 신호를 나른다({ch-gin}에서 다시 본다).
 {ch-template-hello}에서 템플릿이 보고 있는 데이터를 부르던 "컨텍스트"와는 이름만 같은 다른 것이다.
-`tx`는 여러 SQL 문장을 전부 되거나 전부 안 되게 하나로 묶는 트랜잭션의 값인데, 다음 {ch-domain-model}에서 제대로 다룬다.
+`tx`는 여러 SQL 문장을 전부 되거나 전부 안 되게 하나로 합치는 트랜잭션의 값인데, 다음 {ch-domain-model}에서 제대로 다룬다.
 
 물론 UUID가 공짜는 아니다.
 운영 PostgreSQL의 uuid 전용 타입은 값을 16바이트로 저장하지만, 전용 타입이 없는 SQLite에서는 36자 텍스트로 저장돼 자리를 더 차지한다.
@@ -432,8 +432,8 @@ const timeLayout = "2006-01-02T15:04:05.000Z"
 형식을 만드는 곳이 한 곳뿐이면 형식이 어긋날 곳도 없다.
 
 시간대가 필요한 곳은 해석 단계다.
-일별 통계와 연속 학습일(streak)은 "그 사용자의 하루" 단위로 묶어야 하는데, 서울의 자정과 뉴욕의 자정은 서로 다른 절대 시각이다.
-SQLite에는 시간대 변환 기능이 없으므로, `internal/litestore/stats.go`의 `DailyStats`는 UTC 텍스트로 쌓인 복습 시각을 읽어 와 Go에서 사용자의 IANA 시간대(전 세계 시간대에 붙인 표준 이름으로, 예: `Asia/Seoul`)의 날짜로 묶는다.
+일별 통계와 연속 학습일(streak)은 "그 사용자의 하루" 단위로 집계해야 하는데, 서울의 자정과 뉴욕의 자정은 서로 다른 절대 시각이다.
+SQLite에는 시간대 변환 기능이 없으므로, `internal/litestore/stats.go`의 `DailyStats`는 UTC 텍스트로 쌓인 복습 시각을 읽어 와 Go에서 사용자의 IANA 시간대(전 세계 시간대에 붙인 표준 이름으로, 예: `Asia/Seoul`)의 날짜별로 집계한다.
 이 소박한 방식은 데이터가 한 사람 분량이라 가능하다.
 운영 PostgreSQL에는 시간대를 품은 전용 타입 timestamptz가 있어, 절대 시각 저장과 시간대 변환은 물론 날짜별 집계까지 DB 안에서 처리한다.
 

@@ -1,7 +1,7 @@
 = GitHub Actions: 원격 품질 게이트
 
 지금까지 Flashcard의 품질 게이트는 두 곳에 있었다.
-{ch-quality-gates}의 훅이 에이전트가 파일을 쓸 때마다 `gofmt`와 `go vet`을 돌리고, {ch-local-dev}의 `전체 검증` 태스크가 사람이 커밋하기 전에 세 검사를 묶어 돌린다.
+{ch-quality-gates}의 훅이 에이전트가 파일을 쓸 때마다 `gofmt`와 `go vet`을 돌리고, {ch-local-dev}의 `전체 검증` 태스크가 사람이 커밋하기 전에 세 검사를 한 번에 순서대로 돌린다.
 
 둘 다 로컬의 게이트다.
 그리고 로컬의 게이트에는 공통된 약점이 하나 있다.
