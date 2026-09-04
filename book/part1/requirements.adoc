@@ -132,7 +132,8 @@ Flashcard가 카드 입력란을 채우려고 단어의 뜻을 받아 오는 사
 === 꾸준히 복습하기: 간격 반복과 "오늘 복습" 큐
 
 암기 앱의 승부처는 학습 화면이 아니라 복습 일정을 짜는 방식이다.
-간격 반복을 쓰는 앱 중에는 얼마나 잘 기억했는지를 여러 단계로 나눠 고르게 하는 것도 있어서, 원조 격인 SuperMemo의 SM-2 알고리즘은 0점부터 5점까지 여섯 단계, Anki는 네 단계(Again·Hard·Good·Easy)로 답을 받는다.footnote:[SM-2의 여섯 단계는 https://super-memory.com/english/ol/sm2.htm[SuperMemo의 SM-2 알고리즘 설명], Anki의 네 단계는 https://faqs.ankiweb.net/what-spaced-repetition-algorithm.html[Anki FAQ] 기준이다.]
+간격 반복을 쓰는 앱 중에는 얼마나 잘 기억했는지를 여러 단계로 나눠 고르게 하는 것도 있다.
+원조 격인 SuperMemo의 SM-2 알고리즘은 0점부터 5점까지 여섯 단계, Anki는 네 단계(Again·Hard·Good·Easy)로 답을 받는다.footnote:[SM-2의 여섯 단계는 https://super-memory.com/english/ol/sm2.htm[SuperMemo의 SM-2 알고리즘 설명], Anki의 네 단계는 https://faqs.ankiweb.net/what-spaced-repetition-algorithm.html[Anki FAQ] 기준이다.]
 그러나 "이번 답이 4점인지 5점인지"를 매번 고민하게 만드는 것은 카드 뒤집기의 리듬을 깨뜨린다.
 그래서 Flashcard는 화면에 "맞았어요"와 "틀렸어요" 두 버튼만 두고, 답을 이 두 가지로만 받아 다음 복습 날짜를 잡는다.
 
@@ -282,7 +283,7 @@ Flashcard에서는 브라우저에 표시되는 화면이 프런트엔드이고,
 ====
 설치해 쓰는 앱처럼 동작하는 웹 앱이다.
 브라우저로 여는 웹사이트지만, 홈 화면에 추가하면 주소창 없이 독립 실행형으로 열려 앱 스토어를 거치지 않고도 설치한 앱과 다름없이 쓸 수 있다.
-덕분에 웹과 모바일을 하나의 코드로 함께 커버할 수 있다.
+덕분에 웹과 모바일을 코드 하나로 함께 감당할 수 있다.
 ====
 
 == 정리

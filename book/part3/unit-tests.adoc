@@ -45,7 +45,8 @@ include::../../flashcard-advanced/internal/model/deckslug_test.go[tag=same-packa
 첫 줄을 `package model_test`로 적으면 테스트가 별도 패키지가 되어, 바깥의 다른 코드와 똑같이 공개된 식별자만 쓸 수 있다.
 비공개 함수에 손을 대지 못하는 대신, 내부 구현을 아무리 바꿔도 공개 API가 그대로면 테스트가 깨지지 않는다는 장점이 있다.
 이 저장소는 검증하고 싶은 대상이 비공개인 경우가 많아 같은 패키지 방식을 골랐다.
-`deckslug_test.go`가 읽는 `slugLen`·`slugSpace`가 그렇고, 뒤에서 볼 `litestore_test.go`는 DB 연결을 쥔 값을 직접 열어 저장된 행 수를 세며, `templates_test.go`는 내부 템플릿 목록을 들여다본다.
+`deckslug_test.go`가 읽는 `slugLen`·`slugSpace`가 그렇다.
+뒤에서 볼 `litestore_test.go`는 DB 연결을 쥔 값을 직접 열어 저장된 행 수를 세고, `templates_test.go`는 내부 템플릿 목록을 들여다본다.
 반대로 라이브러리를 만들어 공개하는 처지라면, 사용자와 같은 입구로만 들어오도록 강제하는 `_test` 패키지가 더 낫다.
 
 `Test` 말고도 `go test`가 알아보는 접두사가 더 있다.
@@ -167,7 +168,8 @@ ok  	github.com/benelog/flashcard/internal/srs	(cached)
 Go 서버는 요청 여러 개를 동시에 처리한다.
 `-race`를 붙이면 테스트가 도는 동안 메모리 접근을 감시해 두 작업이 같은 값을 동시에 건드리는 대목을 신고한다.
 대신 Go 문서에 따르면 실행 시간이 2~20배, 메모리 사용량이 5~10배 늘어나므로 평소에 붙이는 플래그는 아니다.footnote:[Go 공식 문서의 경쟁 상태 검출기 소개 가운데 "Runtime Overhead" 절 https://go.dev/doc/articles/race_detector[Data Race Detector]]
-Flashcard의 코드가 요청 사이에 공유하는 값은 다섯 곳뿐이고(`sync.Once` 셋, `sync.OnceValue` 하나, 그리고 {ch-gin}에서 볼 `EnsureProfile`의 `sync.Map` 하나), 모두 표준 라이브러리의 동기화 타입으로 감싸 두어 상시 검사 목록에는 넣지 않았다.
+Flashcard의 코드가 요청 사이에 공유하는 값은 다섯 곳뿐이다(`sync.Once` 셋, `sync.OnceValue` 하나, 그리고 {ch-gin}에서 볼 `EnsureProfile`의 `sync.Map` 하나).
+모두 표준 라이브러리의 동기화 타입으로 감싸 두어 상시 검사 목록에는 넣지 않았다.
 카운터처럼 요청들이 함께 고치는 값을 그런 보호 없이 서버에 들이는 순간, `-race`는 검사 목록에 가장 먼저 추가할 후보가 된다.
 그때는 로컬과 CI 어느 한쪽에만 붙이지 말고 {ch-github-actions}에서 볼 세 게이트에 함께 붙여야 한다.
 
@@ -208,7 +210,7 @@ include::../../flashcard-advanced/internal/srs/srs_test.go[tag=correct-progressi
 | `t.Errorf` | 실패를 기록하고 다음 검증을 계속 진행 | 독립적인 검증의 실패를 한 번에 모두 보고할 때
 |===
 
-`TestCorrectProgression`은 두 번째 복습의 검증이 첫 번째 복습의 결과 위에서 이뤄지는 진행형 테스트라, 앞 단계가 틀리면 뒤 단계는 의미가 없다.
+`TestCorrectProgression`은 두 번째 복습의 검증이 첫 번째 복습의 결과 위에서 이어지는 진행형 테스트라, 앞 단계가 틀리면 뒤 단계는 의미가 없다.
 그래서 즉시 중단하는 `t.Fatalf`가 맞다.
 서로 독립적인 검증이 이어질 때는 `t.Errorf`로 끝까지 진행해, 한 번의 실행에서 실패를 최대한 많이 수집하는 편이 낫다.
 
@@ -221,9 +223,9 @@ include::../../flashcard-advanced/internal/srs/srs_test.go[tag=ease-floor]
 ----
 
 열 번 연속 틀려도 용이도가 하한 1.3 아래로 내려가지 않는지 확인한다.
-`for range 10`은 Go 1.22부터 지원되는 정수 순회 문법으로, 인덱스가 필요 없는 n회 반복을 간결하게 적을 때 쓴다.
+`for range 10`은 Go 1.22부터 쓸 수 있는 정수 순회 문법으로, 인덱스가 필요 없는 n회 반복을 간결하게 적을 때 쓴다.
 반환값 중 필요 없는 것은 빈 식별자 `_`로 버린다.
-이 파일에는 오답 시 상태 초기화를 확인하는 `TestLapseResets`도 있는데, 경계 조건(리셋, 하한)마다 테스트가 하나씩 배치된 구성을 눈여겨보자.
+이 파일에는 오답 시 상태 초기화를 확인하는 `TestLapseResets`도 있는데, 경계 조건(리셋, 하한)마다 테스트를 하나씩 둔 구성을 눈여겨보자.
 
 == 규칙 파싱 테스트와 테이블 패턴
 
@@ -247,7 +249,7 @@ include::../../flashcard-advanced/internal/pgstore/rules_test.go[tag=queries-bui
 새 규칙 타입을 추가하면 테이블에 JSON 한 줄만 더하면 된다.
 
 이 테스트가 DB 없이 돈다는 점도 눈여겨볼 만하다.
-`ruleQuery`는 문자열을 만들 뿐 접속하지 않으므로, PostgreSQL 전용 코드인데도 PostgreSQL을 띄우지 않고 확인할 수 있다.
+`ruleQuery`는 문자열을 만들 뿐 DB에 접속하지 않으므로, PostgreSQL 전용 코드인데도 PostgreSQL을 띄우지 않고 확인할 수 있다.
 덕분에 같은 파일에서 값이 문장에 이어 붙지 않고 자리표시자로 넘어가는지(`TestRuleValuesAreBoundNotInterpolated`), 모든 규칙이 사용자 범위로 좁혀지는지(`TestEveryRuleScopesToTheUser`)까지 함께 검사한다.
 {ch-database-basics}에서 본 SQL 인젝션 방지와 남의 데이터를 읽지 않는다는 두 가지 약속을, 규칙이 늘어나도 매번 자동으로 확인한다.
 
@@ -257,7 +259,7 @@ include::../../flashcard-advanced/internal/pgstore/rules_test.go[tag=queries-bui
 == 전수 검사와 경계값: 덱 슬러그 테스트
 
 테이블 패턴이 가장 진지하게 쓰인 곳은 덱 슬러그 테스트다.
-{ch-domain-model}에서 본 `internal/model/deckslug.go`는 덱 번호(seq)를 네 글자 슬러그로 바꾸는 `EncodeDeckSlug`와 그 역변환 `DecodeDeckSlug`를 담고 있다.
+{ch-domain-model}에서 본 `internal/model/deckslug.go`는 덱 번호(`seq`)를 네 글자 슬러그로 바꾸는 `EncodeDeckSlug`와 그 역변환 `DecodeDeckSlug`를 담고 있다.
 연속된 번호가 뻔한 슬러그로 드러나지 않도록 곱셈으로 흩뿌리는 계산이 들어 있어서, 산수가 조금이라도 어긋나면 서로 다른 덱이 같은 슬러그를 받는 사고가 난다.
 
 이런 성질은 몇 개의 예시로 확인하는 대신 아예 전수로 검사할 수 있다.
@@ -270,8 +272,9 @@ include::../../flashcard-advanced/internal/model/deckslug_test.go[tag=bijective]
 
 1번부터 2만 번 직전까지 모든 번호를 순회하며 세 가지를 확인한다.
 슬러그가 항상 네 글자인지, 앞서 나온 슬러그와 겹치지 않는지, 다시 풀면 원래 번호로 돌아오는지다.
-충돌 검사에는 `seen` 맵이 쓰였는데, {ch-core-logic}에서 본 comma-ok 관용구(`prev, dup := seen[slug]`)로 "이 슬러그가 전에 나왔는지"를 확인하고, 나왔다면 어느 번호와 부딪혔는지까지 메시지에 담는다.
-2만 번의 반복이 부담스러워 보일 수 있지만, DB도 네트워크도 건드리지 않는 순수 계산이라 전수 검사조차 `-v` 출력에 `0.00s`로 찍힐 만큼, 즉 5밀리초가 안 되어 끝난다.
+충돌 검사에는 `seen` 맵을 썼는데, {ch-core-logic}에서 본 comma-ok 관용구(`prev, dup := seen[slug]`)로 "이 슬러그가 전에 나왔는지"를 확인하고, 나왔다면 어느 번호와 부딪혔는지까지 메시지에 담는다.
+2만 번의 반복이 부담스러워 보일 수 있지만, DB도 네트워크도 건드리지 않는 순수 계산이다.
+전수 검사조차 `-v` 출력에 `0.00s`로 찍힐 만큼, 즉 5밀리초가 안 되어 끝난다.
 
 정상 입력의 반대편, 거부해야 할 입력도 테이블로 고정한다.
 
@@ -289,7 +292,7 @@ URL의 슬러그는 사용자가 아무 문자열이나 넣을 수 있는 입구
 
 여기까지 읽은 테스트는 DB도 네트워크도 없는 순수 계산이었다.
 그런데 이 저장소에서 가장 큰 테스트 파일은 정반대편에 있다.
-`internal/litestore/litestore_test.go`는 534줄로, 진짜 SQLite 파일을 열어 덱과 카드를 만들고 복습을 기록하고 통계를 읽는다.
+`internal/litestore/litestore_test.go`는 558줄로, 진짜 SQLite 파일을 열어 덱과 카드를 만들고 복습을 기록하고 통계를 읽는다.
 {ch-local-dev}의 로컬 모드가 파일 하나로 도는 DB를 쓰기 때문에 가능한 일이다.
 Postgres였다면 테스트마다 서버가 필요했겠지만, SQLite는 임시 파일 하나면 된다.
 
@@ -315,7 +318,7 @@ include::../../flashcard-advanced/internal/litestore/litestore_test.go[tag=fixtu
 
 `t.Helper()`는 이 함수가 헬퍼임을 알리는 표시다.
 이 한 줄을 적어 두면 헬퍼 안에서 `t.Fatal`로 실패했을 때 그 위치가 헬퍼의 줄 번호가 아니라 *헬퍼를 호출한 테스트의 줄 번호*로 보고된다.
-이 파일에서 `testStore`를 부르는 테스트가 일곱인데 실패 위치가 늘 헬퍼 내부로 찍히면 어느 테스트가 깨졌는지 알 수 없으므로, 한 줄로 그것을 막는다.
+이 파일에서 `testStore`를 부르는 테스트가 여덟인데 실패 위치가 늘 헬퍼 내부로 찍히면 어느 테스트가 깨졌는지 알 수 없으므로, 한 줄로 그것을 막는다.
 
 이 헬퍼 덕분에 각 테스트의 첫 줄은 `s, userID := testStore(t)` 하나로 끝난다.
 같은 파일의 `mustDeck`과 `mustCard`도 같은 구조로, 덱과 카드를 만들다 에러가 나면 그 자리에서 테스트를 중단한다.
@@ -348,7 +351,7 @@ include::../../flashcard-advanced/internal/litestore/litestore_test.go[tag=subte
 ----
 
 테이블의 각 행이 이름(`name`), 입력(`rule`), 기댓값(`want`)을 담은 구조체가 됐다.
-그리고 루프 본문이 `t.Run(tt.name, func(t *testing.T) { ... })`으로 감싸였다.
+그리고 루프 본문을 `t.Run(tt.name, func(t *testing.T) { ... })`으로 감쌌다.
 Go에서 테이블 주도 테스트라고 하면 가장 먼저 떠올리는 것이 이 형태다.
 
 무엇이 좋아지는지는 `-v`를 붙인 출력에서 드러난다.
@@ -377,10 +380,10 @@ ok  	github.com/benelog/flashcard/internal/litestore	0.044s
 go test -run 'TestSmartRules/tag_overlap' ./internal/litestore
 ----
 
-앞 절의 `-run`이 테스트 함수 단위였다면, 서브테스트를 쓰면 케이스 단위까지 좁혀진다.
+앞 절의 `-run`이 테스트 함수 단위였다면, 서브테스트에서는 케이스 단위까지 좁혀진다.
 케이스가 스무 개인 테이블에서 열일곱 번째만 깨졌을 때 그 하나만 몇 밀리초에 돌려 가며 고칠 수 있다.
 서브테스트는 각각 독립적으로 실패를 보고하기도 한다.
-한 케이스 안에서 `t.Fatalf`로 중단해도 중단되는 것은 그 서브테스트뿐이고 나머지 케이스는 계속 실행된다.
+한 케이스 안에서 `t.Fatalf`로 멈춰도 멈추는 것은 그 서브테스트뿐이고 나머지 케이스는 계속 실행된다.
 
 케이스마다 이름을 지어 줄 가치가 있는지가 `t.Run`을 쓸지 정하는 기준이다.
 앞서 본 `wantIntervals` 같은 단순한 기댓값 목록은 루프만으로 충분하고, 케이스마다 조건과 기대 결과가 다른 이 규칙 테스트에는 `t.Run`이 맞다.
@@ -421,10 +424,10 @@ DB도 HTTP도 모르는 코드일수록 숫자가 높은데, 검증하기 쉬운
 낮은 숫자를 해석할 때는 조심할 것이 두 가지 있다.
 
 첫째, `internal/pgstore`가 2.3%인 것은 이 패키지를 소홀히 해서가 아니다.
-이 패키지는 대부분이 PostgreSQL에 SQL을 보내는 코드라, 검사하려면 테스트가 붙을 진짜 PostgreSQL 서버가 필요하다.
+이 패키지는 대부분이 PostgreSQL에 SQL을 보내는 코드라, 검사하려면 테스트를 붙일 진짜 PostgreSQL 서버가 필요하다.
 앞서 본 `rules_test.go`처럼 DB에 붙지 않는 부분만 검사하니 숫자가 2%대에 머문다.
 그 준비 비용을 치르는 대신 같은 동작을 SQLite 구현으로 검증하는 쪽을 골랐고, litestore의 78.4%가 그 결정의 결과다.
-두 구현이 같은 인터페이스를 만족한다는 점({ch-app-assembly})이 이 선택의 근거이고, 그럼에도 PostgreSQL 전용 SQL의 오류는 이 그물에 걸리지 않는다는 것이 대가다.
+두 구현이 같은 인터페이스를 만족한다는 점({ch-app-assembly})이 이 선택의 근거이고, 그럼에도 PostgreSQL 전용 SQL의 오류는 이 방식으로 잡히지 않는다는 것이 대가다.
 
 둘째, handlers의 3.2%와 web의 19.8%는 이 두 패키지가 거의 검사되지 않는다는 뜻이 아니다.
 이 앱의 화면과 API는 `pkg/app`에서 앱을 통째로 띄워 진짜 HTTP 요청을 보내는 테스트 마흔네 개(서브테스트까지 세면 일흔아홉 번)가 검사한다({ch-app-tests}에서 읽는다).
@@ -435,7 +438,8 @@ DB도 HTTP도 모르는 코드일수록 숫자가 높은데, 검증하기 쉬운
 그래서 커버리지는 목표로 삼기에 나쁜 숫자다.
 "90%를 채운다"는 규칙을 세우면 검증할 가치가 낮은 코드에도 형식적인 테스트가 붙고, 정작 숫자는 올라가는데 잡히는 버그는 늘지 않는다.
 커버리지는 목표가 아니라 *테스트가 없는 곳을 확인하는 지도*로 읽을 때 쓸모가 있다.
-핸들러의 커버리지가 3%대에 머문다는 사실은 이 저장소의 핸들러가 얇게 유지되고 있다는 {ch-app-assembly}의 설계와 함께 읽어야 하며, 그 계층에 로직이 쌓이기 시작하면 가장 먼저 테스트를 붙일 곳이라는 신호이기도 하다.
+핸들러의 커버리지가 3%대에 머문다는 사실은 이 저장소의 핸들러를 얇게 유지한다는 {ch-app-assembly}의 설계와 함께 읽어야 한다.
+그 계층에 로직이 쌓이기 시작하면 가장 먼저 테스트를 붙일 곳이라는 신호이기도 하다.
 
 == 품질 검사 도구
 
@@ -482,10 +486,10 @@ Go는 사용하지 않는 임포트와 지역 변수를 컴파일 에러로 처�
 staticcheck ./...
 ----
 
-사용되지 않는 코드, 비효율적인 관용구, 오래된 API 사용 등을 짚어 준다.
+쓰지 않는 코드, 비효율적인 관용구, 오래된 API 사용 등을 짚어 준다.
 표준 도구가 아니므로 `go install`로 설치해야 하지만, Go 커뮤니티에서 사실상의 표준으로 통한다.
 
-이 도구들은 빠르고(gofmt는 이 저장소 전체를 0.1초 안에 훑고, go vet도 빌드 캐시가 있으면 1초가 안 걸린다), 결정적이고, 결과 해석에 사람의 판단이 필요 없어서 자동화의 재료로 이상적이다.
+이 도구들은 빠르고(gofmt는 이 저장소 전체를 0.1초 안에 읽고, go vet도 빌드 캐시가 있으면 1초가 안 걸린다), 결정적이고, 결과 해석에 사람의 판단이 필요 없어서 자동화의 재료로 이상적이다.
 이 프로젝트에서는 AI 에이전트가 Go 파일을 수정할 때마다 훅(Hook)으로 gofmt와 go vet이 자동 실행되도록 구성했는데, 그 구조와 설계 의도는 {ch-quality-gates}에서 자세히 다룬다.
 
 == 세로 정렬은 취향이 아니라 규칙이다
@@ -587,4 +591,4 @@ Go에서 "정렬(alignment)"은 구조체 필드를 메모리에 어떤 순서�
 다섯째, gofmt·go vet·staticcheck는 빠르고 결정적이어서 자동화의 재료로 알맞은 품질 검사 도구다.
 gofmt의 세로 정렬은 취향이 아니라 규칙이며, 그 대가와 완화 장치까지 확인했다.
 
-다음 장에서는 이렇게 검증된 코드 조각들을 HTTP API로 엮는 웹 프레임워크 Gin을 다룬다.
+다음 {ch-gin}에서는 이렇게 검증한 코드 조각들을 HTTP API로 엮는 웹 프레임워크 Gin을 다룬다.

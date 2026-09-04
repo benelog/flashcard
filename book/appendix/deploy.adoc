@@ -41,7 +41,8 @@ https://supabase.com[supabase.com]에서 무료 계정을 만들고 New project�
 프로젝트 이름과 데이터베이스 비밀번호를 정하는 칸이 나오는데, 이 비밀번호는 나중에 연결 문자열에 들어가므로 비밀번호 관리자에 적어 둔다.
 리전(region)은 East US (North Virginia)를 고른다.
 Vercel 함수가 기본으로 뜨는 리전(iad1)과 같은 곳이라야 앱과 DB가 가깝다.
-서울 리전을 고르면 함수와 DB 사이 왕복이 180ms쯤으로 늘고 요청 하나가 그 왕복을 서너 번 하므로({ch-supabase-db}), 화면 하나마다 0.5~0.7초가 더 걸려 피한다.
+서울 리전을 고르면 함수와 DB 사이 왕복이 180ms쯤으로 늘고, 요청 하나가 그 왕복을 서너 번 하므로({ch-supabase-db}) 화면 하나마다 0.5~0.7초가 더 걸린다.
+그래서 서울 리전은 고르지 않는다.
 
 프로젝트가 만들어지면 두 종류의 값을 꺼내 둔다.
 하나는 DB 연결 문자열이다.
@@ -52,7 +53,8 @@ Vercel 함수가 기본으로 뜨는 리전(iad1)과 같은 곳이라야 앱과 
 대괄호까지 통째로 지우고 프로젝트를 만들 때 정한 비밀번호로 바꿔 두어야 실제로 접속되는 문자열이 된다.
 다른 하나는 API 값이다.
 Settings → API에서 Project URL과 anon(public) key를 복사한다.
-복사한 값들은 5절에서 Vercel에 환경 변수로 넣을 때 쓰니, 비밀번호와 같은 비밀번호 관리자 항목에 모아 두고, 저장소 안에 두려면 커밋되지 않는 `.env.dev`({ch-env-secrets})에만 둔다.
+복사한 값들은 5절에서 Vercel에 환경 변수로 넣을 때 쓴다.
+DB 비밀번호를 적어 둔 관리자 항목에 함께 모아 두고, 저장소 안에 두려면 커밋되지 않는 `.env.dev`({ch-env-secrets})에만 둔다.
 
 이 책은 개발용과 운영용 DB를 완전히 나눠 쓴다({ch-supabase-db}).
 그러니 같은 방식으로 프로젝트를 하나 더 만들어, 한쪽은 운영용, 다른 한쪽은 개발용으로 삼는다.
@@ -68,7 +70,7 @@ Google(또는 GitHub)에 "이 앱을 위해 로그인을 내준다"는 뜻으로
 === Google 클라이언트 만들기
 
 https://console.cloud.google.com[console.cloud.google.com]에 들어간다.
-예전에는 "APIs & Services" 아래 OAuth consent screen과 Credentials로 나뉘어 있었지만, 지금은 *Google 인증 플랫폼(Google Auth Platform)* 이라는 곳 하나로 합쳐졌다.
+예전에는 "APIs & Services" 아래 OAuth consent screen과 Credentials로 나뉘어 있었지만, 지금은 *Google 인증 플랫폼(Google Auth Platform)* 한 곳으로 합쳐졌다.
 Google 계정으로 처음 들어가면 이 메뉴 대신 클라우드 프로젝트를 만들라는 안내가 먼저 나온다.
 화면 위쪽의 프로젝트 선택 칸에서 새 프로젝트를 만들고 이름을 정한다(Supabase 프로젝트와는 별개이고, 이름은 아무래도 좋다).
 프로젝트가 선택된 상태라야 아래의 메뉴들이 나타난다.
@@ -155,7 +157,7 @@ Redirect URLs는 "돌아와도 되는 주소 목록"이다.
 
 </div>
 
-<p class="fc-caption">그림 35 Supabase URL Configuration. Redirect URLs는 돌아와도 되는 주소 목록이고, Site URL은 그 목록에 맞는 게 없을 때의 기본값이다.</p>
+<p class="fc-caption">그림 35 Supabase URL Configuration. Redirect URLs는 돌아와도 되는 주소 목록이고, Site URL은 그 목록에 맞는 것이 없을 때의 기본값이다.</p>
 ++++
 
 Site URL은 조금 다르다.
@@ -194,7 +196,8 @@ https://github.com[github.com]에서 무료 계정을 만들고, New repository�
 그러니 할 일은 원격을 새로 더하는 것이 아니라 방금 만든 내 저장소 주소로 바꾸는 것이고, 그 명령은 에이전트에게 맡기면 된다.
 "이 저장소의 원격을 GitHub의 <주소>로 바꾸고 main을 push해 줘" 정도의 지시면 충분하다.
 첫 push에서는 "이 계정의 주인이 맞는가"를 확인하는 인증을 한 번 거친다.
-SSH 키를 등록하거나 액세스 토큰을 만들어 비밀번호 대신 쓰는 방식인데, 화면과 절차가 자주 바뀌므로 GitHub 공식 문서(SSH는 "Adding a new SSH key to your GitHub account", 토큰은 "Managing your personal access tokens")의 최신 안내를 따르는 편이 빠르다footnote:[두 문서 모두 https://docs.github.com/en/authentication[GitHub Authentication documentation] 아래에 있다.].
+SSH 키를 등록하거나 액세스 토큰을 만들어 비밀번호 대신 쓰는 방식이다.
+화면과 절차가 자주 바뀌므로 GitHub 공식 문서(SSH는 "Adding a new SSH key to your GitHub account", 토큰은 "Managing your personal access tokens")의 최신 안내를 따르는 편이 빠르다footnote:[두 문서 모두 https://docs.github.com/en/authentication[GitHub Authentication documentation] 아래에 있다.].
 막히면 그 화면의 문구를 에이전트에게 보여 주며 물어보는 것도 요령이다.
 
 push가 끝나면 {ch-git}의 브랜치 정책대로 운영용 release 브랜치를 만들어 함께 올려 둔다.
@@ -206,7 +209,8 @@ push가 끝나면 {ch-git}의 브랜치 정책대로 운영용 release 브랜치
 GitHub 저장소의 Settings → Secrets and variables → Actions에서 New repository secret을 눌러 둘을 등록한다.
 `DEV_MIGRATE_DATABASE_URL`에는 개발 프로젝트의 Session pooler 연결 문자열(포트 5432)을, `PROD_MIGRATE_DATABASE_URL`에는 운영 프로젝트의 같은 문자열을 넣는다.
 등록해 두면 마이그레이션 파일이 바뀐 커밋마다 워크플로가 브랜치를 보고 알맞은 DB에 스키마를 적용한다.
-이 단계를 건너뛰면 5절의 배포는 성공하지만 테이블이 하나도 없는 DB 위에 앱이 떠서, 로그인 직후 프로필을 만드는 첫 쿼리가 실패해 500 오류 화면("일시적인 오류가 발생했어요")을 만나고 Vercel Logs에는 `relation "profiles" does not exist`가 남는다.
+이 단계를 건너뛰면 5절의 배포는 성공하지만 테이블이 하나도 없는 DB 위에 앱이 뜬다.
+로그인 직후 프로필을 만드는 첫 쿼리가 실패해 500 오류 화면("일시적인 오류가 발생했어요")이 뜨고, Vercel Logs에는 `relation "profiles" does not exist`가 남는다.
 
 == 5. Vercel에 올리고 환경을 나눈다
 
@@ -242,7 +246,7 @@ Production을 열어 Branch Tracking의 브랜치 값을 main에서 release로 �
 이제 release에 병합할 때만 운영에 배포되고, main에 푸시하면 프리뷰(개발 확인용) 배포가 된다.
 
 다음은 환경 변수다.
-1절에서 꺼내 둔 값(`DATABASE_URL`, `SUPABASE_URL`, `SUPABASE_ANON_KEY`)을 넣는데, 스코프를 나눠 넣는 것이 핵심이다.
+1절에서 꺼내 둔 값(`DATABASE_URL`, `SUPABASE_URL`, `SUPABASE_ANON_KEY`)을 등록하는데, 스코프를 나눠 넣는 것이 핵심이다.
 이름과 값의 짝은 이렇다.
 `DATABASE_URL`에는 Transaction pooler 연결 문자열(포트 6543)을, `SUPABASE_URL`에는 Project URL을, `SUPABASE_ANON_KEY`에는 anon(public) key를 넣는다.
 Production 스코프에는 운영 프로젝트 값을, Preview 스코프에는 개발 프로젝트 값을 넣는다(이유는 {ch-env-secrets}).

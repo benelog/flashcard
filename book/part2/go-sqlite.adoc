@@ -7,7 +7,7 @@
 sqlite3에 치던 그 문장들을 Go 프로그램이 실행하게 만드는 것이다.
 
 이 장부터 2부의 남은 세 장은 저장소의 `flashcard-basic/` 디렉터리에 있는 최소 플래시카드 앱을 재료로 쓴다.
-{ch-first-run}에서 띄워 본 완성본(`flashcard-advanced/`)에서 배포·인증·간격 반복을 걷어 내고 웹 앱의 기본 구조만 남긴 앱이다.
+{ch-first-run}에서 띄워 본 완성본(`flashcard-advanced/`)에서 배포·인증·간격 반복을 걷어내고 웹 앱의 기본 구조만 남긴 앱이다.
 테이블은 `decks`와 `cards` 둘뿐이고, 로그인이 없으며, 데이터는 현재 디렉터리의 `flashcard.db` 파일 하나에 저장된다.
 그 폴더에서 `go run .`을 실행하면 `http://localhost:8080`에서 열린다.
 완성본의 구조와 문제 풀이를 해부하는 일은 3부의 몫이고, 2부에서는 이 작은 앱으로 기초 사용법만 익힌다.
@@ -81,7 +81,8 @@ var schemaSQL string
 include::../../flashcard-basic/store.go[tag=open]
 ----
 
-`Store`는 데이터베이스 연결 하나를 감싼 구조체이고, 앞으로 볼 함수들은 모두 이 구조체의 메서드({ch-go-types})다.
+`Store`는 데이터베이스 연결 하나를 감싼 구조체다.
+앞으로 볼 함수들은 모두 이 구조체의 메서드({ch-go-types})다.
 `sql.Open`의 첫 인자 `"sqlite"`가 아까 드라이버가 등록해 둔 이름이고, 둘째 인자가 열 파일의 경로다.
 경로 뒤에 `?`로 이어 붙인 `_pragma=foreign_keys(1)`은 연결 옵션이다.
 SQLite는 옛 버전과의 호환 때문에 외래 키 검사가 꺼진 채로 출발하므로, 연결할 때마다 이렇게 켜 줘야 `references` 선언이 실제로 일한다.
@@ -107,9 +108,9 @@ include::../../flashcard-basic/store.go[tag=types]
 
 구조체 하나가 테이블 하나와, 필드 하나가 열 하나와 짝을 이룬다.
 `Deck.Name`이 `decks.name`이고 `Card.DeckID`가 `cards.deck_id`다.
-카드의 원문과 뜻을 담는 열 이름 `text`·`meaning`은 완성본과 같은 이름이라, 3부에서 완성본의 스키마를 읽을 때에도 같은 이름으로 나온다.
+카드의 원문과 뜻을 담는 열 `text`·`meaning`은 완성본에서도 이름이 같아서, 3부에서 완성본의 스키마를 읽을 때 그대로 다시 나온다.
 id를 담는 필드가 `int64`인 것은 새 행의 번호를 알려 주는 `database/sql`의 `res.LastInsertId()`가 이 타입으로 돌려주기 때문이다(다음 절에서 만난다).
-필드 뒤에 붙은 `` `json:"id"` `` 같은 문자열은 이 구조체를 JSON으로 내보낼 때 쓸 이름표인데, 화면 대신 JSON으로 답하는 API를 만들 때 쓰인다.
+필드 뒤에 붙은 `` `json:"id"` `` 같은 문자열은 이 구조체를 JSON으로 내보낼 때 쓸 이름표인데, 화면 대신 JSON으로 답하는 API에서 필요하다.
 지금은 없는 것으로 보고 지나가도 되고, 이런 꼬리표(구조체 태그)의 정체는 {ch-core-logic}에서 다룬다.
 
 앞으로 볼 함수는 모두 이 두 구조체를 주고받는다.
@@ -133,7 +134,7 @@ insert, update, delete가 여기에 해당한다.
 "SQL은 반드시 자리표시자로"라는 철칙이 Go 코드에서는 이 모양이 된다.
 
 문장에 `id`가 없는데도 새 행은 id를 받는다.
-`autoincrement` 열이라 데이터베이스가 번호를 매기기 때문이고, 방금 매겨진 번호를 알려 주는 것이 `res.LastInsertId()`다.
+`autoincrement` 열이라 데이터베이스가 번호를 매기기 때문이고, 그렇게 매긴 번호를 알려 주는 것이 `res.LastInsertId()`다.
 호출한 쪽은 이 id로 방금 만든 덱의 화면으로 이동하거나 그 덱에 카드를 이어서 넣는다.
 카드를 추가하는 `CreateCard`도 같은 모양인데, 자리표시자가 셋(`deck_id`, `text`, `meaning`)으로 늘고, 방금 받은 id까지 채운 `Card` 구조체를 통째로 돌려주는 것만 다르다.
 
@@ -156,7 +157,7 @@ include::../../flashcard-basic/store.go[tag=get-deck]
 select에 적은 열 순서와 `Scan`에 넘긴 순서가 어긋나면 값이 엉뚱한 필드로 들어가므로, 이 둘은 늘 나란히 놓고 맞춘다.
 
 이 함수의 절반은 "없을 때"를 다루는 데 쓰였다.
-조건에 맞는 행이 없으면 `database/sql`은 `sql.ErrNoRows`라는 에러를 돌려주는데, 이 함수는 그것을 그대로 흘려보내지 않고 이 앱의 에러인 `ErrNotFound`로 바꿔 돌려준다.
+조건에 맞는 행이 없으면 `database/sql`은 `sql.ErrNoRows`라는 에러를 내놓는데, 이 함수는 그것을 그대로 흘려보내지 않고 이 앱의 에러인 `ErrNotFound`로 바꿔 돌려준다.
 코드의 `errors.Is`는 돌아온 에러가 바로 그 에러인지 확인하는 표준 라이브러리 함수다.
 그 경우 돌려줄 덱이 없으므로, 빈 `Deck` 값({ch-go-hello}에서 본 제로값)과 함께 `ErrNotFound`를 내보낸다.
 `ErrNotFound`는 `store.go` 첫머리에 한 번 선언해 둔 값이다.
@@ -195,7 +196,7 @@ include::../../flashcard-basic/store.go[tag=list-cards]
 
 마지막 줄의 `rows.Err()`도 빠뜨리기 쉬운 마무리다.
 반복 도중 읽기에 문제가 생기면 `rows.Next()`는 에러를 돌려줄 자리가 없어 그냥 `false`로 반복을 끝낸다.
-그래서 반복이 끝난 뒤 끝까지 잘 읽어서 끝난 것인지를 따로 물어야 하고, 그 물음이 `rows.Err()`다.
+그래서 반복이 끝난 뒤에 끝까지 잘 읽었는지를 따로 물어야 하고, 그 물음이 `rows.Err()`다.
 
 덱 목록을 가져오는 `ListDecks`도 테이블과 열만 다를 뿐 이 모양 그대로다.
 `Query`, `defer rows.Close()`, `rows.Next()` 반복, `Scan`, 마지막 `rows.Err()` 확인.
@@ -220,7 +221,7 @@ delete는 조건에 맞는 행이 없어도 에러 없이 성공하므로, 이 �
 없는 카드를 찾는 것과 없는 카드를 지우는 것이 같은 에러로 표현되니, 부르는 쪽은 어느 쪽이든 같은 방법으로 404 응답을 만들면 된다.
 
 고치는 쪽인 update 문장을 다루는 방법도 같다.
-덱 이름을 바꾸는 `RenameDeck`이 `Exec`으로 update 문장을 실행하고 `RowsAffected`로 고쳐진 행이 있었는지 확인하는, 방금 본 모양 그대로다.
+덱 이름을 바꾸는 `RenameDeck`도 `Exec`으로 update 문장을 실행하고 `RowsAffected`로 고쳐진 행이 있었는지 확인하는, 방금 본 모양 그대로다.
 덱을 지우는 `DeleteDeck`까지 포함해, 이 파일의 고치고 지우는 함수 셋이 전부 이 두 박자로 돈다.
 
 == 직접 확인: 테스트가 대신 돌려 본다
