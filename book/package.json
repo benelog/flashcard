@@ -6,6 +6,8 @@
   "scripts": {
     "dev": "book dev",
     "build": "book build",
+    "metrics": "node scripts/update-metrics.mjs",
+    "prebuild": "node scripts/update-metrics.mjs --check",
     "preview": "book preview",
     "pdf": "book pdf",
     "og": "book og"

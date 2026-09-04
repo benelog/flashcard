@@ -11,7 +11,8 @@
 // 코드 블록(----, ...., ++++) 안은 치환하지 않는다. 코드 안 생략 주석의
 // 장 번호는 여전히 손으로 맞춰야 한다.
 
-const VERBATIM_DELIM = /^(----|\.\.\.\.|\+\+\+\+)$/
+import { replaceTokens } from './tokens.mjs'
+
 const TOKEN = /\{ch-([a-z0-9-]+(?:[·~][a-z0-9-]+)*)\}/g
 
 // 라벨("15장", "부록")에서 번호를 꺼낸다. 번호가 아니면 null.
@@ -44,27 +45,11 @@ function resolveToken(expr, labels) {
 // 원고 본문의 {ch-…} 토큰을 치환한다. lineNumbers는 include 해석으로 늘어난
 // 각 줄이 원고 몇 번째 줄에서 왔는지다(오류를 원고 줄 번호로 짚기 위함).
 export function applyChapterRefs(source, labels, file, lineNumbers) {
-  const errors = []
-  let verbatim = false
-  const out = source.split('\n').map((line, i) => {
-    if (VERBATIM_DELIM.test(line.trimEnd())) {
-      verbatim = !verbatim
-      return line
-    }
-    if (verbatim) return line
-    return line.replace(TOKEN, (whole, expr) => {
-      try {
-        return resolveToken(expr, labels)
-      } catch (e) {
-        errors.push(`${file}:${lineNumbers?.[i] ?? i + 1} ${e.message}`)
-        return whole
-      }
-    })
+  return replaceTokens(source, TOKEN, (expr) => resolveToken(expr, labels), {
+    file,
+    lineNumbers,
+    label: '장 참조 토큰 오류',
   })
-  if (errors.length) {
-    throw new Error(`장 참조 토큰 오류:\n${errors.join('\n')}`)
-  }
-  return out.join('\n')
 }
 
 // 제목 줄에 toc의 장 라벨을 붙인다: "= Gin으로 …" → "= 15장 Gin으로 …".

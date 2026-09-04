@@ -1,7 +1,14 @@
 // 이 책의 단일 설정 소스.
 // 사이트(사이드바·nav·OG), PDF(표지·차례·아웃라인), 홈 표지가 모두 여기서 파생된다.
 // 장을 더하거나 빼면 이 파일의 toc만 고치면 된다.
+import { readFileSync } from 'node:fs'
+
+// 원고가 인용하는 저장소 수치. 본문은 {n-이름} 토큰으로 쓰고 빌드가 치환한다.
+// 값은 `npm run metrics`가 저장소를 직접 세어 갱신한다(scripts/metrics.def.mjs).
+const metrics = JSON.parse(readFileSync(new URL('./metrics.json', import.meta.url), 'utf8'))
+
 export default {
+  metrics,
   lang: 'ko-KR',
   title: '이해하며 만드는 나만의 웹 앱',
   subtitle: '쉬운 프로그래밍 언어로 시작하는 AI 코딩',

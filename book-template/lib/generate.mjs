@@ -8,6 +8,7 @@ import { dirname, join, relative } from 'node:path'
 import { convertAdoc } from './adoc.mjs'
 import { homeCoverMarkdown } from './cover.mjs'
 import { resolveIncludes } from './include.mjs'
+import { applyMetricRefs } from './metrics.mjs'
 import { applyChapterRefs, numberTitle } from './refs.mjs'
 import { chapterLabels, flattenChapters } from './toc.mjs'
 
@@ -44,7 +45,8 @@ export async function generateChapter(root, { file, route, src }, book) {
   if (book) {
     const labels = chapterLabels(book)
     const key = route.replace(/^.*\//, '')
-    manuscript = numberTitle(applyChapterRefs(text, labels, at, lineNumbers), labels.get(key))
+    manuscript = applyMetricRefs(text, book.metrics, at, lineNumbers)
+    manuscript = numberTitle(applyChapterRefs(manuscript, labels, at, lineNumbers), labels.get(key))
   }
   await writeFile(out, convertAdoc(manuscript, at, { lineNumbers }))
   return deps
