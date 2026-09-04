@@ -66,3 +66,20 @@ const (
 	TextToMeaning = "text_to_meaning"
 	MeaningToText = "meaning_to_text"
 )
+
+// AuthConfig는 서버의 로그인 방식이다. authMode가 "local"이면 로그인이 없다.
+type AuthConfig struct {
+	AuthMode    string `json:"authMode"`
+	SupabaseURL string `json:"supabaseUrl"`
+}
+
+type TokenSet struct {
+	AccessToken  string `json:"accessToken"`
+	RefreshToken string `json:"refreshToken"`
+	ExpiresIn    int    `json:"expiresIn"` // 초
+}
+
+type Profile struct {
+	ID          string  `json:"id"`
+	DisplayName *string `json:"displayName"`
+}

@@ -6,7 +6,7 @@ import (
 	"github.com/benelog/flashcard-cli/internal/tui"
 )
 
-func newMenuCmd(client clientFunc) *cobra.Command {
+func newMenuCmd(client clientFunc, auth tui.Auth) *cobra.Command {
 	return &cobra.Command{
 		Use:   "menu",
 		Short: "메뉴 모드로 연다(옵션 없이 실행하면 이 모드다)",
@@ -16,7 +16,7 @@ func newMenuCmd(client clientFunc) *cobra.Command {
 q는 끝낸다.`,
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return tui.RunMenu(cmd.Context(), client())
+			return tui.RunMenu(cmd.Context(), client(), auth)
 		},
 	}
 }

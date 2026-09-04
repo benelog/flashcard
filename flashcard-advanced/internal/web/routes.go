@@ -36,9 +36,11 @@ var assetVersion = sync.OnceValue(func() string {
 func asset(path string) string { return path + "?v=" + assetVersion() }
 
 // Register는 모든 HTML 라우트를 공용 Gin 엔진에 잇는다. /api 아래 JSON API는
-// 따로 등록되며 여기서 건드리지 않는다.
+// 따로 등록되며 여기서 건드리지 않는다. 예외는 CLI 로그인 끝점(/api/auth/*)
+// 으로, GoTrue 클라이언트가 이 패키지에 있어 여기서 잇는다.
 func (w *Web) Register(r *gin.Engine) {
 	w.registerStatic(r)
+	w.registerCLIAuth(r)
 
 	// 공개 페이지: 공유 덱 구경과 로그인 흐름.
 	pub := r.Group("/", w.withUser())

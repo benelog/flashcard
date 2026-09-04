@@ -18,6 +18,9 @@ type itemID int
 
 const (
 	itemHealth itemID = iota
+	itemLoginGitHub
+	itemLoginGoogle
+	itemLogout
 	itemHelp
 	itemQuit
 	itemDecks
@@ -42,6 +45,9 @@ type menuDef struct {
 var menuBar = []menuDef{
 	{"프로그램", []menuItem{
 		{itemHealth, "서버 확인"},
+		{itemLoginGitHub, "GitHub로 로그인…"},
+		{itemLoginGoogle, "Google로 로그인…"},
+		{itemLogout, "로그아웃"},
 		{itemHelp, "조작 안내"},
 		{itemQuit, "끝내기"},
 	}},
@@ -58,6 +64,15 @@ var menuBar = []menuDef{
 	}},
 }
 
+// Auth는 메뉴의 로그인 항목이 쓰는 뒷단이다. cmd 패키지가 채운다. 브라우저를
+// 열고 기다리는 일이라 두 단계로 나뉜다. Begin은 열 주소를 만들고, wait는
+// 브라우저가 돌아올 때까지 막혔다가 로그인을 저장한다.
+type Auth interface {
+	Begin(ctx context.Context, provider string) (url string, wait func(context.Context) error, err error)
+	OpenBrowser(url string) error
+	Logout() (bool, error)
+}
+
 // 학습은 화면(Bubble Tea 프로그램)을 새로 띄워야 한다. 프로그램을 겹쳐 돌릴
 // 수 없어서 메뉴를 한 번 닫고 RunMenu가 이어서 학습 화면을 띄운다.
 type studyAction struct {
@@ -68,14 +83,16 @@ type studyAction struct {
 
 // RunMenu는 메뉴 화면을 띄운다. 학습을 고르면 메뉴를 닫고 학습 화면으로
 // 넘어갔다가, 학습이 끝나면 결과를 안고 메뉴로 돌아온다.
-func RunMenu(ctx context.Context, c *api.Client) error {
+func RunMenu(ctx context.Context, c *api.Client, a Auth) error {
 	notice := ""
 	for {
-		out, err := tea.NewProgram(newMenu(c, notice), tea.WithAltScreen(), tea.WithContext(ctx)).Run()
+		m := newMenu(c, notice)
+		m.auth = a
+		out, err := tea.NewProgram(m, tea.WithAltScreen(), tea.WithContext(ctx)).Run()
 		if err != nil {
 			return err
 		}
-		m := out.(menu)
+		m = out.(menu)
 		if m.err != nil {
 			return m.err
 		}
@@ -103,6 +120,7 @@ type deckPicker struct {
 
 type menu struct {
 	client *api.Client
+	auth   Auth
 
 	bar  int  // 메뉴 바에서 짚고 있는 메뉴
 	open bool // 풀다운을 폈는지
@@ -114,6 +132,8 @@ type menu struct {
 	busy    bool   // 서버 응답을 기다리는 중
 	err     error
 	study   studyAction
+
+	loginCancel context.CancelFunc // 브라우저를 기다리는 중이면 esc로 접는다
 
 	width, height int
 }
@@ -147,6 +167,24 @@ type dueMsg struct {
 }
 
 type healthMsg struct{ err error }
+
+// loginStartedMsg는 브라우저에 열 주소가 준비됐다는 신호다. 화면에 주소를
+// 보여 준 뒤 브라우저를 열고 wait를 시작한다.
+type loginStartedMsg struct {
+	url  string
+	wait func(context.Context) error
+	err  error
+}
+
+type loginDoneMsg struct {
+	name string // 로그인한 사용자의 표시 이름
+	err  error
+}
+
+type logoutMsg struct {
+	had bool
+	err error
+}
 
 func (m menu) Init() tea.Cmd { return nil }
 
@@ -202,6 +240,45 @@ func (m menu) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		m.content = m.client.BaseURL() + " 에 연결됩니다."
 		m.status = ""
+
+	case loginStartedMsg:
+		if msg.err != nil {
+			m.busy = false
+			m.status = "오류: " + msg.err.Error()
+			return m, nil
+		}
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+		m.loginCancel = cancel
+		m.content = "브라우저에서 로그인을 마치세요.\n\n브라우저가 열리지 않으면 이 주소를 직접 여세요:\n" + msg.url
+		m.status = "브라우저를 기다리는 중… esc 취소"
+		return m, tea.Batch(m.openBrowser(msg.url), m.waitLogin(ctx, msg.wait))
+
+	case loginDoneMsg:
+		m.busy = false
+		if m.loginCancel != nil {
+			m.loginCancel()
+			m.loginCancel = nil
+		}
+		if msg.err != nil {
+			m.content = "로그인하지 못했습니다."
+			m.status = "오류: " + msg.err.Error()
+			return m, nil
+		}
+		m.content = msg.name + "님으로 로그인했습니다."
+		m.status = ""
+
+	case logoutMsg:
+		m.busy = false
+		if msg.err != nil {
+			m.status = "오류: " + msg.err.Error()
+			return m, nil
+		}
+		if msg.had {
+			m.content = "로그아웃했습니다."
+		} else {
+			m.content = "저장된 로그인이 없습니다."
+		}
+		m.status = ""
 	}
 	return m, nil
 }
@@ -212,7 +289,12 @@ func (m menu) onKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		return m, tea.Quit
 	}
 	if m.busy {
-		return m, nil // 서버 응답을 기다리는 중에는 키를 받지 않는다
+		// 서버 응답을 기다리는 중에는 키를 받지 않는다. 브라우저를 기다리는
+		// 중이라면 esc로 접을 수는 있다.
+		if key == "esc" && m.loginCancel != nil {
+			m.loginCancel()
+		}
+		return m, nil
 	}
 	if m.picker != nil {
 		return m.onPickerKey(key)
@@ -294,6 +376,25 @@ func (m menu) run(id itemID) (tea.Model, tea.Cmd) {
 	case itemHealth:
 		m.busy = true
 		return m, m.checkHealth()
+	case itemLoginGitHub, itemLoginGoogle:
+		if m.auth == nil {
+			m.status = "이 화면에서는 로그인을 쓸 수 없습니다."
+			return m, nil
+		}
+		provider := "github"
+		if id == itemLoginGoogle {
+			provider = "google"
+		}
+		m.busy = true
+		m.content = "로그인을 준비하는 중…"
+		return m, m.beginLogin(provider)
+	case itemLogout:
+		if m.auth == nil {
+			m.status = "이 화면에서는 로그인을 쓸 수 없습니다."
+			return m, nil
+		}
+		m.busy = true
+		return m, m.logout()
 	case itemDue:
 		m.busy = true
 		return m, m.loadDue()
@@ -346,6 +447,48 @@ func (m menu) loadDue() tea.Cmd {
 	}
 }
 
+func (m menu) beginLogin(provider string) tea.Cmd {
+	a := m.auth
+	return func() tea.Msg {
+		ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+		defer cancel()
+		url, wait, err := a.Begin(ctx, provider)
+		return loginStartedMsg{url: url, wait: wait, err: err}
+	}
+}
+
+func (m menu) openBrowser(url string) tea.Cmd {
+	a := m.auth
+	return func() tea.Msg {
+		_ = a.OpenBrowser(url) // 못 열어도 주소를 화면에 보여 줬으니 넘어간다
+		return nil
+	}
+}
+
+// waitLogin은 브라우저가 돌아올 때까지 기다린 뒤, 새 토큰으로 사용자 이름을
+// 받아 온다. 클라이언트가 저장소에서 토큰을 읽으므로 따로 건넬 것이 없다.
+func (m menu) waitLogin(ctx context.Context, wait func(context.Context) error) tea.Cmd {
+	c := m.client
+	return func() tea.Msg {
+		if err := wait(ctx); err != nil {
+			return loginDoneMsg{err: err}
+		}
+		name := "알 수 없는 사용자"
+		if me, err := c.Me(ctx); err == nil && me.DisplayName != nil && *me.DisplayName != "" {
+			name = *me.DisplayName
+		}
+		return loginDoneMsg{name: name}
+	}
+}
+
+func (m menu) logout() tea.Cmd {
+	a := m.auth
+	return func() tea.Msg {
+		had, err := a.Logout()
+		return logoutMsg{had: had, err: err}
+	}
+}
+
 func (m menu) checkHealth() tea.Cmd {
 	c := m.client
 	return func() tea.Msg {
@@ -362,6 +505,11 @@ const helpText = `조작
   enter  고르기
   esc    펼친 메뉴 닫기
   q      끝내기
+
+로그인
+
+  프로그램 ▸ GitHub로 로그인 / Google로 로그인이 브라우저를 연다.
+  로그인은 설정 디렉터리에 저장돼 다음 실행부터 자동으로 쓴다.
 
 학습 화면
 
@@ -411,7 +559,7 @@ func (m menu) View() string {
 	b.WriteString("\n")
 
 	status := m.status
-	if m.busy {
+	if m.busy && m.loginCancel == nil {
 		status = "서버에 묻는 중…"
 	}
 	b.WriteString(dimStyle.Render(status))

@@ -2,12 +2,15 @@
 package cmd
 
 import (
+	"context"
+	"fmt"
 	"os"
 
 	"github.com/mattn/go-isatty"
 	"github.com/spf13/cobra"
 
 	"github.com/benelog/flashcard-cli/internal/api"
+	"github.com/benelog/flashcard-cli/internal/auth"
 	"github.com/benelog/flashcard-cli/internal/tui"
 )
 
@@ -20,7 +23,8 @@ type clientFunc func() *api.Client
 type options struct {
 	server string
 	token  string
-	nested bool // 셸 모드 안이면 셸·메뉴로 다시 들어가지 못하게 한다
+	store  *auth.Store // 브라우저 로그인을 저장하는 곳. nil이면 로그인 명령이 동작하지 않는다
+	nested bool        // 셸 모드 안이면 셸·메뉴로 다시 들어가지 못하게 한다
 }
 
 // newRootCmd는 명령 트리를 새로 만든다. 플래그 값을 지역 변수에 묶어 두어
@@ -39,10 +43,11 @@ func newRootCmd(o options) *cobra.Command {
   flashcard decks      명령 모드. 명령과 옵션을 한 번에 준다.
   flashcard shell      셸 모드. 명령을 한 줄씩 받는다.
 
-기본값은 운영 서버(https://flashcard.benelog.net)다. Supabase 인증이 있는
-서버를 부르려면 --token이나 FLASHCARD_TOKEN에 액세스 토큰을 넣는다.
-로컬 서버(http://localhost:8080)는 --server나 FLASHCARD_SERVER로 지정하며
-토큰이 필요 없다.`,
+기본값은 운영 서버(https://flashcard.benelog.net)다. 처음 한 번
+flashcard login(또는 메뉴의 프로그램 ▸ 로그인)으로 브라우저에서 로그인하면
+토큰이 저장돼 다음부터는 자동으로 쓴다. --token이나 FLASHCARD_TOKEN을 주면
+저장된 로그인 대신 그 토큰을 쓴다. 로컬 서버(http://localhost:8080)는
+--server나 FLASHCARD_SERVER로 지정하며 로그인이 필요 없다.`,
 		SilenceUsage:  true, // 서버 오류에 사용법을 다시 찍지 않는다
 		SilenceErrors: true,
 	}
@@ -58,8 +63,18 @@ func newRootCmd(o options) *cobra.Command {
 		return o.token
 	}
 
-	client := clientFunc(func() *api.Client { return api.New(server, resolvedToken()) })
+	// 토큰은 플래그·환경 변수가 먼저고, 없으면 저장된 브라우저 로그인이다.
+	tokenSource := func(ctx context.Context) (string, error) {
+		if t := resolvedToken(); t != "" || o.store == nil {
+			return t, nil
+		}
+		return o.store.TokenSource(server)(ctx)
+	}
+	client := clientFunc(func() *api.Client { return api.NewWithTokenSource(server, tokenSource) })
+	login := &loginAuth{client: client, store: o.store, server: func() string { return server }}
 	root.AddCommand(
+		newLoginCmd(login),
+		newLogoutCmd(login),
 		newDecksCmd(client),
 		newCardsCmd(client),
 		newDueCmd(client),
@@ -70,8 +85,8 @@ func newRootCmd(o options) *cobra.Command {
 		// 셸 모드 안에서 help를 치면 셸 이야기만 나오게 한다.
 		root.Long = "셸 모드다. 아래 명령을 한 줄씩 친다. exit로 나간다."
 	} else {
-		root.AddCommand(newMenuCmd(client), newShellCmd(func() options {
-			return options{server: server, token: resolvedToken(), nested: true}
+		root.AddCommand(newMenuCmd(client, login), newShellCmd(func() options {
+			return options{server: server, token: resolvedToken(), store: o.store, nested: true}
 		}))
 		// 옵션 없이 실행하면 메뉴 모드로 간다. NoArgs를 둬야 오타 난 명령이
 		// 조용히 메뉴로 빠지지 않고 오류가 된다.
@@ -81,16 +96,22 @@ func newRootCmd(o options) *cobra.Command {
 			if !isatty.IsTerminal(os.Stdin.Fd()) || !isatty.IsTerminal(os.Stdout.Fd()) {
 				return cmd.Help()
 			}
-			return tui.RunMenu(cmd.Context(), client())
+			return tui.RunMenu(cmd.Context(), client(), login)
 		}
 	}
 	return root
 }
 
 func Execute() error {
+	store, err := auth.DefaultStore()
+	if err != nil {
+		// 설정 디렉터리를 못 찾아도 --token으로는 쓸 수 있다.
+		fmt.Fprintln(os.Stderr, "경고: 로그인 저장소를 쓸 수 없습니다:", err)
+	}
 	return newRootCmd(options{
 		server: envOr("FLASHCARD_SERVER", "https://flashcard.benelog.net"),
 		token:  os.Getenv("FLASHCARD_TOKEN"),
+		store:  store,
 	}).Execute()
 }
 

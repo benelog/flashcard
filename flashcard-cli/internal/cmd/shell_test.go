@@ -5,8 +5,11 @@ import (
 	"context"
 	"net/http"
 	"net/http/httptest"
+	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/benelog/flashcard-cli/internal/auth"
 )
 
 func TestRunShell(t *testing.T) {
@@ -93,5 +96,37 @@ func TestTokenFromEnvIsUsedButNotShownInHelp(t *testing.T) {
 	}
 	if got != "Bearer "+secret {
 		t.Errorf("Authorization = %q, want the env token", got)
+	}
+}
+
+// logout은 저장된 로그인이 없어도 오류가 아니다. 저장소가 없는 트리(테스트나
+// 설정 디렉터리를 못 찾은 경우)에서는 --token을 쓰라고 알린다.
+func TestLogout(t *testing.T) {
+	store := auth.NewStore(filepath.Join(t.TempDir(), "credentials.json"))
+	store.Save("https://x", auth.Credentials{AccessToken: "at"})
+
+	run := func(o options, args ...string) (string, error) {
+		var out bytes.Buffer
+		root := newRootCmd(o)
+		root.SetArgs(args)
+		root.SetOut(&out)
+		root.SetErr(&out)
+		err := root.Execute()
+		return out.String(), err
+	}
+
+	out, err := run(options{server: "https://x", store: store}, "logout")
+	if err != nil || !strings.Contains(out, "로그아웃했습니다") {
+		t.Errorf("logout = %q, %v", out, err)
+	}
+	out, err = run(options{server: "https://x", store: store}, "logout")
+	if err != nil || !strings.Contains(out, "저장된 로그인이 없습니다") {
+		t.Errorf("두 번째 logout = %q, %v", out, err)
+	}
+	if _, err := run(options{server: "https://x"}, "logout"); err == nil || !strings.Contains(err.Error(), "--token") {
+		t.Errorf("저장소 없는 logout = %v", err)
+	}
+	if _, err := run(options{server: "https://x", store: store}, "login", "--provider", "bogus"); err == nil {
+		t.Error("모르는 제공자를 막지 않았다")
 	}
 }
