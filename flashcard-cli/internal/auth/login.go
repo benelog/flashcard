@@ -58,7 +58,7 @@ func Begin(ctx context.Context, client *api.Client, provider string) (*Flow, err
 	}
 	ln, err := net.Listen("tcp", callbackAddr)
 	if err != nil {
-		return nil, fmt.Errorf("콜백 포트 %s를 열 수 없습니다: %w", callbackAddr, err)
+		return nil, fmt.Errorf("콜백 포트 %s를 열 수 없습니다(먼저 띄운 로그인이 아직 기다리는 중일 수 있다. 최대 5분 뒤 풀린다): %w", callbackAddr, err)
 	}
 
 	f := &Flow{

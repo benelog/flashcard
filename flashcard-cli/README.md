@@ -74,7 +74,9 @@ code를 서버의 `/api/auth/exchange`로 보내 토큰을 받는다(Supabase an
 - `logout`은 저장된 토큰을 지운다.
 - Supabase 대시보드의 **Authentication ▸ URL Configuration ▸ Redirect URLs**에
   `http://localhost:45678/callback`이 등록돼 있어야 한다. 없으면 GoTrue가
-  localhost로 돌아오지 않고 Site URL로 가 버려 CLI가 5분 동안 기다리다 끝난다.
+  localhost로 돌아오지 않고 Site URL(`https://flashcard.benelog.net/?code=…`)로
+  가 버려 CLI가 5분 동안 기다리다 끝난다. 그동안 다시 `login`을 치면 포트가
+  잡혀 있다는 오류가 난다.
 - 브라우저는 CLI와 같은 컴퓨터에서 열려야 한다(콜백이 localhost다). 원격
   셸에서는 `--token`을 쓴다.
 
