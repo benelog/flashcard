@@ -62,3 +62,36 @@ func TestRootRunsMenuButRejectsUnknownArgs(t *testing.T) {
 		t.Error("오타 난 명령이 오류가 되지 않는다")
 	}
 }
+
+// 환경 변수로 받은 토큰이 --help에 기본값으로 찍히면 비밀이 화면과 로그에
+// 남는다. 도움말에는 나오지 않되 요청에는 실려야 한다.
+func TestTokenFromEnvIsUsedButNotShownInHelp(t *testing.T) {
+	const secret = "secret-token-xyz"
+	var got string
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		got = r.Header.Get("Authorization")
+		w.Write([]byte(`{"count":0}`))
+	}))
+	defer srv.Close()
+
+	var out bytes.Buffer
+	root := newRootCmd(options{server: srv.URL, token: secret})
+	root.SetOut(&out)
+	root.SetArgs([]string{"--help"})
+	if err := root.Execute(); err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(out.String(), secret) {
+		t.Errorf("--help에 토큰이 찍힌다:\n%s", out.String())
+	}
+
+	root = newRootCmd(options{server: srv.URL, token: secret})
+	root.SetOut(&out)
+	root.SetArgs([]string{"due"})
+	if err := root.Execute(); err != nil {
+		t.Fatal(err)
+	}
+	if got != "Bearer "+secret {
+		t.Errorf("Authorization = %q, want the env token", got)
+	}
+}

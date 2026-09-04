@@ -33,6 +33,8 @@ func TestSafeNext(t *testing.T) {
 		{"스킴 없는 다른 출처", "//evil.example.com/", "/"},
 		{"상대 경로", "decks", "/"},
 		{"역슬래시로 위장", `\\evil.example.com`, "/"},
+		{"슬래시 뒤 역슬래시(브라우저는 //로 읽는다)", `/\evil.example.com`, "/"},
+		{"슬래시 셋(브라우저는 //로 읽는다)", "///evil.example.com", "/"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

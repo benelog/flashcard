@@ -26,7 +26,7 @@ type options struct {
 // newRootCmd는 명령 트리를 새로 만든다. 플래그 값을 지역 변수에 묶어 두어
 // 트리마다 상태가 따로 논다.
 func newRootCmd(o options) *cobra.Command {
-	server, token := o.server, o.token
+	server, token := o.server, ""
 
 	root := &cobra.Command{
 		Use:   "flashcard",
@@ -46,9 +46,18 @@ Supabase 인증이 있는 서버를 부르려면 --token이나 FLASHCARD_TOKEN�
 		SilenceErrors: true,
 	}
 	root.PersistentFlags().StringVar(&server, "server", o.server, "서버 주소")
-	root.PersistentFlags().StringVar(&token, "token", o.token, "Supabase 액세스 토큰(로컬 서버는 불필요)")
+	// 토큰은 플래그 기본값으로 두지 않는다. cobra가 도움말에 기본값을 그대로
+	// 찍어 비밀이 화면과 로그에 남기 때문이다. 플래그가 비어 있으면 그때
+	// 환경 변수에서 온 값(o.token)을 쓴다.
+	root.PersistentFlags().StringVar(&token, "token", "", "Supabase 액세스 토큰(없으면 FLASHCARD_TOKEN을 쓴다. 로컬 서버는 불필요)")
+	resolvedToken := func() string {
+		if token != "" {
+			return token
+		}
+		return o.token
+	}
 
-	client := clientFunc(func() *api.Client { return api.New(server, token) })
+	client := clientFunc(func() *api.Client { return api.New(server, resolvedToken()) })
 	root.AddCommand(
 		newDecksCmd(client),
 		newCardsCmd(client),
@@ -61,7 +70,7 @@ Supabase 인증이 있는 서버를 부르려면 --token이나 FLASHCARD_TOKEN�
 		root.Long = "셸 모드다. 아래 명령을 한 줄씩 친다. exit로 나간다."
 	} else {
 		root.AddCommand(newMenuCmd(client), newShellCmd(func() options {
-			return options{server: server, token: token, nested: true}
+			return options{server: server, token: resolvedToken(), nested: true}
 		}))
 		// 옵션 없이 실행하면 메뉴 모드로 간다. NoArgs를 둬야 오타 난 명령이
 		// 조용히 메뉴로 빠지지 않고 오류가 된다.

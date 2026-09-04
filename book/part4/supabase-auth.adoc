@@ -548,19 +548,23 @@ func (w *Web) requireUser() gin.HandlerFunc {
 [source,go]
 ----
 // safeNext는 앱 안의 경로만 받아들인다. 조작된 ?next= 링크가 로그인 뒤
-// 방문자를 다른 출처로 튕겨 보내지 못하게 한다.
+// 방문자를 다른 출처로 튕겨 보내지 못하게 한다. 슬래시 하나로 시작해야 하고,
+// "//host"는 다른 출처다. 역슬래시도 거절하는데, 브라우저가 "/\host"의
+// 역슬래시를 슬래시로 읽어 "//host"로 가기 때문이다.
 func safeNext(next string) string {
-	if strings.HasPrefix(next, "/") && !strings.HasPrefix(next, "//") {
-		return next
+	if !strings.HasPrefix(next, "/") || strings.HasPrefix(next, "//") || strings.Contains(next, `\`) {
+		return "/"
 	}
-	return "/"
+	return next
 }
 ----
 
 `?next=`에 외부 주소를 심은 링크를 뿌리면, 로그인 직후 방문자를 피싱 사이트로 튕겨 보내는 열린 리다이렉트(open redirect) 공격이 가능해진다.
 `safeNext`는 `/`로 시작하는 같은 앱 내부 경로만 허용하되, `//evil.com`처럼 프로토콜 상대 URL로 위장하는 경우까지 걸러 낸다.
+역슬래시를 함께 거절하는 이유는 브라우저의 URL 해석 규칙 때문이다.
+`/\evil.com`처럼 슬래시 하나 뒤에 역슬래시를 붙인 값은 앞의 검사를 통과하지만, 브라우저는 역슬래시를 슬래시로 읽어 `//evil.com`으로 간다footnote:[WHATWG URL Standard의 special scheme 처리 규칙. https://url.spec.whatwg.org/#special-authority-ignore-slashes-state[URL Standard §4.4]].
 로그인 시작과 콜백, `requireUser`가 전부 이 함수를 거친다.
-두 줄짜리 함수지만 없으면 보안 구멍이 되는 코드다.
+네 줄짜리 함수지만 없으면 보안 구멍이 되는 코드다.
 
 === 로그아웃은 두 곳에서 끝난다
 

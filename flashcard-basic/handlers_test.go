@@ -82,6 +82,9 @@ func TestAddAndDeleteCardOverHTTP(t *testing.T) {
 	if w := do(r, "POST", "/decks/1/cards", url.Values{"text": {"  "}, "meaning": {"사과"}}); w.Code != http.StatusBadRequest {
 		t.Errorf("card with blank text = %d, want 400", w.Code)
 	}
+	if w := do(r, "POST", "/decks/999/cards", form); w.Code != http.StatusNotFound {
+		t.Errorf("card in missing deck = %d, want 404", w.Code)
+	}
 
 	if w := do(r, "POST", "/decks/999/cards/1/delete", nil); w.Code != http.StatusNotFound {
 		t.Errorf("delete card in wrong deck = %d, want 404", w.Code)
@@ -94,5 +97,23 @@ func TestAddAndDeleteCardOverHTTP(t *testing.T) {
 	}
 	if w := do(r, "POST", "/decks/1/cards/1/delete", nil); w.Code != http.StatusNotFound {
 		t.Errorf("delete card twice = %d, want 404", w.Code)
+	}
+}
+
+// SQLite 파일 하나에 요청이 겹쳐 들어와도 "database is locked"로 실패하면 안 된다.
+func TestConcurrentRequestsDoNotLockDatabase(t *testing.T) {
+	r := newTestApp(t)
+	const n = 20
+	codes := make(chan int, n*2)
+	for i := 0; i < n; i++ {
+		go func() {
+			codes <- do(r, "POST", "/decks", url.Values{"name": {"덱"}}).Code
+			codes <- do(r, "GET", "/", nil).Code
+		}()
+	}
+	for i := 0; i < n*2; i++ {
+		if code := <-codes; code >= 500 {
+			t.Fatalf("concurrent request failed with %d", code)
+		}
 	}
 }

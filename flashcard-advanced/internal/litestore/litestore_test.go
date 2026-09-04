@@ -160,6 +160,30 @@ func TestCardCRUD(t *testing.T) {
 	}
 }
 
+// 저장소의 모든 조회는 userID로 가려진다. 남의 덱은 "빈 덱"이 아니라 "없는
+// 덱"이어야 한다. 그래야 학습 세션이 남의 덱 id를 품은 채 만들어지지 않는다.
+func TestListCardsRejectsSomeoneElsesDeck(t *testing.T) {
+	s, owner := testStore(t)
+	ctx := context.Background()
+	deck := mustDeck(t, s, owner, "주인의 덱")
+	mustCard(t, s, owner, deck.ID, "apple", nil)
+
+	stranger := uuid.New()
+	if _, err := s.GetOrCreateProfile(ctx, stranger, ""); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := s.ListCards(ctx, stranger, deck.ID); !errors.Is(err, model.ErrNotFound) {
+		t.Errorf("ListCards on someone else's deck: err = %v, want ErrNotFound", err)
+	}
+	if _, err := s.ListCards(ctx, owner, uuid.New()); !errors.Is(err, model.ErrNotFound) {
+		t.Errorf("ListCards on a missing deck: err = %v, want ErrNotFound", err)
+	}
+	// 주인은 여전히 읽는다.
+	if cards, err := s.ListCards(ctx, owner, deck.ID); err != nil || len(cards) != 1 {
+		t.Errorf("ListCards by owner = %d cards, %v; want 1", len(cards), err)
+	}
+}
+
 func TestBulkCreateCardsSkipsDuplicates(t *testing.T) {
 	s, userID := testStore(t)
 	ctx := context.Background()

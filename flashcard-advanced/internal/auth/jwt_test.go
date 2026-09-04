@@ -1,8 +1,14 @@
 package auth
 
 import (
+	"crypto/rand"
+	"crypto/rsa"
+	"encoding/base64"
+	"encoding/json"
+	"math/big"
 	"net/http"
 	"net/http/httptest"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -230,5 +236,53 @@ func TestSetUserIDIsWhatUserIDReads(t *testing.T) {
 	}
 	if got := OptionalUserID(c); got != testUserID {
 		t.Errorf("OptionalUserID() = %v, want %v", got, testUserID)
+	}
+}
+
+// JWKS를 처음 받아 오는 데 실패해도 그 실패가 프로세스에 눌러앉으면 안 된다.
+// 콜드 스타트 직후의 일시적 네트워크 오류가 그 뒤 요청까지 물들이지 않도록,
+// 다음 요청은 다시 받아 와야 한다.
+func TestJWKSFetchFailureIsRetried(t *testing.T) {
+	key, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		t.Fatal(err)
+	}
+	b64 := base64.RawURLEncoding.EncodeToString
+	var healthy atomic.Bool
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if !healthy.Load() {
+			http.Error(w, "warming up", http.StatusServiceUnavailable)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]any{"keys": []map[string]string{{
+			"kty": "RSA", "kid": "k1", "use": "sig", "alg": "RS256",
+			"n": b64(key.N.Bytes()), "e": b64(big.NewInt(int64(key.E)).Bytes()),
+		}}})
+	}))
+	defer srv.Close()
+
+	// 다른 테스트가 남긴 클라이언트가 없게 비운다.
+	jwksMu.Lock()
+	jwks = nil
+	jwksMu.Unlock()
+
+	tok := jwt.NewWithClaims(jwt.SigningMethodRS256, jwt.MapClaims{
+		"sub": testUserID.String(), "aud": "authenticated", "exp": time.Now().Add(time.Hour).Unix(),
+	})
+	tok.Header["kid"] = "k1"
+	raw, err := tok.SignedString(key)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	mw := Middleware(srv.URL, "")
+	// 키 묶음이 없는 것은 토큰 탓이 아니므로 401이 아니라 500이다.
+	if rec := runMiddleware(t, mw, "Bearer "+raw); rec.Code != http.StatusInternalServerError {
+		t.Fatalf("while JWKS is down: status = %d, want 500", rec.Code)
+	}
+	healthy.Store(true)
+	if rec := runMiddleware(t, mw, "Bearer "+raw); rec.Code != http.StatusOK {
+		t.Fatalf("after JWKS recovers: status = %d, want 200 (failure must not be cached): %s", rec.Code, rec.Body)
 	}
 }

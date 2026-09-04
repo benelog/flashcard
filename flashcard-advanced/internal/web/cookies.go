@@ -136,12 +136,14 @@ func userEmail(c *gin.Context) string {
 }
 
 // safeNext는 앱 안의 경로만 받아들인다. 조작된 ?next= 링크가 로그인 뒤
-// 방문자를 다른 출처로 튕겨 보내지 못하게 한다.
+// 방문자를 다른 출처로 튕겨 보내지 못하게 한다. 슬래시 하나로 시작해야 하고,
+// "//host"는 다른 출처다. 역슬래시도 거절하는데, 브라우저가 "/\host"의
+// 역슬래시를 슬래시로 읽어 "//host"로 가기 때문이다.
 func safeNext(next string) string {
-	if strings.HasPrefix(next, "/") && !strings.HasPrefix(next, "//") {
-		return next
+	if !strings.HasPrefix(next, "/") || strings.HasPrefix(next, "//") || strings.Contains(next, `\`) {
+		return "/"
 	}
-	return "/"
+	return next
 }
 
 // 플래시 메시지는 짧은 수명의 쿠키로 리다이렉트 한 번을 살아남는다.

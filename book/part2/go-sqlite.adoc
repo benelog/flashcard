@@ -85,6 +85,8 @@ include::../../flashcard-basic/store.go[tag=open]
 `sql.Open`의 첫 인자 `"sqlite"`가 아까 드라이버가 등록해 둔 이름이고, 둘째 인자가 열 파일의 경로다.
 경로 뒤에 `?`로 이어 붙인 `_pragma=foreign_keys(1)`은 연결 옵션이다.
 SQLite는 옛 버전과의 호환 때문에 외래 키 검사가 꺼진 채로 출발하므로, 연결할 때마다 이렇게 켜 줘야 `references` 선언이 실제로 일한다.
+`db.SetMaxOpenConns(1)`은 연결을 한 개만 열게 한다.
+`database/sql`은 요청이 겹치면 연결을 여러 개 여는데, 파일 하나를 쓰는 SQLite는 한 연결이 쓰는 동안 다른 연결의 쓰기를 "database is locked" 오류로 거절하기 때문이다.
 
 연결이 열리면 `db.Exec(schemaSQL)`로 스키마 파일을 통째로 실행한다.
 `create table if not exists`라서 데이터베이스 파일이 방금 새로 만들어졌으면 표가 생기고, 이미 표가 있으면 조용히 넘어간다.

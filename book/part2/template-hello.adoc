@@ -180,7 +180,8 @@ include::../../flashcard-basic/templates/cards.html[tag=card-form]
 include::../../flashcard-basic/handlers.go[tag=create-card]
 ----
 
-경로에서 덱 번호를 꺼내 정수로 바꾸고, 폼에서 앞면과 뒷면을 꺼내 빈칸을 막고, 저장한 뒤 카드 목록 화면으로 돌려보낸다.
+경로에서 덱 번호를 꺼내 정수로 바꾸고, 그 덱이 있는지 확인하고, 폼에서 앞면과 뒷면을 꺼내 빈칸을 막고, 저장한 뒤 카드 목록 화면으로 돌려보낸다.
+덱 확인이 없으면 없는 덱 번호로 온 요청이 외래 키 위반으로 500이 되는데, {ch-gin-hello}에서 정한 대로 없는 것은 404다.
 마지막 줄의 `c.Redirect`가 {ch-gin-hello}에서 짚은 그 관례다.
 POST 처리를 마치면 화면을 직접 그리는 대신 GET 주소로 돌려보내, 새로고침이 같은 카드를 한 장 더 만드는 일을 막는다.
 
@@ -271,7 +272,7 @@ include::../../flashcard-basic/templates/study.html[tag=study-card]
 여기까지로 2부의 최소 앱을 한 바퀴 다 읽었다.
 층을 세어 보자.
 SQLite 파일이 데이터를 저장하고({ch-go-sqlite}의 `store.go`), Gin 서버가 요청을 받아 처리하고({ch-gin-hello}의 `handlers.go`), html/template이 그 데이터를 화면으로 그린다(이 장의 `templates/`).
-Go 코드 464줄(`main.go`·`handlers.go`·`store.go`)과 템플릿 108줄, 스키마 15줄을 다 합쳐도 600줄이 안 되는, `go run .` 한 번으로 뜨는 앱이다.
+Go 코드 474줄(`main.go`·`handlers.go`·`store.go`)과 템플릿 108줄, 스키마 15줄을 다 합쳐도 600줄이 안 되는, `go run .` 한 번으로 뜨는 앱이다.
 
 눈여겨볼 것은 이 앱에 자바스크립트가 한 줄도 없다는 사실이다.
 화면 사이의 이동은 링크가, 값을 보내는 일은 폼이, 카드 뒤집기는 `details`가 맡았다.

@@ -300,7 +300,7 @@ func Pool(ctx context.Context, databaseURL string) (*pgxpool.Pool, error) {
 ----
 
 세 가지 결정이 담겨 있다.
-첫째, `sync.Once`로 풀을 프로세스당 하나만 만들어 웜 인스턴스가 호출 간에 재사용한다({ch-token-verification}에서 본 JWKS 클라이언트와 같은 패턴이다).
+첫째, `sync.Once`로 풀을 프로세스당 하나만 만들어 웜 인스턴스가 호출 간에 재사용한다({ch-token-verification}에서 본 JWKS 클라이언트를 프로세스당 하나만 두는 것과 같은 이유다).
 둘째, `MaxConns = 4`로 풀을 작게 잡아 인스턴스가 늘어도 폭증의 기울기를 낮춘다.
 셋째, `QueryExecModeSimpleProtocol`로 단순 프로토콜(simple protocol)을 강제해, 쿼리를 준비 단계 없이 한 번에 보내므로 트랜잭션 풀러에서도 안전하다.
 

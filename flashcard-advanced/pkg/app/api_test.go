@@ -216,6 +216,9 @@ func TestAPISessionValidation(t *testing.T) {
 		{"덱 모드인데 덱 없음", `{"mode":"deck"}`, http.StatusBadRequest},
 		{"스마트 모드인데 규칙 없음", `{"mode":"smart"}`, http.StatusBadRequest},
 		{"규칙이 엉터리", `{"mode":"smart","rule":{"type":"nonsense"}}`, http.StatusBadRequest},
+		// 없는(=남의) 덱은 400이 아니라 404다. 덱 id를 모르는 척해야 남의 덱을
+		// 가리키는 세션이 만들어지지 않는다.
+		{"없는 덱", `{"mode":"deck","deckId":"` + uuid.New().String() + `"}`, http.StatusNotFound},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

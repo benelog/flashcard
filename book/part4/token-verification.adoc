@@ -70,20 +70,36 @@ func keyfuncFor(jwksURL, secret string) (jwt.Keyfunc, error) {
 			return []byte(secret), nil
 		}, nil
 	}
-	jwksOnce.Do(func() {
-		jwks, jwksErr = keyfunc.NewDefaultCtx(context.Background(), []string{jwksURL})
-	})
-	if jwksErr != nil {
-		return nil, jwksErr
+	k, err := jwksFor(jwksURL)
+	if err != nil {
+		return nil, err
 	}
-	return jwks.Keyfunc, nil
+	return k.Keyfunc, nil
+}
+
+func jwksFor(jwksURL string) (keyfunc.Keyfunc, error) {
+	jwksMu.Lock()
+	defer jwksMu.Unlock()
+	if jwks == nil {
+		failFirst := false
+		k, err := keyfunc.NewDefaultOverrideCtx(context.Background(), []string{jwksURL},
+			keyfunc.Override{NoErrorReturnFirstHTTPReq: &failFirst})
+		if err != nil {
+			return nil, err
+		}
+		jwks = k
+	}
+	return jwks, nil
 }
 ----
 
 기본 경로는 아래쪽 JWKS 분기다.
 `github.com/MicahParks/keyfunc/v3` 라이브러리가 JWKS 문서를 내려받아 캐시하고 라이브러리 기본값인 1시간마다 다시 내려받으며(`jwkset`의 `RefreshInterval`), 토큰 헤더의 키 ID(`kid`)에 맞는 공개키를 골라 준다.
-패키지 전역 변수 `jwks`를 `sync.Once`로 한 번만 초기화하는 것은 {ch-vercel-config}에서 본 서버리스 함수의 생명주기 때문이다.
+패키지 전역 변수 `jwks`를 프로세스당 한 번만 만들어 두는 것(`jwksFor`)은 {ch-vercel-config}에서 본 서버리스 함수의 생명주기 때문이다.
 웜 인스턴스는 여러 요청을 처리하므로, JWKS 클라이언트를 재사용하면 첫 요청 이후에는 네트워크 조회 없이 검증할 수 있다.
+다만 첫 취득이 실패하면 클라이언트를 남기지 않고 오류를 돌려주며, 다음 요청이 다시 받아 온다.
+라이브러리 기본값은 첫 취득 실패를 삼키고 빈 키 묶음으로 출발하는데(`NoErrorReturnFirstHTTPReq`), 그러면 콜드스타트 직후의 일시적 네트워크 오류가 몇 분 동안 "잘못된 토큰"(401)으로 둔갑한다.
+토큰이 아니라 서버 사정이므로 500으로 알리고 곧바로 다시 시도하는 편이 낫다.
 
 위쪽 분기는 공유 시크릿(HS256) 폴백(fallback)이다.
 이 분기는 비대칭 키로 옮기기 전의 Supabase 프로젝트를 위한 예비 경로라, 처음 읽을 때는 건너뛰어도 된다.
@@ -217,7 +233,7 @@ func SetUserID(c *gin.Context, id uuid.UUID) {
 == 정리
 
 첫째, JWT 검증의 핵심은 서명 확인이다.
-Supabase가 개인키로 서명한 토큰을 우리 서버는 JWKS로 공개된 공개키를 내려받아 대조하고, `sync.Once`로 초기화한 JWKS 클라이언트를 웜 인스턴스가 재사용하므로 첫 요청 이후에는 네트워크 조회 없이 검증이 끝난다.
+Supabase가 개인키로 서명한 토큰을 우리 서버는 JWKS로 공개된 공개키를 내려받아 대조하고, 프로세스당 한 번 만든 JWKS 클라이언트를 웜 인스턴스가 재사용하므로 첫 요청 이후에는 네트워크 조회 없이 검증이 끝난다.
 
 둘째, 공유 시크릿(HS256)과의 차이는 유출의 결과에 있다.
 시크릿을 나눠 가지는 방식에서는 검증자 쪽이 새어도 토큰을 위조할 수 있지만, JWKS 방식에서는 검증자에게 위조 능력 자체가 없고, 배포할 비밀도 없으며, 키 회전도 발급자 혼자 끝낸다.

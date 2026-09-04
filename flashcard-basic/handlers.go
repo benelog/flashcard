@@ -137,6 +137,13 @@ func createCard(store *Store) gin.HandlerFunc {
 			c.String(http.StatusBadRequest, "잘못된 덱 번호다")
 			return
 		}
+		if _, err := store.GetDeck(id); errors.Is(err, ErrNotFound) {
+			c.String(http.StatusNotFound, "그런 덱이 없다")
+			return
+		} else if err != nil {
+			c.String(http.StatusInternalServerError, err.Error())
+			return
+		}
 		text := strings.TrimSpace(c.PostForm("text"))
 		meaning := strings.TrimSpace(c.PostForm("meaning"))
 		if text == "" || meaning == "" {

@@ -35,6 +35,8 @@ type Store interface {
 	DeckStory(ctx context.Context, userID, deckID uuid.UUID) (*string, error)
 	UpdateDeckStory(ctx context.Context, userID, deckID uuid.UUID, story *string) error
 
+	// ListCards는 덱이 호출자의 것이 아니면 ErrNotFound를 돌려준다. 빈 덱과
+	// 없는 덱을 같은 빈 목록으로 답하면 호출자가 둘을 가릴 수 없다.
 	ListCards(ctx context.Context, userID, deckID uuid.UUID) ([]Card, error)
 	GetCard(ctx context.Context, userID, cardID uuid.UUID) (Card, error)
 	CreateCard(ctx context.Context, userID uuid.UUID, in CardInput) (Card, error)

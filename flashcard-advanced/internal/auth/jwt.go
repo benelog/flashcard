@@ -15,10 +15,31 @@ import (
 const userIDKey = "auth.userID"
 
 var (
-	jwks     keyfunc.Keyfunc
-	jwksOnce sync.Once
-	jwksErr  error
+	jwksMu sync.Mutex
+	jwks   keyfunc.Keyfunc
 )
+
+// jwksFor는 JWKS 클라이언트를 한 번만 만들어 프로세스 안에서 돌려쓴다.
+//
+// 첫 취득이 실패하면 클라이언트를 남기지 않고 오류를 돌려주며, 다음 요청이
+// 다시 받아 온다. keyfunc의 기본값은 첫 취득 실패를 삼키고 빈 키 묶음으로
+// 출발하는데, 그러면 콜드 스타트 직후 네트워크가 잠깐 흔들린 것이 몇 분 동안
+// "invalid token"(401)으로 둔갑한다. 토큰이 아니라 서버 사정이므로 500으로
+// 알리고 곧바로 재시도하는 편이 낫다.
+func jwksFor(jwksURL string) (keyfunc.Keyfunc, error) {
+	jwksMu.Lock()
+	defer jwksMu.Unlock()
+	if jwks == nil {
+		failFirst := false
+		k, err := keyfunc.NewDefaultOverrideCtx(context.Background(), []string{jwksURL},
+			keyfunc.Override{NoErrorReturnFirstHTTPReq: &failFirst})
+		if err != nil {
+			return nil, err
+		}
+		jwks = k
+	}
+	return jwks, nil
+}
 
 func keyfuncFor(jwksURL, secret string) (jwt.Keyfunc, error) {
 	if secret != "" {
@@ -29,13 +50,11 @@ func keyfuncFor(jwksURL, secret string) (jwt.Keyfunc, error) {
 			return []byte(secret), nil
 		}, nil
 	}
-	jwksOnce.Do(func() {
-		jwks, jwksErr = keyfunc.NewDefaultCtx(context.Background(), []string{jwksURL})
-	})
-	if jwksErr != nil {
-		return nil, jwksErr
+	k, err := jwksFor(jwksURL)
+	if err != nil {
+		return nil, err
 	}
-	return jwks.Keyfunc, nil
+	return k.Keyfunc, nil
 }
 
 func bearerToken(c *gin.Context) string {

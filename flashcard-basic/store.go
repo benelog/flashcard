@@ -44,6 +44,9 @@ func OpenStore(path string) (*Store, error) {
 	if err != nil {
 		return nil, err
 	}
+	// SQLite 파일은 한 번에 한 연결만 쓴다. 연결을 여럿 열면 동시에 들어온
+	// 요청이 "database is locked" 오류로 실패한다.
+	db.SetMaxOpenConns(1)
 	if _, err := db.Exec(schemaSQL); err != nil {
 		db.Close()
 		return nil, err

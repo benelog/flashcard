@@ -105,6 +105,8 @@ func Pick(ctx context.Context, s Store, userID uuid.UUID, req Request) (Plan, er
 			return plan, ErrDeckRequired
 		}
 		plan.DeckID = req.DeckID
+		// 남의 덱이나 없는 덱은 저장소가 model.ErrNotFound로 답하므로 여기서
+		// 따로 소유를 확인하지 않는다. 호출자는 그것을 404로 옮긴다.
 		plan.Cards, err = s.ListCards(ctx, userID, *req.DeckID)
 		if err == nil {
 			// 덱에 담긴 순서대로 외워 버리지 않도록 섞는다.

@@ -29,6 +29,11 @@ func scanCard(row pgx.Row) (model.Card, error) {
 }
 
 func (s *Store) ListCards(ctx context.Context, userID, deckID uuid.UUID) ([]model.Card, error) {
+	// 없는 덱과 빈 덱을 구별한다. 남의 덱 id로 물으면 빈 목록이 아니라
+	// ErrNotFound가 나가야 학습 세션이 남의 덱을 가리키며 만들어지지 않는다.
+	if _, err := s.GetDeck(ctx, userID, deckID); err != nil {
+		return nil, err
+	}
 	rows, err := s.pool.Query(ctx,
 		cardSelect+` where user_id = $1 and deck_id = $2 order by created_at desc`, userID, deckID)
 	if err != nil {
