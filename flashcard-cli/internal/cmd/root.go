@@ -39,9 +39,10 @@ func newRootCmd(o options) *cobra.Command {
   flashcard decks      명령 모드. 명령과 옵션을 한 번에 준다.
   flashcard shell      셸 모드. 명령을 한 줄씩 받는다.
 
-기본값은 로컬 서버(http://localhost:8080, 인증 없음)다. dev/production처럼
-Supabase 인증이 있는 서버를 부르려면 --token이나 FLASHCARD_TOKEN에
-액세스 토큰을 넣는다.`,
+기본값은 운영 서버(https://flashcard.benelog.net)다. Supabase 인증이 있는
+서버를 부르려면 --token이나 FLASHCARD_TOKEN에 액세스 토큰을 넣는다.
+로컬 서버(http://localhost:8080)는 --server나 FLASHCARD_SERVER로 지정하며
+토큰이 필요 없다.`,
 		SilenceUsage:  true, // 서버 오류에 사용법을 다시 찍지 않는다
 		SilenceErrors: true,
 	}
@@ -88,7 +89,7 @@ Supabase 인증이 있는 서버를 부르려면 --token이나 FLASHCARD_TOKEN�
 
 func Execute() error {
 	return newRootCmd(options{
-		server: envOr("FLASHCARD_SERVER", "http://localhost:8080"),
+		server: envOr("FLASHCARD_SERVER", "https://flashcard.benelog.net"),
 		token:  os.Getenv("FLASHCARD_TOKEN"),
 	}).Execute()
 }

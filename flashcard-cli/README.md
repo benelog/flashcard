@@ -59,9 +59,10 @@ flashcard> exit
 
 ## 서버 지정
 
-- 기본값은 로컬 서버 `http://localhost:8080`(`../flashcard-advanced/run_local.sh`, 인증 없음).
-- 다른 서버는 `--server` 또는 `FLASHCARD_SERVER`.
-- dev/production처럼 인증 있는 서버는 `--token` 또는 `FLASHCARD_TOKEN`에
+- 기본값은 운영 서버 `https://flashcard.benelog.net`.
+- 다른 서버는 `--server` 또는 `FLASHCARD_SERVER`. 로컬 서버는
+  `--server http://localhost:8080`(`../flashcard-advanced/run_local.sh`, 인증 없음).
+- 운영 서버처럼 인증 있는 서버는 `--token` 또는 `FLASHCARD_TOKEN`에
   Supabase 액세스 토큰을 넣는다. (로그인이 GitHub/Google OAuth뿐이라 CLI용
   토큰 발급 흐름은 아직 없다. 당장은 브라우저 세션에서 꺼낸 액세스 토큰을 쓴다.)
 
