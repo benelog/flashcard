@@ -328,6 +328,18 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 Vercel의 Go 빌더가 이 파일을 모듈 바깥에서 컴파일하므로 `internal/` 패키지를 직접 가져올 수 없고, 주석에도 그 답이 적혀 있다.
 이런 Vercel 함수의 제약과 배포 구성은 {ch-vercel-config}에서 자세히 다룬다.
 
+지금까지 본 조립 관계를 그림 17에 모았다.
+
+++++
+<div class="fc-shots">
+
+![pkg/app 안의 Engine, build, New 세 함수가 *gin.Engine을 만들고, 아래의 api/index.go와 cmd/server/main.go 두 진입점이 그 함수들을 부르는 그림](/screenshots/one-engine-two-entries.png)
+
+</div>
+
+<p class="fc-caption">그림 17 하나의 엔진, 두 개의 진입점. 라우터를 조립하는 것은 <code>pkg/app</code>의 <code>New</code> 하나다. 로컬 서버는 드라이버에 따라 SQLite 저장소를 직접 꽂거나 <code>Engine()</code>을 부르고, Vercel 함수는 <code>Engine()</code>만 부른다.</p>
+++++
+
 정리하면, 두 진입점이 엔진 하나를 공유하는 이 구조의 이점은 두 가지다.
 첫째, 진입점은 둘이어도 조립은 `New` 하나여서 로컬과 프로덕션이 같은 라우팅·핸들러·미들웨어 순서를 지나므로, "로컬에서는 됐는데 배포하니 다르다"류의 문제가 줄어든다.
 둘째, 실행 환경이 바뀌어도(예: Vercel에서 일반 컨테이너로 이전) 진입점 파일 하나만 새로 쓰면 된다.

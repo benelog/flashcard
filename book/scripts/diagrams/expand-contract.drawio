@@ -1,0 +1,97 @@
+<mxGraphModel adaptiveColors="auto">
+  <root>
+    <mxCell id="0"/>
+    <mxCell id="1" parent="0"/>
+
+    <mxCell id="push" value="&lt;span style=&quot;font-family:Courier New&quot;&gt;git push&lt;/span&gt;" style="rounded=1;arcSize=12;html=1;fillColor=#FBE4CC;strokeColor=#D79B63;fontColor=#7F5124;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="10" y="50" width="120" height="44" as="geometry"/>
+    </mxCell>
+    <mxCell id="pushMemo" value="둘은 동시에 출발하고&lt;br&gt;순서가 정해져 있지 않다" style="text;html=1;align=center;verticalAlign=top;fontSize=12;fontColor=#6B6B6B;" vertex="1" parent="1">
+      <mxGeometry x="0" y="100" width="140" height="36" as="geometry"/>
+    </mxCell>
+    <mxCell id="actions" value="GitHub Actions&lt;br&gt;&lt;span style=&quot;font-size:12px;font-weight:normal&quot;&gt;&lt;span style=&quot;font-family:Courier New&quot;&gt;migrate.yml&lt;/span&gt; → 새 스키마&lt;/span&gt;" style="rounded=1;arcSize=12;html=1;fillColor=#EDEDED;strokeColor=#8C8C8C;fontColor=#333333;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="200" y="12" width="200" height="56" as="geometry"/>
+    </mxCell>
+    <mxCell id="vercel" value="Vercel 빌드·배포&lt;br&gt;&lt;span style=&quot;font-size:12px;font-weight:normal&quot;&gt;→ 새 코드&lt;/span&gt;" style="rounded=1;arcSize=12;html=1;fillColor=#EDEDED;strokeColor=#8C8C8C;fontColor=#333333;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="200" y="88" width="200" height="56" as="geometry"/>
+    </mxCell>
+    <mxCell id="ok" value="&lt;span style=&quot;font-size:12px;font-weight:normal&quot;&gt;마이그레이션이 먼저 끝나면&lt;/span&gt;&lt;br&gt;새 스키마 + 옛 코드 = 무해" style="rounded=1;arcSize=12;html=1;fillColor=#D9EAD3;strokeColor=#6AA84F;fontColor=#3F6B2B;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="450" y="12" width="220" height="56" as="geometry"/>
+    </mxCell>
+    <mxCell id="bad" value="&lt;span style=&quot;font-size:12px;font-weight:normal&quot;&gt;배포가 먼저 끝나면&lt;/span&gt;&lt;br&gt;옛 스키마 + 새 코드 = 오류" style="rounded=1;arcSize=12;html=1;fillColor=#F8D7DA;strokeColor=#C0392B;fontColor=#7B1F1F;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="450" y="88" width="220" height="56" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="ePushA" style="strokeColor=#4D4D4D;strokeWidth=1.5;endArrow=classic;endFill=1;html=1;edgeStyle=orthogonalEdgeStyle;rounded=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="push" target="actions">
+      <mxGeometry relative="1" as="geometry">
+        <Array as="points">
+          <mxPoint x="165" y="72"/>
+          <mxPoint x="165" y="40"/>
+        </Array>
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="ePushV" style="strokeColor=#4D4D4D;strokeWidth=1.5;endArrow=classic;endFill=1;html=1;edgeStyle=orthogonalEdgeStyle;rounded=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="push" target="vercel">
+      <mxGeometry relative="1" as="geometry">
+        <Array as="points">
+          <mxPoint x="165" y="72"/>
+          <mxPoint x="165" y="116"/>
+        </Array>
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="eOk" style="strokeColor=#9AA0A6;strokeWidth=1.5;dashed=1;dashPattern=2 3;endArrow=none;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="actions" target="ok">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="eBad" style="strokeColor=#9AA0A6;strokeWidth=1.5;dashed=1;dashPattern=2 3;endArrow=none;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="vercel" target="bad">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="secTitle" value="확장 후 축소(expand and contract)로 나누면" style="text;html=1;align=left;verticalAlign=middle;fontSize=15;fontStyle=1;fontColor=#333333;" vertex="1" parent="1">
+      <mxGeometry x="10" y="166" width="400" height="24" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="s1" value="① 새 칼럼 추가&lt;br&gt;&lt;span style=&quot;font-size:12px;font-weight:normal&quot;&gt;확장(expand)&lt;/span&gt;" style="rounded=1;arcSize=12;html=1;fillColor=#E4D7F5;strokeColor=#8E6BBF;fontColor=#4A2C7A;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="10" y="204" width="110" height="56" as="geometry"/>
+    </mxCell>
+    <mxCell id="s2" value="② 양쪽에 함께&lt;br&gt;쓰는 코드 배포" style="rounded=1;arcSize=12;html=1;fillColor=#CFE2F3;strokeColor=#4A7BA6;fontColor=#1F4E79;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="147.5" y="204" width="110" height="56" as="geometry"/>
+    </mxCell>
+    <mxCell id="s3" value="③ 데이터 복사&lt;br&gt;&lt;span style=&quot;font-size:12px;font-weight:normal&quot;&gt;옛 칼럼 → 새 칼럼&lt;/span&gt;" style="rounded=1;arcSize=12;html=1;fillColor=#E4D7F5;strokeColor=#8E6BBF;fontColor=#4A2C7A;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="285" y="204" width="110" height="56" as="geometry"/>
+    </mxCell>
+    <mxCell id="s4" value="④ 읽기 전환&lt;br&gt;&lt;span style=&quot;font-size:12px;font-weight:normal&quot;&gt;새 칼럼만 읽는다&lt;/span&gt;" style="rounded=1;arcSize=12;html=1;fillColor=#CFE2F3;strokeColor=#4A7BA6;fontColor=#1F4E79;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="422.5" y="204" width="110" height="56" as="geometry"/>
+    </mxCell>
+    <mxCell id="s5" value="⑤ 옛 칼럼 제거&lt;br&gt;&lt;span style=&quot;font-size:12px;font-weight:normal&quot;&gt;축소(contract)&lt;/span&gt;" style="rounded=1;arcSize=12;html=1;fillColor=#E4D7F5;strokeColor=#8E6BBF;fontColor=#4A2C7A;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="560" y="204" width="110" height="56" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="eS1" style="strokeColor=#4D4D4D;strokeWidth=1.5;endArrow=classic;endFill=1;html=1;" edge="1" parent="1" source="s1" target="s2">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="eS2" style="strokeColor=#4D4D4D;strokeWidth=1.5;endArrow=classic;endFill=1;html=1;" edge="1" parent="1" source="s2" target="s3">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="eS3" style="strokeColor=#4D4D4D;strokeWidth=1.5;endArrow=classic;endFill=1;html=1;" edge="1" parent="1" source="s3" target="s4">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="eS4" style="strokeColor=#4D4D4D;strokeWidth=1.5;endArrow=classic;endFill=1;html=1;" edge="1" parent="1" source="s4" target="s5">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="c1" value="✓" style="ellipse;html=1;fillColor=#D9EAD3;strokeColor=#6AA84F;fontColor=#3F6B2B;fontSize=13;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="122.75" y="268" width="22" height="22" as="geometry"/>
+    </mxCell>
+    <mxCell id="c2" value="✓" style="ellipse;html=1;fillColor=#D9EAD3;strokeColor=#6AA84F;fontColor=#3F6B2B;fontSize=13;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="260.25" y="268" width="22" height="22" as="geometry"/>
+    </mxCell>
+    <mxCell id="c3" value="✓" style="ellipse;html=1;fillColor=#D9EAD3;strokeColor=#6AA84F;fontColor=#3F6B2B;fontSize=13;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="397.75" y="268" width="22" height="22" as="geometry"/>
+    </mxCell>
+    <mxCell id="c4" value="✓" style="ellipse;html=1;fillColor=#D9EAD3;strokeColor=#6AA84F;fontColor=#3F6B2B;fontSize=13;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="535.25" y="268" width="22" height="22" as="geometry"/>
+    </mxCell>
+    <mxCell id="checkMemo" value="✓ 어디서 멈춰도 코드와 스키마가 함께 성립한다" style="text;html=1;align=center;verticalAlign=middle;fontSize=12;fontStyle=1;fontColor=#3F6B2B;" vertex="1" parent="1">
+      <mxGeometry x="10" y="296" width="660" height="20" as="geometry"/>
+    </mxCell>
+  </root>
+</mxGraphModel>

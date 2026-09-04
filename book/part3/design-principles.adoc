@@ -46,21 +46,18 @@ Flashcard의 코드 배치에는 그 선택을 이끈 원칙이 다섯 개 있�
 카드와 덱 같은 데이터의 모양, "찾는 것이 없다"를 뜻하는 에러 값, 카드 종류처럼 열이 받을 수 있는 값의 목록, 그리고 저장소가 지켜야 할 계약이다.
 이 장에서 계약이라고 부르는 것은 {ch-go-types}에서 본 인터페이스, 곧 "이런 이름의 메서드를 갖춰야 한다"고 적어 둔 목록이다.
 말하자면 앱의 공용어다.
-화면을 그리는 `web`, JSON API인 `handlers`, 학습 정책인 `study`, CSV 변환인 `cardcsv`는 서로를 모른 채 이 공용어로만 대화한다.
+화면을 그리는 `web`과 JSON API인 `handlers`는 학습 정책인 `study`와 CSV 변환인 `cardcsv`를 부르고, 이 넷은 모두 이 공용어로만 대화한다.
+그 관계를 그림 14에 그렸다.
 
-[source,text]
-----
-        web(화면)   handlers(JSON API)
-            \           /
-             v         v
-     study(학습 정책)  cardcsv(CSV)
-            \           /
-             v         v
-              model(공용어)
-             ^         ^
-            /           \
-   pgstore(PostgreSQL)  litestore(SQLite)
-----
+++++
+<div class="fc-shots">
+
+![web과 handlers에서 study와 cardcsv로, 거기서 model로, 아래의 pgstore와 litestore에서도 model로 화살표가 모이는 그림](/screenshots/dependency-direction.png)
+
+</div>
+
+<p class="fc-caption">그림 14 패키지 사이의 의존 방향. 화살표는 "안다"는 뜻이고 전부 공용어인 <code>model</code>을 향한다. 저장소 구현 둘은 아래에서 <code>model</code>의 계약을 올려다볼 뿐, 누가 자기를 쓰는지 모른다.</p>
+++++
 
 화살표는 "안다"는 뜻이고, 전부 `model`을 향한다.
 거꾸로 가는 화살표는 하나도 없다.

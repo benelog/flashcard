@@ -38,13 +38,17 @@ Vercel은 `api/index.go`를 저장소 모듈의 일원으로 빌드하지 않고
 대응은 구조적 결정이었다.
 엔진 조립 코드를 `internal/app`이 아니라 `pkg/app`에 두는 것이다.
 `pkg/`는 "외부에서 import해도 되는 공개 패키지"를 두는 관례적 위치이고, Vercel처럼 모듈 밖에서 컴파일되는 코드도 자유롭게 import할 수 있다.
-그래서 누가 누구의 코드를 가져다 쓰는지 화살표로 그린 import 그래프가 다음처럼 정리된다.
+그래서 누가 누구의 코드를 가져다 쓰는지 화살표로 그린 import 그래프가 그림 24처럼 정리된다.
 
-[source,text]
-----
-api/index.go  ──▶  pkg/app  ──▶  internal/{config,db,auth,handlers,model,pgstore,web}
-cmd/server    ──▶  pkg/app
-----
+++++
+<div class="fc-shots">
+
+![api/index.go와 cmd/server가 pkg/app을 거쳐 internal 패키지에 닿고, api/index.go에서 internal로 곧장 가는 빨간 점선 화살표에는 금지 표시가 붙은 그림](/screenshots/import-graph.png)
+
+</div>
+
+<p class="fc-caption">그림 24 import 그래프. 모듈 경계 바깥에서 홀로 컴파일되는 <code>api/index.go</code>는 <code>internal/</code>을 직접 import할 수 없고(빨간 점선), 공개 창구인 <code>pkg/app</code>을 거쳐서만 닿는다. 직접 import하면 나는 에러 문구를 점선 위에 적었다.</p>
+++++
 
 `api/index.go`가 직접 만나는 패키지는 `pkg/app` 하나뿐이다.
 `pkg/app`은 모듈에 속한 정상적인 패키지이므로 `internal/` 패키지들을 마음껏 import할 수 있다.

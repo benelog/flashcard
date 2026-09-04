@@ -1,0 +1,68 @@
+<mxGraphModel adaptiveColors="auto">
+  <root>
+    <mxCell id="0"/>
+    <mxCell id="1" parent="0"/>
+
+    <mxCell id="topMemo" value="여기서 답이 나오면 뒤쪽 검문소는 요청이 왔다는 사실조차 모른다" style="text;html=1;align=center;verticalAlign=middle;fontSize=12;fontColor=#6B6B6B;" vertex="1" parent="1">
+      <mxGeometry x="110" y="0" width="460" height="20" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="browser" value="브라우저&lt;br&gt;&lt;span style=&quot;font-size:12px;font-weight:normal&quot;&gt;요청 출발&lt;/span&gt;" style="rounded=1;arcSize=12;html=1;fillColor=#FBE4CC;strokeColor=#D79B63;fontColor=#7F5124;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="0" y="80" width="90" height="56" as="geometry"/>
+    </mxCell>
+    <mxCell id="sw" value="서비스 워커&lt;br&gt;Cache Storage&lt;br&gt;&lt;span style=&quot;font-size:12px;font-weight:normal&quot;&gt;우리 코드가 전부 정한다&lt;br&gt;&lt;span style=&quot;font-family:Courier New&quot;&gt;caches.delete&lt;/span&gt;로&lt;br&gt;골라 지운다&lt;/span&gt;" style="rounded=1;arcSize=12;html=1;fillColor=#CFE2F3;strokeColor=#4A7BA6;fontColor=#1F4E79;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="110" y="60" width="140" height="96" as="geometry"/>
+    </mxCell>
+    <mxCell id="http" value="브라우저&lt;br&gt;HTTP 캐시&lt;br&gt;&lt;span style=&quot;font-size:12px;font-weight:normal&quot;&gt;&lt;span style=&quot;font-family:Courier New&quot;&gt;Cache-Control&lt;/span&gt; 헤더뿐&lt;br&gt;코드로 못 지운다&lt;/span&gt;" style="rounded=1;arcSize=12;html=1;fillColor=#FBE4CC;strokeColor=#D79B63;fontColor=#7F5124;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="270" y="60" width="140" height="96" as="geometry"/>
+    </mxCell>
+    <mxCell id="cdn" value="Vercel&lt;br&gt;CDN·프록시&lt;br&gt;&lt;span style=&quot;font-size:12px;font-weight:normal&quot;&gt;&lt;span style=&quot;font-family:Courier New&quot;&gt;no-store&lt;/span&gt;면&lt;br&gt;남기지 않는다&lt;/span&gt;" style="rounded=1;arcSize=12;html=1;fillColor=#EDEDED;strokeColor=#8C8C8C;fontColor=#333333;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="430" y="60" width="140" height="96" as="geometry"/>
+    </mxCell>
+    <mxCell id="server" value="서버&lt;br&gt;&lt;span style=&quot;font-size:12px;font-weight:normal&quot;&gt;Go 함수&lt;/span&gt;" style="rounded=1;arcSize=12;html=1;fillColor=#CFE2F3;strokeColor=#4A7BA6;fontColor=#1F4E79;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="590" y="80" width="90" height="56" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="e1" style="strokeColor=#4D4D4D;strokeWidth=1.5;endArrow=classic;endFill=1;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="browser" target="sw">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="e2" style="strokeColor=#4D4D4D;strokeWidth=1.5;endArrow=classic;endFill=1;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="sw" target="http">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="e3" style="strokeColor=#4D4D4D;strokeWidth=1.5;endArrow=classic;endFill=1;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="http" target="cdn">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="e4" style="strokeColor=#4D4D4D;strokeWidth=1.5;endArrow=classic;endFill=1;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="cdn" target="server">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="r1" style="strokeColor=#6AA84F;strokeWidth=1.5;endArrow=classic;endFill=1;html=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;" edge="1" parent="1" source="sw">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="180" y="26" as="targetPoint"/>
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="r2" style="strokeColor=#6AA84F;strokeWidth=1.5;endArrow=classic;endFill=1;html=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;" edge="1" parent="1" source="http">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="340" y="26" as="targetPoint"/>
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="r3" style="strokeColor=#6AA84F;strokeWidth=1.5;endArrow=classic;endFill=1;html=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;" edge="1" parent="1" source="cdn">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="500" y="26" as="targetPoint"/>
+      </mxGeometry>
+    </mxCell>
+
+    <mxCell id="n1" value="(ServiceWorker)" style="text;html=1;align=center;verticalAlign=middle;fontSize=12;fontColor=#6B6B6B;fontFamily=Courier New;" vertex="1" parent="1">
+      <mxGeometry x="110" y="162" width="140" height="18" as="geometry"/>
+    </mxCell>
+    <mxCell id="n2" value="(disk cache)" style="text;html=1;align=center;verticalAlign=middle;fontSize=12;fontColor=#6B6B6B;fontFamily=Courier New;" vertex="1" parent="1">
+      <mxGeometry x="270" y="162" width="140" height="18" as="geometry"/>
+    </mxCell>
+    <mxCell id="n3" value="서버" style="text;html=1;align=center;verticalAlign=middle;fontSize=12;fontColor=#6B6B6B;" vertex="1" parent="1">
+      <mxGeometry x="590" y="162" width="90" height="18" as="geometry"/>
+    </mxCell>
+    <mxCell id="bottomMemo" value="개발자 도구 Network 탭에는 응답이 어느 층에서 왔는지가 이렇게 표시된다" style="text;html=1;align=center;verticalAlign=middle;fontSize=12;fontColor=#6B6B6B;" vertex="1" parent="1">
+      <mxGeometry x="0" y="190" width="680" height="20" as="geometry"/>
+    </mxCell>
+  </root>
+</mxGraphModel>

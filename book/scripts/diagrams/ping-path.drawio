@@ -1,0 +1,81 @@
+<mxGraphModel adaptiveColors="auto">
+  <root>
+    <mxCell id="0"/>
+    <mxCell id="1" parent="0"/>
+
+    <mxCell id="start" value="GitHub Actions&lt;br&gt;스케줄 워크플로&lt;br&gt;&lt;span style=&quot;font-size:12px;font-weight:normal&quot;&gt;&lt;span style=&quot;font-family:Courier New&quot;&gt;on: schedule&lt;/span&gt; · 하루 두 번&lt;/span&gt;" style="rounded=1;arcSize=12;html=1;fillColor=#EDEDED;strokeColor=#8C8C8C;fontColor=#333333;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="8" y="112" width="170" height="72" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="okBadge" value="✓ 활동으로 센다" style="rounded=1;arcSize=12;html=1;fillColor=#D9EAD3;strokeColor=#6AA84F;fontColor=#3F6B2B;fontSize=12;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="546" y="6" width="130" height="28" as="geometry"/>
+    </mxCell>
+    <mxCell id="fnUp" value="Vercel 함수" style="rounded=1;arcSize=12;html=1;fillColor=#CFE2F3;strokeColor=#4A7BA6;fontColor=#1F4E79;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="216" y="46" width="110" height="44" as="geometry"/>
+    </mxCell>
+    <mxCell id="epUp" value="/api/shared-decks&lt;br&gt;&lt;span style=&quot;font-size:12px;font-weight:normal;font-family:Helvetica&quot;&gt;로그인 없이 DB를 조회&lt;/span&gt;" style="rounded=1;arcSize=12;html=1;fillColor=#CFE2F3;strokeColor=#4A7BA6;fontColor=#1F4E79;fontSize=14;fontStyle=1;fontFamily=Courier New;" vertex="1" parent="1">
+      <mxGeometry x="350" y="40" width="162" height="56" as="geometry"/>
+    </mxCell>
+    <mxCell id="db" value="Supabase&lt;br&gt;PostgreSQL" style="rounded=1;arcSize=12;html=1;fillColor=#E4D7F5;strokeColor=#8E6BBF;fontColor=#4A2C7A;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="546" y="40" width="130" height="56" as="geometry"/>
+    </mxCell>
+    <mxCell id="pauseBadge" value="7일 무활동 → 자동 일시정지" style="rounded=1;arcSize=12;html=1;fillColor=#F8D7DA;strokeColor=#C0392B;fontColor=#7B1F1F;fontSize=12;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="516" y="104" width="160" height="28" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="fnDown" value="Vercel 함수&lt;br&gt;&lt;span style=&quot;font-size:12px;font-weight:normal&quot;&gt;깨어나긴 한다&lt;/span&gt;" style="rounded=1;arcSize=12;html=1;fillColor=#CFE2F3;strokeColor=#4A7BA6;fontColor=#1F4E79;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="216" y="206" width="110" height="56" as="geometry"/>
+    </mxCell>
+    <mxCell id="epDown" value="/api/healthz&lt;br&gt;&lt;span style=&quot;font-size:12px;font-weight:normal;font-family:Helvetica&quot;&gt;헬스 체크 · DB에 닿지 않는다&lt;/span&gt;" style="rounded=1;arcSize=12;html=1;fillColor=#CFE2F3;strokeColor=#4A7BA6;fontColor=#1F4E79;fontSize=14;fontStyle=1;fontFamily=Courier New;" vertex="1" parent="1">
+      <mxGeometry x="350" y="206" width="162" height="56" as="geometry"/>
+    </mxCell>
+    <mxCell id="xmark" value="✕" style="ellipse;html=1;fillColor=#F8D7DA;strokeColor=#C0392B;fontColor=#C0392B;fontSize=16;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="560" y="219" width="30" height="30" as="geometry"/>
+    </mxCell>
+    <mxCell id="badMemo" value="Supabase 기준으로는 여전히 무활동" style="text;html=1;align=center;verticalAlign=middle;fontSize=12;fontStyle=1;fontColor=#7B1F1F;" vertex="1" parent="1">
+      <mxGeometry x="476" y="256" width="200" height="20" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="eUp1" style="strokeColor=#6AA84F;strokeWidth=1.5;endArrow=classic;endFill=1;html=1;edgeStyle=orthogonalEdgeStyle;rounded=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="start" target="fnUp">
+      <mxGeometry relative="1" as="geometry">
+        <Array as="points">
+          <mxPoint x="196" y="148"/>
+          <mxPoint x="196" y="68"/>
+        </Array>
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="eUp2" style="strokeColor=#6AA84F;strokeWidth=1.5;endArrow=classic;endFill=1;html=1;" edge="1" parent="1" source="fnUp" target="epUp">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="eUp3" style="strokeColor=#6AA84F;strokeWidth=1.5;endArrow=classic;endFill=1;html=1;" edge="1" parent="1" source="epUp" target="db">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="eDown1" style="strokeColor=#C0392B;strokeWidth=1.5;endArrow=classic;endFill=1;html=1;edgeStyle=orthogonalEdgeStyle;rounded=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="start" target="fnDown">
+      <mxGeometry relative="1" as="geometry">
+        <Array as="points">
+          <mxPoint x="196" y="148"/>
+          <mxPoint x="196" y="234"/>
+        </Array>
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="eDown2" style="strokeColor=#C0392B;strokeWidth=1.5;endArrow=classic;endFill=1;html=1;" edge="1" parent="1" source="fnDown" target="epDown">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="eDown3" style="strokeColor=#C0392B;strokeWidth=1.5;dashed=1;dashPattern=6 4;endArrow=none;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" edge="1" parent="1" source="epDown">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="560" y="234" as="targetPoint"/>
+      </mxGeometry>
+    </mxCell>
+
+    <mxCell id="upLabel" value="DB를 조회하는 공개 엔드포인트를 두드리면" style="text;html=1;align=left;verticalAlign=middle;fontSize=12;fontStyle=1;fontColor=#3F6B2B;" vertex="1" parent="1">
+      <mxGeometry x="216" y="98" width="290" height="20" as="geometry"/>
+    </mxCell>
+    <mxCell id="downLabel" value="헬스 체크만 두드리면" style="text;html=1;align=left;verticalAlign=middle;fontSize=12;fontStyle=1;fontColor=#7B1F1F;" vertex="1" parent="1">
+      <mxGeometry x="216" y="184" width="290" height="20" as="geometry"/>
+    </mxCell>
+    <mxCell id="bottomMemo" value="활동을 세는 쪽은 Vercel이 아니라 Supabase의 데이터베이스다" style="text;html=1;align=center;verticalAlign=middle;fontSize=12;fontColor=#6B6B6B;" vertex="1" parent="1">
+      <mxGeometry x="8" y="290" width="668" height="20" as="geometry"/>
+    </mxCell>
+  </root>
+</mxGraphModel>

@@ -255,6 +255,17 @@ include::../../flashcard-basic/handlers.go[tag=list-decks-json]
 실패했을 때도 글자 대신 JSON(`{"error": ...}`)으로 답하는데, 화면을 기대하지 않는 상대에게는 에러도 같은 모양으로 주는 편이 다루기 쉽기 때문이다.
 저장소에서 데이터를 꺼내는 일까지는 화면과 API가 완전히 같고, 그것을 어떤 옷을 입혀 내보내느냐만 다르다.
 주소를 `/api` 아래에 모아 둔 것은 화면 주소와 데이터 주소를 구분하는 흔한 관례다.
+이 장에서 본 요청과 응답의 한 바퀴를 그림 13에 모았다.
+
+++++
+<div class="fc-shots">
+
+![브라우저의 요청이 Gin 엔진과 핸들러를 거쳐 store.go와 SQLite 파일까지 갔다가, HTML 응답과 JSON 응답 두 갈래로 되돌아오는 그림](/screenshots/request-roundtrip.png)
+
+</div>
+
+<p class="fc-caption">그림 13 최소 앱의 요청과 응답 한 바퀴. Gin 엔진이 주소를 보고 핸들러를 고르고, 핸들러는 <code>store.go</code>를 거쳐 SQLite에서 덱 목록을 꺼낸 뒤 화면(<code>c.HTML</code>)이나 JSON(<code>c.JSON</code>)으로 내보낸다.</p>
+++++
 
 서버를 띄워 둔 채 다른 터미널에서 확인해 보자.
 curl은 브라우저 없이 터미널에서 HTTP 요청을 보내는 도구다.

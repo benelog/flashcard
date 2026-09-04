@@ -312,6 +312,18 @@ Flashcard에서 인증이 필요한 요청 하나가 지나는 체인을 나열�
 . `h.EnsureProfile()`: 프로필 행 지연 생성(그룹).
 . 최종 핸들러.
 
+이 길을 그림 16에 그렸다.
+
+++++
+<div class="fc-shots">
+
+![브라우저의 요청이 Gin 라우터, gin.Recovery, auth.Middleware, h.EnsureProfile을 차례로 지나 핸들러와 model.Store에 닿고 응답이 되돌아오는 그림. auth.Middleware에서 막히면 401 응답으로 빠진다](/screenshots/gin-chain.png)
+
+</div>
+
+<p class="fc-caption">그림 16 인증이 필요한 요청 하나가 Gin을 지나는 길. 미들웨어는 등록 순서대로 실행되고, <code>auth.Middleware</code>에서 막히면 <code>c.Abort()</code>로 뒤의 체인을 건너뛴 채 401이 돌아간다.</p>
+++++
+
 그룹 미들웨어를 `r.Group(경로, 미들웨어...)`로 붙인다는 것은 앞 절에서 봤고, 전역 미들웨어는 `r.Use(...)`로 엔진에 직접 붙인다(맨 위의 `gin.Recovery()`가 그 예다).
 순서가 곧 의미다.
 Recovery가 가장 바깥에 있어야 안쪽 어디에서 패닉이 나도 잡을 수 있고, 인증이 EnsureProfile보다 앞이어야 "누구의 프로필인지"를 알 수 있다.

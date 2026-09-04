@@ -304,6 +304,7 @@ include::../../flashcard-advanced/internal/srs/srs.go[tag=grade]
   ```
 - **여러 화면은 반드시 한 장으로 합성해 둔다.** 이 책은 다단 페이지 넘김 모드라 이미지를 flex로 나란히 놓으면 단 경계에서 잘린다.
 - 캡처 조건: 430×860 뷰포트, 3배 배율(화면마다 세로만 조절해 빈 여백을 줄인다).
+- **그림 번호는 손으로 매기지 않는다(2026-09-05 도입).** 새 그림은 캡션과 본문 참조에 `그림 N`이라고 적어 두고 `node scripts/renumber-figures.mjs`를 돌리면 toc 순서대로 번호가 붙는다(캡처든 개념 그림이든 한 번호 체계다). 본문에서 그림을 가리킬 때는 "그림 N에 그렸다", "그림 N처럼"처럼 숫자 뒤에 오는 조사가 받침에 따라 바뀌지 않는 표현만 쓴다("그림 N과 같다"는 번호가 바뀌면 조사가 틀린다).
 
 ### 앱 화면 캡처(1장과 22장)
 
@@ -316,7 +317,7 @@ include::../../flashcard-advanced/internal/srs/srs.go[tag=grade]
 - 헤더에 계정 이메일 대신 "로컬 모드"가 뜬다. 로컬 모드는 5장과 26장에서 설명하는 실행 방식이라 그대로 싣는다.
 - 촬영 순서에 뜻이 있다. 덱 상세(그림 1)를 찍은 **뒤에** 덱을 공유한다. 공유 중인 덱은 링크 버튼과 안내 문구가 화면 위쪽을 차지해 정작 보여야 할 카드 목록이 밀린다.
 - `go run`이 아니라 미리 빌드한 바이너리를 띄운다. go run은 래퍼 프로세스를 하나 더 두어, 그것만 죽이면 서버가 살아남아 다음 실행의 DB에 계속 쓴다(통계 수치가 두 배가 된다).
-- 현재 실린 그림: 그림 1 덱 상세, 그림 2 학습 3단계, 그림 3 홈·복습 큐, 그림 4 통계·공유(모두 1장 `part1/requirements.adoc`), 그림 9 카드 입력 화면(알약 라디오), 그림 10 밝은 테마와 어두운 테마(22장).
+- 현재 실린 앱 캡처: 덱 상세(`deck-cards`), 학습 3단계(`study-flow`), 홈·복습 큐(`home`), 통계·공유(`stats-shared`)(모두 1장 `part1/requirements.adoc`), 밝은 테마와 어두운 테마(`app-light-dark`), 카드 입력 화면(`app-card-form`)(22장). 번호는 위의 스크립트가 매긴다.
 
 ### 문법 입문 장의 예제 캡처(6·7장)
 
@@ -325,14 +326,21 @@ include::../../flashcard-advanced/internal/srs/srs.go[tag=grade]
 - 원고의 코드 블록과 예제 파일은 손으로 맞춘 쌍이다. 한쪽을 고치면 다른 쪽도 고치고 다시 촬영한다(빌드가 대조해 주지 않는다).
 - 재촬영: `cd book && node scripts/capture-examples.mjs`. headless Chrome이라 서버도 로그인도 필요 없고, 합성·축소까지 스크립트가 한다.
 - 데스크톱 폭(480) 화면이라 `fc-shots single`이 아니라 기본 `fc-shots`를 쓴다.
-- 그림 5 첫 문서, 그림 6 폼과 입력 칸(6장), 그림 8 스타일 적용 전·후·다크 모드(7장).
+- 첫 문서(`html-first`), 폼과 입력 칸(`html-form`)(6장), 스타일 적용 전·후·다크 모드(`css-before-after`)(7장).
 
-### 다이어그램(7장)
+### 개념 그림(draw.io)
 
-- 그림 7(박스 모델)은 캡처가 아니라 draw.io로 그린 그림이다. 소스는 `book/scripts/diagrams/box-model.drawio`.
-- 내보내기: `cd book/scripts/diagrams && drawio -x -f png -e -b 12 -s 2 -o ../../public/screenshots/box-model.png box-model.drawio`
+구조·흐름·관계를 설명하는 개념 그림은 캡처가 아니라 draw.io로 그린다(2026-09-05에 22장을 한꺼번에 넣었다. 그 전에는 7장의 박스 모델 한 장뿐이었다).
+소스는 `book/scripts/diagrams/<이름>.drawio`, 내보낸 PNG는 다른 그림과 같은 `book/public/screenshots/<이름>.png`다.
+
+- 색·글자·선·크기 규약은 `book/scripts/diagrams/STYLE.md`에 있다. 표지 그림의 세 층 색(화면=주황, 로직=시안, 데이터=보라)을 그대로 따르고 외부 서비스는 회색, 판정은 노랑, 금지는 빨강이다. 새 그림은 `agent-loop.drawio`의 스타일 문자열을 본떠 그린다.
+- 내보내기: `cd book/scripts/diagrams && drawio -x -f png -e -b 12 -s 2 -o ../../public/screenshots/<이름>.png <이름>.drawio`
 - `-e`가 PNG에 원본 XML을 심으므로 내보낸 PNG를 draw.io에서 바로 열어 고칠 수도 있다. 그래도 텍스트로 비교할 수 있게 `.drawio` 소스를 저장소에 함께 둔다.
 - snap으로 설치한 draw.io는 `/tmp` 아래 파일을 읽지 못한다. 소스와 출력 경로를 모두 홈 디렉터리 아래에 둔다.
+- 크기는 논리 폭 680·높이 460 이하로 잡는다(두 쪽 펼침에서 한 단에 캡션과 함께 들어가는 크기).
+- 원고가 ASCII 화살표로 흐름을 흉내 내던 자리(3·4·14·27·30·31·32장)는 전부 그림으로 바꿨다. 새로 그런 블록을 만들지 말고 그림을 그린다.
+- 실린 그림(장 순): 3장 `agent-loop`, 4장 `two-modes`, 1장 `srs-intervals`, 7장 `box-model`, 10장 `two-tables`, 12장 `request-roundtrip`, 14장 `dependency-direction`, 16장 `er-diagram`, 20장 `gin-chain`, 21장 `one-engine-two-entries`, 24장 `stateless-study`, 27장 `branch-history`, 28장 `three-gates`, 30장 `deploy-request`, 31장 `import-graph`, 32장 `oauth-sequence`, 33장 `jwt-jwks`, 34장 `pool-vs-pooler`·`three-environments`, 35장 `expand-contract`, 38장 `sw-fetch`·`cache-layers`, 39장 `ping-path`.
+- 그림이 코드의 사실을 담으므로 패키지 관계·함수 이름·수치를 바꾸면 그림도 같이 고친다(빌드가 대조해 주지 않는다). 예: `dependency-direction`은 `web`·`handlers`가 `study`·`cardcsv`를 둘 다 import한다는 실제 관계를 그린 것이다.
 
 ### 대시보드 캡처(부록)
 
@@ -341,7 +349,7 @@ include::../../flashcard-advanced/internal/srs/srs.go[tag=grade]
 - 데스크톱 화면이라 가로가 넓다. `fc-shots single`(휴대폰용 좁은 폭)이 아니라 기본 `fc-shots`를 쓴다(폭이 본문 단을 그대로 채운다).
 - 저자 본인의 프로젝트 식별자(Supabase project ref, Google client ID, 조직·프로젝트 이름, Vercel slug)는 화면에 그대로 싣기로 했다. 공개 OAuth 흐름에 드러나는 값이라 비밀이 아니다. 단 연결 문자열·anon key·client secret이 보이는 화면은 찍지 않는다.
 - 재촬영 절차는 `book/scripts/capture-dashboards.mjs`(세 대시보드에 로그인한 디버그 포트 Chrome에 CDP로 연결해 촬영). 사용법은 스크립트 머리 주석.
-- 그림 11~15: 그림 11 Google 클라이언트, 그림 12 Supabase 프로바이더, 그림 13 Supabase URL Configuration, 그림 14 Vercel Environments, 그림 15 Vercel 환경 변수.
+- 실린 화면: Google 클라이언트(`dash-google-client`), Supabase 프로바이더(`dash-providers`), Supabase URL Configuration(`dash-url-config`), Vercel Environments(`dash-vercel-environments`), Vercel 환경 변수(`dash-vercel-envvars`).
 - `public/screenshots/dash-*.png`는 실촬영본이다(2026-07 교체 완료). 대시보드 화면 구성이 바뀌면 `capture-dashboards.mjs`로 재촬영해 교체한다.
 
 ## 문체 가이드

@@ -1,0 +1,72 @@
+<mxGraphModel adaptiveColors="auto">
+  <root>
+    <mxCell id="0"/>
+    <mxCell id="1" parent="0"/>
+
+    <mxCell id="fetch" value="fetch 이벤트&lt;br&gt;&lt;span style=&quot;font-size:12px;font-weight:normal&quot;&gt;브라우저가 보내는 요청 하나&lt;/span&gt;" style="rounded=1;arcSize=12;html=1;fillColor=#FBE4CC;strokeColor=#D79B63;fontColor=#7F5124;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="40" y="8" width="180" height="56" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="d1" value="GET이 아니거나&lt;br&gt;&lt;span style=&quot;font-family:Courier New&quot;&gt;/api/&lt;/span&gt; 이거나&lt;br&gt;다른 오리진?" style="rhombus;html=1;fillColor=#FFF2CC;strokeColor=#B7950B;fontColor=#5C4A00;fontSize=12;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="10" y="90" width="240" height="110" as="geometry"/>
+    </mxCell>
+    <mxCell id="b1" value="건드리지 않는다&lt;br&gt;&lt;span style=&quot;font-size:12px;font-weight:normal&quot;&gt;network only · 평소대로 네트워크로&lt;/span&gt;" style="rounded=1;arcSize=12;html=1;fillColor=#EDEDED;strokeColor=#8C8C8C;fontColor=#333333;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="290" y="117" width="220" height="56" as="geometry"/>
+    </mxCell>
+    <mxCell id="m1" value="예: 채점 POST · &lt;span style=&quot;font-family:Courier New&quot;&gt;/api/&lt;/span&gt; 응답 · 다른 사이트" style="text;html=1;align=center;verticalAlign=middle;fontSize=12;fontColor=#6B6B6B;" vertex="1" parent="1">
+      <mxGeometry x="290" y="175" width="220" height="18" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="d2" value="&lt;span style=&quot;font-family:Courier New&quot;&gt;mode === &amp;quot;navigate&amp;quot;&lt;/span&gt;?&lt;br&gt;(페이지 HTML)" style="rhombus;html=1;fillColor=#FFF2CC;strokeColor=#B7950B;fontColor=#5C4A00;fontSize=12;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="10" y="230" width="240" height="110" as="geometry"/>
+    </mxCell>
+    <mxCell id="b2" value="network-first&lt;br&gt;&lt;span style=&quot;font-size:12px;font-weight:normal&quot;&gt;성공 → 응답 + PAGES에 저장&lt;br&gt;실패 → PAGES 사본 → offline.html&lt;/span&gt;" style="rounded=1;arcSize=12;html=1;fillColor=#CFE2F3;strokeColor=#4A7BA6;fontColor=#1F4E79;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="290" y="250" width="220" height="70" as="geometry"/>
+    </mxCell>
+    <mxCell id="m2" value="예: 홈 화면 · 덱 목록 페이지" style="text;html=1;align=center;verticalAlign=middle;fontSize=12;fontColor=#6B6B6B;" vertex="1" parent="1">
+      <mxGeometry x="290" y="322" width="220" height="18" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="b3" value="stale-while-revalidate&lt;br&gt;&lt;span style=&quot;font-size:12px;font-weight:normal&quot;&gt;STATIC 사본 즉시 → 뒤에서 갱신&lt;/span&gt;" style="rounded=1;arcSize=12;html=1;fillColor=#CFE2F3;strokeColor=#4A7BA6;fontColor=#1F4E79;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="10" y="380" width="240" height="56" as="geometry"/>
+    </mxCell>
+    <mxCell id="m3" value="예: app.css · htmx.min.js · 아이콘" style="text;html=1;align=center;verticalAlign=middle;fontSize=12;fontColor=#6B6B6B;" vertex="1" parent="1">
+      <mxGeometry x="10" y="438" width="240" height="18" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="pages" value="flashcard-pages-v3" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=10;fillColor=#E4D7F5;strokeColor=#8E6BBF;fontColor=#4A2C7A;fontSize=12;fontStyle=1;fontFamily=Courier New;" vertex="1" parent="1">
+      <mxGeometry x="530" y="250" width="150" height="70" as="geometry"/>
+    </mxCell>
+    <mxCell id="pagesMemo" value="사용자별 HTML · 로그아웃 때 지운다" style="text;html=1;align=center;verticalAlign=middle;fontSize=12;fontColor=#6B6B6B;" vertex="1" parent="1">
+      <mxGeometry x="500" y="322" width="180" height="18" as="geometry"/>
+    </mxCell>
+    <mxCell id="static" value="flashcard-static-v3" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=10;fillColor=#E4D7F5;strokeColor=#8E6BBF;fontColor=#4A2C7A;fontSize=12;fontStyle=1;fontFamily=Courier New;" vertex="1" parent="1">
+      <mxGeometry x="530" y="370" width="150" height="70" as="geometry"/>
+    </mxCell>
+    <mxCell id="staticMemo" value="누가 받아도 같은 파일 · offline.html 포함" style="text;html=1;align=center;verticalAlign=middle;fontSize=12;fontColor=#6B6B6B;" vertex="1" parent="1">
+      <mxGeometry x="470" y="442" width="210" height="18" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="e0" style="strokeColor=#4D4D4D;strokeWidth=1.5;endArrow=classic;endFill=1;html=1;" edge="1" parent="1" source="fetch" target="d1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="e1yes" value="예" style="strokeColor=#4D4D4D;strokeWidth=1.5;endArrow=classic;endFill=1;html=1;fontSize=12;fontColor=#6B6B6B;labelBackgroundColor=#FFFFFF;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="d1" target="b1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="e1no" value="아니오" style="strokeColor=#4D4D4D;strokeWidth=1.5;endArrow=classic;endFill=1;html=1;fontSize=12;fontColor=#6B6B6B;labelBackgroundColor=#FFFFFF;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="d1" target="d2">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="e2yes" value="예" style="strokeColor=#4D4D4D;strokeWidth=1.5;endArrow=classic;endFill=1;html=1;fontSize=12;fontColor=#6B6B6B;labelBackgroundColor=#FFFFFF;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="d2" target="b2">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="e2no" value="아니오" style="strokeColor=#4D4D4D;strokeWidth=1.5;endArrow=classic;endFill=1;html=1;fontSize=12;fontColor=#6B6B6B;labelBackgroundColor=#FFFFFF;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="d2" target="b3">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="eP" style="strokeColor=#9AA0A6;strokeWidth=1.5;dashed=1;dashPattern=2 3;endArrow=none;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="b2" target="pages">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="eS" style="strokeColor=#9AA0A6;strokeWidth=1.5;dashed=1;dashPattern=2 3;endArrow=none;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="b3" target="static">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+  </root>
+</mxGraphModel>

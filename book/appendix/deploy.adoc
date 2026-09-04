@@ -98,7 +98,7 @@ Google이 인증을 마치고 처음 돌려보내는 곳은 우리 앱이 아니
 
 </div>
 
-<p class="fc-caption">그림 11 Google 인증 플랫폼 클라이언트 상세. 승인된 리디렉션 URI에는 앱 주소가 아니라 Supabase 콜백 주소를 넣는다.</p>
+<p class="fc-caption">그림 33 Google 인증 플랫폼 클라이언트 상세. 승인된 리디렉션 URI에는 앱 주소가 아니라 Supabase 콜백 주소를 넣는다.</p>
 ++++
 
 클라이언트를 만들면 Client ID와 Client Secret이 나온다(둘의 차이는 {ch-supabase-auth}).
@@ -115,7 +115,7 @@ Google 쪽 클라이언트 설정은 저장한 뒤 반영되기까지 5분에서
 
 </div>
 
-<p class="fc-caption">그림 12 Supabase Sign In / Providers. 여기서 켠 프로바이더만 로그인에 쓸 수 있다. 개발·운영 프로젝트에 각각 켜 준다.</p>
+<p class="fc-caption">그림 34 Supabase Sign In / Providers. 여기서 켠 프로바이더만 로그인에 쓸 수 있다. 개발·운영 프로젝트에 각각 켜 준다.</p>
 ++++
 
 여기까지 하면 첫째 관문(프로바이더 켜기)과 둘째 관문(Google에 등록)이 열린다.
@@ -155,7 +155,7 @@ Redirect URLs는 "돌아와도 되는 주소 목록"이다.
 
 </div>
 
-<p class="fc-caption">그림 13 Supabase URL Configuration. Redirect URLs는 돌아와도 되는 주소 목록이고, Site URL은 그 목록에 맞는 게 없을 때의 기본값이다.</p>
+<p class="fc-caption">그림 35 Supabase URL Configuration. Redirect URLs는 돌아와도 되는 주소 목록이고, Site URL은 그 목록에 맞는 게 없을 때의 기본값이다.</p>
 ++++
 
 Site URL은 조금 다르다.
@@ -235,7 +235,7 @@ import 화면에서 Deploy를 누르면 첫 배포가 시작되는데, 환경 �
 
 </div>
 
-<p class="fc-caption">그림 14 Vercel Environments. Production은 release, Preview는 나머지 브랜치를 따르도록 두어 개발 배포와 운영 배포를 구분한다.</p>
+<p class="fc-caption">그림 36 Vercel Environments. Production은 release, Preview는 나머지 브랜치를 따르도록 두어 개발 배포와 운영 배포를 구분한다.</p>
 ++++
 
 Production을 열어 Branch Tracking의 브랜치 값을 main에서 release로 바꾼다.
@@ -259,7 +259,7 @@ Production 스코프에는 운영 프로젝트 값을, Preview 스코프에는 �
 
 </div>
 
-<p class="fc-caption">그림 15 Vercel 환경 변수. 같은 이름을 스코프별로 나눠, Production에는 운영 값, Preview에는 개발 값을 넣는다.</p>
+<p class="fc-caption">그림 37 Vercel 환경 변수. 같은 이름을 스코프별로 나눠, Production에는 운영 값, Preview에는 개발 값을 넣는다.</p>
 ++++
 
 환경 변수는 다음 배포부터 적용된다.

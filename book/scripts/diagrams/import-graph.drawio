@@ -1,0 +1,45 @@
+<mxGraphModel adaptiveColors="auto">
+  <root>
+    <mxCell id="0"/>
+    <mxCell id="1" parent="0"/>
+
+    <mxCell id="outside" value="모듈 경계 바깥" style="rounded=1;arcSize=8;html=1;dashed=1;dashPattern=6 4;fillColor=none;strokeColor=#9AA0A6;fontColor=#5F6368;fontSize=12;align=left;verticalAlign=top;spacingLeft=8;spacingTop=2;" vertex="1" parent="1">
+      <mxGeometry x="8" y="40" width="214" height="90" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="api" value="api/index.go&lt;br&gt;&lt;span style=&quot;font-size:12px;font-weight:normal;font-family:Helvetica&quot;&gt;Vercel이 모듈 밖에서 단독 컴파일&lt;/span&gt;" style="rounded=1;arcSize=12;html=1;fillColor=#CFE2F3;strokeColor=#4A7BA6;fontColor=#1F4E79;fontSize=14;fontStyle=1;fontFamily=Courier New;" vertex="1" parent="1">
+      <mxGeometry x="20" y="64" width="190" height="56" as="geometry"/>
+    </mxCell>
+    <mxCell id="cmd" value="cmd/server" style="rounded=1;arcSize=12;html=1;fillColor=#CFE2F3;strokeColor=#4A7BA6;fontColor=#1F4E79;fontSize=14;fontStyle=1;fontFamily=Courier New;" vertex="1" parent="1">
+      <mxGeometry x="20" y="196" width="190" height="44" as="geometry"/>
+    </mxCell>
+    <mxCell id="app" value="pkg/app&lt;br&gt;&lt;span style=&quot;font-size:12px;font-weight:normal;font-family:Helvetica&quot;&gt;공개 창구&lt;/span&gt;" style="rounded=1;arcSize=12;html=1;fillColor=#CFE2F3;strokeColor=#4A7BA6;strokeWidth=2;fontColor=#1F4E79;fontSize=14;fontStyle=1;fontFamily=Courier New;" vertex="1" parent="1">
+      <mxGeometry x="300" y="124" width="130" height="56" as="geometry"/>
+    </mxCell>
+    <mxCell id="internal" value="internal/…&lt;br&gt;&lt;span style=&quot;font-size:12px;font-weight:normal;font-family:Helvetica&quot;&gt;config · db · auth · handlers&lt;br&gt;model · pgstore · web&lt;/span&gt;" style="rounded=1;arcSize=12;html=1;fillColor=#CFE2F3;strokeColor=#4A7BA6;fontColor=#1F4E79;fontSize=14;fontStyle=1;fontFamily=Courier New;" vertex="1" parent="1">
+      <mxGeometry x="500" y="116" width="172" height="72" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="e1" style="strokeColor=#4D4D4D;strokeWidth=1.5;endArrow=classic;endFill=1;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="api" target="app">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="e2" style="strokeColor=#4D4D4D;strokeWidth=1.5;endArrow=classic;endFill=1;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="cmd" target="app">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="e3" style="strokeColor=#4D4D4D;strokeWidth=1.5;endArrow=classic;endFill=1;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="app" target="internal">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="forbidden" value="use of internal package … not allowed" style="strokeColor=#C0392B;strokeWidth=1.5;dashed=1;dashPattern=6 4;endArrow=classic;endFill=1;html=1;edgeStyle=orthogonalEdgeStyle;rounded=1;fontFamily=Courier New;fontSize=12;fontColor=#7B1F1F;verticalAlign=bottom;labelBackgroundColor=#FFFFFF;exitX=0.75;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="api" target="internal">
+      <mxGeometry relative="1" as="geometry">
+        <Array as="points">
+          <mxPoint x="162" y="16"/>
+          <mxPoint x="586" y="16"/>
+        </Array>
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="x" value="✕" style="text;html=1;align=center;verticalAlign=middle;fontSize=22;fontStyle=1;fontColor=#C0392B;" vertex="1" parent="1">
+      <mxGeometry x="572" y="62" width="28" height="28" as="geometry"/>
+    </mxCell>
+  </root>
+</mxGraphModel>

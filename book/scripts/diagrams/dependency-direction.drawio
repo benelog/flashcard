@@ -1,0 +1,63 @@
+<mxGraphModel adaptiveColors="auto">
+  <root>
+    <mxCell id="0"/>
+    <mxCell id="1" parent="0"/>
+
+    <mxCell id="web" value="web&lt;br&gt;&lt;span style=&quot;font-size:12px;font-weight:normal&quot;&gt;화면&lt;/span&gt;" style="rounded=1;arcSize=12;html=1;fillColor=#FBE4CC;strokeColor=#D79B63;fontColor=#7F5124;fontSize=14;fontStyle=1;fontFamily=Courier New;" vertex="1" parent="1">
+      <mxGeometry x="110" y="20" width="180" height="56" as="geometry"/>
+    </mxCell>
+    <mxCell id="handlers" value="handlers&lt;br&gt;&lt;span style=&quot;font-size:12px;font-weight:normal&quot;&gt;JSON API&lt;/span&gt;" style="rounded=1;arcSize=12;html=1;fillColor=#CFE2F3;strokeColor=#4A7BA6;fontColor=#1F4E79;fontSize=14;fontStyle=1;fontFamily=Courier New;" vertex="1" parent="1">
+      <mxGeometry x="390" y="20" width="180" height="56" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="study" value="study&lt;br&gt;&lt;span style=&quot;font-size:12px;font-weight:normal&quot;&gt;학습 정책&lt;/span&gt;" style="rounded=1;arcSize=12;html=1;fillColor=#CFE2F3;strokeColor=#4A7BA6;fontColor=#1F4E79;fontSize=14;fontStyle=1;fontFamily=Courier New;" vertex="1" parent="1">
+      <mxGeometry x="110" y="126" width="180" height="56" as="geometry"/>
+    </mxCell>
+    <mxCell id="cardcsv" value="cardcsv&lt;br&gt;&lt;span style=&quot;font-size:12px;font-weight:normal&quot;&gt;CSV 변환&lt;/span&gt;" style="rounded=1;arcSize=12;html=1;fillColor=#CFE2F3;strokeColor=#4A7BA6;fontColor=#1F4E79;fontSize=14;fontStyle=1;fontFamily=Courier New;" vertex="1" parent="1">
+      <mxGeometry x="390" y="126" width="180" height="56" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="model" value="model&lt;br&gt;&lt;span style=&quot;font-size:12px;font-weight:normal&quot;&gt;공용어: 행 타입 · ErrNotFound · Store 인터페이스&lt;/span&gt;" style="rounded=1;arcSize=12;html=1;fillColor=#CFE2F3;strokeColor=#4A7BA6;strokeWidth=2;fontColor=#1F4E79;fontSize=15;fontStyle=1;fontFamily=Courier New;" vertex="1" parent="1">
+      <mxGeometry x="170" y="236" width="340" height="60" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="pgstore" value="pgstore&lt;br&gt;&lt;span style=&quot;font-size:12px;font-weight:normal&quot;&gt;PostgreSQL&lt;/span&gt;" style="rounded=1;arcSize=12;html=1;fillColor=#E4D7F5;strokeColor=#8E6BBF;fontColor=#4A2C7A;fontSize=14;fontStyle=1;fontFamily=Courier New;" vertex="1" parent="1">
+      <mxGeometry x="110" y="350" width="180" height="56" as="geometry"/>
+    </mxCell>
+    <mxCell id="litestore" value="litestore&lt;br&gt;&lt;span style=&quot;font-size:12px;font-weight:normal&quot;&gt;SQLite&lt;/span&gt;" style="rounded=1;arcSize=12;html=1;fillColor=#E4D7F5;strokeColor=#8E6BBF;fontColor=#4A2C7A;fontSize=14;fontStyle=1;fontFamily=Courier New;" vertex="1" parent="1">
+      <mxGeometry x="390" y="350" width="180" height="56" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="e1" style="strokeColor=#4D4D4D;strokeWidth=1.5;endArrow=classic;endFill=1;html=1;" edge="1" parent="1" source="web" target="study">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="e2" style="strokeColor=#4D4D4D;strokeWidth=1.5;endArrow=classic;endFill=1;html=1;" edge="1" parent="1" source="handlers" target="cardcsv">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="e-web-cardcsv" style="strokeColor=#4D4D4D;strokeWidth=1.5;endArrow=classic;endFill=1;html=1;exitX=0.85;exitY=1;exitDx=0;exitDy=0;entryX=0.15;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="web" target="cardcsv">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="e-handlers-study" style="strokeColor=#4D4D4D;strokeWidth=1.5;endArrow=classic;endFill=1;html=1;exitX=0.15;exitY=1;exitDx=0;exitDy=0;entryX=0.85;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="handlers" target="study">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="e3" style="strokeColor=#4D4D4D;strokeWidth=1.5;endArrow=classic;endFill=1;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.25;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="study" target="model">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="e4" style="strokeColor=#4D4D4D;strokeWidth=1.5;endArrow=classic;endFill=1;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.75;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="cardcsv" target="model">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="e5" style="strokeColor=#4D4D4D;strokeWidth=1.5;endArrow=classic;endFill=1;html=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.25;entryY=1;entryDx=0;entryDy=0;" edge="1" parent="1" source="pgstore" target="model">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="e6" style="strokeColor=#4D4D4D;strokeWidth=1.5;endArrow=classic;endFill=1;html=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.75;entryY=1;entryDx=0;entryDy=0;" edge="1" parent="1" source="litestore" target="model">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="memo1" value="화살표 = 안다" style="text;html=1;align=center;verticalAlign=middle;fontSize=12;fontColor=#6B6B6B;" vertex="1" parent="1">
+      <mxGeometry x="280" y="196" width="120" height="22" as="geometry"/>
+    </mxCell>
+    <mxCell id="memo2" value="거꾸로 가는 화살표는 하나도 없다" style="text;html=1;align=center;verticalAlign=middle;fontSize=13;fontColor=#6B6B6B;" vertex="1" parent="1">
+      <mxGeometry x="110" y="418" width="460" height="22" as="geometry"/>
+    </mxCell>
+  </root>
+</mxGraphModel>

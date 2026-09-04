@@ -320,6 +320,17 @@ func insertCard(ctx context.Context, tx *sql.Tx, userID uuid.UUID, in model.Card
 === 외래 키와 ON DELETE 정책
 
 모든 관계에는 외래 키가 걸려 있고, 삭제 정책은 두 가지로 나뉜다.
+일곱 테이블과 그 사이의 외래 키를 그림 15에 모았다.
+
+++++
+<div class="fc-shots">
+
+![profiles, decks, cards, card_srs, study_sessions, review_logs, smart_decks 일곱 테이블 상자를 실선과 점선의 외래 키 화살표로 이은 그림](/screenshots/er-diagram.png)
+
+</div>
+
+<p class="fc-caption">그림 15 일곱 테이블의 관계. 실선은 <code>on delete cascade</code>인 소유 관계, 점선은 <code>on delete set null</code>인 참조 관계다. 모든 표에 있는 <code>user_id</code>에서 <code>profiles</code>로 가는 선은 생략했다.</p>
+++++
 
 소유 관계는 `on delete cascade`다.
 사용자를 지우면 덱·카드·SRS 상태·세션·로그가 연쇄 삭제되고, 덱을 지우면 카드가, 카드를 지우면 SRS 상태와 리뷰 로그가 따라 지워진다.

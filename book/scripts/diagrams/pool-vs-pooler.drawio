@@ -1,0 +1,95 @@
+<mxGraphModel adaptiveColors="auto">
+  <root>
+    <mxCell id="0"/>
+    <mxCell id="1" parent="0"/>
+
+    <mxCell id="titleL" value="풀러 없이" style="text;html=1;align=center;verticalAlign=middle;fontSize=15;fontStyle=1;fontColor=#333333;" vertex="1" parent="1">
+      <mxGeometry x="18" y="8" width="310" height="24" as="geometry"/>
+    </mxCell>
+    <mxCell id="titleR" value="트랜잭션 풀러" style="text;html=1;align=center;verticalAlign=middle;fontSize=15;fontStyle=1;fontColor=#333333;" vertex="1" parent="1">
+      <mxGeometry x="352" y="8" width="310" height="24" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="poolBox" value="커넥션 풀 = 우리 서버 안" style="rounded=1;arcSize=6;html=1;fillColor=none;strokeColor=#9AA0A6;fontColor=#5F6368;dashed=1;dashPattern=6 4;fontSize=12;fontStyle=1;verticalAlign=top;align=left;spacingLeft=8;spacingTop=2;" vertex="1" parent="1">
+      <mxGeometry x="10" y="40" width="660" height="124" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="l1" value="함수 인스턴스&lt;br&gt;&lt;span style=&quot;font-size:12px;font-weight:normal;font-family:Courier New&quot;&gt;pgxpool&lt;br&gt;MaxConns=4&lt;/span&gt;" style="rounded=1;arcSize=12;html=1;fillColor=#CFE2F3;strokeColor=#4A7BA6;fontColor=#1F4E79;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="18" y="76" width="98" height="72" as="geometry"/>
+    </mxCell>
+    <mxCell id="l2" value="함수 인스턴스&lt;br&gt;&lt;span style=&quot;font-size:12px;font-weight:normal;font-family:Courier New&quot;&gt;pgxpool&lt;br&gt;MaxConns=4&lt;/span&gt;" style="rounded=1;arcSize=12;html=1;fillColor=#CFE2F3;strokeColor=#4A7BA6;fontColor=#1F4E79;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="124" y="76" width="98" height="72" as="geometry"/>
+    </mxCell>
+    <mxCell id="l3" value="함수 인스턴스&lt;br&gt;&lt;span style=&quot;font-size:12px;font-weight:normal;font-family:Courier New&quot;&gt;pgxpool&lt;br&gt;MaxConns=4&lt;/span&gt;" style="rounded=1;arcSize=12;html=1;fillColor=#CFE2F3;strokeColor=#4A7BA6;fontColor=#1F4E79;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="230" y="76" width="98" height="72" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="r1" value="함수 인스턴스&lt;br&gt;&lt;span style=&quot;font-size:12px;font-weight:normal;font-family:Courier New&quot;&gt;pgxpool&lt;br&gt;MaxConns=4&lt;/span&gt;" style="rounded=1;arcSize=12;html=1;fillColor=#CFE2F3;strokeColor=#4A7BA6;fontColor=#1F4E79;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="352" y="76" width="98" height="72" as="geometry"/>
+    </mxCell>
+    <mxCell id="r2" value="함수 인스턴스&lt;br&gt;&lt;span style=&quot;font-size:12px;font-weight:normal;font-family:Courier New&quot;&gt;pgxpool&lt;br&gt;MaxConns=4&lt;/span&gt;" style="rounded=1;arcSize=12;html=1;fillColor=#CFE2F3;strokeColor=#4A7BA6;fontColor=#1F4E79;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="458" y="76" width="98" height="72" as="geometry"/>
+    </mxCell>
+    <mxCell id="r3" value="함수 인스턴스&lt;br&gt;&lt;span style=&quot;font-size:12px;font-weight:normal;font-family:Courier New&quot;&gt;pgxpool&lt;br&gt;MaxConns=4&lt;/span&gt;" style="rounded=1;arcSize=12;html=1;fillColor=#CFE2F3;strokeColor=#4A7BA6;fontColor=#1F4E79;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="564" y="76" width="98" height="72" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="dbL" value="PostgreSQL&lt;br&gt;&lt;span style=&quot;font-size:12px;font-weight:normal&quot;&gt;직접 연결 상한 60&lt;/span&gt;" style="rounded=1;arcSize=12;html=1;fillColor=#E4D7F5;strokeColor=#8E6BBF;fontColor=#4A2C7A;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="68" y="332" width="210" height="56" as="geometry"/>
+    </mxCell>
+    <mxCell id="memoL" value="인스턴스 수 × 풀 크기 = 통제 불능" style="text;html=1;align=center;verticalAlign=middle;fontSize=12;fontColor=#7B1F1F;" vertex="1" parent="1">
+      <mxGeometry x="18" y="396" width="310" height="22" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="poolerBox" value="커넥션 풀러 = DB 앞의 별도 서버" style="rounded=1;arcSize=6;html=1;fillColor=none;strokeColor=#9AA0A6;fontColor=#5F6368;dashed=1;dashPattern=6 4;fontSize=12;fontStyle=1;verticalAlign=bottom;align=left;spacingLeft=8;spacingBottom=2;" vertex="1" parent="1">
+      <mxGeometry x="352" y="196" width="310" height="104" as="geometry"/>
+    </mxCell>
+    <mxCell id="pooler" value="Supavisor 트랜잭션 풀러&lt;br&gt;&lt;span style=&quot;font-size:12px;font-weight:normal&quot;&gt;포트 6543 · 클라이언트 상한 200&lt;br&gt;트랜잭션 동안만 빌려주고 회수&lt;/span&gt;" style="rounded=1;arcSize=12;html=1;fillColor=#EDEDED;strokeColor=#8C8C8C;fontColor=#333333;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="422" y="206" width="210" height="70" as="geometry"/>
+    </mxCell>
+    <mxCell id="dbR" value="PostgreSQL&lt;br&gt;&lt;span style=&quot;font-size:12px;font-weight:normal&quot;&gt;실제 커넥션은 소수로 유지&lt;/span&gt;" style="rounded=1;arcSize=12;html=1;fillColor=#E4D7F5;strokeColor=#8E6BBF;fontColor=#4A2C7A;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="422" y="332" width="210" height="56" as="geometry"/>
+    </mxCell>
+    <mxCell id="memoR" value="인스턴스가 아무리 늘어도 DB 쪽은 그대로" style="text;html=1;align=center;verticalAlign=middle;fontSize=12;fontColor=#6B6B6B;" vertex="1" parent="1">
+      <mxGeometry x="352" y="396" width="310" height="22" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="eL1a" style="strokeColor=#4D4D4D;strokeWidth=1.5;endArrow=classic;endFill=1;html=1;exitX=0.3;exitY=1;exitDx=0;exitDy=0;entryX=0.1;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="l1" target="dbL">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="eL1b" style="strokeColor=#4D4D4D;strokeWidth=1.5;endArrow=classic;endFill=1;html=1;exitX=0.7;exitY=1;exitDx=0;exitDy=0;entryX=0.26;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="l1" target="dbL">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="eL2a" style="strokeColor=#4D4D4D;strokeWidth=1.5;endArrow=classic;endFill=1;html=1;exitX=0.3;exitY=1;exitDx=0;exitDy=0;entryX=0.42;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="l2" target="dbL">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="eL2b" style="strokeColor=#4D4D4D;strokeWidth=1.5;endArrow=classic;endFill=1;html=1;exitX=0.7;exitY=1;exitDx=0;exitDy=0;entryX=0.58;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="l2" target="dbL">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="eL3a" style="strokeColor=#4D4D4D;strokeWidth=1.5;endArrow=classic;endFill=1;html=1;exitX=0.3;exitY=1;exitDx=0;exitDy=0;entryX=0.74;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="l3" target="dbL">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="eL3b" style="strokeColor=#4D4D4D;strokeWidth=1.5;endArrow=classic;endFill=1;html=1;exitX=0.7;exitY=1;exitDx=0;exitDy=0;entryX=0.9;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="l3" target="dbL">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="xmark" value="✕" style="ellipse;html=1;fillColor=#F8D7DA;strokeColor=#C0392B;fontColor=#C0392B;fontSize=18;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="156" y="280" width="34" height="34" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="eR1" style="strokeColor=#4D4D4D;strokeWidth=1.5;endArrow=classic;endFill=1;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.12;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="r1" target="pooler">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="eR2" style="strokeColor=#4D4D4D;strokeWidth=1.5;endArrow=classic;endFill=1;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.45;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="r2" target="pooler">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="eR3" style="strokeColor=#4D4D4D;strokeWidth=1.5;endArrow=classic;endFill=1;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.85;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="r3" target="pooler">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="eP1" style="strokeColor=#4D4D4D;strokeWidth=3;endArrow=classic;endFill=1;html=1;exitX=0.62;exitY=1;exitDx=0;exitDy=0;entryX=0.62;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="pooler" target="dbR">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="eP2" style="strokeColor=#4D4D4D;strokeWidth=3;endArrow=classic;endFill=1;html=1;exitX=0.82;exitY=1;exitDx=0;exitDy=0;entryX=0.82;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="pooler" target="dbR">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+  </root>
+</mxGraphModel>

@@ -1,0 +1,92 @@
+<mxGraphModel adaptiveColors="auto">
+  <root>
+    <mxCell id="0"/>
+    <mxCell id="1" parent="0"/>
+
+    <mxCell id="lbl-read" value="읽을 수 있음(Base64)" style="text;html=1;align=center;verticalAlign=middle;fontSize=12;fontColor=#6B6B6B;" vertex="1" parent="1">
+      <mxGeometry x="20" y="20" width="340" height="20" as="geometry"/>
+    </mxCell>
+    <mxCell id="br-read" style="strokeColor=#9AA0A6;strokeWidth=1;endArrow=none;html=1;" edge="1" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="20" y="44" as="sourcePoint"/>
+        <mxPoint x="360" y="44" as="targetPoint"/>
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="lbl-sign" value="개인키로 서명" style="text;html=1;align=center;verticalAlign=middle;fontSize=12;fontColor=#6B6B6B;" vertex="1" parent="1">
+      <mxGeometry x="375" y="20" width="110" height="20" as="geometry"/>
+    </mxCell>
+    <mxCell id="br-sign" style="strokeColor=#9AA0A6;strokeWidth=1;endArrow=none;html=1;" edge="1" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="375" y="44" as="sourcePoint"/>
+        <mxPoint x="485" y="44" as="targetPoint"/>
+      </mxGeometry>
+    </mxCell>
+
+    <mxCell id="hdr" value="헤더&lt;br&gt;&lt;span style=&quot;font-size:12px;font-weight:normal;font-family:Courier New&quot;&gt;alg, kid&lt;/span&gt;" style="rounded=1;arcSize=12;html=1;fillColor=#E4D7F5;strokeColor=#8E6BBF;fontColor=#4A2C7A;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="20" y="52" width="150" height="56" as="geometry"/>
+    </mxCell>
+    <mxCell id="dot1" value="." style="text;html=1;align=center;verticalAlign=middle;fontSize=20;fontStyle=1;fontColor=#4A2C7A;" vertex="1" parent="1">
+      <mxGeometry x="170" y="52" width="15" height="56" as="geometry"/>
+    </mxCell>
+    <mxCell id="payload" value="페이로드&lt;br&gt;&lt;span style=&quot;font-size:12px;font-weight:normal;font-family:Courier New&quot;&gt;sub, exp, aud&lt;/span&gt;" style="rounded=1;arcSize=12;html=1;fillColor=#E4D7F5;strokeColor=#8E6BBF;fontColor=#4A2C7A;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="185" y="52" width="175" height="56" as="geometry"/>
+    </mxCell>
+    <mxCell id="dot2" value="." style="text;html=1;align=center;verticalAlign=middle;fontSize=20;fontStyle=1;fontColor=#4A2C7A;" vertex="1" parent="1">
+      <mxGeometry x="360" y="52" width="15" height="56" as="geometry"/>
+    </mxCell>
+    <mxCell id="sig" value="서명" style="rounded=1;arcSize=12;html=1;fillColor=#E4D7F5;strokeColor=#8E6BBF;fontColor=#4A2C7A;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="375" y="52" width="110" height="56" as="geometry"/>
+    </mxCell>
+    <mxCell id="supa" value="Supabase&lt;br&gt;&lt;span style=&quot;font-size:12px;font-weight:normal&quot;&gt;개인키로 서명해 발급&lt;/span&gt;" style="rounded=1;arcSize=12;html=1;fillColor=#EDEDED;strokeColor=#8C8C8C;fontColor=#333333;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="535" y="52" width="140" height="56" as="geometry"/>
+    </mxCell>
+    <mxCell id="e-issue" style="strokeColor=#4D4D4D;strokeWidth=1.5;endArrow=classic;endFill=1;html=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="supa" target="sig">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="kid" value="헤더의 kid" style="rounded=1;arcSize=12;html=1;fillColor=#CFE2F3;strokeColor=#4A7BA6;fontColor=#1F4E79;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="20" y="190" width="120" height="44" as="geometry"/>
+    </mxCell>
+    <mxCell id="jwks" value="JWKS 문서" style="rounded=1;arcSize=12;html=1;fillColor=#EDEDED;strokeColor=#8C8C8C;fontColor=#333333;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="190" y="190" width="130" height="44" as="geometry"/>
+    </mxCell>
+    <mxCell id="pub" value="kid에 맞는 공개키" style="rounded=1;arcSize=12;html=1;fillColor=#CFE2F3;strokeColor=#4A7BA6;fontColor=#1F4E79;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="370" y="190" width="150" height="44" as="geometry"/>
+    </mxCell>
+    <mxCell id="verify" value="서명 대조" style="rounded=1;arcSize=12;html=1;fillColor=#D9EAD3;strokeColor=#6AA84F;fontColor=#3F6B2B;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="570" y="190" width="100" height="44" as="geometry"/>
+    </mxCell>
+    <mxCell id="f1" style="strokeColor=#4D4D4D;strokeWidth=1.5;endArrow=classic;endFill=1;html=1;" edge="1" parent="1" source="kid" target="jwks">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="f2" style="strokeColor=#4D4D4D;strokeWidth=1.5;endArrow=classic;endFill=1;html=1;" edge="1" parent="1" source="jwks" target="pub">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="f3" style="strokeColor=#4D4D4D;strokeWidth=1.5;endArrow=classic;endFill=1;html=1;" edge="1" parent="1" source="pub" target="verify">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="jwks-memo" value="&lt;span style=&quot;font-family:Courier New&quot;&gt;…/auth/v1/.well-known/jwks.json&lt;/span&gt;&lt;br&gt;프로세스당 한 번 받아 캐시" style="text;html=1;align=center;verticalAlign=middle;fontSize=12;fontColor=#6B6B6B;" vertex="1" parent="1">
+      <mxGeometry x="140" y="244" width="230" height="36" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="g-hdr" style="strokeColor=#9AA0A6;dashed=1;dashPattern=2 3;endArrow=none;strokeWidth=1.5;html=1;exitX=0.4;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="hdr" target="kid">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="g-supa" value="공개키 목록을 공개" style="strokeColor=#9AA0A6;dashed=1;dashPattern=2 3;endArrow=classic;endFill=1;strokeWidth=1.5;html=1;edgeStyle=orthogonalEdgeStyle;rounded=1;fontSize=12;fontColor=#6B6B6B;labelBackgroundColor=#FFFFFF;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="supa" target="jwks">
+      <mxGeometry relative="1" as="geometry">
+        <Array as="points">
+          <mxPoint x="605" y="150"/>
+          <mxPoint x="255" y="150"/>
+        </Array>
+      </mxGeometry>
+    </mxCell>
+
+    <mxCell id="gofn" value="Go 함수&lt;br&gt;&lt;span style=&quot;font-size:12px;font-weight:normal&quot;&gt;공개키로 검증만 · 비밀 없음&lt;/span&gt;" style="rounded=1;arcSize=12;html=1;fillColor=#CFE2F3;strokeColor=#4A7BA6;fontColor=#1F4E79;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="20" y="296" width="180" height="56" as="geometry"/>
+    </mxCell>
+    <mxCell id="g-gofn" style="strokeColor=#9AA0A6;dashed=1;dashPattern=2 3;endArrow=none;strokeWidth=1.5;html=1;exitX=0.333;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" edge="1" parent="1" source="gofn" target="kid">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+  </root>
+</mxGraphModel>

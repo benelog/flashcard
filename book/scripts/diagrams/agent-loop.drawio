@@ -1,0 +1,65 @@
+<mxGraphModel adaptiveColors="auto">
+  <root>
+    <mxCell id="0"/>
+    <mxCell id="1" parent="0"/>
+
+    <mxCell id="req" value="사용자 요청" style="rounded=1;arcSize=12;html=1;fillColor=#FBE4CC;strokeColor=#D79B63;fontColor=#7F5124;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="80" y="20" width="300" height="44" as="geometry"/>
+    </mxCell>
+    <mxCell id="decide" value="모델이 다음 행동을 결정" style="rounded=1;arcSize=12;html=1;fillColor=#CFE2F3;strokeColor=#4A7BA6;fontColor=#1F4E79;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="80" y="100" width="300" height="44" as="geometry"/>
+    </mxCell>
+    <mxCell id="tool" value="도구 호출&lt;br&gt;&lt;span style=&quot;font-size:12px;font-weight:normal&quot;&gt;파일 읽기 · 파일 수정 · 셸 명령 · 코드 검색&lt;/span&gt;" style="rounded=1;arcSize=12;html=1;fillColor=#EDEDED;strokeColor=#8C8C8C;fontColor=#333333;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="80" y="180" width="300" height="56" as="geometry"/>
+    </mxCell>
+    <mxCell id="result" value="도구 실행 결과를 모델에 다시 입력" style="rounded=1;arcSize=12;html=1;fillColor=#EDEDED;strokeColor=#8C8C8C;fontColor=#333333;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="80" y="272" width="300" height="44" as="geometry"/>
+    </mxCell>
+    <mxCell id="observe" value="결과를 보고 다음 행동을 결정" style="rounded=1;arcSize=12;html=1;fillColor=#CFE2F3;strokeColor=#4A7BA6;fontColor=#1F4E79;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="80" y="352" width="300" height="44" as="geometry"/>
+    </mxCell>
+    <mxCell id="done" value="작업 완료" style="rounded=1;arcSize=12;html=1;fillColor=#D9EAD3;strokeColor=#6AA84F;fontColor=#3F6B2B;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="470" y="352" width="150" height="44" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="e1" style="strokeColor=#4D4D4D;strokeWidth=1.5;endArrow=classic;endFill=1;html=1;" edge="1" parent="1" source="req" target="decide">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="e2" style="strokeColor=#4D4D4D;strokeWidth=1.5;endArrow=classic;endFill=1;html=1;" edge="1" parent="1" source="decide" target="tool">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="e3" style="strokeColor=#4D4D4D;strokeWidth=1.5;endArrow=classic;endFill=1;html=1;" edge="1" parent="1" source="tool" target="result">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="e4" style="strokeColor=#4D4D4D;strokeWidth=1.5;endArrow=classic;endFill=1;html=1;" edge="1" parent="1" source="result" target="observe">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="e5" value="할 일이 없으면" style="strokeColor=#4D4D4D;strokeWidth=1.5;endArrow=classic;endFill=1;html=1;fontSize=12;fontColor=#6B6B6B;verticalAlign=bottom;labelBackgroundColor=none;" edge="1" parent="1" source="observe" target="done">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="loop" value="반복" style="strokeColor=#4A7BA6;strokeWidth=2;endArrow=classic;endFill=1;html=1;edgeStyle=orthogonalEdgeStyle;rounded=1;fontSize=13;fontStyle=1;fontColor=#1F4E79;labelBackgroundColor=#FFFFFF;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="observe" target="decide">
+      <mxGeometry relative="1" as="geometry">
+        <Array as="points">
+          <mxPoint x="36" y="374"/>
+          <mxPoint x="36" y="122"/>
+        </Array>
+      </mxGeometry>
+    </mxCell>
+
+    <mxCell id="fb" value="&lt;b&gt;피드백 신호&lt;/b&gt;&lt;br&gt;컴파일러의 에러 메시지&lt;br&gt;테스트의 실패 출력&lt;br&gt;검사 도구의 경고" style="rounded=1;arcSize=12;html=1;fillColor=#FFF2CC;strokeColor=#B7950B;fontColor=#5C4A00;fontSize=12;align=left;spacingLeft=10;verticalAlign=middle;" vertex="1" parent="1">
+      <mxGeometry x="450" y="180" width="190" height="78" as="geometry"/>
+    </mxCell>
+    <mxCell id="e6" style="strokeColor=#B7950B;strokeWidth=1.5;endArrow=classic;endFill=1;html=1;edgeStyle=orthogonalEdgeStyle;rounded=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="fb" target="result">
+      <mxGeometry relative="1" as="geometry">
+        <Array as="points">
+          <mxPoint x="420" y="219"/>
+          <mxPoint x="420" y="294"/>
+        </Array>
+      </mxGeometry>
+    </mxCell>
+
+    <mxCell id="summary" value="생성 → 실행 → 오류 관찰 → 수정" style="text;html=1;align=center;verticalAlign=middle;fontSize=13;fontColor=#6B6B6B;" vertex="1" parent="1">
+      <mxGeometry x="80" y="410" width="300" height="22" as="geometry"/>
+    </mxCell>
+  </root>
+</mxGraphModel>

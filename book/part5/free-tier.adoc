@@ -157,6 +157,17 @@ DB 연결도, Auth 로그인도, 그 위에 올라탄 API 호출도 전부 실�
 이때 핑 대상이 실제로 DB 쿼리를 일으켜야 한다는 점이 핵심이다.
 DB를 건드리지 않는 로그인 화면이나 헬스 체크(health check, Flashcard의 `/api/healthz`)만 두드리면 Vercel 함수는 깨어나도 Supabase 기준으로는 여전히 무활동이다.
 활동 여부를 세는 쪽은 Vercel이 아니라 Supabase의 데이터베이스이기 때문이다.
+두 경로의 차이를 그림 32에 그렸다.
+
+++++
+<div class="fc-shots">
+
+![GitHub Actions 스케줄 워크플로에서 갈라진 두 경로. 위는 Vercel 함수와 /api/shared-decks를 거쳐 Supabase PostgreSQL에 닿아 활동으로 세지고, 아래는 /api/healthz에서 끊겨 DB에 닿지 않는다](/screenshots/ping-path.png)
+
+</div>
+
+<p class="fc-caption">그림 32 핑이 닿아야 하는 곳. DB를 조회하는 <code>/api/shared-decks</code>는 Supabase의 활동으로 세지만, DB에 닿지 않는 <code>/api/healthz</code>는 Vercel 함수만 깨울 뿐 일시정지를 막지 못한다.</p>
+++++
 근본적인 해결책은 유료 전환뿐이고, 유료 플랜의 프로젝트는 일시정지 대상이 아니다.
 
 .[용어 풀이] 핑(Ping)과 헬스 체크(Health Check)

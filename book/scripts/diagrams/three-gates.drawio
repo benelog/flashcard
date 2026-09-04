@@ -1,0 +1,53 @@
+<mxGraphModel adaptiveColors="auto">
+  <root>
+    <mxCell id="0"/>
+    <mxCell id="1" parent="0"/>
+
+    <mxCell id="span" value="빠르고 좁게 → 느리고 넓게" style="strokeColor=#9AA0A6;strokeWidth=1.5;startArrow=classic;startFill=1;endArrow=classic;endFill=1;html=1;fontSize=13;fontColor=#6B6B6B;verticalAlign=bottom;labelBackgroundColor=#FFFFFF;" edge="1" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="30" y="30" as="sourcePoint"/>
+        <mxPoint x="650" y="30" as="targetPoint"/>
+      </mxGeometry>
+    </mxCell>
+
+    <mxCell id="g1" value="훅 &lt;span style=&quot;font-family:Courier New&quot;&gt;go-check.sh&lt;/span&gt;&lt;br&gt;&lt;span style=&quot;font-size:12px;font-weight:normal&quot;&gt;파일 수정 직후 · 0.2초 · 시스템이 강제&lt;/span&gt;" style="rounded=1;arcSize=12;html=1;fillColor=#CFE2F3;strokeColor=#4A7BA6;fontColor=#1F4E79;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="10" y="60" width="200" height="56" as="geometry"/>
+    </mxCell>
+    <mxCell id="g2" value="서브에이전트 &lt;span style=&quot;font-family:Courier New&quot;&gt;go-quality&lt;/span&gt;&lt;br&gt;&lt;span style=&quot;font-size:12px;font-weight:normal&quot;&gt;커밋 전 · 몇 초~1분 · 에이전트가 판단&lt;/span&gt;" style="rounded=1;arcSize=12;html=1;fillColor=#CFE2F3;strokeColor=#4A7BA6;fontColor=#1F4E79;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="240" y="60" width="200" height="56" as="geometry"/>
+    </mxCell>
+    <mxCell id="g3" value="CI &lt;span style=&quot;font-family:Courier New&quot;&gt;ci.yml&lt;/span&gt;&lt;br&gt;&lt;span style=&quot;font-size:12px;font-weight:normal&quot;&gt;push 후 원격 · 1분 30초 · 무조건&lt;/span&gt;" style="rounded=1;arcSize=12;html=1;fillColor=#EDEDED;strokeColor=#8C8C8C;fontColor=#333333;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="470" y="60" width="200" height="56" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="e1" style="strokeColor=#4D4D4D;strokeWidth=1.5;endArrow=classic;endFill=1;html=1;" edge="1" parent="1" source="g1" target="g2">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="e2" style="strokeColor=#4D4D4D;strokeWidth=1.5;endArrow=classic;endFill=1;html=1;" edge="1" parent="1" source="g2" target="g3">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="k1" value="gofmt -w · go vet" style="text;html=1;align=center;verticalAlign=middle;fontFamily=Courier New;fontSize=12;fontColor=#6B6B6B;" vertex="1" parent="1">
+      <mxGeometry x="10" y="122" width="200" height="36" as="geometry"/>
+    </mxCell>
+    <mxCell id="k2" value="build · vet · test&lt;br&gt;Vercel 호환" style="text;html=1;align=center;verticalAlign=middle;fontFamily=Courier New;fontSize=12;fontColor=#6B6B6B;" vertex="1" parent="1">
+      <mxGeometry x="240" y="122" width="200" height="36" as="geometry"/>
+    </mxCell>
+    <mxCell id="k3" value="gofmt -l · build · vet&lt;br&gt;test · grep (Vercel 호환)" style="text;html=1;align=center;verticalAlign=middle;fontFamily=Courier New;fontSize=12;fontColor=#6B6B6B;" vertex="1" parent="1">
+      <mxGeometry x="470" y="122" width="200" height="36" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="leak" value="앞 게이트를 빠져나간 오류" style="strokeColor=#C0392B;strokeWidth=1.5;dashed=1;dashPattern=6 4;endArrow=none;html=1;fontSize=12;fontColor=#7B1F1F;verticalAlign=bottom;labelBackgroundColor=#FFFFFF;" edge="1" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="20" y="190" as="sourcePoint"/>
+        <mxPoint x="556" y="190" as="targetPoint"/>
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="x" value="✕" style="text;html=1;align=center;verticalAlign=middle;fontSize=22;fontStyle=1;fontColor=#C0392B;" vertex="1" parent="1">
+      <mxGeometry x="556" y="176" width="28" height="28" as="geometry"/>
+    </mxCell>
+    <mxCell id="caught" value="CI가 잡는다" style="text;html=1;align=left;verticalAlign=middle;fontSize=12;fontStyle=1;fontColor=#7B1F1F;" vertex="1" parent="1">
+      <mxGeometry x="586" y="180" width="90" height="20" as="geometry"/>
+    </mxCell>
+  </root>
+</mxGraphModel>

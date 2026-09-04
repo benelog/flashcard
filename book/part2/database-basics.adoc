@@ -77,6 +77,17 @@
 
 `id`가 이 표의 기본 키이고, `deck_id`가 `decks` 표의 `id`를 가리키는 외래 키다.
 두 카드 모두 `deck_id`가 1이므로 "토익 필수 단어" 덱에 속한다는 사실이, 덱 이름을 한 글자도 중복해 적지 않고도 드러난다.
+두 표가 이어진 모습을 그림 12에 그렸다.
+
+++++
+<div class="fc-shots">
+
+![decks 표와 cards 표를 나란히 두고 cards의 deck_id 열에서 decks의 id 열로 화살표를 이은 그림](/screenshots/two-tables.png)
+
+</div>
+
+<p class="fc-caption">그림 12 최소 앱의 두 표. 카드는 덱 이름을 적지 않고 외래 키 <code>deck_id</code>로 <code>decks</code> 표의 기본 키 <code>id</code>를 가리킨다.</p>
+++++
 2부의 최소 앱은 이 두 표가 전부다.
 완성본은 같은 방식으로 이어진 테이블 일곱 개로 이루어져 있는데, 전체 그림은 {ch-database-design}에서 요구사항을 따라 하나씩 도출한다.
 

@@ -1,0 +1,84 @@
+<mxGraphModel adaptiveColors="auto">
+  <root>
+    <mxCell id="0"/>
+    <mxCell id="1" parent="0"/>
+
+    <mxCell id="dt" value="decks 표" style="text;html=1;align=left;verticalAlign=middle;fontSize=15;fontStyle=1;fontColor=#4A2C7A;fontFamily=Courier New;" vertex="1" parent="1">
+      <mxGeometry x="40" y="12" width="190" height="24" as="geometry"/>
+    </mxCell>
+    <mxCell id="dh1" value="id&lt;br&gt;&lt;span style=&quot;font-size:11px;font-weight:normal&quot;&gt;PK&lt;/span&gt;" style="rounded=0;html=1;fillColor=#E4D7F5;strokeColor=#8E6BBF;fontColor=#4A2C7A;fontSize=13;fontStyle=1;fontFamily=Courier New;" vertex="1" parent="1">
+      <mxGeometry x="40" y="42" width="50" height="40" as="geometry"/>
+    </mxCell>
+    <mxCell id="dh2" value="name" style="rounded=0;html=1;fillColor=#E4D7F5;strokeColor=#8E6BBF;fontColor=#4A2C7A;fontSize=13;fontStyle=1;fontFamily=Courier New;" vertex="1" parent="1">
+      <mxGeometry x="90" y="42" width="140" height="40" as="geometry"/>
+    </mxCell>
+    <mxCell id="d11" value="1" style="rounded=0;html=1;fillColor=#FFFFFF;strokeColor=#8E6BBF;fontColor=#333333;fontSize=13;" vertex="1" parent="1">
+      <mxGeometry x="40" y="82" width="50" height="28" as="geometry"/>
+    </mxCell>
+    <mxCell id="d12" value="토익 필수 단어" style="rounded=0;html=1;fillColor=#FFFFFF;strokeColor=#8E6BBF;fontColor=#333333;fontSize=13;" vertex="1" parent="1">
+      <mxGeometry x="90" y="82" width="140" height="28" as="geometry"/>
+    </mxCell>
+    <mxCell id="d21" value="2" style="rounded=0;html=1;fillColor=#FFFFFF;strokeColor=#8E6BBF;fontColor=#333333;fontSize=13;" vertex="1" parent="1">
+      <mxGeometry x="40" y="110" width="50" height="28" as="geometry"/>
+    </mxCell>
+    <mxCell id="d22" value="회화 표현" style="rounded=0;html=1;fillColor=#FFFFFF;strokeColor=#8E6BBF;fontColor=#333333;fontSize=13;" vertex="1" parent="1">
+      <mxGeometry x="90" y="110" width="140" height="28" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="ct" value="cards 표" style="text;html=1;align=left;verticalAlign=middle;fontSize=15;fontStyle=1;fontColor=#4A2C7A;fontFamily=Courier New;" vertex="1" parent="1">
+      <mxGeometry x="300" y="12" width="370" height="24" as="geometry"/>
+    </mxCell>
+    <mxCell id="ch1" value="id&lt;br&gt;&lt;span style=&quot;font-size:11px;font-weight:normal&quot;&gt;PK&lt;/span&gt;" style="rounded=0;html=1;fillColor=#E4D7F5;strokeColor=#8E6BBF;fontColor=#4A2C7A;fontSize=13;fontStyle=1;fontFamily=Courier New;" vertex="1" parent="1">
+      <mxGeometry x="300" y="42" width="50" height="40" as="geometry"/>
+    </mxCell>
+    <mxCell id="ch2" value="deck_id&lt;br&gt;&lt;span style=&quot;font-size:11px;font-weight:normal&quot;&gt;FK&lt;/span&gt;" style="rounded=0;html=1;fillColor=#E4D7F5;strokeColor=#8E6BBF;fontColor=#4A2C7A;fontSize=13;fontStyle=1;fontFamily=Courier New;" vertex="1" parent="1">
+      <mxGeometry x="350" y="42" width="80" height="40" as="geometry"/>
+    </mxCell>
+    <mxCell id="ch3" value="text" style="rounded=0;html=1;fillColor=#E4D7F5;strokeColor=#8E6BBF;fontColor=#4A2C7A;fontSize=13;fontStyle=1;fontFamily=Courier New;" vertex="1" parent="1">
+      <mxGeometry x="430" y="42" width="110" height="40" as="geometry"/>
+    </mxCell>
+    <mxCell id="ch4" value="meaning" style="rounded=0;html=1;fillColor=#E4D7F5;strokeColor=#8E6BBF;fontColor=#4A2C7A;fontSize=13;fontStyle=1;fontFamily=Courier New;" vertex="1" parent="1">
+      <mxGeometry x="540" y="42" width="130" height="40" as="geometry"/>
+    </mxCell>
+    <mxCell id="c11" value="1" style="rounded=0;html=1;fillColor=#FFFFFF;strokeColor=#8E6BBF;fontColor=#333333;fontSize=13;" vertex="1" parent="1">
+      <mxGeometry x="300" y="82" width="50" height="28" as="geometry"/>
+    </mxCell>
+    <mxCell id="c12" value="1" style="rounded=0;html=1;fillColor=#FFFFFF;strokeColor=#8E6BBF;fontColor=#333333;fontSize=13;" vertex="1" parent="1">
+      <mxGeometry x="350" y="82" width="80" height="28" as="geometry"/>
+    </mxCell>
+    <mxCell id="c13" value="trade-off" style="rounded=0;html=1;fillColor=#FFFFFF;strokeColor=#8E6BBF;fontColor=#333333;fontSize=13;" vertex="1" parent="1">
+      <mxGeometry x="430" y="82" width="110" height="28" as="geometry"/>
+    </mxCell>
+    <mxCell id="c14" value="맞바꿈, 절충" style="rounded=0;html=1;fillColor=#FFFFFF;strokeColor=#8E6BBF;fontColor=#333333;fontSize=13;" vertex="1" parent="1">
+      <mxGeometry x="540" y="82" width="130" height="28" as="geometry"/>
+    </mxCell>
+    <mxCell id="c21" value="2" style="rounded=0;html=1;fillColor=#FFFFFF;strokeColor=#8E6BBF;fontColor=#333333;fontSize=13;" vertex="1" parent="1">
+      <mxGeometry x="300" y="110" width="50" height="28" as="geometry"/>
+    </mxCell>
+    <mxCell id="c22" value="1" style="rounded=0;html=1;fillColor=#FFFFFF;strokeColor=#8E6BBF;fontColor=#333333;fontSize=13;" vertex="1" parent="1">
+      <mxGeometry x="350" y="110" width="80" height="28" as="geometry"/>
+    </mxCell>
+    <mxCell id="c23" value="pull request" style="rounded=0;html=1;fillColor=#FFFFFF;strokeColor=#8E6BBF;fontColor=#333333;fontSize=13;" vertex="1" parent="1">
+      <mxGeometry x="430" y="110" width="110" height="28" as="geometry"/>
+    </mxCell>
+    <mxCell id="c24" value="코드 반영 요청" style="rounded=0;html=1;fillColor=#FFFFFF;strokeColor=#8E6BBF;fontColor=#333333;fontSize=13;" vertex="1" parent="1">
+      <mxGeometry x="540" y="110" width="130" height="28" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="fk" style="strokeColor=#8E6BBF;strokeWidth=1.5;endArrow=classic;endFill=1;html=1;edgeStyle=orthogonalEdgeStyle;rounded=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" edge="1" parent="1" source="c22" target="d21">
+      <mxGeometry relative="1" as="geometry">
+        <Array as="points">
+          <mxPoint x="390" y="176"/>
+          <mxPoint x="65" y="176"/>
+        </Array>
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="fkl" value="외래 키 deck_id → 기본 키 id" style="text;html=1;align=center;verticalAlign=middle;fontSize=12;fontColor=#4A2C7A;labelBackgroundColor=#FFFFFF;" vertex="1" parent="1">
+      <mxGeometry x="120" y="165" width="220" height="22" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="memo" value="덱의 이름은 decks 표에 한 번만 적고, 카드 표에는 어느 덱에 속하는지 가리키는 식별자만 둔다" style="text;html=1;align=center;verticalAlign=middle;fontSize=12;fontColor=#6B6B6B;" vertex="1" parent="1">
+      <mxGeometry x="20" y="208" width="660" height="22" as="geometry"/>
+    </mxCell>
+  </root>
+</mxGraphModel>

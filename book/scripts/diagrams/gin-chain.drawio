@@ -1,0 +1,72 @@
+<mxGraphModel adaptiveColors="auto">
+  <root>
+    <mxCell id="0"/>
+    <mxCell id="1" parent="0"/>
+
+    <mxCell id="browser" value="브라우저" style="rounded=1;arcSize=12;html=1;fillColor=#FBE4CC;strokeColor=#D79B63;fontColor=#7F5124;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="10" y="30" width="80" height="56" as="geometry"/>
+    </mxCell>
+    <mxCell id="router" value="Gin 라우터&lt;br&gt;&lt;span style=&quot;font-size:12px;font-weight:normal&quot;&gt;경로 + 메서드로 핸들러를 고른다&lt;/span&gt;" style="rounded=1;arcSize=12;html=1;fillColor=#CFE2F3;strokeColor=#4A7BA6;fontColor=#1F4E79;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="125" y="30" width="195" height="56" as="geometry"/>
+    </mxCell>
+    <mxCell id="recovery" value="gin.Recovery()&lt;br&gt;&lt;span style=&quot;font-size:12px;font-weight:normal;font-family:Noto Sans KR,sans-serif&quot;&gt;패닉 → 500&lt;/span&gt;" style="rounded=1;arcSize=12;html=1;fillColor=#CFE2F3;strokeColor=#4A7BA6;fontColor=#1F4E79;fontSize=13;fontStyle=1;fontFamily=Courier New;" vertex="1" parent="1">
+      <mxGeometry x="345" y="30" width="125" height="56" as="geometry"/>
+    </mxCell>
+    <mxCell id="auth" value="auth.Middleware&lt;br&gt;&lt;span style=&quot;font-size:12px;font-weight:normal;font-family:Noto Sans KR,sans-serif&quot;&gt;토큰 검증 → c.Set(userID)&lt;/span&gt;" style="rounded=1;arcSize=12;html=1;fillColor=#CFE2F3;strokeColor=#4A7BA6;fontColor=#1F4E79;fontSize=13;fontStyle=1;fontFamily=Courier New;" vertex="1" parent="1">
+      <mxGeometry x="500" y="30" width="170" height="56" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="ensure" value="h.EnsureProfile()&lt;br&gt;&lt;span style=&quot;font-size:12px;font-weight:normal;font-family:Noto Sans KR,sans-serif&quot;&gt;프로필 행 지연 생성&lt;/span&gt;" style="rounded=1;arcSize=12;html=1;fillColor=#CFE2F3;strokeColor=#4A7BA6;fontColor=#1F4E79;fontSize=13;fontStyle=1;fontFamily=Courier New;" vertex="1" parent="1">
+      <mxGeometry x="300" y="180" width="160" height="56" as="geometry"/>
+    </mxCell>
+    <mxCell id="handler" value="핸들러&lt;br&gt;&lt;span style=&quot;font-size:12px;font-weight:normal&quot;&gt;본문 읽고 응답 만들기&lt;/span&gt;" style="rounded=1;arcSize=12;html=1;fillColor=#CFE2F3;strokeColor=#4A7BA6;fontColor=#1F4E79;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="150" y="180" width="110" height="56" as="geometry"/>
+    </mxCell>
+    <mxCell id="store" value="model.Store&lt;br&gt;&lt;span style=&quot;font-size:12px;font-weight:normal;font-family:Noto Sans KR,sans-serif&quot;&gt;DB 읽기·쓰기&lt;/span&gt;" style="rounded=1;arcSize=12;html=1;fillColor=#E4D7F5;strokeColor=#8E6BBF;fontColor=#4A2C7A;fontSize=13;fontStyle=1;fontFamily=Courier New;" vertex="1" parent="1">
+      <mxGeometry x="10" y="180" width="110" height="56" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="abort" value="c.Abort() → 401 응답&lt;br&gt;&lt;span style=&quot;font-size:12px;font-weight:normal&quot;&gt;막히면 뒤는 건너뛴다&lt;/span&gt;" style="rounded=1;arcSize=12;html=1;fillColor=#F8D7DA;strokeColor=#C0392B;fontColor=#7B1F1F;fontSize=13;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="500" y="180" width="170" height="56" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="e1" value="요청" style="strokeColor=#4D4D4D;strokeWidth=1.5;endArrow=classic;endFill=1;html=1;fontSize=12;fontColor=#6B6B6B;labelBackgroundColor=none;verticalAlign=bottom;" edge="1" parent="1" source="browser" target="router">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="e2" style="strokeColor=#4D4D4D;strokeWidth=1.5;endArrow=classic;endFill=1;html=1;" edge="1" parent="1" source="router" target="recovery">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="e3" style="strokeColor=#4D4D4D;strokeWidth=1.5;endArrow=classic;endFill=1;html=1;" edge="1" parent="1" source="recovery" target="auth">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="e4" value="c.Next()" style="strokeColor=#4D4D4D;strokeWidth=1.5;endArrow=classic;endFill=1;html=1;edgeStyle=orthogonalEdgeStyle;rounded=1;fontSize=12;fontColor=#6B6B6B;fontFamily=Courier New;labelBackgroundColor=#FFFFFF;exitX=0.25;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="auth" target="ensure">
+      <mxGeometry relative="1" as="geometry">
+        <Array as="points">
+          <mxPoint x="542" y="140"/>
+          <mxPoint x="380" y="140"/>
+        </Array>
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="e5" style="strokeColor=#4D4D4D;strokeWidth=1.5;endArrow=classic;endFill=1;html=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="ensure" target="handler">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="e6" style="strokeColor=#4D4D4D;strokeWidth=1.5;endArrow=classic;endFill=1;startArrow=classic;startFill=1;html=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="handler" target="store">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="e7" value="응답" style="strokeColor=#4D4D4D;strokeWidth=1.5;endArrow=classic;endFill=1;html=1;edgeStyle=orthogonalEdgeStyle;rounded=1;fontSize=12;fontColor=#6B6B6B;labelBackgroundColor=#FFFFFF;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" edge="1" parent="1" source="handler" target="browser">
+      <mxGeometry relative="1" as="geometry">
+        <Array as="points">
+          <mxPoint x="205" y="130"/>
+          <mxPoint x="50" y="130"/>
+        </Array>
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="e8" value="토큰 없음·오류" style="strokeColor=#C0392B;strokeWidth=1.5;endArrow=classic;endFill=1;html=1;fontSize=12;fontColor=#7B1F1F;labelBackgroundColor=#FFFFFF;exitX=0.75;exitY=1;exitDx=0;exitDy=0;entryX=0.75;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="auth" target="abort">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="memo" value="등록 순서 = 실행 순서: Recovery → 인증 → EnsureProfile → 핸들러" style="text;html=1;align=center;verticalAlign=middle;fontSize=13;fontColor=#6B6B6B;" vertex="1" parent="1">
+      <mxGeometry x="10" y="270" width="660" height="22" as="geometry"/>
+    </mxCell>
+  </root>
+</mxGraphModel>

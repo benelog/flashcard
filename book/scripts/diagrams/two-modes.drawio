@@ -1,0 +1,69 @@
+<mxGraphModel adaptiveColors="auto">
+  <root>
+    <mxCell id="0"/>
+    <mxCell id="1" parent="0"/>
+
+    <mxCell id="lt" value="로컬 모드(3부까지)" style="text;html=1;align=center;verticalAlign=middle;fontSize=15;fontStyle=1;fontColor=#333333;" vertex="1" parent="1">
+      <mxGeometry x="30" y="8" width="240" height="22" as="geometry"/>
+    </mxCell>
+    <mxCell id="ls" value="환경 변수 DATABASE_URL 없음" style="text;html=1;align=center;verticalAlign=middle;fontSize=12;fontColor=#6B6B6B;fontFamily=Courier New;" vertex="1" parent="1">
+      <mxGeometry x="30" y="30" width="240" height="18" as="geometry"/>
+    </mxCell>
+    <mxCell id="rt" value="운영 모드(4부부터)" style="text;html=1;align=center;verticalAlign=middle;fontSize=15;fontStyle=1;fontColor=#333333;" vertex="1" parent="1">
+      <mxGeometry x="326" y="8" width="200" height="22" as="geometry"/>
+    </mxCell>
+    <mxCell id="rs" value="환경 변수 DATABASE_URL 있음" style="text;html=1;align=center;verticalAlign=middle;fontSize=12;fontColor=#6B6B6B;fontFamily=Courier New;" vertex="1" parent="1">
+      <mxGeometry x="326" y="30" width="200" height="18" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="lbox" value="" style="rounded=1;arcSize=6;html=1;fillColor=none;strokeColor=#9AA0A6;dashed=1;dashPattern=6 4;strokeWidth=1.5;" vertex="1" parent="1">
+      <mxGeometry x="16" y="138" width="268" height="184" as="geometry"/>
+    </mxCell>
+    <mxCell id="rbox" value="" style="rounded=1;arcSize=6;html=1;fillColor=none;strokeColor=#9AA0A6;dashed=1;dashPattern=6 4;strokeWidth=1.5;" vertex="1" parent="1">
+      <mxGeometry x="312" y="138" width="368" height="184" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="lb" value="브라우저" style="rounded=1;arcSize=12;html=1;fillColor=#FBE4CC;strokeColor=#D79B63;fontColor=#7F5124;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="30" y="54" width="240" height="44" as="geometry"/>
+    </mxCell>
+    <mxCell id="lsv" value="내 컴퓨터의 Go 서버&lt;br&gt;&lt;span style=&quot;font-size:12px;font-weight:normal;font-family:Courier New&quot;&gt;cmd/server → Gin 라우터&lt;/span&gt;" style="rounded=1;arcSize=12;html=1;fillColor=#CFE2F3;strokeColor=#4A7BA6;fontColor=#1F4E79;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="30" y="150" width="240" height="56" as="geometry"/>
+    </mxCell>
+    <mxCell id="ldb" value="SQLite 파일&lt;br&gt;&lt;span style=&quot;font-size:12px;font-weight:normal;font-family:Courier New&quot;&gt;local-db/flashcard.db&lt;/span&gt;" style="rounded=1;arcSize=12;html=1;fillColor=#E4D7F5;strokeColor=#8E6BBF;fontColor=#4A2C7A;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="30" y="250" width="240" height="56" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="rb" value="브라우저" style="rounded=1;arcSize=12;html=1;fillColor=#FBE4CC;strokeColor=#D79B63;fontColor=#7F5124;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="326" y="54" width="200" height="44" as="geometry"/>
+    </mxCell>
+    <mxCell id="rsv" value="Vercel 서버리스 함수&lt;br&gt;&lt;span style=&quot;font-size:12px;font-weight:normal&quot;&gt;같은 Gin 라우터&lt;/span&gt;" style="rounded=1;arcSize=12;html=1;fillColor=#CFE2F3;strokeColor=#4A7BA6;fontColor=#1F4E79;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="326" y="150" width="200" height="56" as="geometry"/>
+    </mxCell>
+    <mxCell id="rdb" value="Supabase PostgreSQL" style="rounded=1;arcSize=12;html=1;fillColor=#E4D7F5;strokeColor=#8E6BBF;fontColor=#4A2C7A;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="326" y="256" width="200" height="44" as="geometry"/>
+    </mxCell>
+    <mxCell id="auth" value="Supabase 인증&lt;br&gt;&lt;span style=&quot;font-size:12px;font-weight:normal&quot;&gt;Google/GitHub 로그인&lt;/span&gt;" style="rounded=1;arcSize=12;html=1;fillColor=#EDEDED;strokeColor=#8C8C8C;fontColor=#333333;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="546" y="150" width="120" height="56" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="le1" value="localhost:8080으로 요청" style="strokeColor=#4D4D4D;strokeWidth=1.5;endArrow=classic;endFill=1;html=1;fontSize=12;fontColor=#6B6B6B;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="lb" target="lsv">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="le2" value="SQL" style="strokeColor=#4D4D4D;strokeWidth=1.5;endArrow=classic;endFill=1;html=1;fontSize=12;fontColor=#6B6B6B;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="lsv" target="ldb">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="re1" value="HTTPS" style="strokeColor=#4D4D4D;strokeWidth=1.5;endArrow=classic;endFill=1;html=1;fontSize=12;fontColor=#6B6B6B;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="rb" target="rsv">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="re2" value="SQL" style="strokeColor=#4D4D4D;strokeWidth=1.5;endArrow=classic;endFill=1;html=1;fontSize=12;fontColor=#6B6B6B;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="rsv" target="rdb">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="re3" style="strokeColor=#4D4D4D;strokeWidth=1.5;endArrow=classic;endFill=1;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="rsv" target="auth">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="memo" value="바뀌는 것은 아래 두 상자다. 브라우저는 그대로다." style="text;html=1;align=center;verticalAlign=middle;fontSize=12;fontColor=#6B6B6B;" vertex="1" parent="1">
+      <mxGeometry x="16" y="332" width="664" height="22" as="geometry"/>
+    </mxCell>
+  </root>
+</mxGraphModel>

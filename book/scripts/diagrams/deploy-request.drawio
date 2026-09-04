@@ -1,0 +1,54 @@
+<mxGraphModel adaptiveColors="auto">
+  <root>
+    <mxCell id="0"/>
+    <mxCell id="1" parent="0"/>
+
+    <mxCell id="hdr1" value="배포할 때 한 번" style="text;html=1;align=left;verticalAlign=middle;fontSize=13;fontStyle=1;fontColor=#6B6B6B;" vertex="1" parent="1">
+      <mxGeometry x="20" y="0" width="160" height="20" as="geometry"/>
+    </mxCell>
+    <mxCell id="push" value="git push" style="rounded=1;arcSize=12;html=1;fillColor=#CFE2F3;strokeColor=#4A7BA6;fontColor=#1F4E79;fontSize=14;fontStyle=1;fontFamily=Courier New;" vertex="1" parent="1">
+      <mxGeometry x="20" y="30" width="110" height="44" as="geometry"/>
+    </mxCell>
+    <mxCell id="build" value="Vercel이 빌드&lt;br&gt;&lt;span style=&quot;font-size:12px;font-weight:normal&quot;&gt;Go 컴파일&lt;/span&gt;" style="rounded=1;arcSize=12;html=1;fillColor=#EDEDED;strokeColor=#8C8C8C;fontColor=#333333;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="170" y="24" width="170" height="56" as="geometry"/>
+    </mxCell>
+    <mxCell id="e1" style="strokeColor=#4D4D4D;strokeWidth=1.5;endArrow=classic;endFill=1;html=1;" edge="1" parent="1" source="push" target="build">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="e2" style="strokeColor=#4D4D4D;strokeWidth=1.5;endArrow=classic;endFill=1;html=1;edgeStyle=orthogonalEdgeStyle;rounded=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="build" target="fn">
+      <mxGeometry relative="1" as="geometry">
+        <Array as="points">
+          <mxPoint x="485" y="52"/>
+        </Array>
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="placed" value="Vercel 서버에 놓인다" style="text;html=1;align=left;verticalAlign=middle;fontSize=12;fontColor=#6B6B6B;" vertex="1" parent="1">
+      <mxGeometry x="496" y="108" width="150" height="20" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="hdr2" value="요청마다" style="text;html=1;align=left;verticalAlign=middle;fontSize=13;fontStyle=1;fontColor=#6B6B6B;" vertex="1" parent="1">
+      <mxGeometry x="20" y="140" width="160" height="20" as="geometry"/>
+    </mxCell>
+    <mxCell id="req" value="브라우저 요청" style="rounded=1;arcSize=12;html=1;fillColor=#FBE4CC;strokeColor=#D79B63;fontColor=#7F5124;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="20" y="176" width="130" height="44" as="geometry"/>
+    </mxCell>
+    <mxCell id="vercel" value="Vercel" style="rounded=1;arcSize=12;html=1;fillColor=#EDEDED;strokeColor=#8C8C8C;fontColor=#333333;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="190" y="176" width="150" height="44" as="geometry"/>
+    </mxCell>
+    <mxCell id="fn" value="함수 한 벌&lt;br&gt;&lt;span style=&quot;font-size:12px;font-weight:normal&quot;&gt;Gin 라우터가 경로를 나눈다&lt;/span&gt;" style="rounded=1;arcSize=12;html=1;fillColor=#CFE2F3;strokeColor=#4A7BA6;strokeWidth=2;fontColor=#1F4E79;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="400" y="170" width="170" height="56" as="geometry"/>
+    </mxCell>
+    <mxCell id="resp" value="응답" style="rounded=1;arcSize=12;html=1;fillColor=#FBE4CC;strokeColor=#D79B63;fontColor=#7F5124;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="610" y="176" width="60" height="44" as="geometry"/>
+    </mxCell>
+    <mxCell id="e3" style="strokeColor=#4D4D4D;strokeWidth=1.5;endArrow=classic;endFill=1;html=1;" edge="1" parent="1" source="req" target="vercel">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="e4" style="strokeColor=#4D4D4D;strokeWidth=1.5;endArrow=classic;endFill=1;html=1;" edge="1" parent="1" source="vercel" target="fn">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="e5" style="strokeColor=#4D4D4D;strokeWidth=1.5;endArrow=classic;endFill=1;html=1;" edge="1" parent="1" source="fn" target="resp">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+  </root>
+</mxGraphModel>

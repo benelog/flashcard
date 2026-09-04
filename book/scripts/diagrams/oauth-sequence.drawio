@@ -1,0 +1,85 @@
+<mxGraphModel adaptiveColors="auto">
+  <root>
+    <mxCell id="0"/>
+    <mxCell id="1" parent="0"/>
+
+    <mxCell id="p-browser" value="브라우저" style="rounded=1;arcSize=12;html=1;fillColor=#FBE4CC;strokeColor=#D79B63;fontColor=#7F5124;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="10" y="10" width="120" height="56" as="geometry"/>
+    </mxCell>
+    <mxCell id="p-go" value="Go 서버&lt;br&gt;&lt;span style=&quot;font-size:12px;font-weight:normal;font-family:Courier New&quot;&gt;internal/web&lt;/span&gt;" style="rounded=1;arcSize=12;html=1;fillColor=#CFE2F3;strokeColor=#4A7BA6;fontColor=#1F4E79;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="190" y="10" width="160" height="56" as="geometry"/>
+    </mxCell>
+    <mxCell id="p-gotrue" value="GoTrue&lt;br&gt;&lt;span style=&quot;font-size:12px;font-weight:normal&quot;&gt;Supabase Auth&lt;/span&gt;" style="rounded=1;arcSize=12;html=1;fillColor=#EDEDED;strokeColor=#8C8C8C;fontColor=#333333;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="370" y="10" width="160" height="56" as="geometry"/>
+    </mxCell>
+    <mxCell id="p-provider" value="Google/GitHub" style="rounded=1;arcSize=12;html=1;fillColor=#EDEDED;strokeColor=#8C8C8C;fontColor=#333333;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="555" y="10" width="120" height="56" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="l-browser" style="endArrow=none;dashed=1;strokeColor=#9AA0A6;strokeWidth=1.5;html=1;" edge="1" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="70" y="66" as="sourcePoint"/>
+        <mxPoint x="70" y="392" as="targetPoint"/>
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="l-go" style="endArrow=none;dashed=1;strokeColor=#9AA0A6;strokeWidth=1.5;html=1;" edge="1" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="270" y="66" as="sourcePoint"/>
+        <mxPoint x="270" y="392" as="targetPoint"/>
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="l-gotrue" style="endArrow=none;dashed=1;strokeColor=#9AA0A6;strokeWidth=1.5;html=1;" edge="1" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="450" y="66" as="sourcePoint"/>
+        <mxPoint x="450" y="392" as="targetPoint"/>
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="l-provider" style="endArrow=none;dashed=1;strokeColor=#9AA0A6;strokeWidth=1.5;html=1;" edge="1" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="615" y="66" as="sourcePoint"/>
+        <mxPoint x="615" y="392" as="targetPoint"/>
+      </mxGeometry>
+    </mxCell>
+
+    <mxCell id="s1" value="① &lt;span style=&quot;font-family:Courier New&quot;&gt;/auth/login/google&lt;/span&gt; 클릭" style="strokeColor=#4D4D4D;strokeWidth=1.5;endArrow=classic;endFill=1;html=1;fontSize=12;fontColor=#333333;verticalAlign=bottom;labelBackgroundColor=#FFFFFF;" edge="1" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="70" y="100" as="sourcePoint"/>
+        <mxPoint x="270" y="100" as="targetPoint"/>
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="s2" value="② authorize 주소로 리다이렉트" style="strokeColor=#4D4D4D;strokeWidth=1.5;endArrow=classic;endFill=1;html=1;fontSize=12;fontColor=#333333;verticalAlign=bottom;labelBackgroundColor=#FFFFFF;" edge="1" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="270" y="155" as="sourcePoint"/>
+        <mxPoint x="70" y="155" as="targetPoint"/>
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="s3" value="③ 동의 화면 왕복 (GoTrue 경유)" style="strokeColor=#4D4D4D;strokeWidth=1.5;startArrow=classic;startFill=1;endArrow=classic;endFill=1;html=1;fontSize=12;fontColor=#333333;verticalAlign=bottom;labelBackgroundColor=#FFFFFF;" edge="1" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="70" y="210" as="sourcePoint"/>
+        <mxPoint x="615" y="210" as="targetPoint"/>
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="s4" value="④ &lt;span style=&quot;font-family:Courier New&quot;&gt;/auth/callback?code=…&lt;/span&gt;" style="strokeColor=#4D4D4D;strokeWidth=1.5;endArrow=classic;endFill=1;html=1;fontSize=12;fontColor=#333333;verticalAlign=bottom;labelBackgroundColor=#FFFFFF;" edge="1" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="70" y="265" as="sourcePoint"/>
+        <mxPoint x="270" y="265" as="targetPoint"/>
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="s5" value="⑤ 코드를 토큰으로 교환" style="strokeColor=#4A7BA6;strokeWidth=2.5;startArrow=classic;startFill=1;endArrow=classic;endFill=1;html=1;fontSize=12;fontStyle=1;fontColor=#1F4E79;verticalAlign=bottom;labelBackgroundColor=#FFFFFF;" edge="1" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="270" y="320" as="sourcePoint"/>
+        <mxPoint x="450" y="320" as="targetPoint"/>
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="s6" value="⑥ HttpOnly 쿠키 + 리다이렉트" style="strokeColor=#4D4D4D;strokeWidth=1.5;endArrow=classic;endFill=1;html=1;fontSize=12;fontColor=#333333;verticalAlign=bottom;labelBackgroundColor=#FFFFFF;" edge="1" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="270" y="375" as="sourcePoint"/>
+        <mxPoint x="70" y="375" as="targetPoint"/>
+      </mxGeometry>
+    </mxCell>
+
+    <mxCell id="memo" value="토큰 실물이&lt;br&gt;브라우저에 오지 않는다" style="rounded=1;arcSize=12;html=1;fillColor=#FFF2CC;strokeColor=#B7950B;fontColor=#5C4A00;fontSize=12;" vertex="1" parent="1">
+      <mxGeometry x="0" y="400" width="170" height="40" as="geometry"/>
+    </mxCell>
+  </root>
+</mxGraphModel>

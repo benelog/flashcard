@@ -1,0 +1,80 @@
+<mxGraphModel adaptiveColors="auto">
+  <root>
+    <mxCell id="0"/>
+    <mxCell id="1" parent="0"/>
+
+    <mxCell id="hCode" value="코드" style="text;html=1;align=center;verticalAlign=middle;fontSize=12;fontColor=#6B6B6B;" vertex="1" parent="1">
+      <mxGeometry x="96" y="0" width="150" height="20" as="geometry"/>
+    </mxCell>
+    <mxCell id="hDeploy" value="배포" style="text;html=1;align=center;verticalAlign=middle;fontSize=12;fontColor=#6B6B6B;" vertex="1" parent="1">
+      <mxGeometry x="270" y="0" width="200" height="20" as="geometry"/>
+    </mxCell>
+    <mxCell id="hDb" value="데이터베이스" style="text;html=1;align=center;verticalAlign=middle;fontSize=12;fontColor=#6B6B6B;" vertex="1" parent="1">
+      <mxGeometry x="496" y="0" width="180" height="20" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="laneLocal" value="로컬" style="text;html=1;align=center;verticalAlign=middle;fontSize=15;fontStyle=1;fontColor=#333333;" vertex="1" parent="1">
+      <mxGeometry x="8" y="32" width="80" height="56" as="geometry"/>
+    </mxCell>
+    <mxCell id="laneDev" value="개발" style="text;html=1;align=center;verticalAlign=middle;fontSize=15;fontStyle=1;fontColor=#333333;" vertex="1" parent="1">
+      <mxGeometry x="8" y="138" width="80" height="56" as="geometry"/>
+    </mxCell>
+    <mxCell id="laneProd" value="운영" style="text;html=1;align=center;verticalAlign=middle;fontSize=15;fontStyle=1;fontColor=#333333;" vertex="1" parent="1">
+      <mxGeometry x="8" y="244" width="80" height="56" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="localCode" value="작업 중인 코드" style="rounded=1;arcSize=12;html=1;fillColor=#CFE2F3;strokeColor=#4A7BA6;fontColor=#1F4E79;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="96" y="38" width="150" height="44" as="geometry"/>
+    </mxCell>
+    <mxCell id="localRun" value="내 컴퓨터에서 실행" style="rounded=1;arcSize=12;html=1;fillColor=#CFE2F3;strokeColor=#4A7BA6;fontColor=#1F4E79;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="270" y="38" width="200" height="44" as="geometry"/>
+    </mxCell>
+    <mxCell id="localDb" value="SQLite 파일" style="rounded=1;arcSize=12;html=1;fillColor=#E4D7F5;strokeColor=#8E6BBF;fontColor=#4A2C7A;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="496" y="38" width="180" height="44" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="devCode" value="&lt;span style=&quot;font-family:Courier New&quot;&gt;main&lt;/span&gt; 브랜치" style="rounded=1;arcSize=12;html=1;fillColor=#CFE2F3;strokeColor=#4A7BA6;fontColor=#1F4E79;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="96" y="144" width="150" height="44" as="geometry"/>
+    </mxCell>
+    <mxCell id="devDeploy" value="Vercel 프리뷰 배포&lt;br&gt;&lt;span style=&quot;font-size:12px;font-weight:normal&quot;&gt;Preview 스코프의 &lt;span style=&quot;font-family:Courier New&quot;&gt;DATABASE_URL&lt;/span&gt;&lt;/span&gt;" style="rounded=1;arcSize=12;html=1;fillColor=#EDEDED;strokeColor=#8C8C8C;fontColor=#333333;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="270" y="138" width="200" height="56" as="geometry"/>
+    </mxCell>
+    <mxCell id="devDb" value="개발 Supabase 프로젝트" style="rounded=1;arcSize=12;html=1;fillColor=#E4D7F5;strokeColor=#8E6BBF;fontColor=#4A2C7A;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="496" y="144" width="180" height="44" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="prodCode" value="&lt;span style=&quot;font-family:Courier New&quot;&gt;release&lt;/span&gt; 브랜치" style="rounded=1;arcSize=12;html=1;fillColor=#CFE2F3;strokeColor=#4A7BA6;fontColor=#1F4E79;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="96" y="250" width="150" height="44" as="geometry"/>
+    </mxCell>
+    <mxCell id="prodDeploy" value="Vercel 프로덕션 배포&lt;br&gt;&lt;span style=&quot;font-size:12px;font-weight:normal&quot;&gt;Production 스코프의 &lt;span style=&quot;font-family:Courier New&quot;&gt;DATABASE_URL&lt;/span&gt;&lt;/span&gt;" style="rounded=1;arcSize=12;html=1;fillColor=#EDEDED;strokeColor=#8C8C8C;fontColor=#333333;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="270" y="244" width="200" height="56" as="geometry"/>
+    </mxCell>
+    <mxCell id="prodDb" value="운영 Supabase 프로젝트" style="rounded=1;arcSize=12;html=1;fillColor=#E4D7F5;strokeColor=#8E6BBF;fontColor=#4A2C7A;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="496" y="250" width="180" height="44" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="e1" style="strokeColor=#4D4D4D;strokeWidth=1.5;endArrow=classic;endFill=1;html=1;" edge="1" parent="1" source="localCode" target="localRun">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="e2" style="strokeColor=#4D4D4D;strokeWidth=1.5;endArrow=classic;endFill=1;html=1;" edge="1" parent="1" source="localRun" target="localDb">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="e3" style="strokeColor=#4D4D4D;strokeWidth=1.5;endArrow=classic;endFill=1;html=1;" edge="1" parent="1" source="devCode" target="devDeploy">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="e4" style="strokeColor=#4D4D4D;strokeWidth=1.5;endArrow=classic;endFill=1;html=1;" edge="1" parent="1" source="devDeploy" target="devDb">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="e5" style="strokeColor=#4D4D4D;strokeWidth=1.5;endArrow=classic;endFill=1;html=1;" edge="1" parent="1" source="prodCode" target="prodDeploy">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="e6" style="strokeColor=#4D4D4D;strokeWidth=1.5;endArrow=classic;endFill=1;html=1;" edge="1" parent="1" source="prodDeploy" target="prodDb">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="eMerge" value="병합 = 사람이 정하는 운영 배포의 순간" style="strokeColor=#4A7BA6;strokeWidth=2;endArrow=classic;endFill=1;html=1;fontSize=12;fontStyle=1;fontColor=#1F4E79;labelBackgroundColor=#FFFFFF;align=left;verticalAlign=middle;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="devCode" target="prodCode">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint as="offset" x="10" y="0"/>
+      </mxGeometry>
+    </mxCell>
+  </root>
+</mxGraphModel>
