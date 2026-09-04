@@ -292,7 +292,7 @@ URL의 슬러그는 사용자가 아무 문자열이나 넣을 수 있는 입구
 
 여기까지 읽은 테스트는 DB도 네트워크도 없는 순수 계산이었다.
 그런데 이 저장소에서 가장 큰 테스트 파일은 정반대편에 있다.
-`internal/litestore/litestore_test.go`는 558줄로, 진짜 SQLite 파일을 열어 덱과 카드를 만들고 복습을 기록하고 통계를 읽는다.
+`internal/litestore/litestore_test.go`는 500줄이 넘고, 진짜 SQLite 파일을 열어 덱과 카드를 만들고 복습을 기록하고 통계를 읽는다.
 {ch-local-dev}의 로컬 모드가 파일 하나로 도는 DB를 쓰기 때문에 가능한 일이다.
 Postgres였다면 테스트마다 서버가 필요했겠지만, SQLite는 임시 파일 하나면 된다.
 
