@@ -160,6 +160,11 @@ export const definitions = {
     desc: '화면 템플릿의 <form> 수',
     measure: () => countInTemplates(/<form/g),
   },
+  'icon-count': {
+    desc: 'PWA 아이콘 파일 수 (internal/web/static/icons/)',
+    korean: true,
+    measure: () => filesIn('internal/web/static/icons').length,
+  },
   'srs-lines': {
     desc: '간격 반복 알고리즘 internal/srs/srs.go의 줄 수',
     measure: () => readFileSync(at('internal/srs/srs.go'), 'utf8').split('\n').length - 1,
