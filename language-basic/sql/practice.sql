@@ -26,8 +26,8 @@ create table cards (
 
 create index cards_deck_idx on cards (deck_id);
 
-insert into cards (deck_id, text, meaning) values (1, 'trade-off', '맞바꿈, 절충');
-insert into cards (deck_id, text, meaning) values (1, 'pull request', '코드 반영 요청');
+insert into cards (deck_id, text, meaning) values (1, 'deadline', '마감 기한');
+insert into cards (deck_id, text, meaning) values (1, 'invoice', '청구서, 송장');
 
 -- 조회 연습: select, 집계, 조인
 select text, meaning from cards where deck_id = 1;

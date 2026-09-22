@@ -20,7 +20,7 @@
 설정에 앞서 로그인이 어떤 길을 지나는지부터 그려 두면, 나중에 막혔을 때 어느 화면을 열어야 할지 바로 안다.
 사용자가 "Google로 계속하기"를 누른 순간부터 앱으로 돌아오기까지, 요청은 세 관문을 지난다.
 
-첫째, 앱이 Supabase(GoTrue)에 "이 사용자를 Google로 로그인시켜 달라"고 넘긴다.
+첫째, 앱이 Supabase의 인증 서버(GoTrue)에 "이 사용자를 Google로 로그인시켜 달라"고 넘긴다.
 둘째, Supabase가 사용자를 Google 로그인 화면으로 보낸다.
 셋째, Google이 인증을 마치면 Supabase를 거쳐 다시 앱의 `/auth/callback`으로 돌려보낸다.
 
@@ -46,7 +46,8 @@ Vercel 함수가 기본으로 뜨는 리전(iad1)과 같은 곳이라야 앱과 
 
 프로젝트가 만들어지면 두 종류의 값을 꺼내 둔다.
 하나는 DB 연결 문자열이다.
-대시보드 위쪽의 Connect 버튼을 누르면 Direct connection, Transaction pooler, Session pooler 세 문자열이 나오는데, 서버가 쓸 Transaction pooler(포트 6543)와 마이그레이션이 쓸 Session pooler(포트 5432)를 각각 복사한다.
+대시보드 위쪽의 Connect 버튼을 누르면 Direct connection, Transaction pooler, Session pooler 세 문자열이 나온다.
+이 가운데 서버가 쓸 Transaction pooler(포트 6543)와 마이그레이션이 쓸 Session pooler(포트 5432)를 각각 복사한다.
 둘은 포트 번호가 다르고 쓰임도 다르다(이유는 {ch-supabase-db}).
 남은 Direct connection은 {ch-free-tier}의 `pg_dump` 백업에 쓴다.
 복사한 문자열에는 비밀번호 자리가 `[YOUR-PASSWORD]` 같은 자리표시자로 들어 있다.
@@ -127,7 +128,8 @@ Google 쪽 클라이언트 설정은 저장한 뒤 반영되기까지 5분에서
 
 GitHub도 구조는 같다.
 https://github.com/settings/developers[github.com/settings/developers]에서 New OAuth App을 만들고, Authorization callback URL에 위와 똑같은 Supabase 콜백 주소를 넣는다.
-이름(Application name)과 홈페이지 주소(Homepage URL) 칸도 필수로 채워야 하는데, 앱 이름과 배포 주소를 적으면 되고, 로그인 동작에는 영향이 없다.
+이름(Application name)과 홈페이지 주소(Homepage URL)도 필수 칸이다.
+앱 이름과 배포 주소를 적으면 되고, 무엇을 적든 로그인 동작에는 영향이 없다.
 발급된 Client ID와 Secret을 Supabase의 Sign In / Providers → GitHub에 넣고 사용 설정한다.
 
 === 개발용은 클라이언트를 따로
@@ -221,8 +223,10 @@ Root Directory는 완성본 앱이 있는 `flashcard-advanced`로 지정한다.
 Framework Preset은 무엇으로 감지되든 상관없다.
 `vercel.json`의 `"framework": null`이 그 값을 덮어쓰기 때문이다({ch-vercel-config}).
 
-import 화면에서 Deploy를 누르면 첫 배포가 시작되는데, 환경 변수를 아직 넣지 않았으므로 이 배포는 열어 봐도 500 오류만 내는 상태로 뜬다.
-{ch-vercel-config}에서 본 대로 필수 값이 없으면 함수가 일부러 기동을 거부하기 때문이니 놀랄 일이 아니고, 아래에서 환경 변수까지 채운 뒤 다시 배포하면 된다.
+import 화면에서 Deploy를 누르면 첫 배포가 시작된다.
+환경 변수를 아직 넣지 않았으므로 이 배포는 열어 봐도 500 오류만 낸다.
+{ch-vercel-config}에서 본 대로 필수 값이 없으면 함수가 일부러 기동을 거부하기 때문이니 놀랄 일은 아니다.
+아래에서 환경 변수까지 채운 뒤 다시 배포하면 된다.
 배포가 끝나면 프로젝트 화면 위쪽에 `<앱 이름>.vercel.app` 형태의 주소가 뜬다.
 3절에서 Redirect URLs와 Site URL에 넣으라던 배포 주소가 이 값이다.
 
@@ -270,7 +274,7 @@ Production 스코프에는 운영 프로젝트 값을, Preview 스코프에는 �
 값을 바꿨다면 다시 푸시하거나 대시보드에서 Redeploy한다.
 
 마지막으로 프리뷰 배포에 하나 더 손볼 곳이 있다.
-Vercel은 프리뷰 배포를 기본으로 보호해, 팀 바깥에서는 열지 못하게 막아 둘 수 있다.
+Vercel은 프리뷰 배포에 기본으로 보호를 걸어, Vercel에 로그인한 팀 구성원이 아니면 열지 못하게 막는다.
 이 보호가 켜져 있으면 로그인 시도가 앱에 닿기도 전에 Vercel 로그인 화면이 가로챈다.
 Settings → Deployment Protection → Vercel Authentication의 Require Log In을 꺼 두면 프리뷰를 공개로 열 수 있다(Hobby 플랜에서 가능).
 
@@ -285,7 +289,7 @@ Sign In / Providers에서 켠다.
 둘째, Google이나 GitHub 화면에서 `redirect_uri_mismatch`가 뜬다면, 그 프로바이더에 Supabase 콜백이 등록되지 않은 것이다(관문 2).
 앱 주소가 아니라 Supabase 주소(`https://<project-ref>.supabase.co/auth/v1/callback`)를 등록한다.
 
-셋째, 로그인은 되는데 마지막에 엉뚱한 주소(예: `localhost:8080`)로 간다면, Redirect URLs에 그 배포의 `/auth/callback`이 없어 Site URL로 조용히 폴백된 것이다(관문 3).
+셋째, 로그인은 되는데 마지막에 엉뚱한 주소(예: `localhost:8080`)로 간다면, Redirect URLs에 그 배포의 `/auth/callback`이 없어 Supabase가 기본값인 Site URL로 대신 보낸 것이다(관문 3).
 Redirect URLs와 Site URL을 함께 확인한다.
 
 이 밖에 세 가지가 더 있다.

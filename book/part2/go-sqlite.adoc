@@ -24,8 +24,9 @@ Flashcard 완성본이 로컬에서는 SQLite로, 운영에서는 PostgreSQL로 
 
 flashcard-basic이 쓰는 SQLite 드라이버는 modernc.org/sqlite다.
 SQLite 자체는 C 언어로 만들어진 라이브러리인데, 이 드라이버는 그 코드를 Go로 통째로 옮긴 순수 Go 구현이라 C 컴파일러 없이 `go build` 하나로 빌드가 끝난다.
-또 다른 드라이버인 mattn/go-sqlite3는 C로 된 원본을 cgo로 함께 컴파일하므로 `CGO_ENABLED=1`에 gcc가 깔려 있어야 하고, 윈도우에서는 TDM-GCC 같은 gcc 툴체인을 따로 설치해야 하는 등 그 준비가 운영체제마다 다르다footnote:[go-sqlite3 README의 빌드 요구 사항 https://github.com/mattn/go-sqlite3[mattn/go-sqlite3]].
-Go 코드만 있는 이 드라이버는 Go가 깔린 컴퓨터라면 어디서든 그대로 돈다.
+널리 쓰이는 또 다른 드라이버 mattn/go-sqlite3는 C로 된 원본을 cgo(Go 코드와 C 코드를 함께 컴파일하는 장치)로 함께 빌드한다.
+그래서 `CGO_ENABLED=1` 설정과 C 컴파일러 gcc가 있어야 하고, 윈도우에서는 TDM-GCC 같은 gcc 툴체인을 따로 설치해야 하는 등 준비할 것이 운영체제마다 다르다footnote:[go-sqlite3 README의 빌드 요구 사항 https://github.com/mattn/go-sqlite3[mattn/go-sqlite3]].
+반면 Go 코드로만 된 modernc.org/sqlite는 Go가 깔린 컴퓨터라면 어디서든 그대로 돈다.
 
 드라이버를 코드에 들이는 방법이 조금 별나다.
 `flashcard-basic/store.go`의 임포트 목록에서 발췌한 두 줄이다.
@@ -41,7 +42,7 @@ Go 코드만 있는 이 드라이버는 Go가 깔린 컴퓨터라면 어디서�
 {ch-go-hello}에서 쓰지 않을 반환값을 `_`로 버린 것과 같은 밑줄이다.
 이름도 쓰지 않을 패키지를 왜 불러올까.
 Go는 패키지를 불러오는 순간 그 패키지의 초기화 코드를 실행하는데, 드라이버는 그 초기화에서 "나는 sqlite라는 이름의 드라이버다"라고 `database/sql`에 자신을 등록한다.
-불러오는 행위 자체가 목적인, 부수 효과를 위한 임포트다.
+패키지 안의 함수를 쓰려는 것이 아니라, 불러올 때 저절로 일어나는 이 등록이 목적인 임포트다.
 이렇게 등록된 이름을 잠시 뒤 `sql.Open`의 첫 인자로 다시 만난다.
 
 == 연결 열기와 스키마 적용
@@ -87,7 +88,9 @@ include::../../flashcard-basic/store.go[tag=open]
 경로 뒤에 `?`로 이어 붙인 `_pragma=foreign_keys(1)`은 연결 옵션이다.
 SQLite는 옛 버전과의 호환 때문에 외래 키 검사가 꺼진 채로 출발하므로, 연결할 때마다 이렇게 켜 줘야 `references` 선언이 실제로 일한다.
 `db.SetMaxOpenConns(1)`은 연결을 한 개만 열게 한다.
-`database/sql`은 요청이 겹치면 연결을 여러 개 여는데, 파일 하나를 쓰는 SQLite는 한 연결이 쓰는 동안 다른 연결의 쓰기를 "database is locked" 오류로 거절하기 때문이다.
+`database/sql`은 요청이 동시에 여럿 들어오면 연결도 여러 개 연다.
+그런데 파일 하나에 저장하는 SQLite는 한 연결이 쓰는 동안 다른 연결이 쓰려고 하면 "database is locked" 오류로 거절한다.
+연결을 하나로 묶어 두면 요청들이 그 연결 앞에 줄을 서서 차례로 쓰므로 이 오류가 나지 않는다.
 
 연결이 열리면 `db.Exec(schemaSQL)`로 스키마 파일을 통째로 실행한다.
 `create table if not exists`라서 데이터베이스 파일이 방금 새로 만들어졌으면 테이블이 생기고, 이미 테이블이 있으면 조용히 넘어간다.
@@ -184,7 +187,8 @@ include::../../flashcard-basic/store.go[tag=list-cards]
 ----
 
 결과가 여러 행일 때는 `QueryRow` 대신 `Query`를 쓴다.
-돌아오는 `rows`는 결과 전체를 담은 목록이 아니라, 결과 위를 한 행씩 전진하는 읽기 창이다.
+돌아오는 `rows`는 결과 전체를 담은 목록이 아니라, 결과를 한 행씩 짚어 가며 읽는 읽기 창이다.
+책을 한 줄씩 손가락으로 짚으며 읽듯, 지금 짚은 행 하나만 꺼낼 수 있다.
 `rows.Next()`가 다음 행으로 전진하며 행이 남아 있으면 `true`를 돌려주므로, {ch-go-hello}에서 본 조건 반복 `for`에 그대로 끼우면 "행이 있는 동안 반복"이 된다.
 회차마다 `Scan`으로 행 하나를 `Card` 구조체에 옮기고, `append`({ch-go-types})로 슬라이스에 쌓는다.
 

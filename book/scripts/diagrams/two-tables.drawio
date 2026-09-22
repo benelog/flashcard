@@ -46,10 +46,10 @@
     <mxCell id="c12" value="1" style="rounded=0;html=1;fillColor=#FFFFFF;strokeColor=#8E6BBF;fontColor=#333333;fontSize=13;" vertex="1" parent="1">
       <mxGeometry x="350" y="82" width="80" height="28" as="geometry"/>
     </mxCell>
-    <mxCell id="c13" value="trade-off" style="rounded=0;html=1;fillColor=#FFFFFF;strokeColor=#8E6BBF;fontColor=#333333;fontSize=13;" vertex="1" parent="1">
+    <mxCell id="c13" value="deadline" style="rounded=0;html=1;fillColor=#FFFFFF;strokeColor=#8E6BBF;fontColor=#333333;fontSize=13;" vertex="1" parent="1">
       <mxGeometry x="430" y="82" width="110" height="28" as="geometry"/>
     </mxCell>
-    <mxCell id="c14" value="맞바꿈, 절충" style="rounded=0;html=1;fillColor=#FFFFFF;strokeColor=#8E6BBF;fontColor=#333333;fontSize=13;" vertex="1" parent="1">
+    <mxCell id="c14" value="마감 기한" style="rounded=0;html=1;fillColor=#FFFFFF;strokeColor=#8E6BBF;fontColor=#333333;fontSize=13;" vertex="1" parent="1">
       <mxGeometry x="540" y="82" width="130" height="28" as="geometry"/>
     </mxCell>
     <mxCell id="c21" value="2" style="rounded=0;html=1;fillColor=#FFFFFF;strokeColor=#8E6BBF;fontColor=#333333;fontSize=13;" vertex="1" parent="1">
@@ -58,10 +58,10 @@
     <mxCell id="c22" value="1" style="rounded=0;html=1;fillColor=#FFFFFF;strokeColor=#8E6BBF;fontColor=#333333;fontSize=13;" vertex="1" parent="1">
       <mxGeometry x="350" y="110" width="80" height="28" as="geometry"/>
     </mxCell>
-    <mxCell id="c23" value="pull request" style="rounded=0;html=1;fillColor=#FFFFFF;strokeColor=#8E6BBF;fontColor=#333333;fontSize=13;" vertex="1" parent="1">
+    <mxCell id="c23" value="invoice" style="rounded=0;html=1;fillColor=#FFFFFF;strokeColor=#8E6BBF;fontColor=#333333;fontSize=13;" vertex="1" parent="1">
       <mxGeometry x="430" y="110" width="110" height="28" as="geometry"/>
     </mxCell>
-    <mxCell id="c24" value="코드 반영 요청" style="rounded=0;html=1;fillColor=#FFFFFF;strokeColor=#8E6BBF;fontColor=#333333;fontSize=13;" vertex="1" parent="1">
+    <mxCell id="c24" value="청구서, 송장" style="rounded=0;html=1;fillColor=#FFFFFF;strokeColor=#8E6BBF;fontColor=#333333;fontSize=13;" vertex="1" parent="1">
       <mxGeometry x="540" y="110" width="130" height="28" as="geometry"/>
     </mxCell>
 

@@ -37,6 +37,7 @@ include::../../flashcard-advanced/internal/srs/srs.go[tag=head]
 `InitialEase`(2.5)는 새 카드가 출발하는 용이도, 즉 복습 간격을 늘려 가는 배율이고, `MinEase`(1.3)는 용이도가 내려갈 수 있는 하한이다.
 `easeGainCorrect`(0.1)는 정답 한 번에 용이도가 올라가는 폭, `easeLossIncorrect`(0.32)는 오답 한 번에 깎이는 폭이다.
 0.1과 0.32는 임의로 고른 숫자가 아니라, SM-2의 용이도 공식에 품질 점수 5(맞음)와 2(틀림)를 대입하면 나오는 증감 폭이다.
+SM-2는 품질 점수가 q일 때 용이도를 `0.1 - (5-q) × (0.08 + (5-q) × 0.02)`만큼 바꾸는데, q에 5를 넣으면 +0.1, 2를 넣으면 -0.32가 나온다.
 이렇게 이름을 붙여 한곳에 모아 둔 덕에, 곧 읽을 알고리즘 본체에서 숫자의 의미를 이 블록으로 되짚어 볼 수 있다.
 
 이름의 첫 글자도 설계다.
@@ -46,6 +47,7 @@ include::../../flashcard-advanced/internal/srs/srs.go[tag=head]
 === 제로값이 곧 새 카드다
 
 카드 하나의 학습 상태는 구조체로 표현한다.
+다음 코드는 상태를 담는 `State` 구조체와, 새 카드의 상태를 만들어 주는 `NewState` 함수다.
 
 [source,go]
 ----
@@ -175,6 +177,7 @@ include::../../flashcard-advanced/internal/smartrules/rules.go[tag=validate-tag]
 === 규칙 타입의 생김새
 
 `Rule` 타입 자체도 설계를 드러낸다.
+규칙의 종류(`Type`)와, 종류마다 골라 쓰는 조건 값(최소 시도 횟수, 오답률, 안 본 날 수, 태그, 추가한 지 며칠 이내, 최대 장수)을 필드로 담는 구조체다.
 
 [source,go]
 ----
@@ -233,7 +236,7 @@ HTTP 요청과 응답에 담긴 JSON은 이 함수들을 직접 부르지 않고
 
 규칙으로 카드를 고르는 일에는 순서 문제가 하나 딸려 온다.
 "오답률이 높은 순서"처럼 규칙 자체가 순서를 정한다.
-그런데 그 순서대로 카드 번호를 뽑은 뒤 본문을 다시 읽어 오면, 데이터베이스가 행을 돌려주는 순서는 달라질 수 있다.
+그런데 그 순서대로 카드 ID를 뽑은 뒤 그 ID 목록으로 카드 본문을 다시 읽어 오면, 데이터베이스는 목록의 순서를 지켜 준다는 약속 없이 행을 돌려준다.
 `internal/model/card.go`의 `SortCardsByIDOrder`가 그 어긋남을 바로잡는다.
 
 [source,go]
@@ -241,7 +244,7 @@ HTTP 요청과 응답에 담긴 JSON은 이 함수들을 직접 부르지 않고
 include::../../flashcard-advanced/internal/model/card.go[tag=sort-by-id-order]
 ----
 
-읽어 온 카드들을 번호로 찾을 수 있게 맵에 담아 두고, 정해진 순서대로 하나씩 꺼내 새 목록을 만든다.
+읽어 온 카드들을 ID로 찾을 수 있게 맵에 담아 두고, 정해진 순서대로 하나씩 꺼내 새 목록을 만든다.
 `if card, ok := cardOf[id]; ok`는 맵 조회의 comma-ok 관용구로, 값과 함께 "그 열쇠가 실제로 있었는지"를 두 번째 값으로 받는다.
 없는 열쇠를 읽어도 에러가 나지 않고 제로값이 나오기 때문에, 그 사이에 지워진 카드를 조용히 건너뛰려면 이 두 번째 값이 필요하다.
 
@@ -322,7 +325,7 @@ include::../../flashcard-advanced/internal/model/deck.go[tag=deck]
 이 앱에서 그 조건을 만족한 곳이 딱 하나 있다.
 
 데이터베이스에서 여러 행을 읽어 목록으로 만드는 코드가 덱, 카드, 스마트 덱, 공유 덱, 통계처럼 종류마다 한 벌씩 있었다.
-지금 그 자리를 세면 PostgreSQL 구현에서 열한 곳, SQLite 구현에서 열두 곳이다.
+지금 그 자리를 세면 PostgreSQL 구현과 SQLite 구현에 각각 열 곳이 넘는다.
 그 코드들이 하는 일은 똑같았고, 다른 것은 한 행을 읽어 값으로 만드는 방법뿐이었다.
 그 다른 부분만 인자로 받게 하자 나머지가 함수 하나로 모였다.
 `internal/pgstore/store.go`의 `collect`다.
@@ -350,7 +353,7 @@ include::../../flashcard-advanced/internal/pgstore/decks.go[tag=list-decks]
 
 SQL 한 덩어리와 `collect` 호출 한 줄이 전부다.
 로컬 모드의 SQLite 구현에도 같은 이름의 짝이 있다.
-결과를 꺼내 오는 통로의 타입이 서로 달라 함수는 둘이지만, 안에서 하는 일과 모양은 같다.
+결과를 꺼내 오는 통로의 타입이 드라이버마다 달라(pgx는 `pgx.Rows`, SQLite 쪽의 표준 `database/sql`은 `*sql.Rows`) 함수는 둘이지만, 안에서 하는 일과 모양은 같다.
 {ch-code-map}에서 본 두 저장소의 대칭이 함수 단위까지 내려간 모습이다.
 
 == 카드가 드나드는 길

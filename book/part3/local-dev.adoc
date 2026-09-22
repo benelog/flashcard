@@ -2,7 +2,8 @@
 
 {ch-first-run}에서 우리는 저장소를 클론해 명령 하나로 이 앱을 띄웠다.
 데이터베이스 설치도, 계정 가입도, 설정 파일 작성도 없었다.
-그때는 결과만 확인하고 지나갔지만, 3부에서 테이블부터 화면까지 코드를 층층이 읽고 그 코드를 검증하는 테스트까지 본 지금은 그 무설정 실행의 원리를 해부할 수 있다.
+그때는 결과만 확인하고 지나갔다.
+3부에서 테이블부터 화면까지 코드를 층층이 읽고 그 코드를 검증하는 테스트까지 본 지금은, 그 무설정 실행의 원리를 해부할 수 있다.
 {ch-app-tests}의 테스트가 계정도 설정도 없이 앱을 띄울 수 있었던 것도 이 장에서 볼 분기 덕분이다.
 이번 장에서는 먼저 그 실행을 성립시키는 코드의 분기들을 따라가고, 이어서 에디터 설정으로 사람 쪽 개발 환경을 갖춘 뒤, 환경 변수로 동작을 바꾸는 길까지 정리해 3부를 마무리하겠다.
 
@@ -81,9 +82,9 @@ func Open(path string) (*Store, error) {
 }
 ----
 
-파일 경로의 물음표 뒤에 붙은 긴 글자들은 SQLite에 함께 거는 세 가지 주문이다.
+파일 경로의 물음표 뒤에 붙은 긴 글자들은 파일을 열면서 SQLite에 함께 거는 세 가지 설정이다.
 외래 키 제약을 실제로 검사하고({ch-database-basics}), 파일이 잠겨 있으면 5초까지 기다렸다가 포기하고, 쓰기 기록을 별도 파일에 먼저 남기는 방식(WAL)으로 돌아 읽기와 쓰기가 서로를 막지 않게 하라는 뜻이다.
-{ch-first-run}에서 본 `-wal` 파일이 세 번째 주문의 산물이다.
+{ch-first-run}에서 본 `-wal` 파일이 세 번째 설정이 만든 그 별도 파일이다.
 스키마의 모든 문장이 `if not exists` 꼴이라 몇 번을 켜도 이미 있는 테이블은 건드리지 않는다.
 파일을 바이너리에 함께 굽는 embed({ch-html-template}) 덕에 스키마 파일을 따로 배포할 일도 없다.
 다만 `if not exists`는 이미 있는 테이블에 새 열을 더해 주지는 않으므로, 발췌에서 생략한 `ensureColumn` 대목이 예전에 만들어 둔 파일에 빠진 열을 보정한다.
@@ -308,7 +309,7 @@ Go의 디버거는 델브(Delve)이고, 실행 파일 이름은 `dlv`다.
 환경 변수(Environment Variable)는 프로그램이 실행될 때 운영체제에서 건네받는 이름표 붙은 값으로, 코드를 고치지 않고 프로그램의 동작을 바깥에서 바꾸는 수단이다.
 로컬 모드는 이 관점에서 다시 읽을 수 있는데, "환경 변수를 하나도 채우지 않았을 때의 기본 동작"을 신중하게 설계해 둔 결과다.
 
-`config.go`가 읽는 환경 변수는 여덟 개(`DATABASE_URL`, `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_JWKS_URL`, `SUPABASE_JWT_SECRET`, `PORT`, `SQLITE_PATH`, 그리고 배포 환경을 알리는 `VERCEL`)인데, 그중 둘은 지금 당장 돌려 볼 수 있다.
+`config.go`가 읽는 환경 변수는 `DATABASE_URL`, `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_JWKS_URL`, `SUPABASE_JWT_SECRET`, `PORT`, `SQLITE_PATH`, 그리고 배포 환경을 알리는 `VERCEL`인데, 그중 둘은 지금 당장 돌려 볼 수 있다.
 셸에서는 명령 앞에 `이름=값`을 붙여 한 줄로 적을 수 있는데, 이는 그 값을 환경 변수로 얹은 채 뒤의 명령을 실행하라는 뜻이다(두 개의 명령이 아니라 한 줄짜리 명령 하나다).
 `SQLITE_PATH=~/cards/my.db go run ./cmd/server`로 실행하면 데이터 파일의 위치가 바뀌고, `PORT=9090 go run ./cmd/server`로 실행하면 접속 주소가 `http://localhost:9090`으로 바뀐다.
 화면과 API가 한 서버에서 나가므로 포트를 바꿔도 다른 곳에 알릴 일이 없다.
@@ -355,8 +356,9 @@ Flashcard에서 포맷의 원본은 `gofmt`이고 검증의 원본은 `go vet`�
 `.vscode/` 네 파일은 포맷과 검증 명령, 디버깅 구성을 저장소가 실어 나르게 하고, 환경 변수는 코드를 고치지 않고 동작을 바꾸는 통로로 남는다.
 
 이 장으로 3부의 완성본 앱 해부가 끝났다.
-{ch-database-design}에서 요구사항을 테이블로 옮겼고, {ch-code-map}부터 {ch-unit-tests}까지 그 테이블을 다루는 Go 코드와 테스트를 읽었다.
-{ch-gin}에서 Gin이 요청을 핸들러로 잇는 길을 봤고, {ch-html-css}부터 {ch-htmx}까지 HTML·CSS와 html/template, htmx로 화면이 만들어지는 과정을 따라갔다.
+{ch-design-principles}과 {ch-code-map}에서 설계 원칙과 코드의 지도를 손에 들었고, {ch-database-design·domain-model}에서 요구사항을 테이블로 옮겼다.
+{ch-core-logic·unit-tests}에서 그 테이블을 다루는 핵심 로직과 테스트를 읽었고, {ch-gin·app-assembly}에서 요청이 핸들러에 닿는 길과 계층이 하나로 조립되는 자리를 봤다.
+{ch-html-css~htmx}에서 HTML·CSS와 html/template, htmx로 화면이 만들어지는 과정을 따라갔고, {ch-app-tests}에서 앱을 통째로 띄워 그 배선까지 확인했다.
 그리고 이 장에서 그 전부가 설정 없이 도는 원리를 확인하고, 코드를 고치는 사람의 작업 환경까지 갖췄다.
 여기까지가 내 컴퓨터 안의 이야기다.
 
