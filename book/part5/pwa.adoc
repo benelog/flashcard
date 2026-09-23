@@ -44,7 +44,7 @@
 이 조건은 브라우저마다 다르다.
 Chrome은 오랫동안 `fetch` 핸들러가 있는 서비스 워커를 설치 조건으로 요구했지만, 모바일 108, 데스크톱 112 버전부터 그 요구를 없앴다footnote:[Chrome for Developers 블로그 "Revisiting Chrome's installability criteria". https://developer.chrome.com/blog/update-install-criteria[Revisiting Chrome's installability criteria]].
 iOS의 Safari는 서비스 워커를 요구하지 않고, 매니페스트를 읽어 공유 메뉴의 "홈 화면에 추가"로 설치한다footnote:[MDN "Making PWAs installable"의 브라우저별 설치 지원 설명. https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps/Guides/Making_PWAs_installable[Making PWAs installable]].
-그러니 2026년 기준으로 서비스 워커는 설치 자격의 필수 조건이라기보다, 오프라인 안내와 캐시를 위해 두는 것이다.
+그러니 2026년 기준으로 서비스 워커는 설치 자격의 필수 조건이라기보다 오프라인 안내와 캐시를 위한 장치다.
 등록은 파일을 두는 것으로 끝나지 않고, 페이지가 브라우저에 "이 파일을 내 서비스 워커로 써 달라"고 한 번 알려 주어야 이루어진다.
 그 한 줄을 누가 어디서 부르는지는 {ch-caching}에서 읽는다.
 
@@ -57,7 +57,8 @@ iOS의 Safari는 서비스 워커를 요구하지 않고, 매니페스트를 읽
 페이지를 닫아도 살아 있을 수 있어서 오프라인 동작과 푸시 알림의 토대가 된다.
 ====
 
-첫째 조건은 Vercel이 해결해 주므로, Flashcard는 둘째 조건을 `manifest.webmanifest`로 충족하고, 셋째 몫으로 `sw.js`를 둔다.
+첫째 조건은 Vercel이 해결한다.
+Flashcard는 둘째 조건을 `manifest.webmanifest`로 채우고, 셋째 조건을 위해 `sw.js`를 둔다.
 두 파일 모두 `internal/web/static/`에 있는 평범한 정적 파일이고, {ch-html-template}에서 본 embed로 Go 바이너리에 담겨 다른 정적 자산과 같은 경로로 서빙된다.
 
 == manifest.webmanifest: 설치 화면을 결정하는 파일
@@ -161,8 +162,8 @@ Flashcard는 PWA의 일부만 쓴다.
 지원하려면 카드 데이터를 브라우저 안의 데이터 저장소(IndexedDB)에 미리 내려 두고, 오프라인에서 매긴 학습 결과를 나중에 서버와 동기화해야 한다.
 동기화에는 충돌 해결이 따라온다.
 같은 카드를 두 기기에서 다르게 채점했을 때 어느 SRS 상태가 옳은가라는 질문에 답해야 한다.
-`card_srs`의 난이도·간격·반복 횟수·다음 복습일이 기기마다 따로 달라진 뒤 하나로 합쳐야 하므로, 경우의 수가 이 앱의 어느 코드보다 많아진다.
-매일 쓰는 기기가 하나뿐인 개인 앱에서는 그 복잡도를 살 이유가 없었다.
+기기마다 따로 달라진 `card_srs`의 난이도·간격·반복 횟수·다음 복습일을 하나로 합쳐야 하므로, 경우의 수가 이 앱의 어느 코드보다 많아진다.
+매일 쓰는 기기가 하나뿐인 개인 앱에서는 그 복잡도를 떠안을 이유가 없었다.
 
 *푸시 알림이 없다.*
 암기 앱에 "오늘 복습할 카드 12장이 있습니다" 알림만큼 어울리는 기능도 드물다.
@@ -176,7 +177,7 @@ Flashcard는 PWA의 일부만 쓴다.
 이 세 가지는 서로 이어져 있다.
 오프라인 학습을 하기로 하면 동기화가 필요하고, 알림을 보내기로 하면 상주하는 무언가가 필요하다.
 어느 쪽도 "무료 인프라, 서버리스, 1인 운영"이라는 제약과 어울리지 않는다.
-PWA를 고른 이유가 네이티브 앱의 배포 부담을 피하는 것이었지, 그 모든 기능을 웹으로 재현하는 것은 아니었다.
+PWA를 고른 이유는 네이티브 앱의 배포 부담을 피하려는 것이었지, 그 모든 기능을 웹으로 재현하려는 것이 아니었다.
 
 == 에이전트 활용 아이디어
 

@@ -12,7 +12,7 @@ sqlite3에 치던 그 문장들을 Go 프로그램이 실행하게 만드는 것
 그 폴더에서 `go run .`을 실행하면 `http://localhost:8080`에서 열린다.
 완성본의 구조와 문제 풀이를 해부하는 일은 3부의 몫이고, 2부에서는 이 작은 앱으로 기초 사용법만 익힌다.
 
-이 장의 담당은 그중 데이터 층, 파일로는 `flashcard-basic/store.go` 하나다.
+이 장이 맡는 부분은 그중 데이터 층이고, 파일로는 `flashcard-basic/store.go` 하나다.
 저장한 데이터를 웹 화면으로 보여 주는 일은 {ch-gin-hello}에서, 그 화면을 템플릿으로 그리는 일은 {ch-template-hello}에서 이어 간다.
 
 == database/sql과 드라이버
@@ -23,7 +23,8 @@ SQLite든 PostgreSQL이든 코드의 모양은 그대로 두고, 각 데이터�
 Flashcard 완성본이 로컬에서는 SQLite로, 운영에서는 PostgreSQL로 도는 것도 이 구조 덕분이다({ch-supabase-db}).
 
 flashcard-basic이 쓰는 SQLite 드라이버는 modernc.org/sqlite다.
-SQLite 자체는 C 언어로 만들어진 라이브러리인데, 이 드라이버는 그 코드를 Go로 통째로 옮긴 순수 Go 구현이라 C 컴파일러 없이 `go build` 하나로 빌드가 끝난다.
+SQLite 자체는 C 언어로 만든 라이브러리다.
+이 드라이버는 그 코드를 Go로 통째로 옮긴 순수 Go 구현이라, C 컴파일러 없이 `go build` 하나로 빌드가 끝난다.
 널리 쓰이는 또 다른 드라이버 mattn/go-sqlite3는 C로 된 원본을 cgo(Go 코드와 C 코드를 함께 컴파일하는 장치)로 함께 빌드한다.
 그래서 `CGO_ENABLED=1` 설정과 C 컴파일러 gcc가 있어야 하고, 윈도우에서는 TDM-GCC 같은 gcc 툴체인을 따로 설치해야 하는 등 준비할 것이 운영체제마다 다르다footnote:[go-sqlite3 README의 빌드 요구 사항 https://github.com/mattn/go-sqlite3[mattn/go-sqlite3]].
 반면 Go 코드로만 된 modernc.org/sqlite는 Go가 깔린 컴퓨터라면 어디서든 그대로 돈다.
@@ -41,7 +42,8 @@ SQLite 자체는 C 언어로 만들어진 라이브러리인데, 이 드라이�
 임포트 경로 앞의 밑줄 `_`는 "이 패키지의 이름을 코드에서 직접 쓰지는 않지만, 불러오기는 하라"는 표기다.
 {ch-go-hello}에서 쓰지 않을 반환값을 `_`로 버린 것과 같은 밑줄이다.
 이름도 쓰지 않을 패키지를 왜 불러올까.
-Go는 패키지를 불러오는 순간 그 패키지의 초기화 코드를 실행하는데, 드라이버는 그 초기화에서 "나는 sqlite라는 이름의 드라이버다"라고 `database/sql`에 자신을 등록한다.
+Go는 패키지를 불러오는 순간 그 패키지의 초기화 코드를 실행한다.
+드라이버는 그 초기화에서 "나는 sqlite라는 이름의 드라이버다"라고 `database/sql`에 자신을 등록한다.
 패키지 안의 함수를 쓰려는 것이 아니라, 불러올 때 저절로 일어나는 이 등록이 목적인 임포트다.
 이렇게 등록된 이름을 잠시 뒤 `sql.Open`의 첫 인자로 다시 만난다.
 
@@ -56,10 +58,11 @@ include::../../flashcard-basic/schema.sql[tag=schema]
 ----
 
 덱 테이블과 카드 테이블, 카드가 소속 덱을 가리키는 외래 키(`references`)와 덱을 지우면 카드도 따라 지워지는 `on delete cascade`, 그리고 카드를 덱으로 찾는 마지막 줄의 인덱스까지 앞 장에서 본 그대로다.
-다른 것은 기본 키다.
+완성본과 다른 점은 기본 키다.
 완성본은 UUID 문자열을 쓰지만, 이 앱의 `id`는 `integer primary key autoincrement`, 즉 행을 넣을 때마다 데이터베이스가 1, 2, 3으로 번호를 매겨 주는 정수 순번이다.
 서버가 하나뿐인 최소 앱에서는 이쪽이 단순하다(완성본이 UUID를 고른 이유는 {ch-database-design}에서 따진다).
-그리고 `if not exists`가 붙어 있어 이 파일은 몇 번을 다시 실행해도 안전한데, 이 성질을 곧 코드가 이용한다.
+그리고 `if not exists`가 붙어 있어 이 파일은 몇 번을 다시 실행해도 안전하다.
+곧 볼 코드가 이 성질을 이용한다.
 
 이 스키마 파일을 Go 코드로 가져오는 일은 `flashcard-basic/store.go`의 다음 두 줄이 한다.
 
@@ -113,8 +116,9 @@ include::../../flashcard-basic/store.go[tag=types]
 `Deck.Name`이 `decks.name`이고 `Card.DeckID`가 `cards.deck_id`다.
 카드의 원문과 뜻을 담는 열 `text`·`meaning`은 완성본에서도 이름이 같아서, 3부에서 완성본의 스키마를 읽을 때 그대로 다시 나온다.
 id를 담는 필드가 `int64`인 것은 새 행의 번호를 알려 주는 `database/sql`의 `res.LastInsertId()`가 이 타입으로 돌려주기 때문이다(다음 절에서 만난다).
-필드 뒤에 붙은 `` `json:"id"` `` 같은 문자열은 이 구조체를 JSON으로 내보낼 때 쓸 이름표인데, 화면 대신 JSON으로 답하는 API에서 필요하다.
-지금은 없는 것으로 보고 지나가도 되고, 이런 꼬리표(구조체 태그)의 정체는 {ch-core-logic}에서 다룬다.
+필드 뒤에 붙은 `` `json:"id"` `` 같은 문자열은 이 구조체를 JSON으로 내보낼 때 쓸 이름표로, 화면 대신 JSON으로 답하는 API에서 쓴다.
+지금은 없는 것으로 보고 지나가도 된다.
+이런 꼬리표(구조체 태그)의 정체는 {ch-core-logic}에서 다룬다.
 
 앞으로 볼 함수는 모두 이 두 구조체를 주고받는다.
 데이터베이스에서 꺼낸 행은 구조체가 되어 나오고, 저장할 값은 인자로 들어가 행이 된다.
@@ -129,7 +133,7 @@ id를 담는 필드가 `int64`인 것은 새 행의 번호를 알려 주는 `dat
 include::../../flashcard-basic/store.go[tag=create-deck]
 ----
 
-`s.db.Exec`이 결과 행을 돌려받을 필요가 없는 문장을 실행하는 메서드다.
+`s.db.Exec`은 결과 행을 돌려받을 필요가 없는 문장을 실행하는 메서드다.
 insert, update, delete가 여기에 해당한다.
 첫 인자가 SQL 문장이고, 문장 속 `?` 자리마다 뒤따르는 인자가 순서대로 들어간다.
 {ch-database-basics}에서 배운 그 자리표시자다.
@@ -137,7 +141,8 @@ insert, update, delete가 여기에 해당한다.
 "SQL은 반드시 자리표시자로"라는 철칙이 Go 코드에서는 이 모양이 된다.
 
 문장에 `id`가 없는데도 새 행은 id를 받는다.
-`autoincrement` 열이라 데이터베이스가 번호를 매기기 때문이고, 그렇게 매긴 번호를 알려 주는 것이 `res.LastInsertId()`다.
+`autoincrement` 열이라 데이터베이스가 번호를 매기기 때문이다.
+그렇게 매긴 번호를 알려 주는 것이 `res.LastInsertId()`다.
 호출한 쪽은 이 id로 방금 만든 덱의 화면으로 이동하거나 그 덱에 카드를 이어서 넣는다.
 카드를 추가하는 `CreateCard`도 같은 모양인데, 자리표시자가 셋(`deck_id`, `text`, `meaning`)으로 늘고, 방금 받은 id까지 채운 `Card` 구조체를 통째로 돌려주는 것만 다르다.
 
@@ -160,7 +165,8 @@ include::../../flashcard-basic/store.go[tag=get-deck]
 select에 적은 열 순서와 `Scan`에 넘긴 순서가 어긋나면 값이 엉뚱한 필드로 들어가므로, 이 둘은 늘 나란히 놓고 맞춘다.
 
 이 함수의 절반은 "없을 때"를 다루는 데 쓰였다.
-조건에 맞는 행이 없으면 `database/sql`은 `sql.ErrNoRows`라는 에러를 내놓는데, 이 함수는 그것을 그대로 흘려보내지 않고 이 앱의 에러인 `ErrNotFound`로 바꿔 돌려준다.
+조건에 맞는 행이 없으면 `database/sql`은 `sql.ErrNoRows`라는 에러를 내놓는다.
+이 함수는 그것을 그대로 흘려보내지 않고 이 앱의 에러인 `ErrNotFound`로 바꿔 돌려준다.
 코드의 `errors.Is`는 돌아온 에러가 바로 그 에러인지 확인하는 표준 라이브러리 함수다.
 그 경우 돌려줄 덱이 없으므로, 빈 `Deck` 값({ch-go-hello}에서 본 제로값)과 함께 `ErrNotFound`를 내보낸다.
 `ErrNotFound`는 `store.go` 첫머리에 한 번 선언해 둔 값이다.
@@ -172,9 +178,11 @@ var ErrNotFound = errors.New("not found")
 
 바꿔 돌려주는 이유는 부르는 쪽의 사정에 있다.
 "찾는 덱이 없다"는 이 앱의 일상적인 상황이고, 화면을 만드는 쪽은 그 사실만 알면 404 응답을 만들 수 있다.
-404는 "찾는 것이 없다"는 뜻으로 서버가 브라우저에 돌려주는 세 자리 응답 번호인데, 이 번호 체계는 {ch-gin-hello}에서 다룬다.
+404는 "찾는 것이 없다"는 뜻으로 서버가 브라우저에 돌려주는 세 자리 응답 번호다.
+이 번호 체계는 {ch-gin-hello}에서 다룬다.
 `sql.ErrNoRows`를 그대로 내보내면 store를 부르는 모든 코드가 `database/sql`의 사정까지 알아야 한다.
-이렇게 약속된 상황을 나타내려고 미리 만들어 두고 `errors.Is`로 알아보는 에러 값을 센티널 에러라 부르는데, 완성본의 에러 설계와 함께 {ch-core-logic}에서 자세히 다룬다.
+이렇게 약속된 상황을 나타내려고 미리 만들어 두고 `errors.Is`로 알아보는 에러 값을 센티널 에러라 부른다.
+센티널 에러는 완성본의 에러 설계와 함께 {ch-core-logic}에서 자세히 다룬다.
 
 == 여러 행 꺼내기: Query와 rows
 
@@ -203,7 +211,7 @@ include::../../flashcard-basic/store.go[tag=list-cards]
 그래서 반복이 끝난 뒤에 끝까지 잘 읽었는지를 따로 물어야 하고, 그 물음이 `rows.Err()`다.
 
 덱 목록을 가져오는 `ListDecks`도 테이블과 열만 다를 뿐 이 모양 그대로다.
-`Query`, `defer rows.Close()`, `rows.Next()` 반복, `Scan`, 마지막 `rows.Err()` 확인.
+`Query`, `defer rows.Close()`, `rows.Next()` 반복, `Scan`, 마지막 `rows.Err()` 확인 순서다.
 여러 행을 읽는 `database/sql` 코드는 어디서나 이 다섯 박자로 돈다.
 
 == 지우기: RowsAffected로 확인한다
@@ -218,14 +226,15 @@ include::../../flashcard-basic/store.go[tag=delete-card]
 
 지우는 문장도 `Exec`으로 실행한다.
 조건에 카드 번호와 함께 덱 번호도 들어 있어, 그 덱에 속한 카드일 때만 지워진다.
-다른 것은 결과 확인이다.
+넣기와 다른 점은 결과 확인이다.
 {ch-database-basics}에서 고치거나 지운 뒤에는 몇 행이 영향을 받았는지가 돌아온다고 했는데, 그 숫자를 꺼내는 것이 `res.RowsAffected()`다.
 delete는 조건에 맞는 행이 없어도 에러 없이 성공하므로, 이 숫자가 0인지 확인해야 "지울 카드가 애초에 없었다"를 알 수 있다.
 이 함수는 그 경우에 앞서 만든 `ErrNotFound`를 돌려준다.
 없는 카드를 찾는 것과 없는 카드를 지우는 것이 같은 에러로 표현되니, 부르는 쪽은 어느 쪽이든 같은 방법으로 404 응답을 만들면 된다.
 
 고치는 쪽인 update 문장을 다루는 방법도 같다.
-덱 이름을 바꾸는 `RenameDeck`도 `Exec`으로 update 문장을 실행하고 `RowsAffected`로 고쳐진 행이 있었는지 확인하는, 방금 본 모양 그대로다.
+덱 이름을 바꾸는 `RenameDeck`도 `Exec`으로 update 문장을 실행하고 `RowsAffected`로 고쳐진 행이 있었는지 확인한다.
+방금 본 모양 그대로다.
 덱을 지우는 `DeleteDeck`까지 포함해, 이 파일의 고치고 지우는 함수 셋이 전부 이 두 박자로 돈다.
 
 == 직접 확인: 테스트가 대신 돌려 본다
@@ -282,6 +291,6 @@ sqlite3 프롬프트는 에이전트의 결과를 대조하는 도구로도 쓸 
 다섯째, `sql.ErrNoRows` 같은 라이브러리의 에러는 store 안에서 `ErrNotFound`로 바꿔 돌려준다.
 덕분에 store를 부르는 쪽은 `database/sql`을 몰라도 "없다"는 상황을 다룰 수 있다.
 
-이제 덱과 카드를 저장하고 꺼내는 바닥이 놓였다.
+이제 덱과 카드를 저장하고 꺼내는 코드가 갖춰졌다.
 다음 {ch-gin-hello}에서는 이 함수들을 웹 서버에 연결한다.
 브라우저가 주소를 요청하면 store에서 꺼낸 덱과 카드가 HTML 화면이 되어 돌아가는, 웹 앱다운 왕복을 처음 완성해 보자.
