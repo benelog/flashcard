@@ -38,7 +38,7 @@ Go가 `if err != nil`로 처리하던 자리({ch-go-hello})를 자바스크립�
 == 등록은 한 줄: 자바스크립트가 필요한 자리
 
 서비스 워커는 저절로 켜지지 않는다.
-{ch-htmx}에서 해부한 160줄 남짓한 `app.js`의 한 대목이 등록을 맡는다.
+{ch-htmx}에서 해부한 {n-app-js-lines}줄 남짓한 `app.js`의 한 대목이 등록을 맡는다.
 이 앱이 직접 쓴 자바스크립트는 그 `app.js`와 이 장의 `sw.js` {n-sw-lines}줄, 둘뿐이다.
 
 `internal/web/static/app.js` (발췌):

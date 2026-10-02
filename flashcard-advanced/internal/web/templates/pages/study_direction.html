@@ -24,5 +24,15 @@
     </span>
     <span class="faint">{{icon "arrow"}}</span>
   </a>
+
+  <a class="tile direction-tile row-between" href="{{.Data.Voice}}" data-needs-speech>
+    <span>
+      <span class="row direction-tile-head">{{icon "mic"}} 뜻 → 말하기
+        {{if eq .Data.Last "voice"}}<span class="pill pill-blue">지난번</span>{{end}}
+      </span>
+      <span class="small muted">뜻을 보고 소리 내어 답해요. 들린 말로 채점하고 정답을 읽어 줘요</span>
+    </span>
+    <span class="faint">{{icon "arrow"}}</span>
+  </a>
 </div>
 {{end}}

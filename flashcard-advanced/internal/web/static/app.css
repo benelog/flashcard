@@ -1082,6 +1082,111 @@ details.story[open] .story-less {
   display: none;
 }
 
+/* ---------- 음성으로 답하기·따라 말하기 ---------- */
+
+.voice-card,
+.verdict-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+}
+
+.voice-card {
+  min-height: 14rem;
+}
+
+.verdict-ok {
+  border-color: var(--green-soft-border);
+}
+
+.verdict-miss {
+  border-color: color-mix(in srgb, var(--red) 45%, transparent);
+}
+
+.verdict-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-weight: 700;
+}
+
+.verdict-ok .verdict-title {
+  color: var(--green);
+}
+
+.verdict-miss .verdict-title {
+  color: var(--red);
+}
+
+.spoken-words {
+  font-size: 1.25rem;
+  font-weight: 600;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.word-missed {
+  color: var(--red);
+  text-decoration: underline wavy color-mix(in srgb, var(--red) 60%, transparent);
+  text-underline-offset: 0.25em;
+}
+
+.shadow-box {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.shadow-ok {
+  color: var(--green);
+}
+
+/* 손으로 채점하는 화면의 따라 말하기는 카드를 뒤집은 뒤에만 보인다(채점
+   버튼과 같은 :checked ~ 상태 전달). */
+.shadow-after-reveal {
+  display: none;
+}
+
+.reveal-toggle:checked ~ .shadow-after-reveal {
+  display: flex;
+}
+
+/* 듣는 동안은 버튼 글자를 바꾼다. data-listening은 app.js가 단다. */
+.listen-on {
+  display: none;
+}
+
+[data-listening] .listen-idle {
+  display: none;
+}
+
+[data-listening] .listen-on {
+  display: inline;
+}
+
+.listen-status:empty {
+  display: none;
+}
+
+/* 음성 인식이 없는 브라우저(Firefox 등)에서는 마이크를 쓰는 것을 숨기고 안내만
+   남긴다. data-no-speech는 app.js가 문서 루트에 단다. 기능 유무라는 문서 전체의
+   상태를 자식에게 전하는 경로라 클래스로 평탄화하지 않는다. */
+.speech-fallback {
+  display: none;
+}
+
+[data-no-speech] [data-needs-speech] {
+  display: none !important;
+}
+
+[data-no-speech] .speech-fallback {
+  display: block;
+}
+
 /* 학습을 마쳤거나 라운드 사이에 쉬어 가는 화면 */
 
 .study-end {

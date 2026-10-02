@@ -1,6 +1,6 @@
 /* Flashcard에 남은 유일한 자바스크립트.
    앱 로직은 전부 Go 서버에 있고, 이 파일은 브라우저에서만 접근할 수 있는
-   API(음성 합성, 클립보드, 온라인 상태, 서비스 워커, 시간대)만 감싼다. */
+   API(음성 합성·인식, 클립보드, 온라인 상태, 서비스 워커, 시간대)만 감싼다. */
 
 // 시간대: 서버가 "오늘"의 경계와 통계 날짜를 사용자 기준으로 계산하도록 알린다.
 document.cookie =
@@ -113,6 +113,65 @@ function speakStory(text, rate, button) {
 // 다른 화면으로 떠나도 읽던 소리는 계속 나므로 여기서 끊는다.
 addEventListener("pagehide", stopStory);
 
+// 음성 인식: 말해서 답하기와 따라 말하기. 들은 말을 글자로 받아 적어 폼의
+// heard 칸에 넣고 제출할 뿐이다. 정답과 맞는지는 서버가 정한다(study/speech.go).
+// 인식 후보를 여럿(줄마다 하나) 보내 서버가 정답에 가장 가까운 것을 고르게 한다.
+const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+if (!Recognition) document.documentElement.dataset.noSpeech = "true"; // CSS가 마이크 버튼을 숨긴다
+let listening = null;
+
+const listenErrors = {
+  "not-allowed": "마이크 권한을 허용해 주세요.",
+  "service-not-allowed": "마이크 권한을 허용해 주세요.",
+  "audio-capture": "마이크를 찾을 수 없어요.",
+  "no-speech": "아무 말도 듣지 못했어요. 다시 눌러 말해 보세요.",
+  network: "음성 인식 서버에 연결하지 못했어요.",
+};
+
+function listen(button) {
+  if (listening) {
+    listening.stop(); // 듣는 중에 다시 누르면 멈춘다
+    return;
+  }
+  const form = button.closest("form");
+  const status = form.querySelector("[data-listen-status]");
+  const show = (msg) => status && (status.textContent = msg);
+  if ("speechSynthesis" in window) speechSynthesis.cancel(); // 읽어 주던 소리를 받아 적지 않게
+
+  const rec = new Recognition();
+  rec.lang = button.dataset.listenLang || "en-US";
+  rec.interimResults = true; // 말하는 동안 들린 말을 보여 준다
+  rec.maxAlternatives = 5;
+  let sent = false;
+  rec.onresult = (e) => {
+    const result = e.results[e.results.length - 1];
+    show(result[0].transcript);
+    if (!result.isFinal || sent) return;
+    sent = true;
+    form.elements.heard.value = Array.from(result, (alt) => alt.transcript).join("\n");
+    form.requestSubmit(); // htmx가 제출을 가로채 결과 조각을 받아 온다
+  };
+  rec.onerror = (e) => {
+    if (e.error !== "aborted") show(listenErrors[e.error] || "다시 눌러 말해 보세요.");
+  };
+  rec.onend = () => {
+    listening = null;
+    delete button.dataset.listening;
+  };
+  listening = rec;
+  button.dataset.listening = "true";
+  show("");
+  rec.start();
+}
+
+// 말해서 답한 결과 화면이 뜨면 정답을 한 번 읽어 준다.
+document.addEventListener("htmx:afterSettle", () => {
+  const el = document.querySelector("[data-autospeak]");
+  if (!el) return;
+  delete el.dataset.autospeak;
+  speak(el.dataset.tts, parseFloat(el.dataset.ttsRate));
+});
+
 // data-* 속성으로만 연결: 서버가 렌더링한(htmx로 갈아끼운) HTML에도 그대로 동작한다.
 document.addEventListener("click", (e) => {
   const story = e.target.closest("[data-tts-story]");
@@ -124,6 +183,13 @@ document.addEventListener("click", (e) => {
     }
     const body = document.getElementById(story.dataset.ttsStory);
     speakStory(body ? body.textContent : "", parseFloat(story.dataset.ttsRate), story);
+    return;
+  }
+
+  const mic = e.target.closest("[data-listen]");
+  if (mic) {
+    e.preventDefault();
+    if (Recognition) listen(mic);
     return;
   }
 

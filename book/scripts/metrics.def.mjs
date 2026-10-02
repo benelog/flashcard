@@ -129,6 +129,13 @@ export const definitions = {
     desc: '테스트를 뺀 Go 코드 줄 수 (internal/ 아래만)',
     measure: () => linesOf(goFiles('internal')),
   },
+  'app-js-lines': {
+    desc: '"N줄 남짓"에 쓰는 internal/web/static/app.js의 줄 수 (10 단위로 내림)',
+    measure: () => {
+      const lines = readFileSync(at('internal/web/static/app.js'), 'utf8').split('\n').length - 1
+      return Math.floor(lines / 10) * 10
+    },
+  },
   'sw-lines': {
     desc: '서비스 워커 internal/web/static/sw.js의 줄 수',
     measure: () => readFileSync(at('internal/web/static/sw.js'), 'utf8').split('\n').length - 1,

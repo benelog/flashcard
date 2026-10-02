@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/http"
 	"net/url"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -33,6 +34,7 @@ type studyState struct {
 	FirstPassTotal   int // 1라운드 카드 수
 	FirstPassCorrect int // 1라운드 정답 수
 	TtsRate          float64
+	Voice            bool // 말해서 답하기: 뜻을 보고 소리 내어 답하면 서버가 채점한다
 }
 
 // end::study-state[]
@@ -40,12 +42,13 @@ type studyState struct {
 // studyBodyView는 study_body 조각이 그리는 값이다. 단계(Phase) 중 정확히
 // 하나만 그리며, 옛 React 상태 기계를 그대로 옮긴 모양이다.
 type studyBodyView struct {
-	Phase   string // studying | break | finished | empty
+	Phase   string // studying | spoken | break | finished | empty
 	State   studyState
 	Card    *model.Card
 	Index   int // 이번 라운드에서 몇 번째 카드인지 (0부터)
 	TextTTS string
 	BackTTS string
+	Spoken  *study.SpeechMatch // spoken 단계: 말해서 답한 것을 채점한 결과
 }
 
 func (v studyBodyView) QueueJoined() string  { return strings.Join(v.State.Queue, ",") }
@@ -59,6 +62,37 @@ func (v studyBodyView) Accuracy() int {
 // ProgressPct는 진행 막대를 채운다.
 func (v studyBodyView) ProgressPct() int { return percent(v.Index, v.State.RoundCards) }
 
+// ListenLang은 카드의 원문을 받아 적을 음성 인식 언어다. 앱이 영어 학습을
+// 기본으로 하지만, 한글로 쓴 용어 카드는 한국어로 들어야 받아 적을 수 있다.
+func (v studyBodyView) ListenLang() string {
+	if v.Card != nil && hangulPattern.MatchString(v.Card.Text) {
+		return "ko-KR"
+	}
+	return "en-US"
+}
+
+var hangulPattern = regexp.MustCompile(`\p{Hangul}`)
+
+// shadowView는 따라 말하기 폼이 그리는 값이다.
+type shadowView struct {
+	Text        string // 따라 말할 원문
+	Lang        string
+	AfterReveal bool // 카드를 뒤집은 뒤에만 보인다(손으로 채점하는 화면)
+}
+
+// Shadow는 판정 화면의 따라 말하기다. 정답이 이미 보이므로 처음부터 보인다.
+func (v studyBodyView) Shadow() shadowView {
+	return shadowView{Text: v.Card.Text, Lang: v.ListenLang()}
+}
+
+// ShadowAfterReveal은 손으로 채점하는 화면의 따라 말하기다. 정답을 보기 전에
+// 원문을 말하게 하면 답을 알려 주는 셈이라 뒤집은 뒤에만 보인다.
+func (v studyBodyView) ShadowAfterReveal() shadowView {
+	s := v.Shadow()
+	s.AfterReveal = true
+	return s
+}
+
 // studyPage는 세션을 시작한다. ?direction=이 없으면 나머지 질의 문자열을
 // 유지한 채 방향 선택 화면부터 그린다.
 func (w *Web) studyPage(c *gin.Context) {
@@ -67,7 +101,14 @@ func (w *Web) studyPage(c *gin.Context) {
 		return
 	}
 	direction := model.NormalizeDirection(c.Query("direction"))
-	setCookie(c, dirCookie, direction, dirCookieMaxAge)
+	// 말해서 답하기는 뜻을 보고 원문을 말하는 것이라 방향이 정해져 있다.
+	voice := c.Query("voice") == "1"
+	if voice {
+		direction = model.MeaningToText
+		setCookie(c, dirCookie, voiceChoice, dirCookieMaxAge)
+	} else {
+		setCookie(c, dirCookie, direction, dirCookieMaxAge)
+	}
 
 	userID := auth.UserID(c)
 	ctx := c.Request.Context()
@@ -100,6 +141,7 @@ func (w *Web) studyPage(c *gin.Context) {
 		RoundCards:     len(plan.Cards),
 		FirstPassTotal: len(plan.Cards),
 		TtsRate:        settings.TtsRate,
+		Voice:          voice,
 	}
 	for _, card := range plan.Cards {
 		state.Queue = append(state.Queue, card.ID.String())
@@ -122,12 +164,26 @@ func (w *Web) studyPage(c *gin.Context) {
 // (mode, deckId, rule …)을 그대로 물고 간다.
 func (w *Web) directionChooser(c *gin.Context) {
 	base := c.Request.URL.Query()
+	last := cookieValue(c, dirCookie)
+	if last != voiceChoice {
+		last = model.NormalizeDirection(last)
+	}
+	voiceQuery := url.Values{}
+	for k, v := range base {
+		voiceQuery[k] = v
+	}
+	voiceQuery.Set("voice", "1")
 	w.render(c, http.StatusOK, "study_direction", "학습", gin.H{
-		"Last":      model.NormalizeDirection(cookieValue(c, dirCookie)),
+		"Last":      last,
 		"TextFirst": "/study?" + withParam(base, "direction", model.TextToMeaning),
 		"TextLast":  "/study?" + withParam(base, "direction", model.MeaningToText),
+		"Voice":     "/study?" + withParam(voiceQuery, "direction", model.MeaningToText),
 	})
 }
+
+// voiceChoice는 지난번에 말해서 답하기를 골랐다는 표시로 방향 쿠키에 남긴다.
+// 세션에 기록되는 방향(meaning_to_text)과는 따로 둬야 고르는 화면이 구별한다.
+const voiceChoice = "voice"
 
 // studyPlan은 한 세션의 카드 목록이다. 고르는 일은 JSON API도 쓰는
 // internal/study가 하고, 화면에만 필요한 둘(세션 제목, 끝나면 돌아갈 곳)을
@@ -285,6 +341,7 @@ func stateFromValues(form url.Values) studyState {
 		FirstPassTotal:   firstPassTotal,
 		FirstPassCorrect: firstPassCorrect,
 		TtsRate:          rate,
+		Voice:            form.Get("voice") == "1",
 	}
 }
 
@@ -351,4 +408,54 @@ func (w *Web) quitStudy(c *gin.Context) {
 		_ = w.store.FinishSession(c.Request.Context(), auth.UserID(c), sessionID, false)
 	}
 	c.Redirect(http.StatusSeeOther, state.ReturnURL)
+}
+
+// speakAnswer는 말해서 답하기의 채점이다. 브라우저가 받아 적은 인식 후보들을
+// 지금 카드의 원문과 견주고, 판정과 정답을 보여 주는 화면을 돌려준다.
+//
+// 기록은 여기서 하지 않는다. 판정 화면의 "다음" 버튼이 서버가 정한 결과를
+// 실어 /study/grade로 보내므로, 기록·점수·다음 카드는 손으로 채점할 때와 같은
+// 길(gradeCard)을 지난다. 그 화면에는 맞았어요·틀렸어요 버튼이 없다.
+func (w *Web) speakAnswer(c *gin.Context) {
+	state := stateFromForm(c)
+	v := w.studyBody(c, state)
+	if state.Voice && v.Phase == "studying" {
+		m := study.MatchSpeech(v.Card.Text, heardCandidates(c.PostForm("heard")))
+		v.Phase = "spoken"
+		v.Spoken = &m
+	}
+	w.renderPartial(c, "study_body", v)
+}
+
+// shadowSpeech는 따라 말하기다. 채점에 들어가지 않고, 어느 단어가 들렸는지만
+// 돌려준다.
+func (w *Web) shadowSpeech(c *gin.Context) {
+	m := study.MatchSpeech(c.PostForm("expected"), heardCandidates(c.PostForm("heard")))
+	w.renderPartial(c, "shadow_result", m)
+}
+
+// 인식 후보는 브라우저가 보내는 값이다. 비교가 단어 수의 곱에 비례하므로
+// 후보 수와 길이를 묶어 둔다.
+const (
+	maxHeardCandidates = 5
+	maxHeardRunes      = 300
+)
+
+// heardCandidates는 줄마다 하나씩 온 인식 후보를 나눈다.
+func heardCandidates(raw string) []string {
+	var out []string
+	for _, line := range strings.Split(raw, "\n") {
+		line = strings.TrimSpace(line)
+		if line == "" {
+			continue
+		}
+		if r := []rune(line); len(r) > maxHeardRunes {
+			line = string(r[:maxHeardRunes])
+		}
+		out = append(out, line)
+		if len(out) == maxHeardCandidates {
+			break
+		}
+	}
+	return out
 }

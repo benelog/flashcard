@@ -83,6 +83,8 @@ func (w *Web) Register(r *gin.Engine) {
 
 		app.GET("/study", w.studyPage)
 		app.POST("/study/grade", w.gradeCard)
+		app.POST("/study/speak", w.speakAnswer)
+		app.POST("/study/shadow", w.shadowSpeech)
 		app.POST("/study/next-round", w.nextRound)
 		app.POST("/study/quit", w.quitStudy)
 

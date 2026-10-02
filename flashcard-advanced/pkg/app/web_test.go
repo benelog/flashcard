@@ -509,3 +509,70 @@ func TestStreakAndHeatmap(t *testing.T) {
 		t.Error("오늘 이미 공부했는데 스트릭을 이으라는 안내가 떴다")
 	}
 }
+
+// 말해서 답하기: 맞았어요 버튼이 없고, 들린 말로 서버가 채점한다. 판정 화면의
+// "다음"은 서버가 정한 결과를 그대로 채점 요청에 싣는다.
+func TestVoiceAnswer(t *testing.T) {
+	a := newTestApp(t)
+	slug := a.makeDeck("Verbs")
+	a.makeCard(slug, "It's my first day.", "오늘 첫 출근이에요.")
+	deckID := a.deck(slug).ID.String()
+
+	chooser := a.get("/study?mode=deck&deckId=" + deckID)
+	mustContain(t, chooser, "뜻 → 말하기")
+	mustContain(t, chooser, "voice=1")
+
+	front := a.get("/study?mode=deck&deckId=" + deckID + "&direction=meaning_to_text&voice=1")
+	mustStatus(t, front, http.StatusOK)
+	mustContain(t, front, "오늘 첫 출근이에요.")
+	mustContain(t, front, `hx-post="/study/speak"`)
+	mustNotContain(t, front, "맞았어요")     // 스스로 맞았다고 할 수 없다
+	mustNotContain(t, front, "my first day") // 원문은 답하기 전에 보이지 않는다
+	state := hiddenFields(t, front)
+	if state.Get("voice") != "1" {
+		t.Fatalf("voice flag is not carried in the state: %v", state)
+	}
+
+	// 인식 후보 중 하나라도 정답이면 맞은 것이다.
+	state.Set("heard", "it's my thirst day\nit is my first day")
+	spoken := a.postHTMX("/study/speak", state)
+	mustStatus(t, spoken, http.StatusOK)
+	mustContain(t, spoken, "verdict-ok")
+	mustContain(t, spoken, "data-autospeak") // 정답을 읽어 준다
+	mustNotContain(t, spoken, `name="correct" value="false"`)
+	verdict := hiddenFields(t, spoken)
+	if verdict.Get("correct") != "true" {
+		t.Fatalf("correct = %q, want the server's verdict true", verdict.Get("correct"))
+	}
+
+	finished := a.postHTMX("/study/grade", verdict)
+	mustContain(t, finished, "학습 완료")
+	summary, err := a.store.StatsSummary(t.Context(), a.userID, "UTC", time.UTC)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if summary.TotalReviews != 1 || summary.CorrectReviews != 1 {
+		t.Errorf("reviews = %d/%d, want 1/1", summary.CorrectReviews, summary.TotalReviews)
+	}
+
+	// 다른 말을 하면 틀린 것이고, 들리지 않은 단어를 표시한다.
+	state.Set("heard", "it's my last day")
+	wrong := a.postHTMX("/study/speak", state)
+	mustContain(t, wrong, "verdict-miss")
+	mustContain(t, wrong, `<span class="word-missed">first</span>`)
+	if got := hiddenFields(t, wrong).Get("correct"); got != "false" {
+		t.Errorf("correct = %q, want false", got)
+	}
+}
+
+// 따라 말하기는 채점과 상관없이 들린 단어만 알려 준다.
+func TestShadowSpeech(t *testing.T) {
+	a := newTestApp(t)
+	rec := a.postHTMX("/study/shadow", url.Values{"expected": {"Where's the new gig?"}, "heard": {"where is the new kick"}})
+	mustStatus(t, rec, http.StatusOK)
+	mustContain(t, rec, `<span class="word-missed">gig?</span>`)
+	mustContain(t, rec, "80%")
+
+	ok := a.postHTMX("/study/shadow", url.Values{"expected": {"Have a good one!"}, "heard": {"have a good one"}})
+	mustContain(t, ok, "잘 알아들었어요")
+}
