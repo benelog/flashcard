@@ -484,3 +484,28 @@ func assetURL(t *testing.T, page, path string) string {
 	rest := page[i:]
 	return rest[:strings.IndexAny(rest, `"'`)]
 }
+
+// 한 장이라도 풀면 홈에 연속 학습일이 뜨고, 통계 화면 잔디의 오늘 칸이 채워진다.
+func TestStreakAndHeatmap(t *testing.T) {
+	a := newTestApp(t)
+	slug := a.makeDeck("Verbs")
+	a.makeCard(slug, "run", "달리다")
+	mustContain(t, a.get("/stats"), "0일 학습 · 최장 0일 연속")
+
+	opened := a.sendJSON(http.MethodPost, "/api/sessions", `{"mode":"due","direction":"text_to_meaning"}`)
+	mustStatus(t, opened, http.StatusCreated)
+	session := decodeJSON[struct {
+		Session model.Session `json:"session"`
+		Cards   []model.Card  `json:"cards"`
+	}](t, opened)
+	mustStatus(t, a.sendJSON(http.MethodPost, "/api/sessions/"+session.Session.ID.String()+"/reviews",
+		`{"cardId":"`+session.Cards[0].ID.String()+`","result":true}`), http.StatusOK)
+
+	mustContain(t, a.get("/"), "1일 연속</a>")
+	stats := a.get("/stats")
+	mustContain(t, stats, "1일 학습 · 최장 1일 연속")
+	mustContain(t, stats, `class="heat-cell heat-4"`) // 하루뿐이니 그날이 가장 진하다
+	if strings.Contains(stats.Body.String(), "오늘 학습하면") {
+		t.Error("오늘 이미 공부했는데 스트릭을 이으라는 안내가 떴다")
+	}
+}

@@ -2,7 +2,7 @@
 <header class="row-between">
   <h1>Flashcard</h1>
   {{if gt .Data.Streak 0}}
-  <span class="pill pill-streak">{{icon "flame"}} {{.Data.Streak}}일 연속</span>
+  <a class="pill pill-streak" href="/stats" title="학습한 날 보기">{{icon "flame"}} {{.Data.Streak}}일 연속</a>
   {{end}}
 </header>
 

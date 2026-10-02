@@ -7,6 +7,45 @@
   <div class="stat-box"><div class="stat-num">{{if lt .Data.Accuracy 0}}-{{else}}{{.Data.Accuracy}}%{{end}}</div><div class="stat-label">전체 정답률</div></div>
 </section>
 
+{{with .Data.Heatmap}}
+<section class="stack">
+  <h2>학습한 날 <span class="normal">(최근 1년)</span></h2>
+  <div class="tile tile-lg">
+    <div class="heatmap" role="img" aria-label="최근 1년 동안 {{.StudiedDays}}일 학습, 최장 {{.Longest}}일 연속">
+      <div class="heatmap-weekdays" aria-hidden="true">
+        <span class="heatmap-label"></span>
+        <span class="heatmap-label"></span><span class="heatmap-label">월</span><span class="heatmap-label"></span>
+        <span class="heatmap-label">수</span><span class="heatmap-label"></span><span class="heatmap-label">금</span>
+        <span class="heatmap-label"></span>
+      </div>
+      <div class="heatmap-scroll" aria-hidden="true">
+        <div class="heatmap-weeks">
+          {{range .Weeks}}
+          <div class="heatmap-week">
+            <span class="heatmap-label heatmap-month">{{.Month}}</span>
+            {{range .Days}}
+            {{if .Future}}<span class="heat-cell heat-future"></span>{{else}}<span class="heat-cell heat-{{.Level}}" title="{{.Title}}"></span>{{end}}
+            {{end}}
+          </div>
+          {{end}}
+        </div>
+      </div>
+    </div>
+    <div class="row-between tiny muted heatmap-foot">
+      <span>{{.StudiedDays}}일 학습 · 최장 {{.Longest}}일 연속</span>
+      <span class="heatmap-legend" aria-hidden="true">
+        적게
+        <span class="heat-cell heat-0"></span><span class="heat-cell heat-1"></span><span class="heat-cell heat-2"></span><span class="heat-cell heat-3"></span><span class="heat-cell heat-4"></span>
+        많이
+      </span>
+    </div>
+  </div>
+  {{if and (gt $.Data.Summary.Streak 0) (not .TodayDone)}}
+  <p class="small streak-nudge">{{icon "flame"}} 오늘 학습하면 {{add $.Data.Summary.Streak 1}}일 연속이 돼요.</p>
+  {{end}}
+</section>
+{{end}}
+
 <section class="stack">
   <h2>최근 30일 학습량 <span class="normal">(<span class="primary">정답</span> · <span class="red">오답</span>)</span></h2>
   <div class="tile tile-lg">

@@ -1181,6 +1181,109 @@ details.story[open] .story-less {
   background: color-mix(in srgb, var(--red) 80%, transparent);
 }
 
+/* 잔디: 열은 주, 행은 요일(일~토). 요일 이름표는 스크롤 밖에 두어 옆으로 밀어도 남는다. */
+
+.heatmap {
+  --heat-cell: 0.6875rem;
+  --heat-gap: 3px;
+  display: flex;
+  gap: var(--heat-gap);
+}
+
+.heatmap-weekdays,
+.heatmap-week {
+  display: grid;
+  grid-template-rows: 1rem repeat(7, var(--heat-cell));
+  gap: var(--heat-gap);
+}
+
+/* 열 너비를 칸 크기로 묶어 두어야 달 이름표가 열을 넓히지 않고 옆으로 넘친다. */
+.heatmap-week {
+  grid-template-columns: var(--heat-cell);
+}
+
+/* 1년(53주)은 휴대폰 폭에 다 들어가지 않아 옆으로 스크롤한다. direction: rtl은
+   스크롤 시작 위치를 오른쪽 끝(이번 주)에 두기 위한 것이고, 안쪽 내용은 다시
+   ltr로 돌려 주가 왼쪽에서 오른쪽으로 흐르게 한다. 자바스크립트 없이 최근
+   기록부터 보이게 하는 방법이다. */
+.heatmap-scroll {
+  flex: 1;
+  min-width: 0;
+  overflow-x: auto;
+  direction: rtl;
+  scrollbar-width: thin;
+  scrollbar-color: var(--faint) transparent;
+}
+
+/* 오른쪽 여백은 이번 주 열 위의 달 이름표가 넘쳐 잘리지 않게 할 자리다. */
+.heatmap-weeks {
+  direction: ltr;
+  display: flex;
+  gap: var(--heat-gap);
+  width: max-content;
+  padding-right: 1rem;
+}
+
+.heatmap-label {
+  font-size: 0.625rem;
+  line-height: var(--heat-cell);
+  color: var(--muted);
+}
+
+/* 달 이름은 한 칸보다 넓어 오른쪽 열 위로 넘친다(GitHub와 같다). */
+.heatmap-month {
+  line-height: 1rem;
+  white-space: nowrap;
+}
+
+.heat-cell {
+  display: inline-block;
+  width: var(--heat-cell, 0.6875rem);
+  height: var(--heat-cell, 0.6875rem);
+  border-radius: 2px;
+  vertical-align: middle;
+}
+
+.heat-0 {
+  background: color-mix(in srgb, var(--fg) 8%, transparent);
+}
+
+.heat-1 {
+  background: color-mix(in srgb, var(--green) 30%, transparent);
+}
+
+.heat-2 {
+  background: color-mix(in srgb, var(--green) 55%, transparent);
+}
+
+.heat-3 {
+  background: color-mix(in srgb, var(--green) 80%, transparent);
+}
+
+.heat-4 {
+  background: var(--green);
+}
+
+.heat-future {
+  visibility: hidden;
+}
+
+.heatmap-foot {
+  margin-top: 0.75rem;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.heatmap-legend {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.streak-nudge {
+  color: var(--amber-strong);
+}
+
 .meter {
   height: 0.5rem;
   border-radius: 9999px;

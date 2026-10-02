@@ -1,6 +1,7 @@
 package web
 
 import (
+	"strings"
 	"testing"
 	"time"
 
@@ -66,5 +67,78 @@ func TestAccuracy(t *testing.T) {
 				t.Errorf("accuracy() = %d, want %d", got, tt.want)
 			}
 		})
+	}
+}
+
+// 차트보다 오래된 날이 섞여 들어와도 막대의 기준은 보이는 30일 안에서 고른다.
+func TestBuildChartIgnoresOlderDays(t *testing.T) {
+	today := time.Date(2026, 7, 25, 9, 0, 0, 0, time.UTC)
+	daily := []model.DailyStat{
+		{Date: "2026-01-01", Total: 100, Correct: 100},
+		{Date: "2026-07-25", Total: 4, Correct: 4},
+	}
+	days := buildChart(daily, today)
+	if last := days[len(days)-1]; last.CorrectPct != 100 {
+		t.Errorf("today bar = %d%%, want 100%% (older busy day must not count)", last.CorrectPct)
+	}
+}
+
+func TestBuildHeatmap(t *testing.T) {
+	today := time.Date(2026, 10, 3, 22, 0, 0, 0, time.UTC) // 토요일
+	daily := []model.DailyStat{
+		{Date: "2025-09-27", Total: 50}, // 잔디보다 이른 날: 세지 않는다
+		{Date: "2026-09-29", Total: 1},
+		{Date: "2026-09-30", Total: 2},
+		{Date: "2026-10-01", Total: 8},
+		{Date: "2026-10-03", Total: 3},
+	}
+
+	h := buildHeatmap(daily, today)
+
+	if len(h.Weeks) != heatmapWeeks {
+		t.Fatalf("weeks = %d, want %d", len(h.Weeks), heatmapWeeks)
+	}
+	if first := h.Weeks[0].Days[0].Title; first[:10] != "2025-09-28" {
+		t.Errorf("first cell = %q, want the Sunday 2025-09-28", first)
+	}
+	week := h.Weeks[heatmapWeeks-1].Days
+	// 가장 많이 푼 날(8회)이 4단계, 한 번만 풀어도 1단계다.
+	wantLevels := [7]int{0, 0, 1, 1, 4, 0, 2} // 일 9/27 ~ 토 10/3
+	for d, want := range wantLevels {
+		if week[d].Level != want {
+			t.Errorf("%s level = %d, want %d", week[d].Title, week[d].Level, want)
+		}
+	}
+	if !strings.HasPrefix(week[6].Title, "2026-10-03 (토)") {
+		t.Errorf("today title = %q", week[6].Title)
+	}
+	if h.Weeks[heatmapWeeks-1].Month != "10월" {
+		t.Errorf("last week month = %q, want 10월", h.Weeks[heatmapWeeks-1].Month)
+	}
+	if h.StudiedDays != 4 || h.Longest != 3 || !h.TodayDone {
+		t.Errorf("studied=%d longest=%d todayDone=%v, want 4/3/true", h.StudiedDays, h.Longest, h.TodayDone)
+	}
+	// 첫 칸부터 오늘까지가 DB에서 읽어야 할 날 수다.
+	if got, want := heatmapDays(today), (heatmapWeeks-1)*7+7; got != want {
+		t.Errorf("heatmapDays = %d, want %d", got, want)
+	}
+}
+
+// 이번 주의 남은 날은 그리지 않고, 오늘 안 했으면 TodayDone이 거짓이다.
+func TestBuildHeatmapMidWeek(t *testing.T) {
+	today := time.Date(2026, 9, 30, 9, 0, 0, 0, time.UTC) // 수요일
+	h := buildHeatmap([]model.DailyStat{{Date: "2026-09-29", Total: 5}}, today)
+
+	week := h.Weeks[heatmapWeeks-1].Days
+	for d, cell := range week {
+		if wantFuture := d > int(time.Wednesday); cell.Future != wantFuture {
+			t.Errorf("day %d future = %v, want %v", d, cell.Future, wantFuture)
+		}
+	}
+	if h.TodayDone || h.Longest != 1 {
+		t.Errorf("todayDone=%v longest=%d, want false/1", h.TodayDone, h.Longest)
+	}
+	if got, want := heatmapDays(today), (heatmapWeeks-1)*7+4; got != want {
+		t.Errorf("heatmapDays = %d, want %d", got, want)
 	}
 }
