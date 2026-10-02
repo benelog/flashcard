@@ -34,6 +34,25 @@ type Card struct {
 	DueAt        time.Time `json:"dueAt"`
 }
 
+// NewCard는 카드를 만들 때 보내는 값이다. 서버가 정하는 ID·학습 기록은 없다.
+type NewCard struct {
+	Text     string   `json:"text"`
+	Meaning  string   `json:"meaning"`
+	CardType string   `json:"cardType,omitempty"`
+	Tags     []string `json:"tags,omitempty"`
+	Phonetic *string  `json:"phonetic,omitempty"`
+	Example  *string  `json:"example,omitempty"`
+	Notes    *string  `json:"notes,omitempty"`
+}
+
+// BulkResult는 카드 일괄 추가의 결과다. Skipped는 덱에 이미 있던 표현,
+// Invalid는 표현이나 뜻이 비었거나 종류가 틀려 서버가 받지 않은 행이다.
+type BulkResult struct {
+	Added   int `json:"added"`
+	Skipped int `json:"skipped"`
+	Invalid int `json:"invalid"`
+}
+
 type Session struct {
 	ID         string    `json:"id"`
 	Mode       string    `json:"mode"`

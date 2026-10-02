@@ -102,6 +102,8 @@ func New(cfg *config.Config, s model.Store) *gin.Engine {
 		api.GET("/decks/:slug/cards", h.ListDeckCards)
 		api.POST("/decks/:slug/cards/bulk", h.BulkCreateCards)
 		api.GET("/decks/:slug/export", h.ExportDeck)
+		api.GET("/decks/:slug/story", h.GetDeckStory)
+		api.PUT("/decks/:slug/story", h.PutDeckStory)
 		api.POST("/decks/:slug/share", h.ShareDeck)
 		api.DELETE("/decks/:slug/share", h.UnshareDeck)
 

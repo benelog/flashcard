@@ -79,6 +79,7 @@ flashcard login(또는 메뉴의 프로그램 ▸ 로그인)으로 브라우저�
 		newCardsCmd(client),
 		newDueCmd(client),
 		newStudyCmd(client),
+		newImportCmd(client),
 	)
 
 	if o.nested {

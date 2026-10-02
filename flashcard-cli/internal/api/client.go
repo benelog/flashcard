@@ -116,6 +116,28 @@ func (c *Client) ListDeckCards(ctx context.Context, slug string) ([]Card, error)
 	return cards, err
 }
 
+func (c *Client) CreateDeck(ctx context.Context, name string, description *string) (Deck, error) {
+	body := map[string]any{"name": name, "description": description}
+	var deck Deck
+	err := c.do(ctx, http.MethodPost, "/api/decks", body, &deck)
+	return deck, err
+}
+
+// PutDeckStory는 덱 스토리(마크다운)를 통째로 바꾼다. 빈 문자열은 스토리를 지운다.
+func (c *Client) PutDeckStory(ctx context.Context, slug, story string) error {
+	body := map[string]string{"story": story}
+	return c.do(ctx, http.MethodPut, "/api/decks/"+url.PathEscape(slug)+"/story", body, nil)
+}
+
+// BulkCreateCards는 카드를 한꺼번에 넣는다. 덱에 이미 있는 표현(대소문자·앞뒤
+// 공백 무시)은 서버가 건너뛰므로 같은 파일을 다시 넣어도 카드가 겹치지 않는다.
+func (c *Client) BulkCreateCards(ctx context.Context, slug string, cards []NewCard) (BulkResult, error) {
+	body := map[string]any{"cards": cards}
+	var out BulkResult
+	err := c.do(ctx, http.MethodPost, "/api/decks/"+url.PathEscape(slug)+"/cards/bulk", body, &out)
+	return out, err
+}
+
 func (c *Client) DueCount(ctx context.Context) (int, error) {
 	var out struct {
 		Count int `json:"count"`

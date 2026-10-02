@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/benelog/flashcard/internal/auth"
+	"github.com/benelog/flashcard/internal/model"
 )
 
 func (h *Handlers) ListDecks(c *gin.Context) {
@@ -85,4 +86,42 @@ func (h *Handlers) DeleteDeck(c *gin.Context) {
 		return
 	}
 	c.Status(http.StatusNoContent)
+}
+
+// deckStoryBody는 덱 스토리(마크다운 원문)를 주고받는 모양이다. 스토리가 없으면 null이다.
+type deckStoryBody struct {
+	Story *string `json:"story"`
+}
+
+func (h *Handlers) GetDeckStory(c *gin.Context) {
+	deckID, ok := h.deckIDFromPath(c)
+	if !ok {
+		return
+	}
+	story, err := h.Store.DeckStory(c.Request.Context(), auth.UserID(c), deckID)
+	if err != nil {
+		fail(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, deckStoryBody{Story: story})
+}
+
+// PutDeckStory는 스토리를 통째로 바꾼다. 빈 문자열이나 null은 스토리를 지운다
+// (웹 편집 화면에서 비워 저장한 것과 같다).
+func (h *Handlers) PutDeckStory(c *gin.Context) {
+	deckID, ok := h.deckIDFromPath(c)
+	if !ok {
+		return
+	}
+	var body deckStoryBody
+	if err := c.ShouldBindJSON(&body); err != nil {
+		badRequest(c, "invalid body")
+		return
+	}
+	story := model.NilIfBlank(model.OrEmpty(body.Story))
+	if err := h.Store.UpdateDeckStory(c.Request.Context(), auth.UserID(c), deckID, story); err != nil {
+		fail(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, deckStoryBody{Story: story})
 }

@@ -17,7 +17,7 @@ func newShellCmd(resolve func() options) *cobra.Command {
 		Short: "명령을 한 줄씩 받는 셸 모드",
 		Long: `명령을 한 줄씩 받는다.
 
-프롬프트에 decks·cards·due·study를 그대로 친다. help로 명령 목록을,
+프롬프트에 decks·cards·due·study·import를 그대로 친다. help로 명령 목록을,
 exit(또는 quit, Ctrl-D)로 셸을 나간다. --server·--token은 셸에 들어올 때의
 값을 이어 쓰고, 한 줄에서 준 플래그는 그 줄에만 적용된다.`,
 		Args: cobra.NoArgs,

@@ -3,6 +3,7 @@ package app
 import (
 	"encoding/json"
 	"net/http"
+	"strings"
 	"testing"
 
 	"github.com/google/uuid"
@@ -323,4 +324,30 @@ func TestWebAndAPIShareOneStore(t *testing.T) {
 
 	a.sendJSON(http.MethodPost, "/api/cards", `{"deckSlug":"`+slug+`","text":"walk","meaning":"걷다"}`)
 	mustContain(t, a.get("/decks/"+slug), "걷다")
+}
+
+// 덱 스토리는 JSON API로도 읽고 바꾼다. 비워 보내면 지운다.
+func TestAPIDeckStory(t *testing.T) {
+	a := newTestApp(t)
+	deck := decodeJSON[model.Deck](t, a.sendJSON(http.MethodPost, "/api/decks", `{"name":"Verbs"}`))
+	path := "/api/decks/" + deck.Slug + "/story"
+
+	type storyBody struct {
+		Story *string `json:"story"`
+	}
+	if got := decodeJSON[storyBody](t, a.sendJSON(http.MethodGet, path, "")); got.Story != nil {
+		t.Errorf("new deck story = %q, want null", *got.Story)
+	}
+
+	mustStatus(t, a.sendJSON(http.MethodPut, path, `{"story":"## 첫날\n\n**Carl**: Heading into work?"}`), http.StatusOK)
+	if got := decodeJSON[storyBody](t, a.sendJSON(http.MethodGet, path, "")); got.Story == nil || !strings.Contains(*got.Story, "Heading into work?") {
+		t.Errorf("story after PUT = %v", got.Story)
+	}
+	mustContain(t, a.get("/decks/"+deck.Slug), "Heading into work?") // 웹 화면도 같은 스토리를 그린다
+
+	mustStatus(t, a.sendJSON(http.MethodPut, path, `{"story":"  "}`), http.StatusOK)
+	if got := decodeJSON[storyBody](t, a.sendJSON(http.MethodGet, path, "")); got.Story != nil {
+		t.Errorf("blank PUT should clear the story, got %q", *got.Story)
+	}
+	mustStatus(t, a.sendJSON(http.MethodPut, "/api/decks/nope/story", `{"story":"x"}`), http.StatusNotFound)
 }
