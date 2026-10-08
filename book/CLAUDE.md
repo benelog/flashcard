@@ -34,7 +34,7 @@
 - PDF: `npm run pdf`(`book-template/lib/pdf.mjs`)가 표지·차례를 만들고 빌드 결과를 장 순서대로 인쇄해 `flashcard-book.pdf` 한 권으로 병합한다. CI(`book.yml`)가 매 배포마다 재생성한다.
 - EPUB: `npm run epub`(`book-template/lib/epub.mjs`)이 빌드 결과에서 장마다 본문을 뽑아 `flashcard-book.epub`(EPUB 3)으로 묶는다. CI가 PDF와 함께 재생성한다.
 - POD 원고: `npm run pod`(`book-template/lib/pod.mjs`)가 교보문고 바로출판 POD용 B5(188×254mm) 본문 PDF를 `book/.pod/`(gitignore)에 만든다. 종이책 조판(나눔명조 10pt, D2Coding 코드, 흑백 강조, 홀짝 거울 여백)을 덧입히고 표지는 넣지 않는다. CI는 만들지 않는다. 판형·용지를 고른 근거와 등록 전 확인 사항은 `book/pod-prize.md`.
-- 형식별 용도와 조판 수치(웹·EPUB·A4 PDF·POD)는 `book/formats.md`에 있다. A4 PDF는 집에서 직접 인쇄하는 독자를 위한 판이다.
+- 형식별 용도와 조판 수치(웹·EPUB·A4 PDF·POD)는 `book/formats.md`에 있다. A4 PDF는 집이나 회사에서 직접 프린트하는 독자를 위한 판이다("직접 인쇄"가 아니라 "직접 프린트"로 쓴다).
 - 배포: GitHub Pages (https://benelog.github.io/flashcard/). `.github/workflows/book.yml`이 `book/**`·`book-template/**` 변경 push 시 자동 배포한다.
 - 인라인 코드의 `{{ }}`는 엔진이 `v-pre`를 붙여 Vue 보간을 막는다(Go 템플릿 표기 때문에 필수). AsciiDoc 원고에서도 일반 백틱 안에 그대로 쓴다.
 
