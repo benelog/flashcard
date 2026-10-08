@@ -51,4 +51,4 @@
 
 `npm run pod`(`book-template/lib/pod.mjs`)이 `book/.pod/`에 만든다.
 조판 수치와 판형을 고른 근거는 [pod-prize.md](pod-prize.md)에 있다.
-요약하면 책 크기 188×254mm에 재단 여유 사방 3mm, 본문 나눔명조 10pt·행간 1.7, 코드 D2Coding 8pt, 안쪽 22mm·바깥쪽 16mm 거울 여백, 그레이스케일, 526쪽이다.
+요약하면 책 크기 188×254mm에 재단 여유 사방 3mm, 본문 나눔명조 10pt·행간 1.7, 코드 D2Coding 8pt, 안쪽 22mm·바깥쪽 16mm 거울 여백, 그레이스케일, 426쪽이다.

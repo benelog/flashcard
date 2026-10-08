@@ -7,4 +7,4 @@
 - `go/`: Go 장의 완결 실행형 예제. `go/hello`, `go/grade` 각 디렉터리에서 `go run .`으로 실행한다.
 - `sql/`: 데이터베이스 기초 장의 연습 문장 모음(`sqlite3 practice.db < practice.sql`).
 
-원고의 코드 블록 중 완결된 예제는 여기 파일을 `include::`로 인용하고, 짧은 조각은 원고에 직접 적혀 있다(집필 규약은 `book/CLAUDE.md`).
+원고의 코드 블록 중 완결된 예제는 여기 파일을 `include::`로 인용하고, 짧은 조각은 원고에 직접 적혀 있다(집필 규약은 `book/AGENTS.md`).

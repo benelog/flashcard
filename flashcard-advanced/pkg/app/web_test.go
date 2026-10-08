@@ -526,7 +526,7 @@ func TestVoiceAnswer(t *testing.T) {
 	mustStatus(t, front, http.StatusOK)
 	mustContain(t, front, "오늘 첫 출근이에요.")
 	mustContain(t, front, `hx-post="/study/speak"`)
-	mustNotContain(t, front, "맞았어요")     // 스스로 맞았다고 할 수 없다
+	mustNotContain(t, front, "맞았어요")         // 스스로 맞았다고 할 수 없다
 	mustNotContain(t, front, "my first day") // 원문은 답하기 전에 보이지 않는다
 	state := hiddenFields(t, front)
 	if state.Get("voice") != "1" {

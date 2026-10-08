@@ -3,7 +3,7 @@
 지난 일의 기록을 두는 곳이다. 지금 따라야 할 안내가 아니다.
 
 지금 읽어야 할 문서는 저장소 루트에 있다. 앱 소개와 개발 시작은 [README.md](../README.md),
-배포와 환경 설정은 [DEPLOY.md](../DEPLOY.md), 작업 규칙은 [CLAUDE.md](../CLAUDE.md)다.
+배포와 환경 설정은 [DEPLOY.md](../DEPLOY.md), 작업 규칙은 [AGENTS.md](../AGENTS.md)다.
 책 원고는 `book/`에 따로 있다.
 
 | 파일 | 내용 |

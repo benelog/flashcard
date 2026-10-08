@@ -10,10 +10,10 @@
       </mxGeometry>
     </mxCell>
 
-    <mxCell id="g1" value="훅 &lt;span style=&quot;font-family:Courier New&quot;&gt;go-check.sh&lt;/span&gt;&lt;br&gt;&lt;span style=&quot;font-size:12px;font-weight:normal&quot;&gt;파일 수정 직후 · 0.2초 · 시스템이 강제&lt;/span&gt;" style="rounded=1;arcSize=12;html=1;fillColor=#CFE2F3;strokeColor=#4A7BA6;fontColor=#1F4E79;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+    <mxCell id="g1" value="파일 수정마다&lt;br&gt;&lt;span style=&quot;font-size:12px;font-weight:normal&quot;&gt;에디터 · 에이전트 훅 · 0.2초 · 자동&lt;/span&gt;" style="rounded=1;arcSize=12;html=1;fillColor=#CFE2F3;strokeColor=#4A7BA6;fontColor=#1F4E79;fontSize=14;fontStyle=1;" vertex="1" parent="1">
       <mxGeometry x="10" y="60" width="200" height="56" as="geometry"/>
     </mxCell>
-    <mxCell id="g2" value="서브에이전트 &lt;span style=&quot;font-family:Courier New&quot;&gt;go-quality&lt;/span&gt;&lt;br&gt;&lt;span style=&quot;font-size:12px;font-weight:normal&quot;&gt;커밋 전 · 몇 초~1분 · 에이전트가 판단&lt;/span&gt;" style="rounded=1;arcSize=12;html=1;fillColor=#CFE2F3;strokeColor=#4A7BA6;fontColor=#1F4E79;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+    <mxCell id="g2" value="커밋 전 &lt;span style=&quot;font-family:Courier New&quot;&gt;check.sh&lt;/span&gt;&lt;br&gt;&lt;span style=&quot;font-size:12px;font-weight:normal&quot;&gt;명령 하나 · 몇 초~30초 · 직접 실행&lt;/span&gt;" style="rounded=1;arcSize=12;html=1;fillColor=#CFE2F3;strokeColor=#4A7BA6;fontColor=#1F4E79;fontSize=14;fontStyle=1;" vertex="1" parent="1">
       <mxGeometry x="240" y="60" width="200" height="56" as="geometry"/>
     </mxCell>
     <mxCell id="g3" value="CI &lt;span style=&quot;font-family:Courier New&quot;&gt;ci.yml&lt;/span&gt;&lt;br&gt;&lt;span style=&quot;font-size:12px;font-weight:normal&quot;&gt;push 후 원격 · 1분 30초 · 무조건&lt;/span&gt;" style="rounded=1;arcSize=12;html=1;fillColor=#EDEDED;strokeColor=#8C8C8C;fontColor=#333333;fontSize=14;fontStyle=1;" vertex="1" parent="1">
@@ -30,7 +30,7 @@
     <mxCell id="k1" value="gofmt -w · go vet" style="text;html=1;align=center;verticalAlign=middle;fontFamily=Courier New;fontSize=12;fontColor=#6B6B6B;" vertex="1" parent="1">
       <mxGeometry x="10" y="122" width="200" height="36" as="geometry"/>
     </mxCell>
-    <mxCell id="k2" value="build · vet · test&lt;br&gt;Vercel 호환" style="text;html=1;align=center;verticalAlign=middle;fontFamily=Courier New;fontSize=12;fontColor=#6B6B6B;" vertex="1" parent="1">
+    <mxCell id="k2" value="gofmt -l · build · vet&lt;br&gt;test · Vercel 호환" style="text;html=1;align=center;verticalAlign=middle;fontFamily=Courier New;fontSize=12;fontColor=#6B6B6B;" vertex="1" parent="1">
       <mxGeometry x="240" y="122" width="200" height="36" as="geometry"/>
     </mxCell>
     <mxCell id="k3" value="gofmt -l · build · vet&lt;br&gt;test · grep (Vercel 호환)" style="text;html=1;align=center;verticalAlign=middle;fontFamily=Courier New;fontSize=12;fontColor=#6B6B6B;" vertex="1" parent="1">
