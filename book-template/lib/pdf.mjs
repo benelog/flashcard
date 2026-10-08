@@ -9,6 +9,29 @@ import { pdfCoverHtml, pdfTocHtml } from './cover.mjs'
 import { findChrome, serveDist } from './server.mjs'
 import { flattenChapters } from './toc.mjs'
 
+// 북마크(PDF 아웃라인)를 한 단계로 단다. items: [{ title, pageIndex }]
+export function addOutline(doc, items) {
+  const ctx = doc.context
+  const rootRef = ctx.nextRef()
+  const itemRefs = items.map(() => ctx.nextRef())
+  items.forEach((item, i) => {
+    const dict = ctx.obj({})
+    dict.set(PDFName.of('Title'), PDFHexString.fromText(item.title))
+    dict.set(PDFName.of('Parent'), rootRef)
+    dict.set(PDFName.of('Dest'), ctx.obj([doc.getPage(item.pageIndex).ref, PDFName.of('Fit')]))
+    if (i > 0) dict.set(PDFName.of('Prev'), itemRefs[i - 1])
+    if (i < itemRefs.length - 1) dict.set(PDFName.of('Next'), itemRefs[i + 1])
+    ctx.assign(itemRefs[i], dict)
+  })
+  const outlineRoot = ctx.obj({})
+  outlineRoot.set(PDFName.of('Type'), PDFName.of('Outlines'))
+  outlineRoot.set(PDFName.of('First'), itemRefs[0])
+  outlineRoot.set(PDFName.of('Last'), itemRefs[itemRefs.length - 1])
+  outlineRoot.set(PDFName.of('Count'), PDFNumber.of(items.length))
+  ctx.assign(rootRef, outlineRoot)
+  doc.catalog.set(PDFName.of('Outlines'), rootRef)
+}
+
 export async function exportPdf(root, book) {
   const dist = join(root, '.vitepress/dist')
   const chapters = flattenChapters(book)
@@ -96,32 +119,10 @@ export async function exportPdf(root, book) {
     })
   })
 
-  // ── 북마크(PDF 아웃라인) ────────────────────────────────────────
-  const outlineItems = [
+  addOutline(merged, [
     { title: '차례', pageIndex: coverPages },
     ...chapters.map((c, i) => ({ title: c.title, pageIndex: chapterStartIndex[i] })),
-  ]
-  {
-    const ctx = merged.context
-    const rootRef = ctx.nextRef()
-    const itemRefs = outlineItems.map(() => ctx.nextRef())
-    outlineItems.forEach((item, i) => {
-      const dict = ctx.obj({})
-      dict.set(PDFName.of('Title'), PDFHexString.fromText(item.title))
-      dict.set(PDFName.of('Parent'), rootRef)
-      dict.set(PDFName.of('Dest'), ctx.obj([merged.getPage(item.pageIndex).ref, PDFName.of('Fit')]))
-      if (i > 0) dict.set(PDFName.of('Prev'), itemRefs[i - 1])
-      if (i < itemRefs.length - 1) dict.set(PDFName.of('Next'), itemRefs[i + 1])
-      ctx.assign(itemRefs[i], dict)
-    })
-    const outlineRoot = ctx.obj({})
-    outlineRoot.set(PDFName.of('Type'), PDFName.of('Outlines'))
-    outlineRoot.set(PDFName.of('First'), itemRefs[0])
-    outlineRoot.set(PDFName.of('Last'), itemRefs[itemRefs.length - 1])
-    outlineRoot.set(PDFName.of('Count'), PDFNumber.of(outlineItems.length))
-    ctx.assign(rootRef, outlineRoot)
-    merged.catalog.set(PDFName.of('Outlines'), rootRef)
-  }
+  ])
 
   const out = join(dist, book.pdf.fileName)
   await writeFile(out, await merged.save())

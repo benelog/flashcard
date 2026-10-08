@@ -23,6 +23,7 @@ book/node_modules/
 book/.generated/
 book/.vitepress/dist/
 book/.vitepress/cache/
+book/.pod/
 book-template/node_modules/
 
 .idea/

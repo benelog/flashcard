@@ -13,12 +13,24 @@ const MIME = {
   '.svg': 'image/svg+xml',
   '.png': 'image/png',
   '.woff2': 'font/woff2',
+  '.ttf': 'font/ttf',
   '.ico': 'image/x-icon',
 }
 
-export async function serveDist(dist, base) {
+// mounts: dist 밖의 디렉터리를 덧붙여 서빙한다 ({ '/경로/': 디렉터리 }). POD 글꼴 캐시가 쓴다.
+export async function serveDist(dist, base, mounts = {}) {
   const server = createServer(async (req, res) => {
     const path = decodeURIComponent(new URL(req.url, 'http://localhost').pathname)
+    const mount = Object.keys(mounts).find((prefix) => path.startsWith(prefix))
+    if (mount) {
+      const file = join(mounts[mount], path.slice(mount.length))
+      if (!existsSync(file)) {
+        res.writeHead(404)
+        return res.end()
+      }
+      res.writeHead(200, { 'content-type': MIME[extname(file)] ?? 'application/octet-stream' })
+      return res.end(await readFile(file))
+    }
     if (!path.startsWith(base)) {
       res.writeHead(404)
       return res.end()

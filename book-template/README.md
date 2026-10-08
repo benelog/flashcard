@@ -9,7 +9,7 @@ AsciiDoc 원고를 이북 뷰어 웹사이트와 PDF·EPUB 한 권으로 배포�
 ## 구성
 
 ```
-bin/book.mjs        CLI: dev | build | preview | pdf | epub | og
+bin/book.mjs        CLI: dev | build | preview | pdf | epub | pod | og
 lib/config.mjs      defineBookConfig(book): book.config → VitePress 설정
 lib/generate.mjs    원고(.adoc) → .generated/*.md + 홈(index.md) 생성
 lib/include.mjs     include:: 지시자 해석(저장소 코드를 베끼지 않고 인용)
@@ -17,6 +17,7 @@ lib/adoc.mjs        downdoc 변환 파이프라인(보호 → 변환 → 복원 
 lib/cover.mjs       표지 단일 소스(홈 랜딩·PDF 표지·PDF 차례)
 lib/pdf.mjs         빌드 결과를 장 순서대로 인쇄해 한 권으로 병합(아웃라인·쪽 번호)
 lib/epub.mjs        빌드 결과에서 본문을 뽑아 EPUB 3 한 권으로 묶기(표지·차례·그림)
+lib/pod.mjs         종이책 조판을 덧입혀 POD 본문 PDF 만들기(표제지·판권·차례, 홀짝 거울 여백, 글꼴 임베딩)
 lib/og.mjs          홈 표지에서 Open Graph 이미지(1200×630) 생성
 theme/              VitePress 테마(이북 뷰어 Layout.vue, custom.css, ebook.js)
 tools/              md2adoc.mjs(마크다운 원고 일회성 이행), verify-roundtrip.mjs(이행 검증)
@@ -54,6 +55,8 @@ templates/          새 저장소용 참고 파일(GitHub Actions 워크플로, 
      siteLabel: 'user.github.io/repo',        // PDF 표지 하단 표기
      pdf: { fileName: 'my-book.pdf' },
      epub: { fileName: 'my-book.epub' },     // 생략하면 PDF 이름의 확장자만 바꾼다
+     // POD 본문(book pod, 결과는 .pod/). 기본값은 188×254mm, 여백 위20·아래22·안쪽22·바깥16mm
+     pod: { fileName: 'my-book-pod.pdf', width: 188, height: 254, isbn: '...' },
      storage: { prefix: 'mybook' },           // 북마크·형광펜 localStorage 키 접두사
      cover: {
        kicker: '시리즈 라벨',

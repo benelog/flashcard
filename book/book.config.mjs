@@ -21,6 +21,13 @@ export default {
   siteLabel: 'benelog.github.io/flashcard',
   pdf: { fileName: 'flashcard-book.pdf' },
   epub: { fileName: 'flashcard-book.epub' },
+  // 교보문고 바로출판 POD의 B5(46배판) 본문 원고. 가격 근거는 pod-prize.md.
+  pod: {
+    fileName: 'flashcard-book-pod-b5.pdf',
+    width: 188,
+    height: 254,
+    margin: { top: 20, bottom: 22, inner: 22, outer: 16 },
+  },
   // 북마크·형광펜 localStorage 키 접두사. ef-는 앱 이름 변경 전의 잔재를 이행한다.
   storage: { prefix: 'fc', legacyPrefixes: ['ef'] },
   cover: {

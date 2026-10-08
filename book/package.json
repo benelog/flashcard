@@ -11,6 +11,7 @@
     "preview": "book preview",
     "pdf": "book pdf",
     "epub": "book epub",
+    "pod": "book pod",
     "og": "book og"
   },
   "devDependencies": {
