@@ -24,6 +24,7 @@ book/.generated/
 book/.vitepress/dist/
 book/.vitepress/cache/
 book/.pod/
+book/.fonts-cache/
 book-template/node_modules/
 
 .idea/

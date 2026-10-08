@@ -31,9 +31,9 @@
 - 홈 표지(`book-template/theme/custom.css`의 "홈 — 책 표지" 절)와 PDF 표지(`book-template/lib/cover.mjs`)는 단위만 다르고(px/mm) 같은 그림이다. **한쪽을 고치면 다른 쪽도 같이 고친다.** 판 치수는 `--sw`·`--sh`·`--t`에서 나머지가 계산되므로 이 셋만 맞추면 된다.
 - 표지를 고쳤으면 `npm run og`로 OG 이미지를 다시 만들고 `npm run build`를 한 번 더 돌린다(빌드 결과에 담기는 것은 재생성한 파일이다). OG 이미지는 홈 표지의 제목부터 첫 판까지를 잘라 쓰므로 표지 구성이 바뀌면 잘리는 자리도 바뀐다.
 - 이북 뷰어 레이아웃: `book-template/theme/Layout.vue`(DefaultTheme 확장). 목차는 왼쪽 하나뿐(오른쪽 아웃라인 없음), 상단 바 "목차" 버튼으로 접기/펼치기, 본문은 회색 배경 위 페이지 카드, 상단 읽기 진행 바, 좌우 화살표와 ←/→ 키로 장 이동. 홈(책 표지 랜딩)은 `book.config.mjs`의 cover 데이터에서 생성된다(홈 원고 파일은 없다).
-- PDF: `npm run pdf`(`book-template/lib/pdf.mjs`)가 표지·차례를 만들고 빌드 결과를 장 순서대로 인쇄해 `flashcard-book.pdf` 한 권으로 병합한다. CI(`book.yml`)가 매 배포마다 재생성한다.
+- PDF: `npm run pdf`(`book-template/lib/pdf.mjs`)가 표지·차례를 만들고 빌드 결과를 장 순서대로 인쇄해 `flashcard-book.pdf` 한 권으로 병합한다. 직접 프린트용 A4 판이라 웹 화면용 크기가 아니라 종이책 조판(`book-template/lib/print.mjs`: 나눔명조 11pt, D2Coding 코드, 흑백 강조)을 덧입힌다. 인쇄 글꼴은 처음 실행할 때 내려받아 `book/.fonts-cache/`(gitignore)에 둔다. CI(`book.yml`)가 매 배포마다 재생성한다.
 - EPUB: `npm run epub`(`book-template/lib/epub.mjs`)이 빌드 결과에서 장마다 본문을 뽑아 `flashcard-book.epub`(EPUB 3)으로 묶는다. CI가 PDF와 함께 재생성한다.
-- POD 원고: `npm run pod`(`book-template/lib/pod.mjs`)가 교보문고 바로출판 POD용 B5(188×254mm) 본문 PDF를 `book/.pod/`(gitignore)에 만든다. 종이책 조판(나눔명조 10pt, D2Coding 코드, 흑백 강조, 홀짝 거울 여백)을 덧입히고 표지는 넣지 않는다. CI는 만들지 않는다. 판형·용지를 고른 근거와 등록 전 확인 사항은 `book/pod-prize.md`.
+- POD 원고: `npm run pod`(`book-template/lib/pod.mjs`)가 교보문고 바로출판 POD용 B5(188×254mm) 본문 PDF를 `book/.pod/`(gitignore)에 만든다. 종이책 조판(나눔명조 10pt, D2Coding 코드, 흑백 강조, 홀짝 거울 여백)을 덧입히고, 교보 원고 규정에 따라 재단 여유 사방 3mm·그레이스케일(Ghostscript 필요)·판권(`pod.colophon`)을 넣는다. 표지는 넣지 않는다. CI는 만들지 않는다. 판형·용지를 고른 근거와 등록 전 확인 사항은 `book/pod-prize.md`.
 - 형식별 용도와 조판 수치(웹·EPUB·A4 PDF·POD)는 `book/formats.md`에 있다. A4 PDF는 집이나 회사에서 직접 프린트하는 독자를 위한 판이다("직접 인쇄"가 아니라 "직접 프린트"로 쓴다).
 - 배포: GitHub Pages (https://benelog.github.io/flashcard/). `.github/workflows/book.yml`이 `book/**`·`book-template/**` 변경 push 시 자동 배포한다.
 - 인라인 코드의 `{{ }}`는 엔진이 `v-pre`를 붙여 Vue 보간을 막는다(Go 템플릿 표기 때문에 필수). AsciiDoc 원고에서도 일반 백틱 안에 그대로 쓴다.

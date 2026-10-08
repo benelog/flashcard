@@ -1,15 +1,32 @@
-// 빌드된 사이트(.vitepress/dist)를 로컬로 서빙하고, 표지·차례와 함께
-// 장 순서대로 인쇄해 한 권의 PDF로 합친다.
-// 북마크(PDF 아웃라인)와 연속 쪽 번호를 넣는다. 시스템 Chrome을 사용한다.
+// 직접 프린트용 A4 PDF. 집이나 회사의 프린터로 뽑아 읽는 독자를 위한 판이다.
+// 빌드된 사이트를 장 순서대로 인쇄 조판(print.mjs)으로 찍고, 표지·차례와 함께 한 권으로 합친다.
+// 프린트해서 직접 묶는 책이라 홀짝 구분 없이 좌우 여백을 같게 두고 쪽 번호는 아래 가운데에 찍는다.
+// 북마크(PDF 아웃라인)를 넣어 화면에서 넘겨 보기에도 쓸 수 있다. 시스템 Chrome을 사용한다.
 import { writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
-import puppeteer from 'puppeteer-core'
-import { PDFDocument, PDFHexString, PDFName, PDFNumber, StandardFonts, rgb } from 'pdf-lib'
+import { PDFDocument, PDFHexString, PDFName, PDFNumber } from 'pdf-lib'
 import { pdfCoverHtml, pdfTocHtml } from './cover.mjs'
-import { findChrome, serveDist } from './server.mjs'
+import { localFonts, pageNumbersHtml, printCss, stampNumbers, startPages, withPrinter } from './print.mjs'
 import { flattenChapters } from './toc.mjs'
 
-// 북마크(PDF 아웃라인)를 한 단계로 단다. items: [{ title, pageIndex }]
+// A4는 B5 POD 판보다 넓어서 본문을 한 단계 키워도 쪽수가 늘지 않는다. 일반 책 본문 크기(11pt)에
+// 펜으로 메모할 행간을 남긴다. 그림은 mm.
+const TYPE = {
+  body: 11,
+  lineHeight: 1.7,
+  h1: 20,
+  h2: 14,
+  h3: 12,
+  code: 9,
+  inlineCode: 9.5,
+  box: 9.5,
+  small: 9,
+  imageMaxHeight: 180,
+  phoneImageWidth: 70,
+}
+// 사무용·가정용 프린터는 가장자리 3~5mm를 찍지 못한다. 펀치 구멍이나 클립 자리도 남긴다.
+const MARGIN = { top: 20, bottom: 22, side: 20 }
+
 export function addOutline(doc, items) {
   const ctx = doc.context
   const rootRef = ctx.nextRef()
@@ -33,52 +50,36 @@ export function addOutline(doc, items) {
 }
 
 export async function exportPdf(root, book) {
-  const dist = join(root, '.vitepress/dist')
   const chapters = flattenChapters(book)
-  const { port, close } = await serveDist(dist, book.base)
-
-  const CONTENT_MARGIN = { top: '18mm', bottom: '18mm', left: '15mm', right: '15mm' }
-  const browser = await puppeteer.launch({
-    executablePath: findChrome(),
-    args: ['--no-sandbox', '--font-render-hinting=none'],
-  })
-
-  let coverBuf, tocBuf
-  const chapterDocs = []
-  try {
-    const page = await browser.newPage()
-
-    // 본문 장들
-    for (const { route } of chapters) {
-      await page.goto(`http://127.0.0.1:${port}${book.base}${route}`, {
-        waitUntil: 'networkidle0',
-        timeout: 90_000,
-      })
-      await page.evaluateHandle('document.fonts.ready')
-      const buf = await page.pdf({ format: 'A4', printBackground: true, margin: CONTENT_MARGIN })
-      chapterDocs.push(await PDFDocument.load(buf))
-      console.log(`printed: ${route}`)
-    }
-
-    // 장별 시작 쪽 번호(본문 기준 1부터)를 계산해 차례를 만든다
-    const startPages = []
-    let cursor = 1
-    for (const doc of chapterDocs) {
-      startPages.push(cursor)
-      cursor += doc.getPageCount()
-    }
-
-    await page.setContent(pdfTocHtml(chapters, startPages), { waitUntil: 'load', timeout: 60_000 })
-    await page.evaluate(() => document.fonts.ready)
-    tocBuf = await page.pdf({ format: 'A4', printBackground: true, margin: CONTENT_MARGIN })
-
-    await page.setContent(pdfCoverHtml(book), { waitUntil: 'load', timeout: 60_000 })
-    await page.evaluate(() => document.fonts.ready)
-    coverBuf = await page.pdf({ format: 'A4', printBackground: true, margin: 0, pageRanges: '1' })
-  } finally {
-    await browser.close()
-    close()
+  const bodyMargin = {
+    top: `${MARGIN.top}mm`,
+    bottom: `${MARGIN.bottom}mm`,
+    left: `${MARGIN.side}mm`,
+    right: `${MARGIN.side}mm`,
   }
+  const a4 = (margin) => ({ format: 'A4', printBackground: true, margin })
+  const none = { top: 0, bottom: 0, left: 0, right: 0 }
+
+  const { chapterDocs, coverBuf, tocBuf, numbersBuf } = await withPrinter(
+    root,
+    book,
+    async (printer) => {
+      const chapterDocs = await printer.chapters(chapters, printCss(TYPE), a4(bodyMargin))
+      const bodyPages = chapterDocs.reduce((n, d) => n + d.getPageCount(), 0)
+      return {
+        chapterDocs,
+        tocBuf: await printer.html(
+          localFonts(pdfTocHtml(chapters, startPages(chapterDocs))),
+          a4(bodyMargin),
+        ),
+        coverBuf: await printer.html(pdfCoverHtml(book), { ...a4(none), pageRanges: '1' }),
+        numbersBuf: await printer.html(
+          pageNumbersHtml(bodyPages, 210, 297, { bottom: MARGIN.bottom, align: 'center' }),
+          a4(none),
+        ),
+      }
+    },
+  )
 
   // ── 병합: 표지 + 차례 + 본문 ────────────────────────────────────
   const merged = await PDFDocument.create()
@@ -102,29 +103,15 @@ export async function exportPdf(root, book) {
     chapterStartIndex.push(merged.getPageCount())
     await append(doc)
   }
-
-  // 본문에만 연속 쪽 번호를 찍는다 (표지·차례 제외)
-  const font = await merged.embedFont(StandardFonts.Helvetica)
   const contentTotal = merged.getPageCount() - frontPages
-  merged.getPages().forEach((p, i) => {
-    if (i < frontPages) return
-    const label = `${i - frontPages + 1} / ${contentTotal}`
-    const width = font.widthOfTextAtSize(label, 9)
-    p.drawText(label, {
-      x: (p.getSize().width - width) / 2,
-      y: 24,
-      size: 9,
-      font,
-      color: rgb(0.45, 0.45, 0.45),
-    })
-  })
+  await stampNumbers(merged, numbersBuf, frontPages)
 
   addOutline(merged, [
     { title: '차례', pageIndex: coverPages },
     ...chapters.map((c, i) => ({ title: c.title, pageIndex: chapterStartIndex[i] })),
   ])
 
-  const out = join(dist, book.pdf.fileName)
+  const out = join(root, '.vitepress/dist', book.pdf.fileName)
   await writeFile(out, await merged.save())
   console.log(`PDF 생성 완료: ${out} (표지 ${coverPages} + 차례 ${tocPages} + 본문 ${contentTotal}쪽)`)
 }
