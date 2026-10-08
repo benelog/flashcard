@@ -21,6 +21,11 @@ export function flattenChapters(book) {
   return out
 }
 
+// EPUB 파일 이름. 따로 정하지 않으면 PDF 이름의 확장자만 바꾼다.
+export function epubFileName(book) {
+  return book.epub?.fileName ?? book.pdf.fileName.replace(/\.pdf$/, '.epub')
+}
+
 export function firstRoute(book) {
   return flattenChapters(book)[0].route
 }

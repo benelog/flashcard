@@ -44,6 +44,9 @@ jobs:
       - name: Export PDF
         run: npm run pdf
         working-directory: book
+      - name: Export EPUB
+        run: npm run epub
+        working-directory: book
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

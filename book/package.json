@@ -10,6 +10,7 @@
     "prebuild": "node scripts/update-metrics.mjs --check",
     "preview": "book preview",
     "pdf": "book pdf",
+    "epub": "book epub",
     "og": "book og"
   },
   "devDependencies": {

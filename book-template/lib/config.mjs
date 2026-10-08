@@ -3,7 +3,7 @@
 import { defineConfig } from 'vitepress'
 import footnote from 'markdown-it-footnote'
 import { FONT_URL, coverFontFaceCss } from './fonts.mjs'
-import { firstRoute, sidebar } from './toc.mjs'
+import { epubFileName, firstRoute, sidebar } from './toc.mjs'
 
 export function defineBookConfig(book) {
   return defineConfig({
@@ -52,6 +52,7 @@ export function defineBookConfig(book) {
         { text: '홈', link: '/' },
         { text: '읽기 시작', link: '/' + firstRoute(book) },
         { text: 'PDF 다운로드', link: `${book.site}${book.pdf.fileName}` },
+        { text: 'EPUB 다운로드', link: `${book.site}${epubFileName(book)}` },
       ],
       sidebar: sidebar(book),
       outline: false,

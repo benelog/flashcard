@@ -5,6 +5,7 @@
 //   book build    원고 변환 + VitePress 빌드 (깨진 링크 검증 포함)
 //   book preview  빌드 결과 미리보기
 //   book pdf      빌드 결과를 한 권의 PDF로 인쇄
+//   book epub     빌드 결과에서 본문을 뽑아 EPUB 한 권으로 묶기
 //   book og       홈 표지에서 OG 이미지 생성
 import { spawn } from 'node:child_process'
 import { existsSync } from 'node:fs'
@@ -107,6 +108,17 @@ switch (cmd) {
     break
   }
 
+  case 'epub': {
+    const book = await loadBook()
+    if (!existsSync(join(root, '.vitepress/dist'))) {
+      console.error('빌드 결과가 없다. 먼저 `book build`를 실행한다.')
+      process.exit(1)
+    }
+    const { exportEpub } = await import('../lib/epub.mjs')
+    await exportEpub(root, book)
+    break
+  }
+
   case 'og': {
     const book = await loadBook()
     if (!existsSync(join(root, '.vitepress/dist'))) {
@@ -119,6 +131,6 @@ switch (cmd) {
   }
 
   default:
-    console.error('사용법: book <dev|build|preview|pdf|og>')
+    console.error('사용법: book <dev|build|preview|pdf|epub|og>')
     process.exit(1)
 }

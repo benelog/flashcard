@@ -20,6 +20,7 @@ export default {
   author: '정상혁',
   siteLabel: 'benelog.github.io/flashcard',
   pdf: { fileName: 'flashcard-book.pdf' },
+  epub: { fileName: 'flashcard-book.epub' },
   // 북마크·형광펜 localStorage 키 접두사. ef-는 앱 이름 변경 전의 잔재를 이행한다.
   storage: { prefix: 'fc', legacyPrefixes: ['ef'] },
   cover: {
@@ -40,6 +41,7 @@ export default {
     actions: [
       { text: '읽기 시작', link: 'start', brand: true },
       { text: 'PDF 다운로드', link: 'pdf' },
+      { text: 'EPUB 다운로드', link: 'epub' },
       { text: 'GitHub 저장소', link: 'repo' },
     ],
     licenseHtml:

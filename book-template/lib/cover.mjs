@@ -2,12 +2,13 @@
 // 홈(랜딩) 페이지 마크다운과 PDF 표지·차례 HTML을 만든다.
 // 스타일은 theme/custom.css(홈)와 이 파일 안의 인쇄 CSS(PDF)가 담당한다.
 import { COVER_FONT, FONT_LINKS, coverFontFaceCss } from './fonts.mjs'
-import { firstRoute } from './toc.mjs'
+import { epubFileName, firstRoute } from './toc.mjs'
 
 // cover.actions의 link 약어를 실제 주소로 푼다.
 function actionHref(book, link) {
   if (link === 'start') return book.base + firstRoute(book)
   if (link === 'pdf') return `${book.site}${book.pdf.fileName}`
+  if (link === 'epub') return `${book.site}${epubFileName(book)}`
   if (link === 'repo') return book.repo
   return link
 }

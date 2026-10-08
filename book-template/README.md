@@ -1,6 +1,6 @@
 # book-template
 
-AsciiDoc 원고를 이북 뷰어 웹사이트와 PDF 한 권으로 배포하는 책 빌드 엔진이다.
+AsciiDoc 원고를 이북 뷰어 웹사이트와 PDF·EPUB 한 권으로 배포하는 책 빌드 엔진이다.
 원고(.adoc)를 downdoc으로 마크다운으로 변환해 VitePress로 빌드하고, 그 위에 종이책 느낌의 뷰어(페이지 넘김·책장 넘김 애니메이션·북마크·형광펜·읽기 진행 바)를 얹는다.
 
 책 저장소는 원고와 설정만 가지며, 이 패키지를 npm 의존성으로 쓴다.
@@ -9,13 +9,14 @@ AsciiDoc 원고를 이북 뷰어 웹사이트와 PDF 한 권으로 배포하는 
 ## 구성
 
 ```
-bin/book.mjs        CLI: dev | build | preview | pdf | og
+bin/book.mjs        CLI: dev | build | preview | pdf | epub | og
 lib/config.mjs      defineBookConfig(book): book.config → VitePress 설정
 lib/generate.mjs    원고(.adoc) → .generated/*.md + 홈(index.md) 생성
 lib/include.mjs     include:: 지시자 해석(저장소 코드를 베끼지 않고 인용)
 lib/adoc.mjs        downdoc 변환 파이프라인(보호 → 변환 → 복원 → 검증)
 lib/cover.mjs       표지 단일 소스(홈 랜딩·PDF 표지·PDF 차례)
 lib/pdf.mjs         빌드 결과를 장 순서대로 인쇄해 한 권으로 병합(아웃라인·쪽 번호)
+lib/epub.mjs        빌드 결과에서 본문을 뽑아 EPUB 3 한 권으로 묶기(표지·차례·그림)
 lib/og.mjs          홈 표지에서 Open Graph 이미지(1200×630) 생성
 theme/              VitePress 테마(이북 뷰어 Layout.vue, custom.css, ebook.js)
 tools/              md2adoc.mjs(마크다운 원고 일회성 이행), verify-roundtrip.mjs(이행 검증)
@@ -30,7 +31,7 @@ templates/          새 저장소용 참고 파일(GitHub Actions 워크플로, 
    // package.json
    {
      "type": "module",
-     "scripts": { "dev": "book dev", "build": "book build", "pdf": "book pdf", "og": "book og" },
+     "scripts": { "dev": "book dev", "build": "book build", "pdf": "book pdf", "epub": "book epub", "og": "book og" },
      "devDependencies": { "book-template": "file:../book-template" }
    }
    ```
@@ -52,6 +53,7 @@ templates/          새 저장소용 참고 파일(GitHub Actions 워크플로, 
      author: '지은이',
      siteLabel: 'user.github.io/repo',        // PDF 표지 하단 표기
      pdf: { fileName: 'my-book.pdf' },
+     epub: { fileName: 'my-book.epub' },     // 생략하면 PDF 이름의 확장자만 바꾼다
      storage: { prefix: 'mybook' },           // 북마크·형광펜 localStorage 키 접두사
      cover: {
        kicker: '시리즈 라벨',
@@ -62,7 +64,7 @@ templates/          새 저장소용 참고 파일(GitHub Actions 워크플로, 
        pitch: ['특징 한 줄', '특징 한 줄'],                 // 생략 가능
        homeDesc: '홈 하단 설명 문단',
        actions: [
-         { text: '읽기 시작', link: 'start', brand: true }, // start|pdf|repo|URL
+         { text: '읽기 시작', link: 'start', brand: true }, // start|pdf|epub|repo|URL
          { text: 'PDF 다운로드', link: 'pdf' },
        ],
        licenseHtml: '© 2026 지은이. <a href="...">CC BY-NC-SA 4.0</a>', // 생략 가능, 홈 버튼 아래 작은 글씨
@@ -99,7 +101,7 @@ templates/          새 저장소용 참고 파일(GitHub Actions 워크플로, 
 4. 원고(.adoc)를 쓰고 `npm run dev`로 확인한다. `.generated/`(변환 산출물)는 gitignore에 넣는다.
    정적 파일(이미지 등)은 `public/`에 두면 사이트 루트로 복사된다.
 5. 배포는 `templates/book.yml`을 참고해 GitHub Actions를 구성한다.
-   PDF·OG 생성은 시스템 Chrome을 쓴다(`PUPPETEER_EXECUTABLE_PATH`로 지정 가능).
+   PDF·EPUB·OG 생성은 시스템 Chrome을 쓴다(`PUPPETEER_EXECUTABLE_PATH`로 지정 가능).
 
 ## 원고 규약 (downdoc 부분집합)
 
