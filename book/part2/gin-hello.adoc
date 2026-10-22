@@ -54,7 +54,7 @@ go run .
 
 == 주소와 핸들러를 짝짓는 라우팅
 
-이 앱의 주소 지도는 `flashcard-basic/handlers.go`의 함수 하나에 모여 있다.
+이 앱의 라우팅은 `flashcard-basic/handlers.go`의 함수 하나에 모여 있다.
 한 줄에 하나씩 주소와 핸들러를 등록한다.
 
 [source,go]
@@ -63,7 +63,8 @@ include::../../flashcard-basic/handlers.go[tag=routes]
 ----
 
 `r.GET("/", ...)`은 "GET 요청이 `/` 주소로 오면 이 핸들러가 맡는다"는 등록이다.
-GET과 POST는 요청의 종류를 나타내는 HTTP 메서드(method)로, GET은 "보여 달라", POST는 "새로 만들거나 처리해 달라"는 뜻이고, 같은 주소라도 메서드가 다르면 다른 요청이다.
+GET과 POST는 요청의 종류를 나타내는 HTTP 메서드(method)로, GET은 "보여 달라", POST는 "새로 만들거나 처리해 달라"는 뜻이다.
+같은 주소라도 메서드가 다르면 다른 요청이다.
 브라우저의 폼이 보낼 수 있는 것은 이 둘뿐이라, 자바스크립트가 없는 이 앱에도 둘만 나온다.
 {ch-go-types}의 메서드(구조체에 딸린 함수)와는 이름만 같은 다른 개념이다.
 
@@ -102,7 +103,8 @@ include::../../flashcard-basic/handlers.go[tag=show-decks]
 
 `showDecks` 자체는 핸들러가 아니라, `store`를 받아 핸들러를 만들어 돌려주는 함수다.
 첫 줄 끝의 `gin.HandlerFunc`가 "핸들러 하나"를 뜻하는 타입이고, `return func(c *gin.Context) {`부터가 실제로 돌려주는 핸들러다.
-돌려준 안쪽 함수는 바깥에서 받은 `store`를 기억해서 요청이 올 때마다 그 저장소로 데이터를 가지러 가고, 라우팅 코드에서 `showDecks(store)`처럼 괄호를 붙여 등록한 이유가 이것이다.
+돌려준 안쪽 함수는 바깥에서 받은 `store`를 기억해서 요청이 올 때마다 그 저장소로 데이터를 가지러 간다.
+라우팅 코드에서 `showDecks(store)`처럼 괄호를 붙여 등록한 이유가 이것이다.
 이 구조의 원리(팩토리 함수, 클로저)는 {ch-gin}에서 다루니, 지금은 "핸들러에 저장소를 쥐여 주는 포장"으로 읽으면 된다.
 
 안쪽 함수의 매개변수 `c *gin.Context`는 요청 하나에 딸린 모든 것을 담은 값으로, 요청에서 값을 꺼내는 일도 응답을 만드는 일도 전부 `c`를 통한다.
@@ -125,7 +127,8 @@ include::../../flashcard-basic/templates/decks.html[tag=deck-list]
 
 HTML 사이의 `{{...}}`가 데이터가 들어갈 자리다.
 `{{range .Decks}}`는 `Decks` 목록을 하나씩 돌며 안쪽 HTML을 반복해 찍으라는 뜻이고, `{{.Name}}`은 지금 보고 있는 덱의 `Name` 값을 그 자리에 넣으라는 뜻이다.
-`{{.ID}}`로는 덱마다 `/decks/3` 같은 링크가 만들어지고, `{{else}}`는 목록이 비었을 때 찍을 내용(처음 본 "아직 덱이 없다")이다.
+`{{.ID}}`로는 덱마다 `/decks/3` 같은 링크가 만들어진다.
+`{{else}}` 뒤에는 목록이 비었을 때 찍을 내용(처음 본 "아직 덱이 없다")이 온다.
 
 이처럼 화면의 구조를 HTML로 적어 두고 데이터가 들어갈 자리만 비워 두었다가 요청마다 채워 그리는 파일을 템플릿(template)이라고 한다.
 html/template의 문법은 {ch-template-hello}에서 익히므로, 이 장에서는 `{{range}}`와 `{{.필드}}` 두 가지면 충분하다.
@@ -150,12 +153,13 @@ include::../../flashcard-basic/handlers.go[tag=create-deck]
 ----
 
 `c.PostForm("name")`이 폼에서 `name` 칸의 값을 꺼낸다.
-`strings.TrimSpace`로 앞뒤 공백을 걷어 낸 뒤, 빈 문자열이면 저장하지 않고 400(`http.StatusBadRequest`, "요청이 잘못됐다")으로 답한다.
+`strings.TrimSpace`로 앞뒤 공백을 걷어낸 뒤, 빈 문자열이면 저장하지 않고 400(`http.StatusBadRequest`, "요청이 잘못됐다")으로 답한다.
 
 폼에 `required`가 있는데도 서버가 또 검사하는 것은, 잠시 뒤에 쓸 curl 같은 도구로 폼을 거치지 않고도 빈 이름의 POST 요청을 보낼 수 있기 때문이다.
 브라우저의 검증은 사용자를 위한 편의이고, 데이터를 지키는 최종 검증은 서버 몫이다.
 
-저장에 성공하면 `c.Redirect(http.StatusSeeOther, "/")`로 "`/` 주소를 GET으로 다시 봐 달라"고 답하고, 브라우저는 덱 목록을 새로 요청해 그린다.
+저장에 성공하면 `c.Redirect(http.StatusSeeOther, "/")`로 "`/` 주소를 GET으로 다시 봐 달라"고 답한다.
+그러면 브라우저는 덱 목록을 새로 요청해 그린다.
 성공 화면을 곧바로 그리지 않는 데는 이유가 있다.
 POST 응답으로 화면을 그리면 새로고침할 때마다 마지막 요청인 POST가 되풀이되어 같은 덱이 자꾸 만들어진다.
 리다이렉트(redirect)를 끼우면 마지막 요청이 GET이라 새로고침이 안전하다(이 패턴의 이름과 사연은 {ch-html-template}에서 다룬다).
@@ -170,7 +174,8 @@ include::../../flashcard-basic/handlers.go[tag=show-cards]
 ----
 
 `c.Param("id")`가 라우팅의 `:id` 자리에 온 값을 꺼낸다.
-주소는 글자의 나열이라 이 값도 숫자가 아닌 문자열 `"3"`이므로, `strconv.ParseInt`로 정수로 바꾸고 `/decks/abc`처럼 변환이 실패하면 400으로 답한다.
+주소는 글자의 나열이라 이 값도 숫자가 아닌 문자열 `"3"`이다.
+그래서 `strconv.ParseInt`로 정수로 바꾸고, `/decks/abc`처럼 변환이 실패하면 400으로 답한다.
 
 `store.GetDeck`은 찾는 덱이 없으면 `ErrNotFound`를 돌려준다.
 저장소는 HTTP를 모르므로 "없다"는 사정을 에러 값으로만 알리고, 그것을 어떤 상태 코드로 전할지는 핸들러가 정한다.

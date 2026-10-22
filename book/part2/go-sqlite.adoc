@@ -5,7 +5,7 @@
 이 장에서는 {ch-go-hello}·{ch-go-types}의 Go와 {ch-database-basics}의 SQL을 잇는 코드를 읽는다.
 
 이 장부터 2부의 남은 세 장은 저장소의 `flashcard-basic/`에 있는 최소 플래시카드 앱을 읽는다.
-완성본(`flashcard-advanced/`)에서 배포·인증·간격 반복을 걷어 내고 웹 앱의 기본 구조만 남긴 앱이다.
+완성본(`flashcard-advanced/`)에서 배포·인증·간격 반복을 걷어내고 웹 앱의 기본 구조만 남긴 앱이다.
 테이블은 `decks`와 `cards` 둘뿐이고, 로그인이 없으며, 데이터는 현재 디렉터리의 `flashcard.db` 파일 하나에 저장된다.
 그 폴더에서 `go run .`을 실행하면 `http://localhost:8080`에서 열린다.
 이 장이 맡는 것은 데이터 층, 파일로는 `flashcard-basic/store.go` 하나다.
@@ -18,7 +18,8 @@ Go 표준 라이브러리의 `database/sql` 패키지는 SQL 데이터베이스 
 
 flashcard-basic이 쓰는 SQLite 드라이버는 modernc.org/sqlite다.
 C 언어로 만든 SQLite를 Go로 통째로 옮긴 순수 Go 구현이라, C 컴파일러 없이 `go build` 하나로 빌드가 끝난다.
-널리 쓰이는 또 다른 드라이버 mattn/go-sqlite3는 C로 된 원본을 cgo(Go 코드와 C 코드를 함께 컴파일하는 장치)로 빌드하므로, `CGO_ENABLED=1` 설정과 C 컴파일러 gcc가 있어야 하고 윈도우에서는 TDM-GCC 같은 툴체인을 따로 설치해야 한다footnote:[go-sqlite3 README의 빌드 요구 사항 https://github.com/mattn/go-sqlite3[mattn/go-sqlite3]].
+널리 쓰이는 또 다른 드라이버 mattn/go-sqlite3는 C로 된 원본을 cgo(Go 코드와 C 코드를 함께 컴파일하는 장치)로 빌드한다.
+그래서 `CGO_ENABLED=1` 설정과 C 컴파일러 gcc가 있어야 하고, 윈도우에서는 TDM-GCC 같은 툴체인을 따로 설치해야 한다footnote:[go-sqlite3 README의 빌드 요구 사항 https://github.com/mattn/go-sqlite3[mattn/go-sqlite3]].
 
 드라이버를 들이는 방법이 조금 별나다.
 `flashcard-basic/store.go`의 임포트 목록에서 발췌한 두 줄이다.
@@ -31,7 +32,8 @@ C 언어로 만든 SQLite를 Go로 통째로 옮긴 순수 Go 구현이라, C �
 ----
 
 임포트 경로 앞의 밑줄 `_`는 "이 패키지의 이름을 코드에서 쓰지는 않지만, 불러오기는 하라"는 표기다({ch-go-hello}에서 쓰지 않을 반환값을 버린 그 밑줄이다).
-Go는 패키지를 불러오는 순간 그 패키지의 초기화 코드를 실행하고, 드라이버는 그 초기화에서 "나는 sqlite라는 이름의 드라이버다"라고 `database/sql`에 자신을 등록한다.
+Go는 패키지를 불러오는 순간 그 패키지의 초기화 코드를 실행한다.
+드라이버는 그 초기화 코드에서 "나는 sqlite라는 이름의 드라이버다"라고 `database/sql`에 자신을 등록한다.
 이 등록이 목적인 임포트이고, 등록된 이름은 잠시 뒤 `sql.Open`의 첫 인자로 다시 나온다.
 
 == 연결 열기와 스키마 적용
@@ -62,12 +64,14 @@ include::../../flashcard-basic/store.go[tag=open]
 SQLite는 옛 버전과의 호환 때문에 외래 키 검사가 꺼진 채로 출발하므로, 연결할 때마다 켜 줘야 `references` 선언이 실제로 일한다.
 
 `db.SetMaxOpenConns(1)`은 연결을 한 개만 열게 한다.
-`database/sql`은 요청이 동시에 여럿 들어오면 연결도 여러 개 여는데, 파일 하나에 저장하는 SQLite는 한 연결이 쓰는 동안 다른 연결이 쓰려 하면 "database is locked" 오류로 거절한다.
-연결을 하나로 묶어 두면 요청들이 줄을 서서 차례로 쓰므로 이 오류가 나지 않는다.
+`database/sql`은 요청이 동시에 여럿 들어오면 연결도 여러 개 연다.
+그런데 파일 하나에 저장하는 SQLite는 한 연결이 쓰는 동안 다른 연결이 쓰려 하면 "database is locked" 오류로 거절한다.
+연결을 하나로 제한해 두면 요청들이 줄을 서서 차례로 쓰므로 이 오류가 나지 않는다.
 
 연결이 열리면 `db.Exec(schemaSQL)`로 스키마 파일을 통째로 실행한다.
 새 파일이면 테이블이 생기고, 이미 있으면 조용히 넘어간다.
-그래서 이 앱에는 데이터베이스 설치도 준비 절차도 없이, 서버를 켜면 파일과 테이블이 함께 준비된다.
+그래서 이 앱은 데이터베이스 설치도 준비 절차도 필요 없다.
+서버를 켜면 파일과 테이블이 함께 준비된다.
 {ch-first-run}에서 완성본을 처음 실행했을 때 `flashcard.db`가 저절로 생긴 것도 같은 방식이다.
 
 == 행을 Go 값으로
@@ -84,7 +88,7 @@ include::../../flashcard-basic/store.go[tag=types]
 id 필드가 `int64`인 것은 새 행의 번호를 알려 주는 `res.LastInsertId()`가 이 타입으로 돌려주기 때문이다.
 필드 뒤의 `` `json:"id"` `` 같은 문자열은 이 구조체를 JSON으로 내보낼 때 쓸 이름표로, 지금은 없는 것으로 보고 지나가도 된다(정체는 {ch-core-logic}에서 다룬다).
 
-== 넣기: Exec와 자리표시자
+== 넣기: Exec과 자리표시자
 
 덱 하나를 추가하는 함수다.
 
@@ -116,7 +120,8 @@ select의 열 순서와 `Scan`에 넘긴 순서가 어긋나면 값이 엉뚱한
 
 이 함수의 절반은 "없을 때"를 다룬다.
 조건에 맞는 행이 없으면 `database/sql`은 `sql.ErrNoRows` 에러를 내놓는데, 이 함수는 그것을 이 앱의 에러인 `ErrNotFound`로 바꿔 돌려준다.
-`errors.Is`는 돌아온 에러가 바로 그 에러인지 확인하는 표준 라이브러리 함수이고, 그 경우 빈 `Deck` 값(제로값)과 함께 `ErrNotFound`를 내보낸다.
+`errors.Is`는 돌아온 에러가 바로 그 에러인지 확인하는 표준 라이브러리 함수다.
+그 경우 이 함수는 빈 `Deck` 값(제로값)과 함께 `ErrNotFound`를 내보낸다.
 `ErrNotFound`는 `store.go` 첫머리에 선언해 둔 값이다.
 
 [source,go]
@@ -139,12 +144,13 @@ include::../../flashcard-basic/store.go[tag=list-cards]
 ----
 
 결과가 여러 행이면 `Query`를 쓴다.
-돌아오는 `rows`는 결과 전체를 담은 목록이 아니라, 책을 손가락으로 짚으며 읽듯 결과를 한 행씩 짚어 가는 읽기 창이다.
+돌아오는 `rows`는 결과 전체를 담은 목록이 아니라, 책을 손가락으로 짚으며 읽듯 결과를 한 행씩 따라가는 읽기 창이다.
 `rows.Next()`는 다음 행으로 넘어가며 행이 남아 있으면 `true`를 돌려주므로, 조건 반복 `for`에 끼우면 "행이 있는 동안 반복"이 된다.
 회차마다 `Scan`으로 행 하나를 `Card`에 옮기고 `append`({ch-go-types})로 슬라이스에 쌓는다.
 
 `defer rows.Close()`의 `defer`는 새 문법으로, "이 일을 지금 하지 말고 이 함수가 끝날 때 하라"는 예약이다.
-읽기 창은 다 쓰면 닫아 자원을 돌려줘야 하는데, 함수를 빠져나가는 길은 정상 반환과 중간의 `return`들로 여러 갈래다.
+읽기 창은 다 쓰면 닫아 자원을 돌려줘야 한다.
+그런데 함수를 빠져나가는 길은 맨 끝의 정상 반환 하나가 아니라 중간의 `return`들까지 여럿이다.
 여는 데 성공한 직후 닫는 일을 `defer`로 예약해 두면 어느 길로 나가든 빠짐없이 닫힌다.
 
 마지막 줄의 `rows.Err()`도 빠뜨리기 쉽다.
@@ -162,7 +168,8 @@ include::../../flashcard-basic/store.go[tag=list-cards]
 include::../../flashcard-basic/store.go[tag=delete-card]
 ----
 
-지우는 문장도 `Exec`으로 실행하고, 조건에 덱 번호도 들어 있어 그 덱에 속한 카드일 때만 지워진다.
+지우는 문장도 `Exec`으로 실행한다.
+조건에 덱 번호도 들어 있어 그 덱에 속한 카드일 때만 지워진다.
 delete는 조건에 맞는 행이 없어도 에러 없이 성공하므로, 영향을 받은 행 수를 꺼내는 `res.RowsAffected()`가 0인지 봐야 "지울 카드가 없었다"를 알 수 있다.
 그 경우 이 함수는 `ErrNotFound`를 돌려주므로, 부르는 쪽은 없는 카드를 찾을 때와 같은 방법으로 404 응답을 만들면 된다.
 덱 이름을 바꾸는 `RenameDeck`과 덱을 지우는 `DeleteDeck`도 `Exec`으로 실행하고 `RowsAffected`로 확인하는 같은 두 박자로 돈다.
@@ -192,7 +199,8 @@ go test ./...
 == 에이전트 활용 아이디어
 
 데이터베이스 코드를 맡길 때는 기존 함수를 본보기로 지목한다.
-"카드의 앞뒷면을 고치는 UpdateCard를 store.go에 추가하되, DeleteCard처럼 RowsAffected를 확인해 ErrNotFound를 돌려주라. store_test.go에 검증도 더하고 `go test ./...`가 통과하는 것까지 확인해 달라"처럼 따를 모양과 검증을 함께 지시하면, 이 파일의 규칙이 새 코드에도 이어지고 결과를 실행으로 받는다.
+"카드의 앞뒷면을 고치는 UpdateCard를 store.go에 추가하되, DeleteCard처럼 RowsAffected를 확인해 ErrNotFound를 돌려주라. store_test.go에 검증도 더하고 `go test ./...`가 통과하는 것까지 확인해 달라"처럼 따를 모양과 검증을 함께 지시한다.
+그러면 이 파일의 규칙이 새 코드에도 이어지고, 테스트를 실행한 결과까지 함께 받는다.
 
 "SQL에 값을 이어 붙이지 말고 자리표시자를 쓰라", "rows를 열면 `defer rows.Close()`와 마지막 `rows.Err()` 확인을 빠뜨리지 말라"는 `AGENTS.md`에 적어 둘 만하다.
 에이전트가 쓴 코드를 리뷰할 때도 이 목록이 점검표가 된다.
@@ -212,4 +220,5 @@ go test ./...
 
 다섯째, `sql.ErrNoRows` 같은 라이브러리의 에러는 store 안에서 `ErrNotFound`로 바꿔, 부르는 쪽이 `database/sql`을 몰라도 "없다"는 상황을 다루게 한다.
 
-다음 {ch-gin-hello}에서는 이 함수들이 웹 서버에 연결되어, 브라우저의 요청에 store에서 꺼낸 덱과 카드가 HTML 화면으로 돌아가는 왕복을 읽는다.
+다음 {ch-gin-hello}에서는 이 함수들을 부르는 웹 서버를 읽는다.
+브라우저의 요청에 store에서 꺼낸 덱과 카드가 HTML 화면으로 돌아가는 왕복이다.

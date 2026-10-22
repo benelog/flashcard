@@ -94,26 +94,28 @@ include::../../flashcard-advanced/internal/handlers/handlers.go[tag=deck-id-from
 include::../../flashcard-advanced/internal/handlers/handlers.go[tag=deck-id-by-slug]
 ----
 
-스토어는 `context.Context`, `uuid.UUID`, `string` 같은 일반 타입만 받아 SQL을 실행하고 실패를 `model.ErrNotFound` 같은 앱 공용 에러로 번역하며, 핸들러는 `gin.Context`에서 값을 꺼내 스토어에 넘기고 결과를 상태 코드와 JSON으로 번역한다.
+스토어는 `context.Context`, `uuid.UUID`, `string` 같은 일반 타입만 받아 SQL을 실행하고, 실패를 `model.ErrNotFound` 같은 앱 공용 에러로 번역한다.
+핸들러는 `gin.Context`에서 값을 꺼내 스토어에 넘기고, 결과를 상태 코드와 JSON으로 번역한다.
 스토어는 HTTP를 모르고, 핸들러는 SQL을 모른다.
 
 이 분리의 이점은 세 가지다.
 
 첫째, 변경 범위를 예측할 수 있다.
-응답 형식을 바꾸는 일은 handlers만, 쿼리를 최적화하는 일은 store만 건드리고, 잘못된 슬러그와 남의 덱을 모두 404로 처리하는 정책처럼 두 계층에 걸치는 결정은 `ErrNotFound`라는 계약 하나로 표현된다.
+응답 형식을 바꾸는 일은 handlers만, 쿼리를 최적화하는 일은 store만 건드린다.
+잘못된 슬러그와 남의 덱을 모두 404로 처리하는 정책처럼 두 계층에 걸치는 결정은 `ErrNotFound`라는 계약 하나로 표현된다.
 
 둘째, 테스트가 쉬워진다.
 스토어 함수는 `gin.Context`를 요구하지 않으므로 HTTP 없이 DB만 있으면 검증할 수 있고, 슬러그 인코딩 같은 순수 로직은 `internal/model/deckslug_test.go`처럼 DB조차 없이 검사한다.
 
 셋째, AI 에이전트에게 일을 맡기는 단위가 명확해진다.
-"덱 목록 응답에 카드 수를 추가해 줘" 같은 요청이 어느 계층의 어느 파일을 고치는 일인지 구조에서 드러나므로, 에이전트의 변경을 검토할 범위도 좁아진다.
+"덱 목록 응답에 카드 수를 추가해 달라" 같은 요청이 어느 계층의 어느 파일을 고치는 일인지 구조에서 드러나므로, 에이전트의 변경을 검토할 범위도 좁아진다.
 
 다만 이 앱의 분리는 실용적인 절충이다.
 `internal/model/deck.go`의 `Deck` 구조체에는 `` `json:"id"` `` 같은 태그가 붙어 있어, 스토어의 도메인 타입이 API 응답 타입을 겸한다.
-교과서대로라면 DB의 행 모양과 API 응답 모양이 따로 바뀔 수 있게 전달 전용 구조체인 DTO(Data Transfer Object)를 응답용으로 따로 둔다.
+교과서대로라면 DB의 행 모양과 API 응답 모양이 각자 바뀔 수 있게 전달 전용 구조체인 DTO(Data Transfer Object)를 응답용으로 따로 둔다.
 하지만 이 앱의 `Deck`은 필드가 모두 응답에 그대로 나가고 감추는 필드(`` `json:"-"` ``)가 없어서, 따로 두면 변환 코드만 늘어난다.
 `Store` 인터페이스도 처음에는 없었고, 로컬 모드용 SQLite 스토어라는 두 번째 구현이 필요해졌을 때 `*pgstore.Store`에서 추출했다.
-그 덕에 스토어를 모의 객체(mock)로 바꿔 끼우는 핸들러 테스트의 길도 열렸다.
+그 덕에 스토어를 모의 객체(mock)로 바꿔 끼워 핸들러를 테스트할 수도 있게 됐다.
 작은 프로젝트에서는 처음부터 계층을 쌓기보다 이렇게 필요가 증명될 때 나누는 편이 맞다.
 
 .[용어 풀이] 모의 객체(Mock)
@@ -130,7 +132,8 @@ include::../../flashcard-advanced/internal/handlers/handlers.go[tag=deck-id-by-s
 
 === pkg/app: Gin 엔진을 만드는 조립 지점
 
-다음은 핸들러 조립과 라우트 등록을 마친 `*gin.Engine`을 만드는 부분으로, 엔진을 프로세스에 하나만 만들어 돌려주는 `Engine`과 설정과 저장소를 받아 라우터를 조립하는 `New`가 등장한다.
+다음은 핸들러 조립과 라우트 등록을 마친 `*gin.Engine`을 만드는 부분이다.
+엔진을 프로세스에 하나만 만들어 돌려주는 `Engine`과, 설정과 저장소를 받아 라우터를 조립하는 `New`가 등장한다.
 
 [source,go]
 ----
@@ -198,14 +201,15 @@ func New(cfg *config.Config, s model.Store) *gin.Engine {
 ====
 
 셋째, `gin.Default()` 대신 `gin.New()`에 `gin.Recovery()`만 붙였다.
-`gin.Default()`가 함께 등록하는 요청 로거는 Vercel이 요청 로그를 남겨 주므로 중복이고, 패닉(panic)을 요청 하나의 실패(500 응답)로 가둬 프로세스 전체가 멈추지 않게 하는 복구 미들웨어만 남겼다.
+`gin.Default()`가 함께 등록하는 요청 로거는 Vercel이 요청 로그를 남겨 주므로 중복이다.
+그래서 패닉(panic)을 요청 하나의 실패(500 응답)로 가둬 프로세스 전체가 멈추지 않게 하는 복구 미들웨어만 남겼다.
 
 .[용어 풀이] 패닉(Panic)
 [NOTE]
 ====
 Go 프로그램이 더 진행할 수 없는 오류를 만나 그 자리에서 실행을 중단하는 것이다.
 없는 배열 칸을 읽거나 nil 포인터를 따라가는 것처럼 코드가 당연하게 여기던 전제가 깨졌을 때 일어나고, 아무도 손을 쓰지 않으면 프로세스 전체가 종료된다.
-Go는 `recover`로 이 중단을 가로챌 길을 열어 두었고, Gin의 `gin.Recovery()`가 요청마다 그 일을 대신한다.
+Go에는 이 중단을 가로채는 `recover`가 있고, Gin의 `gin.Recovery()`가 요청마다 그 일을 대신한다.
 ====
 
 넷째, 마지막의 `web.New(cfg, s).Register(r)`는 브라우저에 보일 HTML 화면의 라우트를 같은 엔진에 등록한다.
@@ -252,7 +256,8 @@ func main() {
 분기의 기준은 설정의 드라이버다.
 `DATABASE_URL` 없이 도는 로컬 모드(sqlite)에서는 SQLite 스토어를 직접 열어 `app.New`에 꽂고, PostgreSQL 설정이 있으면 그 조립까지 대신하는 `app.Engine()`을 부른다.
 어느 쪽이든 라우터를 만드는 것은 같은 `New`다(로컬 모드의 전체 그림은 {ch-local-dev}에서 다룬다).
-`engine.Run`은 `http.ListenAndServe`를 부르는 얇은 포장이라, `go run ./cmd/server` 하나로 8080 포트(`PORT` 환경 변수가 없을 때의 기본값)에 서버가 뜨고 이 한 프로세스가 화면 요청과 API 요청에 모두 응답한다.
+`engine.Run`은 `http.ListenAndServe`를 부르는 얇은 포장이다.
+`go run ./cmd/server` 하나로 8080 포트(`PORT` 환경 변수가 없을 때의 기본값)에 서버가 뜨고, 이 한 프로세스가 화면 요청과 API 요청에 모두 응답한다.
 
 Vercel 쪽 진입점 `api/index.go`도 하는 일은 같아서, `app.Engine()`으로 엔진을 얻어 들어온 요청을 그대로 넘겨줄 뿐이다.
 
@@ -292,7 +297,8 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 <p class="fc-caption">그림 16 하나의 엔진, 두 개의 진입점. 라우터를 조립하는 것은 <code>pkg/app</code>의 <code>New</code> 하나다. 로컬 서버는 드라이버에 따라 SQLite 저장소를 직접 꽂거나 <code>Engine()</code>을 부르고, Vercel 함수는 <code>Engine()</code>만 부른다.</p>
 ++++
 
-진입점은 둘이어도 조립은 `New` 하나라서 로컬과 운영의 요청이 같은 라우팅·핸들러·미들웨어 순서를 지나고, "로컬에서는 됐는데 배포하니 다르다" 같은 문제가 그만큼 줄어든다.
+진입점은 둘이어도 조립은 `New` 하나라서 로컬과 운영의 요청이 같은 라우팅·핸들러·미들웨어 순서를 지난다.
+"로컬에서는 됐는데 배포하니 다르다" 같은 문제가 그만큼 줄어든다.
 실행 환경이 바뀌어도(예: Vercel에서 일반 컨테이너로 이전) 진입점 파일 하나만 새로 쓰면 된다.
 
 == 에이전트 활용 아이디어
@@ -302,15 +308,18 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 "덱 목록에 카드 수를 더해 달라"는 요청에 에이전트는 스토어 메서드를 고치는 대신 핸들러 안에서 `count(*)` 질의를 바로 보내는 쪽으로 기울기 쉬우므로, 계층 경계일수록 지침이 필요하다.
 
 조립 코드의 위치 제약은 지침보다 검사에 맡긴다.
-`api/index.go`가 `internal/`을 가져올 수 없다는 규칙은 어겨도 로컬 빌드가 통과하므로, 이 저장소는 커밋 전에 도는 `./check.sh`가 `api/index.go`를 단독으로 빌드해 어기면 실패하게 했다({ch-quality-gates}).
+`api/index.go`가 `internal/`을 가져올 수 없다는 규칙은 어겨도 로컬 빌드가 통과한다.
+그래서 커밋 전에 도는 `./check.sh`가 `api/index.go`를 단독으로 빌드해, 이 규칙을 어기면 실패하게 했다({ch-quality-gates}).
 
 == 정리
 
 handlers(HTTP 관심사)와 store(DB 접근)로 계층을 나누면 변경 범위를 예측할 수 있고 테스트도 쉬워진다.
 핸들러가 구현이 아니라 `Store` 인터페이스에 기대므로 같은 핸들러가 PostgreSQL과 SQLite 어느 쪽과도 짝을 이룬다.
 
-`pkg/app/app.go`의 `New`가 조립한 `*gin.Engine`을 로컬 서버(`cmd/server`)와 Vercel 함수(`api/index.go`)가 공유하고, Vercel 쪽 완성품은 `Engine`이 `sync.Once` 싱글턴으로 제공한다.
-이 공유는 `*gin.Engine`이 표준 `http.Handler`라서 성립하고, 조립 코드를 `pkg/`에 둔 것은 Vercel 빌더가 `internal` 패키지를 가져올 수 없기 때문이다.
+`pkg/app/app.go`의 `New`가 조립한 `*gin.Engine`을 로컬 서버(`cmd/server`)와 Vercel 함수(`api/index.go`)가 공유한다.
+Vercel 쪽 완성품은 `Engine`이 `sync.Once` 싱글턴으로 제공한다.
+이 공유는 `*gin.Engine`이 표준 `http.Handler`라서 성립한다.
+조립 코드를 `pkg/`에 둔 것은 Vercel 빌더가 `internal` 패키지를 가져올 수 없기 때문이다.
 같은 엔진에 HTML 화면 라우트도 등록되므로 `/api/*`는 curl·자동화 스크립트 같은 프로그램을 위한 창구로 남는다.
 
 다음 장에서는 시선을 브라우저 쪽으로 돌려, {ch-html-hello}과 {ch-css-hello}에서 익힌 HTML과 CSS를 이 앱의 실제 화면 파일에서 다시 읽어 보겠다.

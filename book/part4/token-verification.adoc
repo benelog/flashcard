@@ -1,13 +1,14 @@
 = 토큰 검증의 원리: JWT와 JWKS
 
-{ch-supabase-auth}에서 로그인을 마친 브라우저의 HttpOnly 쿠키에는 서명된 토큰이 담겨 돌아온다.
+{ch-supabase-auth}에서 로그인을 마친 브라우저는 서명된 토큰을 HttpOnly 쿠키에 담아 돌아온다.
 이 장에서는 서버가 그 토큰이 진짜인지 판별하는 원리를 해부한다.
 앱을 따라 만드는 데에는 {ch-supabase-auth}까지로 충분하므로, 원리가 궁금할 때 읽으면 된다.
-JWT의 구조, JWKS 공개키로 서명을 확인하는 절차, 클레임 검증, 그리고 두 인증 경로가 같은 검증 코드로 모이는 구조를 차례로 본다.
+JWT의 구조, JWKS 공개키로 서명을 확인하는 절차, 클레임 검증, 그리고 두 인증 경로가 같은 검증 코드로 모이는 방식을 차례로 본다.
 
-== Go에서의 JWT 검증
+== Go로 JWT 검증하기
 
-JWT(JSON Web Token)는 헤더·페이로드·서명 세 부분을 점으로 이은 문자열이고, 페이로드에는 사용자 ID(`sub`), 만료 시각(`exp`) 같은 클레임(claim)이 들어 있다.
+JWT(JSON Web Token)는 헤더·페이로드·서명 세 부분을 점으로 이은 문자열이다.
+페이로드에는 사용자 ID(`sub`), 만료 시각(`exp`) 같은 클레임(claim)이 들어 있다.
 앞의 두 토막은 암호가 아니라 JSON을 Base64URL이라는 규칙으로 글자만 바꿔 적은 것이라, 토큰을 주운 사람도 내용은 읽을 수 있다.
 대신 한 글자라도 고치면 마지막 토막인 서명과 맞지 않게 되므로 고쳐 쓰지는 못한다.
 검증의 핵심은 "이 토큰을 정말 Supabase가 발급했는가"를 서명으로 확인하는 것이다.
@@ -44,7 +45,7 @@ JWT의 서명 방식 이름에서 HS256은 대칭 키(HMAC)를, RS256과 ES256�
 [NOTE]
 ====
 발급자가 개인키로 찍은 서명을 대조할 수 있도록 공개키를 모아 공개한 목록이 JWKS(JSON Web Key Set)다.
-인감은 주인만 찍을 수 있지만, 인감증명서(공개키)를 가진 사람은 누구나 그 도장이 진짜인지 대조할 수 있는 것과 같다.
+인감은 주인만 찍을 수 있지만, 인감증명서(공개키)가 있는 사람은 누구나 그 도장이 진짜인지 대조할 수 있는 것과 같다.
 ====
 
 토큰의 생김새와 공개키를 찾아 서명을 대조하는 흐름을 그림 25에 모았다.
@@ -104,14 +105,16 @@ func jwksFor(jwksURL string) (keyfunc.Keyfunc, error) {
 그래서 이 코드는 첫 실패 때 클라이언트를 남기지 않고 오류(500)를 돌려주어, 다음 요청이 다시 받아 오게 한다.
 
 위쪽 분기는 비대칭 키로 옮기기 전의 Supabase 프로젝트를 위한 공유 시크릿(HS256) 폴백(fallback)이라, 처음 읽을 때는 건너뛰어도 된다.
-Supabase는 2025년 7월에 비대칭 서명 키 체계를 내놓았고, 2025년 10월 1일부터 새 프로젝트는 비대칭 키로 서명한다footnote:[Supabase 블로그 "Introducing JWT Signing Keys"(2025-07-14). https://supabase.com/blog/jwt-signing-keys[Introducing JWT Signing Keys]].
+Supabase는 2025년 7월에 비대칭 서명 키 체계를 내놓았다.
+2025년 10월 1일부터 새 프로젝트는 비대칭 키로 서명한다footnote:[Supabase 블로그 "Introducing JWT Signing Keys"(2025-07-14). https://supabase.com/blog/jwt-signing-keys[Introducing JWT Signing Keys]].
 그 전에 만든 프로젝트는 대시보드의 JWT Signing Keys 화면에서 이관하기 전까지 공유 시크릿으로 서명하므로, `SUPABASE_JWT_SECRET`을 설정해 이 분기를 탄다.
 이 분기의 HMAC 확인은 알고리즘 혼동(algorithm confusion) 공격을 막는다.
 누구나 구할 수 있는 공개키를 비밀 열쇠인 척 쓰게 만들려고 토큰 머리의 서명 방식 표기(`alg`)를 바꿔치기하는 수법이다.
 
 === 왜 공유 시크릿이 아닌가
 
-HS256은 서명과 검증에 같은 시크릿을 쓰므로, 검증하는 Go 함수에도 시크릿을 환경 변수로 배포해야 하고, 우리 쪽에서 그 시크릿이 새면 누구든 토큰을 위조할 수 있다.
+HS256은 서명과 검증에 같은 시크릿을 쓰므로, 검증하는 Go 함수에도 시크릿을 환경 변수로 배포해야 한다.
+우리 쪽에서 그 시크릿이 새면 누구든 토큰을 위조할 수 있다.
 JWKS 기반 비대칭 서명은 이 문제를 구조적으로 없앤다.
 첫째, 개인키는 Supabase만 보유하므로 검증자 쪽에서 무엇이 유출되어도 위조할 수 없다.
 둘째, JWKS URL은 공개 정보라 관리할 비밀이 하나 줄어든다.
@@ -150,7 +153,7 @@ include::../../flashcard-advanced/internal/auth/jwt.go[tag=parse-claims]
 include::../../flashcard-advanced/internal/auth/jwt.go[tag=parse-user]
 ----
 
-검증 옵션을 두 함수에 한 벌씩 적어 두면 나중에 한쪽에만 검사를 더하기 쉽지만, 옵션이 `parseClaims` 한 곳에만 있으므로 헤더와 쿠키 두 입구의 기준이 어긋날 수 없다.
+검증 옵션을 두 함수에 한 벌씩 적어 두면 나중에 한쪽에만 검사를 더하는 실수가 생기기 쉽지만, 옵션이 `parseClaims` 한 곳에만 있으므로 헤더와 쿠키 두 입구의 기준이 어긋날 수 없다.
 
 === 필수 인증과 선택 인증
 
@@ -188,7 +191,7 @@ app := r.Group("/", w.withUser(), w.requireUser(), auth.EnsureProfile(w.store, w
 ----
 
 공개 그룹은 `withUser`만 지나서 익명도 통과하고, 로그인 그룹은 `requireUser`가 문을 지킨다.
-끝의 `EnsureProfile`은 첫 요청에서 사용자의 프로필 행을 만들어 주는 미들웨어로, {ch-gin}의 JSON API와 함께 쓰되 실패 응답만 화면용 오류 화면(`failPage`)으로 끼워 만든다.
+끝의 `EnsureProfile`은 첫 요청에서 사용자의 프로필 행을 만들어 주는 미들웨어로, {ch-gin}의 JSON API와 함께 쓰되 실패 응답만 오류 화면을 그리는 `failPage`로 바꿔 끼운다.
 이 공유는 `internal/auth/jwt.go`의 작은 함수 하나 덕분에 성립한다.
 
 [source,go]
@@ -207,13 +210,15 @@ func SetUserID(c *gin.Context, id uuid.UUID) {
 == 정리
 
 첫째, JWT 검증의 핵심은 서명 확인이다.
-Supabase가 개인키로 서명한 토큰을 우리 서버는 JWKS로 공개된 공개키로 대조하고, 웜 인스턴스가 JWKS 클라이언트를 재사용해 첫 요청 이후에는 네트워크 조회가 없다.
+Supabase가 개인키로 서명한 토큰을 우리 서버는 JWKS에서 받은 공개키로 대조한다.
+웜 인스턴스가 JWKS 클라이언트를 재사용하므로 첫 요청 이후에는 네트워크 조회가 없다.
 
 둘째, 공유 시크릿(HS256)과의 차이는 유출의 결과에 있다.
 JWKS 방식에서는 검증자에게 위조 능력이 없고, 배포할 비밀도 없으며, 키 회전도 발급자 혼자 끝낸다.
 
 셋째, 서명이 유효해도 클레임을 검증한다.
-허용 알고리즘 고정, `aud` 확인, 만료 필수라는 옵션 세 개가 `parseClaims` 한 곳에 모여 있고, 통과한 `sub`가 그대로 `profiles.id`가 된다.
+허용 알고리즘 고정, `aud` 확인, 만료 필수라는 옵션 세 개가 `parseClaims` 한 곳에 모여 있다.
+통과한 `sub`가 그대로 `profiles.id`가 된다.
 
 넷째, 인증 경로는 둘이지만 둘 다 같은 컨텍스트 키에 사용자 ID를 남기므로 그 아래 코드는 구분하지 않는다.
 

@@ -3,7 +3,8 @@
 이번 장에서는 HTTP API를 실제로 만드는 웹 프레임워크(web framework) Gin을 다룬다.
 Gin을 고른 이유는 {ch-tech-choices}에서 정리했으므로, 여기서는 요청 하나가 Gin을 통과하는 길을 실제 코드로 좇는다.
 
-브라우저가 API 주소로 요청을 보내면 Gin이 그 주소에 맞는 담당 함수를 찾고(라우팅), 요청은 그 함수에 닿기 전 인증 같은 공통 검사를 거친다(미들웨어).
+브라우저가 API 주소로 요청을 보내면 Gin이 그 주소에 맞는 담당 함수를 찾는다(라우팅).
+요청은 그 함수에 닿기 전에 인증 같은 공통 검사를 거친다(미들웨어).
 담당 함수(핸들러)는 요청 본문을 읽고 데이터베이스를 다녀와 응답을 만든다.
 핸들러 뒤의 저장소 계층과 앱 전체의 조립은 다음 {ch-app-assembly}에서 본다.
 
@@ -87,7 +88,8 @@ Gin의 그룹은 "접두사 + 미들웨어 묶음"일 뿐이라, 두 그룹처�
 
 `r.Group`의 두 번째 인자부터는 미들웨어를 필요한 개수만큼 받고, `pub` 그룹의 세 번째 인자처럼 그 자리에서 만든 익명 함수(anonymous function)를 끼워 넣을 수도 있다.
 브라우저와 서버 사이에는 응답을 보관했다가 같은 주소의 다음 요청에 대신 돌려주는 공유 캐시(shared cache)가 놓일 수 있다.
-공유 덱 목록은 로그인 여부에 따라 응답이 달라지므로, 로그인 사용자에게 "내 덱" 표시를 붙여 나간 목록을 공유 캐시가 다른 방문자에게 돌려주지 않도록 `Cache-Control: no-store`를 그룹 전체에 붙였다.
+공유 덱 목록은 로그인 여부에 따라 응답이 달라진다.
+그래서 로그인 사용자에게 "내 덱" 표시를 붙여 보낸 목록을 공유 캐시가 다른 방문자에게 돌려주지 않도록, 그룹 전체에 `Cache-Control: no-store` 헤더를 달았다.
 중괄호 블록 `{ ... }`는 문법적 의미가 없고, 그룹에 속한 라우트를 눈으로 구분하기 쉽게 하는 관례다.
 
 === gin.Context: 요청과 응답을 다루는 단일 창구
@@ -125,7 +127,7 @@ include::../../flashcard-advanced/internal/handlers/handlers.go[tag=healthz]
 .[용어 풀이] 경로 파라미터와 쿼리 파라미터
 [NOTE]
 ====
-둘 다 요청 주소에 값을 실어 보내는 방법이지만 값이 앉는 자리가 다르다.
+둘 다 요청 주소에 값을 실어 보내는 방법이지만 값이 놓이는 자리가 다르다.
 경로 파라미터(path parameter)는 주소의 한 칸 자체가 값인 경우로, `/api/decks/ab3f`에서 덱마다 달라지는 `ab3f` 자리가 그것이다.
 쿼리 파라미터(query parameter)는 주소 뒤에 물음표를 붙여 덧대는 부가 조건으로, `?dueBefore=2026-07-12T09:00:00Z`처럼 `이름=값` 형태로 적고 여러 개면 `&`로 잇는다.
 무엇을 가리키는지는 경로에, 결과를 어떻게 걸러 볼지는 쿼리에 적는 것이 보통이다.
@@ -167,8 +169,9 @@ if raw := c.Query("dueBefore"); raw != "" {
 "없으면 기본값, 있으면 검증"이 선택적 쿼리 파라미터를 다루는 전형적인 패턴이다.
 
 JSON이 아닌 응답도 가능하다.
-`internal/handlers/cards.go`의 CSV 내보내기 핸들러 `ExportDeck`은 `gin.Context`가 감싼 응답 스트림 `c.Writer`를 `internal/cardcsv`에 그대로 넘기고, 받은 쪽은 표준 라이브러리의 `csv.Writer`로 카드를 한 줄씩 흘려보낸다.
-CSV 전체를 메모리에 쌓아 둘 필요가 없고, `c.Writer`가 Go 표준의 응답 쓰기 규격(`http.ResponseWriter`)을 따르므로 표준 라이브러리의 부품을 곧바로 끼울 수 있다.
+`internal/handlers/cards.go`의 CSV 내보내기 핸들러 `ExportDeck`은 `gin.Context`가 감싼 응답 스트림 `c.Writer`를 `internal/cardcsv`에 그대로 넘긴다.
+받은 쪽은 표준 라이브러리의 `csv.Writer`로 카드를 한 줄씩 흘려보내므로 CSV 전체를 메모리에 쌓아 둘 필요가 없다.
+`c.Writer`가 Go 표준의 응답 쓰기 규격(`http.ResponseWriter`)을 따르므로 이렇게 표준 라이브러리의 부품을 곧바로 끼울 수 있다.
 
 == 요청 바인딩과 검증
 
@@ -183,12 +186,15 @@ include::../../flashcard-advanced/internal/handlers/decks.go[tag=create-deck]
 ----
 
 요청 본문 타입은 핸들러 안의 익명 구조체(anonymous struct)로 선언했다.
-`var body struct { ... }` 한 줄이 타입 선언과 변수 선언을 겸하고, 이 필드 조합은 다른 곳에서 쓸 일이 없다.
+`var body struct { ... }` 한 줄이 타입 선언과 변수 선언을 겸한다.
+이 필드 조합은 다른 곳에서 쓸 일이 없다.
 
-Gin의 `BindJSON`은 파싱 실패 시 스스로 400 응답을 쓰지만, `ShouldBindJSON`은 에러만 반환하므로 Flashcard는 에러 메시지 형식을 직접 통제하려고 이쪽만 쓴다.
+Gin의 `BindJSON`은 파싱에 실패하면 스스로 400 응답을 쓰지만, `ShouldBindJSON`은 에러만 반환한다.
+Flashcard는 에러 메시지 형식을 직접 통제하려고 `ShouldBindJSON`만 쓴다.
 
 검증도 `strings.TrimSpace(body.Name) == ""` 같은 코드로 직접 한다.
-Gin에는 `binding:"required"` 같은 구조체 태그로 규칙을 적는 기능도 있지만, 공백만 있는 이름 거부처럼 태그로 표현하기 애매한 규칙이 있고 에러 메시지를 직접 쓰고 싶었다.
+Gin에는 `binding:"required"` 같은 구조체 태그로 규칙을 적는 기능도 있지만 쓰지 않았다.
+공백만 있는 이름 거부처럼 태그로 표현하기 애매한 규칙이 있고, 에러 메시지도 직접 쓰고 싶었기 때문이다.
 태그 하나로 적히는 규칙이 대부분이고 기본 에러 문구로 충분하다면 태그 방식이 코드를 줄여 준다.
 
 부분 수정(PATCH)에서는 포인터 필드가 쓰인다.
@@ -232,7 +238,8 @@ include::../../flashcard-advanced/internal/handlers/cards.go[tag=to-input]
 
 허용값 목록 자체는 `model.IsCardType`이 들고 있다.
 카드가 들어오는 길이 JSON API, 웹 폼, CSV 가져오기 셋이라 목록을 한 곳에 둔 것이다.
-어긋난 값의 처리는 입구마다 달라서, 프로그램이 보내는 API 요청은 오타를 400으로 알리고, 사람이 채우는 폼과 CSV는 `model.NormalizeCardType`으로 기본 종류를 채워 등록을 살린다.
+어긋난 값의 처리는 입구마다 다르다.
+프로그램이 보내는 API 요청에는 오타를 400으로 알리고, 사람이 채우는 폼과 CSV에서는 `model.NormalizeCardType`으로 기본 종류를 채워 등록을 살린다.
 
 일괄 등록 핸들러 `BulkCreateCards`도 같은 함수를 행 단위로 쓰지만, 불량 행을 만나도 400을 내지 않는다.
 CSV에서 파싱한 최대 2,000행(`model.MaxBulkCards`) 가운데 불량 행만 건너뛰고 나머지를 저장한 뒤, 건너뛴 개수를 `invalid`로 응답에 담는다.
@@ -247,8 +254,8 @@ include::../../flashcard-advanced/internal/handlers/handlers.go[tag=error-helper
 ----
 
 `badRequest`는 요청을 보낸 쪽의 잘못(400)을 알리고, `fail`은 스토어가 돌려준 에러가 `model.ErrNotFound`면 404를, 그 밖이면 상세를 로그에만 남긴 채 "internal error" 메시지로 500을 준다.
-남은 401은 인증 미들웨어가 맡으므로, 이 앱의 JSON API가 내는 오류 상태 코드는 이 넷이 전부다.
-테이블 이름이나 SQL 조각이 담긴 DB 에러 문장을 화면에 그대로 보여 주면 공격자에게 내부 구조를 알려 주게 된다.
+여기에 인증 미들웨어가 맡는 401을 더하면, 이 앱의 JSON API가 내는 오류 상태 코드는 이 넷이 전부다.
+500의 상세를 로그에만 남기는 것은, 테이블 이름이나 SQL 조각이 담긴 DB 에러 문장을 화면에 그대로 보여 주면 공격자에게 내부 구조를 알려 주게 되기 때문이다.
 
 Gin 핸들러는 에러를 반환하지 않으므로({ch-tech-choices}), 도우미 호출 뒤 `return`하는 패턴이 모든 핸들러에 반복된다.
 Echo였다면 `return err` 한 줄로 중앙 에러 핸들러에 위임했을 대목이지만, 어디서 어떤 상태 코드가 나가는지 핸들러 안에서 다 보인다는 이점도 있다.
@@ -257,7 +264,8 @@ Echo였다면 `return err` 한 줄로 중앙 에러 핸들러에 위임했을 �
 
 === 미들웨어는 등록 순서대로 실행되는 체인이다
 
-Gin에서 미들웨어(middleware)와 핸들러는 같은 타입 `gin.HandlerFunc`이고, 한 요청에 매칭된 함수들이 등록 순서대로 배열을 이뤄 실행된다.
+Gin에서 미들웨어(middleware)와 핸들러는 같은 타입 `gin.HandlerFunc`이다.
+한 요청에 매칭된 함수들은 등록 순서대로 배열을 이뤄 실행된다.
 미들웨어 안에서 `c.Next()`를 호출하면 체인의 다음 함수로 진행하고, `c.Abort()`를 호출하면 남은 체인을 건너뛴다.
 
 .[용어 풀이] 미들웨어(Middleware)
@@ -325,7 +333,8 @@ func UserID(c *gin.Context) uuid.UUID {
 }
 ----
 
-`Middleware`는 설정값을 받아 `gin.HandlerFunc`를 반환하는 팩토리 함수(factory function)이고, 반환된 함수는 `jwksURL`과 `secret`을 기억한 채 도는 클로저(closure)다.
+`Middleware`는 설정값을 받아 `gin.HandlerFunc`를 반환하는 팩토리 함수(factory function)다.
+반환된 함수는 `jwksURL`과 `secret`을 기억한 채 도는 클로저(closure)다.
 미들웨어에 인자를 넘기고 싶을 때 쓰는 Gin의 표준 관용구다.
 
 .[용어 풀이] 팩토리 함수(Factory Function)와 클로저(Closure)
@@ -343,16 +352,16 @@ Gin의 미들웨어처럼 "인자를 하나만 받는 함수"라는 규격을 �
 이 장에서 중요한 것은 검증에 성공하면 `c.Set(userIDKey, userID)`로 사용자 ID를 요청 컨텍스트에 저장하고 `c.Next()`로 진행하는 마지막 두 줄이다.
 
 이후의 모든 핸들러는 `auth.UserID(c)` 한 줄로 지금 요청한 사용자를 얻는다.
-앞의 핸들러들에서 `h.Store.ListDecks(ctx, auth.UserID(c))`처럼 스토어 호출마다 첫 인자로 들어가던 값이고, 모든 쿼리에 조건으로 들어간다.
+앞의 핸들러들에서 `h.Store.ListDecks(ctx, auth.UserID(c))`처럼 스토어 호출마다 첫 인자로 들어가던 값이고, 모든 쿼리의 조건에 쓰인다.
 그래서 누군가 남의 덱 주소를 알아내 요청해도 쿼리 결과가 비어 404가 된다.
 
-`UserID`가 값이 없으면 패닉을 일으키는 `c.MustGet`을 쓰는 것은, 인증 미들웨어 뒤에서 값이 없다면 라우팅 구성 버그라서 크게 실패해야 빨리 드러나기 때문이다.
+`UserID`가 값이 없으면 패닉을 일으키는 `c.MustGet`을 쓰는 것은, 인증 미들웨어 뒤에서 값이 없다면 라우팅 구성의 버그이고 그런 버그는 크게 실패해야 빨리 드러나기 때문이다.
 
 공개 엔드포인트용 `OptionalMiddleware`는 토큰이 유효하면 사용자 ID를 실어 주고 없거나 무효면 거절 없이 통과시킨다.
 핸들러는 `auth.OptionalUserID(c)`로 "로그인했으면 UUID, 아니면 uuid.Nil"을 받아 공유 덱 목록의 "내 덱" 표시에 쓴다.
 
 로컬 모드의 `auth.LocalMiddleware`(`internal/auth/local.go`)는 검증 없이 모든 요청에 미리 정해 둔 사용자 ID를 싣지만, `c.Set(userIDKey, ...)`라는 계약은 그대로 지키므로 핸들러는 두 모드를 구분할 필요가 없다.
-검증 없는 인증이 왜 로컬에서만 허용되는지는 {ch-token-verification}에서 다룬다.
+검증 없는 인증이 왜 로컬에서만 허용되는지는 {ch-supabase-auth}에서 다룬다.
 
 === 도메인 로직도 미들웨어가 될 수 있다
 
@@ -368,18 +377,20 @@ include::../../flashcard-advanced/internal/auth/profile.go[tag=ensure-profile]
 이를 핸들러마다 챙기는 대신 인증 그룹 전체에 미들웨어로 걸어 "인증된 사용자는 반드시 프로필이 있다"는 불변식(invariant, 언제나 참이라고 보장되는 조건)을 만들었다.
 클로저 안의 `sync.Map`이 이미 확인한 사용자를 적어 두므로, 서버가 살아 있는 동안 사용자 한 명당 DB를 한 번만 확인한다.
 
-이 미들웨어는 JSON API와 웹 화면이 함께 쓰는데(화면 쪽은 {ch-supabase-auth}), 실패를 JSON으로 알릴지 오류 페이지로 알릴지는 `fail` 인자로 받는다.
+이 미들웨어는 JSON API와 웹 화면이 함께 쓴다(화면 쪽은 {ch-token-verification}).
+실패를 JSON으로 알릴지 오류 페이지로 알릴지는 `fail` 인자로 받은 함수가 정한다.
 라우트 등록부의 `h.EnsureProfile()`은 여기에 JSON 오류 응답을 끼운 얇은 메서드다.
 
 저장소는 `model.Store` 전체가 아니라 이 미들웨어가 부르는 메서드 하나만 담은 `profileStore` 인터페이스로 받는다.
-Go에서는 인터페이스를 쓰는 쪽에서 필요한 만큼만 정의하는 것이 관용구이고, 그러면 시그니처가 "저장소의 무엇을 건드리는가"를 알려 주며 테스트도 메서드 하나만 채운 스텁으로 충분하다.
+Go에서는 인터페이스를 쓰는 쪽에서 필요한 만큼만 정의하는 것이 관용구다.
+그러면 시그니처만 보고도 저장소의 무엇을 건드리는지 알 수 있고, 테스트도 메서드 하나만 채운 스텁으로 충분하다.
 
 == 에이전트 활용 아이디어
 
 새 엔드포인트는 기존 코드를 본보기로 지목하며 시키는 것이 가장 정확하다.
 "태그 목록 API를 추가해 달라. 요청 검증과 에러 응답은 덱 목록 핸들러의 방식을 따르라"처럼 저장소 안의 관례를 참조점으로 준다.
 
-"`pkg/app`의 라우트 등록을 읽어 메서드·경로·핸들러 표로 정리해 달라"는 지시는 자주 쓰는 지시문으로 저장해 두고 API가 늘 때마다 불러 쓸 만하다.
+"`pkg/app`의 라우트 등록을 읽어 메서드·경로·핸들러 표로 정리해 달라"는 지시문은 저장해 두고 API가 늘 때마다 불러 쓸 만하다.
 
 == 정리
 
@@ -387,6 +398,7 @@ net/http·chi·Echo 같은 대안과의 비교는 {ch-alternatives}에 있다.
 
 라우트 그룹이 인증 경계를 정하고, 핸들러는 `gin.Context` 하나로 파라미터를 읽고 `c.JSON`으로 응답한다.
 요청 본문은 `ShouldBindJSON`으로 받고 검증은 코드로 직접 하며, 에러 응답은 `badRequest`와 `fail`로 통일한다.
-미들웨어 체인은 Recovery, JWT 인증(로컬 모드에서는 고정 사용자), 프로필 보장 순으로 흐르고, 인증 미들웨어가 실어 준 사용자 ID를 모든 핸들러가 `auth.UserID(c)`로 꺼내 쓴다.
+미들웨어 체인은 Recovery, JWT 인증(로컬 모드에서는 고정 사용자), 프로필 보장 순으로 흐른다.
+인증 미들웨어가 실어 준 사용자 ID는 모든 핸들러가 `auth.UserID(c)`로 꺼내 쓴다.
 
-다음 {ch-app-assembly}에서는 이 조각들이 한 벌의 앱으로 조립되어 내 컴퓨터의 서버와 Vercel 함수가 같은 엔진을 나눠 쓰는 구조를 본다.
+다음 {ch-app-assembly}에서는 이 조각들이 한 벌의 앱으로 조립되는 과정과, 내 컴퓨터의 서버와 Vercel 함수가 같은 엔진을 나눠 쓰는 구조를 본다.
