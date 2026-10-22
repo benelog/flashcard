@@ -17,8 +17,12 @@ for m in flashcard-advanced flashcard-basic flashcard-cli; do
 done
 (cd language-basic/go && go build ./... && go vet ./...)
 
-# Vercel은 api/index.go를 모듈 밖에서 단독 컴파일한다.
-# internal/ 패키지를 import하면 로컬 빌드는 통과해도 배포가 실패하므로 여기서 미리 잡는다.
-(cd flashcard-advanced && go build -o /dev/null api/index.go)
+# Vercel은 api/index.go를 모듈 밖에서 단독 컴파일하므로 api/는 internal/ 패키지를 직접 import할 수 없다.
+# 모듈 안의 go build는 이 import를 허용해 잡지 못하므로, api 패키지의 import 목록을 직접 검사한다.
+imports=$(cd flashcard-advanced && go list -f '{{join .Imports "\n"}}' ./api/)
+if grep -q '/internal/' <<<"$imports"; then
+  echo "api/가 internal/ 패키지를 import한다. 공유 코드는 pkg/에 둔다." >&2
+  exit 1
+fi
 
 echo "PASS: gofmt, build, vet, test, vercel"

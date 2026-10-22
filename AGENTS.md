@@ -17,11 +17,16 @@
 
 - `main`: 개발 브랜치. 모든 작업은 main에서 한다. main 푸시는 Vercel Preview 배포(개발 환경)로 이어진다.
 - `release`: 운영 브랜치. 직접 커밋하지 않는다. 운영 배포는 main → release 병합으로만 한다(`flashcard-advanced/release.sh`).
-- 두 브랜치 모두 push 전에 `./check.sh`가 통과해야 한다(CI도 같은 검사를 돌린다).
+- 두 브랜치 모두 push 전에 `./check.sh`가 통과해야 한다(CI도 같은 검사를 돌린다). 습관으로는 커밋 전에 돌린다.
+
+## 커밋 메시지
+
+- `feat:`·`fix:` 같은 접두사 없이 무엇을 했는지 한 문장으로 적는다(예: "덱 이름을 고치고 공유 스토리를 펼친 채로 열 수 있게 한다").
+- 내용이 길면 빈 줄 뒤에 본문으로 이유와 수치를 적는다.
 
 ## 검증
 
-저장소 루트의 `./check.sh` 하나가 아래를 모두 돌린다(gofmt -l, 세 모듈의 build·vet·test, `language-basic/go` 빌드, `go build api/index.go`로 Vercel 호환 검사). 모듈 하나만 빠르게 볼 때는 각 디렉터리에서 따로 돌린다. `check.sh`와 `.github/workflows/ci.yml`은 같은 검사를 돌리므로 한쪽을 고치면 다른 쪽도 고친다.
+저장소 루트의 `./check.sh` 하나가 아래를 모두 돌린다(gofmt -l, 세 모듈의 build·vet·test, `language-basic/go` 빌드, `go list`로 `api/`가 `internal/`을 import하지 않는지 보는 Vercel 호환 검사). 모듈 하나만 빠르게 볼 때는 각 디렉터리에서 따로 돌린다. `check.sh`와 `.github/workflows/ci.yml`은 같은 검사를 돌리므로 한쪽을 고치면 다른 쪽도 고친다.
 
 - `cd flashcard-advanced && go build ./... && go vet ./... && go test ./...`
 - `cd flashcard-basic && go build ./... && go vet ./... && go test ./...`

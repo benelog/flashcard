@@ -68,10 +68,11 @@ jobs:
           go build ./...
           go vet ./...
 
-      - name: Vercel 호환 검사 (api/ 는 internal/ 을 import 할 수 없다)
+      - name: Vercel 호환 검사 (api/는 internal/을 import할 수 없다)
         working-directory: flashcard-advanced
         run: |
-          if grep -rq 'benelog/flashcard/internal' api/; then
-            echo "api/ 가 internal/ 패키지를 import 합니다. pkg/ 로 옮기세요."
+          imports=$(go list -f '{{join .Imports "\n"}}' ./api/)
+          if grep -q '/internal/' <<<"$imports"; then
+            echo "api/가 internal/ 패키지를 import한다. 공유 코드는 pkg/에 둔다."
             exit 1
           fi

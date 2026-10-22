@@ -3,8 +3,8 @@
 //
 // 이 패키지만 internal/ 이 아니라 pkg/ 에 있다. Vercel의 Go 빌더가 api/index.go를
 // 모듈 바깥에서 컴파일해 internal/ 을 가져올 수 없기 때문이다. internal/app으로
-// 옮기면 로컬 빌드와 테스트는 그대로 통과하고 배포만 깨지므로, 위치를 바꾸기
-// 전에 api/index.go의 주석을 함께 읽는다.
+// 옮기면 로컬 빌드와 테스트는 그대로 통과하고 배포만 깨진다(루트 check.sh의
+// import 검사가 미리 잡는다). 위치를 바꾸기 전에 api/index.go의 주석을 함께 읽는다.
 //
 // 이 패키지는 internal/litestore를 import하면 안 된다. Engine은 Vercel에서
 // 돌고, 서버리스 바이너리에 SQLite가 링크되면 안 되기 때문이다. 예외는 _test

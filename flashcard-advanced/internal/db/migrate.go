@@ -14,7 +14,7 @@ import (
 var migrationsFS embed.FS
 
 // Migrate는 아직 적용되지 않은 마이그레이션을 모두 적용한다. golang-migrate가
-// advisory lock을 잡으므로 트랜잭션 풀링이 아닌 직접 연결이 필요하다.
+// advisory lock을 잡으므로 트랜잭션 풀러(6543)가 아니라 세션 풀러나 직접 연결(5432)이 필요하다.
 func Migrate(databaseURL string) error {
 	src, err := iofs.New(migrationsFS, "migrations")
 	if err != nil {

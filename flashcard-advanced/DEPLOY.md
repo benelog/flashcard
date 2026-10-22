@@ -15,14 +15,11 @@
 
 ## 2. DB 마이그레이션
 
-첫 1회는 손으로, 이후에는 GitHub Actions가 자동으로 합니다.
+마이그레이션은 GitHub Actions(`.github/workflows/migrate.yml`)가 적용합니다.
+처음 한 번은 5단계에서 시크릿을 등록한 뒤 손으로 실행하고(Run workflow), 이후에는 스키마가 바뀐 푸시마다 자동으로 돕니다.
+운영 DB에는 로컬에서 직접 적용하지 않습니다. 개발 DB에 미리 적용해 보려면 `./migrate_dev.sh`를 씁니다.
 
-```bash
-MIGRATE_DATABASE_URL='<direct 연결 문자열>' go run ./cmd/migrate
-```
-
-**운영·개발 프로젝트 각각** 실행합니다 (연결 문자열만 바꿔서 두 번).
-Supabase Table Editor에 `profiles, decks, cards, card_srs, study_sessions, review_logs, smart_decks` 테이블이 보이면 성공.
+적용이 끝난 뒤 Supabase Table Editor에 `profiles, decks, cards, card_srs, study_sessions, review_logs, smart_decks` 테이블이 보이면 성공.
 모든 테이블은 RLS enabled + 정책 0개 상태라 anon key로는 PostgREST 접근이 차단됩니다 (Go 서버만 접근 가능).
 
 ## 3. OAuth 앱 등록 ✋
@@ -108,6 +105,8 @@ git branch release && git push origin release   # 운영 배포용 브랜치 (ma
 | `DEV_MIGRATE_DATABASE_URL` | 개발 프로젝트의 **Session pooler / direct (5432)** 문자열 |
 | `PROD_MIGRATE_DATABASE_URL` | 운영 프로젝트의 **Session pooler / direct (5432)** 문자열 |
 
+등록한 뒤 Actions 탭 → **DB migrate** → **Run workflow**를 `main`과 `release`에서 한 번씩 실행해 두 DB에 테이블을 만듭니다.
+워크플로는 스키마 파일이 바뀐 푸시에만 자동으로 돌기 때문에, 시크릿보다 푸시가 먼저였다면 이 첫 실행을 손으로 해야 합니다.
 이후 `internal/db/migrations/`가 바뀐 커밋을 푸시하면 `.github/workflows/migrate.yml`이
 자동으로 마이그레이션을 적용합니다 — main이면 개발 DB, release면 운영 DB.
 포트 6543(transaction pooler)은 advisory lock을 지원하지 않아 여기 쓰면 실패합니다.

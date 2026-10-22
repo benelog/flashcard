@@ -13,8 +13,9 @@ model: haiku
 2. `go build ./...` — 세 모듈 디렉터리 각각에서
 3. `go vet ./...` — 세 모듈 디렉터리 각각에서
 4. `go test ./...` — 세 모듈 디렉터리 각각에서
-5. `flashcard-advanced/`에서 `go build api/index.go` — Vercel 서버리스 빌드 호환 검사. Vercel은 이 파일을
-   모듈 외부에서 단독 컴파일하므로 `internal/` 패키지를 import하면 여기서 실패한다.
+5. `flashcard-advanced/`에서 `go list -f '{{join .Imports "\n"}}' ./api/ | grep /internal/` — Vercel 서버리스 빌드 호환 검사.
+   Vercel은 `api/index.go`를 모듈 외부에서 단독 컴파일하므로 `internal/` 패키지를 직접 import하면 배포가 실패한다.
+   모듈 안의 `go build`는 이 import를 허용하므로 import 목록을 직접 본다. 출력이 있으면 실패다.
    이 검사가 실패하면 Vercel 배포도 실패한다는 점을 명시하라.
 
 보고 규칙 — 마지막 메시지가 그대로 반환값이 된다:

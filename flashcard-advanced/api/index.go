@@ -1,5 +1,5 @@
 // Package handler는 Vercel 서버리스 진입점이다. vercel.json이 모든 요청(HTML
-// 화면, 정적 자원, JSON API 전부)을 여기로 다시 쓴다. 원래 경로가 보존되므로
+// 화면, 정적 자산, JSON API 전부)을 여기로 다시 쓴다. 원래 경로가 보존되므로
 // Gin 라우터가 평소처럼 분기한다.
 //
 // Vercel은 이 파일을 모듈 바깥에서 컴파일하므로 internal/ 패키지를 (직접)
