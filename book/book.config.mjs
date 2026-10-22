@@ -126,7 +126,7 @@ export default {
         },
         {
           file: 'part3/code-map.adoc',
-          text: '14장 코드는 어디에 있는가: 패키지 지도와 의존 방향',
+          text: '14장 코드는 어디에 있는가: 패키지 구성과 의존 방향',
         },
         { file: 'part3/database-design.adoc', text: '15장 데이터베이스 설계: 요구사항에서 테이블로' },
         { file: 'part3/domain-model.adoc', text: '16장 이 앱만의 설계 둘: 간격 반복 상태와 덱 주소' },

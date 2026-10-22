@@ -8,13 +8,15 @@
 완성본(`flashcard-advanced/`)에서 배포·인증·간격 반복을 걷어내고 웹 앱의 기본 구조만 남긴 앱이다.
 테이블은 `decks`와 `cards` 둘뿐이고, 로그인이 없으며, 데이터는 현재 디렉터리의 `flashcard.db` 파일 하나에 저장된다.
 그 폴더에서 `go run .`을 실행하면 `http://localhost:8080`에서 열린다.
-이 장이 맡는 것은 데이터 층, 파일로는 `flashcard-basic/store.go` 하나다.
+이 장이 맡는 것은 store 계층, 파일로는 `flashcard-basic/store.go` 하나다.
 
 == database/sql과 드라이버
 
 Go 표준 라이브러리의 `database/sql` 패키지는 SQL 데이터베이스 일반을 다루는 창구라, 연결을 열고 문장을 실행하고 결과를 받는 방법이 어느 데이터베이스든 같다.
 각 데이터베이스와 대화하는 세부는 드라이버({ch-database-basics})가 맡는다.
-완성본이 로컬에서는 SQLite로, 운영에서는 PostgreSQL로 도는 것도 이 구조 덕분이다({ch-supabase-db}).
+완성본도 SQLite 쪽 store 코드(`internal/litestore`)는 이 구조로 쓴다.
+PostgreSQL 쪽(`internal/pgstore`)은 `database/sql`을 거치지 않고 PostgreSQL 전용 라이브러리 pgx를 직접 쓴다({ch-supabase-db}).
+완성본이 로컬에서는 SQLite로, 운영에서는 PostgreSQL로 도는 것은 두 구현이 같은 `model.Store` 인터페이스를 따르기 때문이다({ch-go-types}).
 
 flashcard-basic이 쓰는 SQLite 드라이버는 modernc.org/sqlite다.
 C 언어로 만든 SQLite를 Go로 통째로 옮긴 순수 Go 구현이라, C 컴파일러 없이 `go build` 하나로 빌드가 끝난다.
@@ -38,7 +40,7 @@ Go는 패키지를 불러오는 순간 그 패키지의 초기화 코드를 실�
 
 == 연결 열기와 스키마 적용
 
-테이블의 틀은 {ch-database-basics}에서 읽은 `flashcard-basic/schema.sql`에 있다.
+테이블 구조는 {ch-database-basics}에서 읽은 `flashcard-basic/schema.sql`에 있다.
 `create table if not exists`로 적혀 있어 몇 번을 다시 실행해도 안전한데, 곧 볼 코드가 이 성질을 이용한다.
 이 파일을 Go 코드로 가져오는 일은 `store.go`의 다음 두 줄이 한다.
 
@@ -84,7 +86,7 @@ SQLite는 옛 버전과의 호환 때문에 외래 키 검사가 꺼진 채로 �
 include::../../flashcard-basic/store.go[tag=types]
 ----
 
-구조체 하나가 테이블 하나와, 필드 하나가 열 하나와 짝을 이룬다(`Deck.Name`이 `decks.name`, `Card.DeckID`가 `cards.deck_id`).
+구조체 하나가 테이블 하나와, 필드 하나가 칼럼 하나와 짝을 이룬다(`Deck.Name`이 `decks.name`, `Card.DeckID`가 `cards.deck_id`).
 id 필드가 `int64`인 것은 새 행의 번호를 알려 주는 `res.LastInsertId()`가 이 타입으로 돌려주기 때문이다.
 필드 뒤의 `` `json:"id"` `` 같은 문자열은 이 구조체를 JSON으로 내보낼 때 쓸 이름표로, 지금은 없는 것으로 보고 지나가도 된다(정체는 {ch-core-logic}에서 다룬다).
 
@@ -115,8 +117,8 @@ include::../../flashcard-basic/store.go[tag=get-deck]
 ----
 
 `QueryRow`는 결과가 한 행뿐인 조회에 쓰고, 돌아온 행을 Go 값으로 옮기는 것이 `Scan`이다.
-`&d.ID`처럼 필드의 포인터({ch-go-types})를 넘기면 select 문장의 열 순서대로 값이 채워진다.
-select의 열 순서와 `Scan`에 넘긴 순서가 어긋나면 값이 엉뚱한 필드로 들어가므로, 둘은 늘 나란히 놓고 맞춘다.
+`&d.ID`처럼 필드의 포인터({ch-go-types})를 넘기면 select 문장의 칼럼 순서대로 값이 채워진다.
+select의 칼럼 순서와 `Scan`에 넘긴 순서가 어긋나면 값이 엉뚱한 필드로 들어가므로, 둘은 늘 나란히 놓고 맞춘다.
 
 이 함수의 절반은 "없을 때"를 다룬다.
 조건에 맞는 행이 없으면 `database/sql`은 `sql.ErrNoRows` 에러를 내놓는데, 이 함수는 그것을 이 앱의 에러인 `ErrNotFound`로 바꿔 돌려준다.
@@ -156,7 +158,7 @@ include::../../flashcard-basic/store.go[tag=list-cards]
 마지막 줄의 `rows.Err()`도 빠뜨리기 쉽다.
 반복 도중 읽기에 문제가 생기면 `rows.Next()`는 에러를 돌려줄 자리가 없어 그냥 `false`로 반복을 끝내므로, 끝까지 잘 읽었는지를 따로 물어야 한다.
 
-덱 목록을 가져오는 `ListDecks`도 테이블과 열만 다를 뿐 같은 모양이다.
+덱 목록을 가져오는 `ListDecks`도 테이블과 칼럼만 다를 뿐 같은 모양이다.
 여러 행을 읽는 `database/sql` 코드는 어디서나 `Query`, `defer rows.Close()`, `rows.Next()` 반복, `Scan`, `rows.Err()`의 다섯 박자로 돈다.
 
 == 지우기: RowsAffected로 확인한다
@@ -194,7 +196,7 @@ go test ./...
 
 . 카드 한 장을 번호로 찾아 돌려주는 `GetCard` 함수를 더한다. `GetDeck`이 본보기이고, 찾지 못했을 때 `ErrNotFound`를 돌려주는 부분까지 따라 하면 된다.
 . 그 함수를 확인하는 테스트를 `store_test.go`에 더한다. 카드를 만들고, 방금 만든 번호로 찾고, 없는 번호로도 찾아 `ErrNotFound`가 나오는지까지 보면 충분하다.
-. `ListCards`의 자리표시자 `?`를 없애고 SQL 문장에 값을 직접 이어 붙이도록 고쳐 본다. 카드 내용에 작은따옴표가 들어가면 어떤 일이 벌어지는지 확인한 뒤 원래대로 되돌린다. 자리표시자를 고집하는 이유를 직접 확인하는 실험이다.
+. `CreateCard`의 자리표시자 `?`를 없애고 앞면과 뒷면을 SQL 문장에 직접 이어 붙이도록 고쳐 본다. `go run .`으로 서버를 띄워 앞면에 `don't`처럼 작은따옴표가 든 카드를 추가해 보고, 어떤 일이 벌어지는지 브라우저에서 확인한 뒤 원래대로 되돌린다. 자리표시자를 고집하는 이유를 직접 확인하는 실험이다.
 
 == 에이전트 활용 아이디어
 

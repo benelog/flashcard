@@ -2,69 +2,16 @@
 
 데이터베이스에서 꺼낸 덱 목록을 HTML에 채워 넣는 것은 서버다.
 Go 표준 라이브러리 html/template이 HTML 양식에 데이터를 채워 완성된 화면을 만들고, 브라우저는 받은 그대로 그린다(그 이유는 {ch-tech-choices}).
-문법은 {ch-template-hello}에서 익혔으므로, 이 장은 화면 {n-page-count-ko-attr} 장과 조각 넷을 거느린 앱이 템플릿을 어떻게 조직하는지를 읽는다.
+문법은 {ch-template-hello}에서, 템플릿 파일을 겉틀·페이지·조각의 세 층으로 나눈 구성은 {ch-html-css}에서 보았다.
+이 장은 html/template이 그 파일들을 읽어 들여 화면 {n-page-count-ko-attr} 장을 그려 내는 방법을 읽는다.
 레이아웃을 씌우는 Clone 패턴과 FuncMap, 자동 이스케이프와 그 예외인 덱 스토리, 그리고 embed와 페이지 핸들러, 템플릿 테스트 순서로 짚는다.
 
-== 완성본의 템플릿 지도
-
-Flashcard의 템플릿은 `internal/web/templates/` 아래에 세 갈래로 나뉜다.
-페이지 파일 {n-page-count}개(`pages/*.html`), 모든 페이지가 공유하는 레이아웃 1개(`layout.html`), 여러 페이지가 나눠 쓰는 조각 4개(`partials/*.html`)다.
-
-Go 진영에도 템플릿 엔진은 여럿 있다.
-templ은 템플릿을 Go 코드로 컴파일해 필드 이름 오타를 컴파일 시점에 잡아 주고, quicktemplate은 속도를, pongo2는 Django풍 문법을 내세운다.
-템플릿이 수십 장으로 늘고 여러 사람이 고치는 프로젝트라면 templ이 더 나을 수 있다.
-Flashcard는 의존성이 늘지 않고 자동 이스케이프가 기본인 html/template을 골랐다.
-컴파일 검사가 없다는 약점은 "템플릿도 테스트한다" 절에서 테스트로 메운다.
-
-== 레이아웃과 조각: 공통 마크업은 한 번만 쓴다
-
-어느 페이지를 열어도 상단 바와 하단 내비게이션은 같다.
-페이지마다 복사해 두면 고칠 때마다 모든 페이지를 손봐야 하므로, 공통 마크업은 `layout.html`에만 쓰고 페이지 파일에는 본문만 쓴다.
-
-=== 액자와 그림: layout이 content를 불러들인다
+== 레이아웃 씌우기: content 자리와 Clone 패턴
 
 최소 앱이 목록의 한 줄을 떼는 데 쓴 `{{define}}`과 `{{template}}`을, 완성본은 방향을 뒤집어 페이지 전체를 감싸는 데 쓴다.
-
-`internal/web/templates/layout.html`은 HTML 문서의 기본 구조를 갖추고, 본문 자리에서 `content`라는 이름의 템플릿을 불러들인다.
-
-[source,html]
-----
-{{define "layout"}}<!doctype html>
-<html lang="ko">
-<head>
-  <meta charset="utf-8">
-  <!-- ... -->
-  <title>{{.Title}}</title>
-  <link rel="stylesheet" href="{{asset "/static/app.css"}}">
-  <script src="{{asset "/static/htmx.min.js"}}" defer></script>
-</head>
-<body>
-<!-- ... -->
-  <div class="frame">
-    <!-- ... -->
-    <main{{if .LoggedIn}} class="with-nav"{{end}}>
-      {{template "content" .}}
-    </main>
-    {{if .LoggedIn}}
-    <nav class="bottomnav">
-      <div class="bottomnav-inner">
-        <a class="navlink{{if eq .Path "/"}} active{{end}}" href="/">{{icon "home"}}홈</a>
-        <a class="navlink{{if hasPrefix .Path "/decks"}} active{{end}}" href="/decks">{{icon "layers"}}덱</a>
-        <!-- ... -->
-      </div>
-    </nav>
-    {{end}}
-  </div>
-{{if .Flash}}
-  <div class="toast"><div class="toast-msg {{.FlashKind}}">{{.Flash}}</div></div>
-{{end}}
-</body>
-</html>{{end}}
-----
-
+{ch-html-css}에서 본 겉틀 `layout.html`은 `{{define "layout"}}`으로 시작해 HTML 문서 전체를 정의하고, 본문 자리의 `{{template "content" .}}`에서 `content`라는 이름의 템플릿을 불러들인다.
 `{{template "content" .}}`의 마지막 점은 지금 보고 있는 데이터를 그대로 넘겨준다는 뜻이다.
 `pages/` 아래의 페이지 파일은 전부 `{{define "content"}}`로 시작한다.
-레이아웃이 액자라면 각 페이지는 거기 끼우는 그림이고, `content`라는 이름이 끼우는 자리다.
 
 === base를 복제하는 이유: Clone 패턴
 
@@ -120,7 +67,7 @@ include::../../flashcard-advanced/internal/web/funcs.go[tag=func-map]
 include::../../flashcard-advanced/internal/web/funcs.go[tag=percent]
 ----
 
-레이아웃의 `{{hasPrefix .Path "/decks"}}`가 등록된 함수 호출이었고, 통계 페이지의 `{{$p := percent .MatureCards .TotalCards}}`, 공유 갤러리의 `{{koDate .SharedAt}}`, 학습 카드의 `{{typeLabel .CardType}}`도 마찬가지다.
+{ch-html-css}에서 본 하단 탭의 `{{hasPrefix .Path "/decks"}}`가 등록된 함수 호출이었고, 통계 페이지의 `{{$p := percent .MatureCards .TotalCards}}`, 공유 갤러리의 `{{koDate .SharedAt}}`, 학습 카드의 `{{typeLabel .CardType}}`도 마찬가지다.
 `parseTemplates`가 base에 `Funcs(funcMap)`을 걸어 두었으므로, base를 복제한 모든 페이지가 같은 함수를 쓴다.
 
 이 중 `icon`은 화면 곳곳의 아이콘(집, 불꽃, 휴지통 같은 것들)을 이미지 파일이나 아이콘 폰트(아이콘 그림들을 글꼴 파일 하나에 담는 방식) 없이 인라인 SVG로 그리는 함수다.
@@ -389,7 +336,15 @@ func takeFlash(c *gin.Context) (kind, message string) {
 }
 ----
 
-`takeFlash`가 꺼낸 메시지는 `view.Flash`에 담기고, 레이아웃 끝의 `{{if .Flash}}` 블록이 토스트로 띄운다.
+`takeFlash`가 꺼낸 메시지는 `view.Flash`에 담기고, `layout.html` 끝의 다음 블록이 그것을 토스트로 띄운다.
+
+[source,html]
+----
+{{if .Flash}}
+  <div class="toast"><div class="toast-msg {{.FlashKind}}">{{.Flash}}</div></div>
+{{end}}
+----
+
 토스트(toast)는 화면 한쪽에 잠깐 떴다가 스스로 사라지는 알림 상자다.
 레이아웃은 모든 페이지의 공통이므로 어디로 리다이렉트하든 플래시가 보인다(쿠키 자체는 {ch-supabase-auth}).
 
@@ -437,6 +392,7 @@ func TestTemplatesParse(t *testing.T) {
 그래도 흔한 실수는 배포 전에 걸러진다.
 이 테스트는 `go test ./...` 한 번에 함께 돈다.
 문법 오류는 페이지 파일 전부에서 잡지만 없는 필드 참조는 그려 본 학습 화면 조각에서만 잡으므로, 나머지 화면은 {ch-app-tests}의 통합 테스트가 이어받는다.
+이런 오타를 `go build` 단계에서 잡는 templ 같은 다른 템플릿 엔진은 {ch-alternatives}에서 비교한다.
 
 == 에이전트 활용 아이디어
 
@@ -450,7 +406,7 @@ func TestTemplatesParse(t *testing.T) {
 
 == 정리
 
-* 구조는 액자와 그림이다. `layout.html`이 페이지 본문(`content`)을 감싸고, 같은 이름의 충돌은 base를 페이지마다 복제하는 Clone 패턴으로 푼다.
+* `layout.html`이 `{{template "content" .}}` 자리에 페이지 본문을 불러들이고, 페이지 파일마다 같은 이름 `content`가 부딪치는 문제는 base를 페이지마다 복제하는 Clone 패턴으로 푼다.
 * FuncMap은 템플릿에 부족한 계산을 Go 함수로 메운다.
 * 컨텍스트 자동 이스케이프는 본문·속성·URL 문맥을 구분해 XSS를 기본으로 막는다. `template.HTML`은 그 문자열을 만든 코드가 안전을 책임질 수 있을 때만 쓰고, 덱 스토리는 goldmark의 출력 범위로 그 조건을 지킨다.
 * 템플릿과 정적 자산은 embed로 실행 파일에 실려, 로컬과 배포 환경이 같은 자산을 본다.

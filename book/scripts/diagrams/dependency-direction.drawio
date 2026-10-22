@@ -18,7 +18,11 @@
     </mxCell>
 
     <mxCell id="model" value="model&lt;br&gt;&lt;span style=&quot;font-size:12px;font-weight:normal&quot;&gt;공용어: 행 타입 · ErrNotFound · Store 인터페이스&lt;/span&gt;" style="rounded=1;arcSize=12;html=1;fillColor=#CFE2F3;strokeColor=#4A7BA6;strokeWidth=2;fontColor=#1F4E79;fontSize=15;fontStyle=1;fontFamily=Courier New;" vertex="1" parent="1">
-      <mxGeometry x="170" y="236" width="340" height="60" as="geometry"/>
+      <mxGeometry x="110" y="236" width="340" height="60" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="smartrules" value="smartrules&lt;br&gt;&lt;span style=&quot;font-size:12px;font-weight:normal&quot;&gt;규칙 정의&lt;/span&gt;" style="rounded=1;arcSize=12;html=1;fillColor=#CFE2F3;strokeColor=#4A7BA6;fontColor=#1F4E79;fontSize=14;fontStyle=1;fontFamily=Courier New;" vertex="1" parent="1">
+      <mxGeometry x="500" y="238" width="150" height="56" as="geometry"/>
     </mxCell>
 
     <mxCell id="pgstore" value="pgstore&lt;br&gt;&lt;span style=&quot;font-size:12px;font-weight:normal&quot;&gt;PostgreSQL&lt;/span&gt;" style="rounded=1;arcSize=12;html=1;fillColor=#E4D7F5;strokeColor=#8E6BBF;fontColor=#4A2C7A;fontSize=14;fontStyle=1;fontFamily=Courier New;" vertex="1" parent="1">
@@ -53,11 +57,15 @@
       <mxGeometry relative="1" as="geometry"/>
     </mxCell>
 
+    <mxCell id="e7" style="strokeColor=#4D4D4D;strokeWidth=1.5;endArrow=classic;endFill=1;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="model" target="smartrules">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
     <mxCell id="memo1" value="화살표 = 안다" style="text;html=1;align=center;verticalAlign=middle;fontSize=12;fontColor=#6B6B6B;" vertex="1" parent="1">
       <mxGeometry x="280" y="196" width="120" height="22" as="geometry"/>
     </mxCell>
     <mxCell id="memo2" value="거꾸로 가는 화살표는 하나도 없다" style="text;html=1;align=center;verticalAlign=middle;fontSize=13;fontColor=#6B6B6B;" vertex="1" parent="1">
-      <mxGeometry x="110" y="418" width="460" height="22" as="geometry"/>
+      <mxGeometry x="110" y="418" width="540" height="22" as="geometry"/>
     </mxCell>
   </root>
 </mxGraphModel>

@@ -1,7 +1,7 @@
 = AI 에이전트와 일하기: 지시하고, 계획을 다듬고, 검증한다
 
 {ch-tech-choices}에서 기술 조합을 정했다.
-이 장에서는 그 조합을 AI 코딩 에이전트에게 지시해 앱의 골격을 만들기까지의 흐름을 따라간다.
+이 장에서는 그 조합을 AI 코딩 에이전트에게 지시해 앱의 기본 구조를 만들기까지의 흐름을 따라간다.
 지시문에 무엇을 담는지, 코드보다 계획을 먼저 받아 요구사항과 아키텍처를 어떻게 다듬는지, 에이전트가 만든 코드를 어디까지 믿을지를 차례로 짚어 보겠다.
 어느 에이전트를 쓰든 통하는 이야기만 다룬다.
 
@@ -13,7 +13,7 @@
 
 에이전트는 모호한 지시를 받으면 그럴듯한 해석을 하나 골라 진행한다.
 기술 스택을 못 박지 않으면 학습 데이터에서 가장 많이 본 조합으로 기운다.
-"암기 카드 웹 앱을 만들어 줘"라고만 하면 React와 Node.js 기반의 골격이 돌아올 가능성이 크다.
+"암기 카드 웹 앱을 만들어 달라"라고만 하면 React와 Node.js로 짠 기본 구조가 돌아올 가능성이 크다.
 그러면 {ch-tech-choices}에서 따져 내린 결론이 첫 응답에서 무의미해진다.
 
 Flashcard의 시작 지시문을 재구성하면 다음과 같다.
@@ -38,7 +38,7 @@ Flashcard의 시작 지시문을 재구성하면 다음과 같다.
 - CSS는 프레임워크 없이 파일 하나. 브라우저 자바스크립트는 최소로.
 
 [지금 만들지 않는 것]
-- 로그인, 배포 설정, 통계 화면. 골격이 돈 다음에 붙인다.
+- 로그인, 배포 설정, 통계 화면. 기본 구조가 돌아간 다음에 붙인다.
 ----
 
 SM-2는 1987년 SuperMemo가 만든 복습 일정 계산 방식으로, Anki를 비롯한 간격 반복 앱들이 이를 바탕으로 삼는다.footnote:[SM-2는 1987년 12월의 SuperMemo 1.0부터 쓰였고(https://super-memory.com/english/ol/sm2.htm[SuperMemo의 SM-2 알고리즘 설명]), Anki의 기본 알고리즘도 SM-2에 기반한다(https://faqs.ankiweb.net/what-spaced-repetition-algorithm.html[Anki FAQ]).]
@@ -53,7 +53,7 @@ SM-2는 1987년 SuperMemo가 만든 복습 일정 계산 방식으로, Anki를 �
 이유까지 설명할 필요는 없지만, 협상할 수 없다는 사실은 분명히 한다.
 
 셋째, 지금 만들지 않는 것을 적었다.
-내버려 두면 첫 골격에 로그인과 통계 화면까지 딸려 온다.
+내버려 두면 처음 만드는 코드에 로그인과 통계 화면까지 딸려 온다.
 범위를 좁히는 문장은 뒤에서 볼 "커밋 단위로 나눠 만들기"의 출발점이기도 하다.
 
 == 코드보다 계획을 먼저 받는다
@@ -144,8 +144,9 @@ SM-2는 1987년 SuperMemo가 만든 복습 일정 계산 방식으로, Anki를 �
 Go 서버가 표준 라이브러리의 템플릿 엔진(html/template)으로 완성된 HTML 문서를 만들어 보내고, 브라우저는 받은 문서를 그리기만 한다.
 카드 한 장을 지우는 것 같은 부분 갱신은 htmx가 맡는다.
 버튼에 적어 둔 속성대로 서버에 요청을 보내고, 돌아온 HTML 조각으로 화면의 해당 부분만 갈아 끼운다.
-스타일은 프레임워크 없이 CSS 파일 하나(`internal/web/static/app.css`)이고, 어두운 테마도 이 파일 안에서 끝난다({ch-css-hello}).
-직접 작성한 브라우저 자바스크립트는 음성 재생·클립보드 복사처럼 브라우저에서만 할 수 있는 일을 감싸는 파일 하나(`internal/web/static/app.js`, {n-app-js-lines}줄 남짓)뿐이다.
+스타일은 프레임워크 없이 CSS 파일 하나(`internal/web/static/app.css`)이고, 다크 모드도 이 파일 안에서 끝난다({ch-css-hello}).
+직접 작성한 브라우저 자바스크립트는 두 파일뿐이다.
+음성 재생·클립보드 복사처럼 브라우저에서만 할 수 있는 일을 감싸는 화면용 `internal/web/static/app.js`({n-app-js-lines}줄 남짓)와, 인터넷이 끊겼을 때 저장해 둔 화면을 대신 보여 주는 `internal/web/static/sw.js`({n-sw-lines}줄)다.
 HTML과 CSS는 {ch-html-css}, 템플릿은 {ch-html-template}, htmx는 {ch-htmx}에서 다룬다.
 
 === 백엔드: Go와 Gin으로 만드는 서버 하나
@@ -161,10 +162,19 @@ Go 쪽의 직접 의존성은 Gin을 포함해 {n-direct-deps-ko-attr} 개가 �
 화면 쪽에는 패키지 매니저도 빌드 도구도 없고, 외부 라이브러리는 저장소에 파일째 넣어 둔 htmx 하나뿐이다.
 개인 프로젝트에서 의존성 하나는 곧 업그레이드 부담 하나라, 표준 라이브러리와 프레임워크 기본 기능으로 되는 일에는 라이브러리를 더하지 않았다.
 
-== 골격은 커밋 단위로 나눠 만든다
+.[용어 풀이] 패키지 매니저(Package Manager)
+[NOTE]
+====
+프로그램이나 라이브러리를 이름으로 찾아 내려받고, 설치하고, 새 버전으로 바꾸는 일을 명령 한 줄로 처리해 주는 도구다.
+운영체제에 프로그램을 설치하는 쪽으로는 macOS의 Homebrew, 윈도우의 winget, 우분투 리눅스의 apt가 있고, {ch-first-run}에서 개발 도구를 설치할 때 쓴다.
+한 언어의 라이브러리를 프로젝트에 들여오는 쪽도 있어서, 자바스크립트는 npm이 대표적이고 Go는 `go` 명령이 이 일을 겸한다.
+화면 쪽에 패키지 매니저가 없다는 말은 npm으로 자바스크립트 라이브러리를 들여오지 않는다는 뜻이다.
+====
+
+== 기본 구조는 커밋 단위로 나눠 만든다
 
 계획에 합의하면 구현으로 넘어가되, 전체를 한 번에 만들게 하지 않는다.
-Flashcard의 첫 골격은 이런 순서였다.
+Flashcard의 기본 구조는 이런 순서로 만들었다.
 
 첫째, 테이블 구조를 정의하는 스키마와 SQLite 연결.
 둘째, SRS 채점 함수와 그 테스트.
@@ -179,7 +189,7 @@ Flashcard의 첫 골격은 이런 순서였다.
 마지막 덩어리까지 끝나면 `go run ./cmd/server`로 서버를 띄우고 브라우저에서 `http://localhost:8080`을 연다.
 덱을 만들고 카드를 뒤집어 보는 순간 {ch-requirements}의 요구사항이 처음으로 화면이 된다.
 지금 따라 칠 필요는 없다.
-{ch-first-run}에서 손에 넣는 것은 이 골격이 아니라 완성본이다.
+{ch-first-run}에서 손에 넣는 것은 이 기본 구조가 아니라 완성본이다.
 
 == 합의는 AGENTS.md에 고정한다
 
@@ -215,7 +225,7 @@ Flashcard 저장소에는 저장소 전체 규칙을 담은 루트의 `AGENTS.md
 
 [source,markdown]
 ----
-# Flashcard 프로젝트 지침
+# Flashcard 저장소 지침
 
 ## 브랜치 정책 (GitLab flow 단순화)
 
@@ -223,10 +233,12 @@ Flashcard 저장소에는 저장소 전체 규칙을 담은 루트의 `AGENTS.md
 - `release`: 운영 브랜치. 직접 커밋하지 않는다. 운영 배포는 main → release 병합으로만 한다.
 - 두 브랜치 모두 push 전에 `./check.sh`가 통과해야 한다(CI도 같은 검사를 돌린다).
 
+# Flashcard 완성본 앱(flashcard-advanced) 지침
+
 ## 구조
 
 - UI는 Go 서버가 렌더링한다: `internal/web` (html/template + htmx + 순수 CSS, 전부 바이너리에 embed).
-- 브라우저 JS는 `internal/web/static/app.js` 하나뿐(TTS·클립보드·오프라인·서비스 워커). 프런트엔드 빌드 도구(npm 등)는 앱에 없다.
+- 브라우저 JS는 화면이 불러오는 `internal/web/static/app.js`(TTS·음성 인식·클립보드·오프라인 배너·서비스 워커 등록)와 서비스 워커 `internal/web/static/sw.js` 둘뿐. 프런트엔드 빌드 도구(npm 등)는 앱에 없다.
 - JSON API(`/api/*`)는 `internal/handlers`에 있다. HTML과 API가 같은 Gin 엔진(`pkg/app`)에 물린다.
 
 ## 환경
@@ -243,7 +255,7 @@ Flashcard 저장소에는 저장소 전체 규칙을 담은 루트의 `AGENTS.md
 ## 스키마 관리
 
 - Postgres 스키마의 단일 소스는 `internal/db/migrations/*.up.sql`. 새 변경은 항상 새 번호의 up/down 쌍을 추가한다.
-- 적용은 `.github/workflows/migrate.yml`이 한다: main → dev DB, release → 운영 DB.
+- 적용은 `cmd/migrate`가 한다. `.github/workflows/migrate.yml`이 **스키마 SQL이 바뀐 푸시에만** 자동 실행한다: main → dev DB, release → 운영 DB.
 - local에서 dev DB에 미리 적용해 보려면 `./migrate_dev.sh`. 운영 DB에는 수동으로 적용하지 않는다.
 
 ## 검증
@@ -251,7 +263,7 @@ Flashcard 저장소에는 저장소 전체 규칙을 담은 루트의 `AGENTS.md
 - 저장소 루트에서 `./check.sh` (gofmt, 세 모듈의 build·vet·test, Vercel 호환 검사)
 ----
 
-"브라우저 JS는 `app.js` 하나뿐", "프런트엔드 빌드 도구는 앱에 없다" 같은 문장이 프로젝트 고유 규약의 예다.
+"브라우저 JS는 `app.js`와 `sw.js` 둘뿐", "프런트엔드 빌드 도구는 앱에 없다" 같은 문장이 프로젝트 고유 규약의 예다.
 화면 작업을 만나면 자바스크립트 라이브러리부터 더하려 드는 에이전트를 이 두 문장이 처음부터 막는다.
 
 거꾸로 적혀 있지 않은 것도 있다.

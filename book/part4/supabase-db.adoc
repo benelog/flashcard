@@ -72,7 +72,7 @@ type Store interface {
 
 	ListDecks(ctx context.Context, userID uuid.UUID) ([]Deck, error)
 	CreateDeck(ctx context.Context, userID uuid.UUID, name string, description *string) (Deck, error)
-	// ... (덱·카드·세션·공유·스마트 덱·통계에 걸쳐 모두 35개 메서드)
+	// ... (덱·카드·세션·공유·스마트 덱·통계에 걸친 나머지 메서드)
 
 	DailyStats(ctx context.Context, userID uuid.UUID, tz string, days int) ([]DailyStat, error)
 }
@@ -102,8 +102,8 @@ Vercel 함수의 진입점 `api/index.go`가 부르는 `pkg/app`의 `Engine()`�
 
 == 같은 설계, 더 풍부한 타입
 
-{ch-database-design}에서 한 설계(일곱 테이블, 외래 키와 cascade, 조회 패턴에서 역산한 인덱스)는 PostgreSQL에서도 그대로고, 바뀌는 것은 표현이다.
-SQLite는 타입의 가짓수를 최소로 줄인 DB라 {ch-database-design}의 스키마는 많은 것을 `text` 열에 눌러 담았다.
+{ch-database-design}에서 한 설계({n-tables-ko-attr} 테이블, 외래 키와 cascade, 조회 패턴에서 역산한 인덱스)는 PostgreSQL에서도 그대로고, 바뀌는 것은 표현이다.
+SQLite는 타입의 가짓수를 최소로 줄인 DB라 {ch-database-design}의 스키마는 많은 것을 `text` 칼럼에 눌러 담았다.
 PostgreSQL은 그 자리마다 전용 타입을 내준다.
 아래 표가 그 대응이고, 낯선 이름은 표 아래에서 하나씩 푼다.
 
@@ -144,7 +144,7 @@ create table cards (
 );
 ----
 
-카드의 두 열이 `text`·`meaning`이 아니라 `front_text`·`back_text`라는 첫 이름으로 등장하는데, 이름이 바뀐 사연은 {ch-migrations}에서 본다.
+카드의 두 칼럼이 `text`·`meaning`이 아니라 `front_text`·`back_text`라는 첫 이름으로 등장하는데, 이름이 바뀐 사연은 {ch-migrations}에서 본다.
 
 `settings`의 `jsonb`는 JSON을 파싱된 이진 형태로 저장하는 타입으로, 넣을 때 문법이 검증되고 내부 필드 조회와 인덱스도 가능하다.
 `card_type`은 {ch-database-design}에서 `check` 제약으로 흉내 냈던 값 목록이 enum 타입이 된 모습이다.
@@ -183,7 +183,7 @@ SQLite에는 UUID 타입도 생성 함수도 없어 Go 코드가 만들어 넣�
 .[용어 풀이] GIN 인덱스(Generalized Inverted Index)
 [NOTE]
 ====
-한 칸에 값이 여러 개 들어 있는 열(배열, jsonb, 전문 검색용 문서)을 위한 PostgreSQL 인덱스다.
+한 칸에 값이 여러 개 들어 있는 칼럼(배열, jsonb, 전문 검색용 문서)을 위한 PostgreSQL 인덱스다.
 책 뒤 찾아보기가 낱말마다 쪽 번호를 모아 두듯 "값 → 그 값이 든 행"으로 뒤집어 둔 역색인이라, 특정 태그가 든 카드를 모든 행을 읽지 않고 찾아낸다.
 대신 행 하나를 쓸 때 그 안의 값 개수만큼 색인을 손봐야 해서 갱신 비용이 B-tree보다 크다.
 ====
@@ -309,7 +309,9 @@ func Pool(ctx context.Context, databaseURL string) (*pgxpool.Pool, error) {
 같은 리전이면 왕복당 1ms 수준이라 쿼리 횟수가 체감 지연에 거의 영향을 주지 않는다.
 Vercel의 Hobby 플랜도 함수 리전을 하나는 고를 수 있고 새 프로젝트의 기본값이 iad1이다footnote:[Vercel 문서 "Configuring regions for Vercel Functions"의 플랜별 리전 수 표와 기본 리전 설명. https://vercel.com/docs/functions/configuring-functions/region[Configuring regions for Vercel Functions]].
 이 저장소는 그 기본값을 고정해 두었으므로 DB를 함수 곁인 버지니아에 만든다.
-사용자→함수 구간의 180ms는 요청당 한 번뿐이고, 정적 자산은 CDN 엣지가 사용자 가까이에서 응답한다.
+사용자→함수 구간의 180ms는 요청당 한 번뿐이다.
+정적 자산도 함수가 내준다.
+그래도 캐시 헤더 덕에 브라우저가 한 번 받은 자산을 재사용하므로 이 왕복을 매번 치르지는 않는다({ch-vercel}).
 한국 사용자만 쓰는 앱이라면 함수 리전을 서울(`icn1`)로 바꾸고 Supabase 프로젝트도 서울에 만들어 둘을 함께 옮기면 된다.
 어느 쪽이든 원칙은 콜로케이션(colocation)이다.
 
@@ -372,7 +374,9 @@ PostgreSQL 뷰는 기본적으로 소유자 권한으로 실행되어 테이블�
 RLS 정책 기반 설계에서는 CRUD 수준의 화면을 API 코드 없이 클라이언트에서 바로 만들 수 있고, 권한 규칙이 데이터 곁에 있어 어떤 클라이언트가 붙어도 일관된다.
 클라이언트 종류가 여럿이고 API 서버 코드를 최소로 두고 싶다면 이쪽이 낫다.
 반면 인가(authorization) 로직이 테이블마다 SQL 정책으로 흩어지고, 정책 하나만 빠뜨려도 데이터가 노출된다.
-Flashcard는 SRS 계산과 트랜잭션 때문에 어차피 Go API가 필수였으므로, 인가를 Go 쪽 한 곳에 모으고(store 계층의 모든 쿼리에 `user_id = $1` 조건이 붙는다) DB에 들어오는 길을 하나로 줄였다.
+Flashcard는 SRS 계산과 트랜잭션 때문에 어차피 Go API가 필수였으므로, 인가를 Go 쪽 한 곳에 모으고 DB에 들어오는 길을 하나로 줄였다.
+store 계층의 쿼리는 대부분 `user_id` 조건을 붙여 요청한 사용자의 행만 건드린다.
+예외는 공개된 덱을 `share_slug`로 찾는 공유 덱 조회(`internal/pgstore/sharing.go`)다.
 RLS를 접근 제어 규칙이 아니라 뒷문을 잠그는 자물쇠로 쓴 셈이다.
 
 == 개발 DB와 운영 DB를 분리한다

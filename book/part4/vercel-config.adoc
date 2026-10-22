@@ -53,23 +53,34 @@ Flashcard는 설정(`internal/config`), 데이터 접근(`internal/pgstore`), �
 `go build ./...`는 모든 패키지를 모듈의 일원으로 빌드하므로, `api/index.go`가 `internal/`을 직접 import해도 에러가 나지 않는다.
 로컬에서는 초록불인데 push하면 Vercel 빌드가 빨간불이 되는, 가장 늦게 발견되는 종류의 실패다.
 
-이 실패는 모듈 루트에서 파일 하나를 지목해 빌드하면 로컬에서 재현된다.
+파일 하나를 지목해 빌드해도(`go build api/index.go`) 결과는 같다.
+Go는 이렇게 지목한 파일을 `command-line-arguments`라는 임시 패키지로 취급해 빌드하는데, 그 패키지의 디렉터리(`api/`)도 `flashcard-advanced/` 안에 있으므로 `internal` 규칙은 이 import를 허용한다.
+이 저장소도 처음에는 이 명령으로 Vercel의 실패를 재현할 수 있다고 보고 검사로 두었지만, 일부러 `internal/` import를 넣고 돌려 보니 그대로 통과했다.
+모듈 안에서 하는 빌드는 어떤 형태든 이 import를 허용하므로, Vercel에서 날 컴파일 에러를 내 컴퓨터에서 재현할 길이 없다.
+
+그래서 컴파일 대신 import 목록을 직접 검사한다.
+아래는 저장소 루트의 `./check.sh`에 있는 검사로, `api/` 패키지가 직접 import하는 패키지 경로를 뽑아 그 가운데 `/internal/`이 든 경로가 있으면 실패한다.
 
 [source,bash]
 ----
-go build api/index.go
+imports=$(cd flashcard-advanced && go list -f '{{join .Imports "\n"}}' ./api/)
+if grep -q '/internal/' <<<"$imports"; then
+  echo "api/가 internal/ 패키지를 import한다. 공유 코드는 pkg/에 둔다." >&2
+  exit 1
+fi
 ----
 
-Go는 파일 단위로 빌드를 지시받으면 그 파일을 모듈 소속으로 인정되지 않는 `command-line-arguments`라는 임시 패키지로 취급한다.
-그래서 `internal/`을 직접 import했다면 `use of internal package ... not allowed` 에러가 나고, Vercel에서 벌어질 실패를 push 전에 볼 수 있다.
+`go list`는 패키지의 정보를 출력하는 명령이고, `-f` 뒤의 템플릿이 그중 직접 import 목록(`.Imports`)만 골라 한 줄에 하나씩 적는다.
+지금의 `api/index.go`라면 `github.com/benelog/flashcard/pkg/app`과 `net/http` 두 줄이 나오고, `grep`(특정 문자열이 든 줄을 찾는 명령)이 어느 줄에서도 `/internal/`을 찾지 못하므로 통과한다.
+`pkg/app`을 거쳐 `internal/`에 닿는 간접 import는 이 목록에 나오지 않는다.
+Vercel에서도 문제가 없는 경로이므로, 주석의 "(직접)"이 가리키는 범위와 이 검사가 막는 범위가 같다.
 
-Flashcard는 이 명령을 상시 품질 게이트로 만들었다.
-저장소 루트의 `./check.sh`가 gofmt·build·vet·test 다음 마지막 검사로 `flashcard-advanced/`에서 이 빌드를 돌린다({ch-quality-gates}).
+`./check.sh`는 gofmt·build·vet·test 다음 마지막으로 이 검사를 돌리고, CI도 같은 검사를 돌린다({ch-quality-gates}).
 에이전트가 `api/index.go`에 `internal/handlers`를 직접 import해도 `go build ./...`와 테스트는 모두 통과하므로, 이런 암묵적 제약은 명시적인 검사로 만들어 두지 않으면 같은 함정을 다시 밟게 된다.
 
 == vercel.json 해부
 
-이 배포 구성의 설계도인 `vercel.json`은 일곱 줄이지만, 앞의 결정들이 전부 이 안에 들어 있다.
+이 배포 구성의 설계도인 `vercel.json`은 짧지만, 앞의 결정들이 전부 이 안에 들어 있다.
 
 `vercel.json`:
 
@@ -130,7 +141,9 @@ Vercel은 빌드할 때 저장소를 최근 커밋 열 개까지만 얕게 복�
 데이터가 오가는 거리가 멀수록 응답이 늦어진다.
 ====
 
-한국에서 쓰는 앱인데 함수를 미국 동부에 두는 이유는, PostgreSQL이 Supabase 무료 티어의 미국 동부(East US, North Virginia) 리전에 있기 때문이다.
+한국에서 쓰는 앱인데 함수가 미국 동부에 있는 것은 iad1이 Vercel 새 프로젝트의 기본 리전이기 때문이다.
+이 파일은 그 기본값을 명시해 고정한다.
+PostgreSQL을 담는 Supabase 프로젝트는 여기에 맞춰 같은 미국 동부(East US, North Virginia)에 만든다.
 함수를 데이터베이스와 같은 지역에 두면 요청당 서너 번 일어나는 둘 사이의 왕복이 그 지역 안에서 끝난다.
 서울과 버지니아 사이의 왕복이 약 180ms, 같은 리전 안에서는 1ms 수준이라 그 차이가 왕복 횟수만큼 곱해진다.
 이 콜로케이션(colocation) 전략의 셈법과 Supabase 쪽 설정은 {ch-supabase-db}에서 다룬다.
@@ -175,7 +188,7 @@ push한 시점의 코드가 운영과 같은 방식으로 빌드되어 고유 �
 프리뷰 URL은 두 종류다.
 배포마다 새로 발급되는 고유 URL과 별개로, 브랜치의 최신 프리뷰를 늘 가리키는 고정 별칭(`<앱>-git-main-<계정>.vercel.app` 형식)이 생긴다.
 {ch-supabase-auth}의 OAuth Redirect URL처럼 개발 환경의 주소를 어딘가에 등록해야 할 때는 이 별칭을 등록한다.
-함수 리전, rewrite 규칙, 스코프별 환경 변수처럼 로컬 서버에는 없는 요소가 어긋났는지는 여기서 처음 드러난다.
+함수 리전, 리라이트 규칙, 스코프별 환경 변수처럼 로컬 서버에는 없는 요소가 어긋났는지는 여기서 처음 드러난다.
 Vercel 빌드가 "만들 수 있는가"를, CI가 "옳은가"를 묻는다면({ch-quality-gates}), 프리뷰 배포는 "실제 인프라 위에서 돌아가는가"를 확인한다.
 
 환경 변수도 같은 기준으로 나뉜다.
@@ -215,13 +228,14 @@ Go 함수는 컴파일된 단일 바이너리라 그런 준비 없이 실행 즉
 단, 첫 요청에는 비용이 두 가지 더해진다.
 하나는 커넥션 풀이 데이터베이스와 첫 연결을 맺는 시간이다.
 다른 하나는 로그인 토큰(JWT)을 검증할 열쇠 묶음인 JWKS(JSON Web Key Set)를 Supabase에서 처음 받아 오는 네트워크 왕복이다.
-`DEPLOY.md`의 문제 해결 절도 "첫 요청이 느림"의 원인으로 이 둘을 적어 두었다.
+`DEPLOY.md`의 문제 해결 절은 "첫 요청이 느림"의 원인으로 콜드스타트와 JWKS 첫 조회를 적어 두었다.
+거기서는 첫 데이터베이스 연결을 콜드스타트에 포함해 셌다.
 
 무료 티어에서 감수하기로 한 것은 셋이다.
 
 첫째, 한동안 요청이 없으면 다음 첫 요청이 느리다.
 유료 요금제의 상시 워밍업 같은 옵션 없이 콜드스타트를 그대로 맞는다.
-하루 몇 번 쓰는 암기 앱이라면 이 지연은 학습 한 번의 첫 화면에서만 생기고, 카드를 넘기는 요청들은 따뜻해진 인스턴스가 받는다.
+하루 몇 번 쓰는 암기 앱이라면 이 지연은 학습 한 번의 첫 화면에서만 생기고, 카드를 넘기는 요청들은 웜 인스턴스가 받는다.
 Go 바이너리의 기동은 수십 밀리초라 지연의 대부분은 첫 데이터베이스 연결과 JWKS 조회이고, 이 둘도 인스턴스가 살아 있는 동안은 되풀이되지 않는다.
 
 둘째, 요청당 실행 시간 제한이 있다(무료 플랜은 300초, {ch-free-tier}).
@@ -242,14 +256,15 @@ Go 바이너리의 기동은 수십 밀리초라 지연의 대부분은 첫 데�
 여기서 아래 표의 세 값, 곧 데이터베이스 연결 문자열과 프로젝트 URL, anon key가 나온다.
 개발용 프로젝트도 하나 더 만드는데, 그 이유는 {ch-supabase-db}에서 다룬다.
 
-둘째, 데이터베이스 마이그레이션(migration)을 실행한다.
-빈 데이터베이스에 {ch-database-design}에서 설계한 테이블을 만드는 작업으로, `go run ./cmd/migrate`가 스키마를 Supabase의 PostgreSQL에 적용한다.
-손으로 실행하는 것은 처음 한 번뿐이고, 그다음부터는 스키마 파일이 바뀐 커밋마다 `migrate.yml`이 브랜치가 정한 DB에 적용한다({ch-migrations}).
-
-셋째, OAuth 앱을 등록한다.
+둘째, OAuth 앱을 등록한다.
 Google과 GitHub에 OAuth 애플리케이션을 만들고 자격 증명을 Supabase에 연결한다({ch-supabase-auth}).
 
-넷째, GitHub 저장소를 만들어 push하고, 운영용 `release` 브랜치를 만들어 둔다({ch-git}).
+셋째, GitHub 저장소를 만들어 push하고, 운영용 `release` 브랜치를 만들어 둔다({ch-git}).
+
+넷째, 데이터베이스 마이그레이션(migration)을 실행한다.
+빈 데이터베이스에 {ch-database-design}에서 설계한 테이블을 만드는 작업으로, GitHub Actions의 `migrate.yml` 워크플로가 `go run ./cmd/migrate`로 스키마를 Supabase의 PostgreSQL에 적용한다.
+워크플로가 접속할 두 DB의 연결 문자열을 GitHub 저장소에 등록한 뒤, GitHub 화면에서 이 워크플로를 `main`과 `release` 브랜치로 한 번씩 손으로 실행(Run workflow)하면 개발 DB와 운영 DB에 테이블이 생긴다({ch-deploy}).
+손으로 실행하는 것은 이 처음 한 번뿐이고, 그다음부터는 스키마 파일이 바뀐 커밋이 push될 때마다 워크플로가 브랜치가 정한 DB에 스키마를 적용한다({ch-migrations}).
 
 다섯째, Vercel에서 저장소를 import하고, Root Directory를 `flashcard-advanced/`로 지정하고, 프로덕션 브랜치를 `release`로 바꾸고, 환경 변수를 등록한다.
 빌드 설정은 `vercel.json`이 정하므로, 사람이 입력할 것은 Root Directory, 프로덕션 브랜치, 그리고 다음 표의 환경 변수 셋뿐이다.
@@ -270,7 +285,7 @@ JWKS 주소는 `SUPABASE_URL`에서 유도된다.
 Production에는 운영 Supabase 프로젝트의 값을, Preview에는 개발 프로젝트의 값을 넣는다.
 값의 의미는 {ch-supabase-auth}과 {ch-supabase-db}을 읽으며 채워 가면 된다.
 
-앞의 세 단계(Supabase 프로젝트, 마이그레이션, OAuth 등록) 없이 Vercel 연결만 먼저 하면, 배포는 성공해도 앱은 뜨지 않는다.
+Supabase 프로젝트, OAuth 등록, 마이그레이션을 갖추지 않고 Vercel 연결만 먼저 하면, 배포는 성공해도 앱은 뜨지 않는다.
 빌드는 코드가 컴파일되는지만 확인한다.
 필요한 환경 변수가 비어 있으면 함수가 기동을 거부하도록 짜여 있어({ch-supabase-db}) 접속자에게는 500 오류만 보인다.
 그래서 배포는 4부를 마친 뒤 {ch-deploy}의 순서를 따라 완주하는 편이 안전하다.
@@ -281,17 +296,17 @@ Production에는 운영 Supabase 프로젝트의 값을, Preview에는 개발 �
 
 == 에이전트 활용 아이디어
 
-* `AGENTS.md`에 "`vercel.json`의 rewrite와 함수 리전은 바꾸지 않는다"를 적어 둔다. 다만 지침은 부탁이라, 기계로 확인할 수 있는 규칙이라면 검사 쪽이 더 믿을 만하다.
+* `AGENTS.md`에 "`vercel.json`의 리라이트 규칙과 함수 리전은 바꾸지 않는다"를 적어 둔다. 다만 지침은 부탁이라, 기계로 확인할 수 있는 규칙이라면 검사 쪽이 더 믿을 만하다.
 * 배포가 실패하면 Vercel 대시보드의 빌드 로그를 대화에 붙여 넣는다. 빌드 환경 차이나 환경 변수 누락처럼 로컬에서 재현되지 않는 실패일수록 로그 해석을 맡기는 값어치가 크다.
-* 플랫폼 제약을 새로 발견하면 그것을 커밋 전에 재현하는 명령을 찾아 `./check.sh`에 더하게 한다. `go build api/index.go`가 그렇게 들어간 검사다.
+* 플랫폼 제약을 새로 발견하면 그 제약을 커밋 전에 확인하는 검사를 찾아 `./check.sh`에 더하게 한다. 검사를 받으면 일부러 제약을 어긴 코드로 한 번 돌려 실제로 실패하는지 확인한다. import 목록 검사는 그렇게 실패를 확인한 뒤에 `go build api/index.go`를 대신해 들어갔다.
 
 == 정리
 
 Vercel Go 런타임이 `api/index.go`를 모듈 외부에서 단독 컴파일한다는 제약 때문에 조립 코드를 `pkg/app`에 두었다.
-`go build ./...`로는 잡히지 않는 이 위반은 `./check.sh`의 `go build api/index.go`가 커밋 전에 잡는다.
+모듈 안의 빌드로는 어떤 형태로도 잡히지 않는 이 위반은 `./check.sh`가 `api/` 패키지의 import 목록을 직접 검사해 커밋 전에 잡는다.
 
 `vercel.json`은 네 가지를 정한다.
-모든 요청을 함수 하나로 모으는 rewrite, 프레임워크가 없다는 `"framework": null`, 데이터베이스와 같은 지역의 함수 리전, 앱 디렉터리가 바뀌지 않은 커밋의 배포를 건너뛰는 `ignoreCommand`다.
+모든 요청을 함수 하나로 모으는 리라이트, 프레임워크가 없다는 `"framework": null`, 데이터베이스와 같은 지역의 함수 리전, 앱 디렉터리가 바뀌지 않은 커밋의 배포를 건너뛰는 `ignoreCommand`다.
 
 프로덕션 브랜치를 `release`로 바꿔 `main` push는 프리뷰 배포로, `release` 병합은 운영 배포로 나눴다.
 환경 변수는 스코프로 운영·개발 값을 따로 둔다.

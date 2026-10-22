@@ -3,26 +3,26 @@
 {ch-gin}에서 본 핸들러는 데이터를 스스로 꺼내지 않았다.
 `store`라는 이름의 무언가에 물어보고 그 답을 JSON으로 옮겼을 뿐이다.
 
-이 장은 그 뒤편의 저장소 계층이 왜 따로 있는지 보고, 나뉜 조각들이 한 벌의 앱으로 조립되어 내 컴퓨터의 서버와 Vercel 함수 양쪽에서 같은 모습으로 도는 과정을 따라간다.
+이 장은 그 뒤편의 store 계층이 왜 따로 있는지 보고, 나뉜 조각들이 한 벌의 앱으로 조립되어 내 컴퓨터의 서버와 Vercel 함수 양쪽에서 같은 모습으로 도는 과정을 따라간다.
 로컬에서 검증한 동작이 배포 환경에서도 그대로라는 보장은 조립 코드를 어디에 두고 무엇을 공유하게 만드느냐에서 나온다.
 
 == 계층 분리: handlers와 store
 
-=== 두 계층의 골격
+=== 두 계층의 기본 구조
 
 Flashcard 백엔드는 HTTP 요청을 다루는 일과 데이터베이스를 읽고 쓰는 일을 다른 패키지로 나눈다.
 `internal/handlers`는 요청 파싱·검증·상태 코드를, `internal/pgstore`는 SQL을 맡는다.
 
 두 계층 사이를 오가는 카드와 덱 같은 행 타입과 "없음"을 알리는 에러 값은 세 번째 패키지 `internal/model`에 둔다.
-저장소 구현이 PostgreSQL용과 SQLite용(`internal/litestore`) 둘이라, 행 타입을 `pgstore`에 두면 SQLite 구현이 PostgreSQL용 패키지를 가져와야 하기 때문이다.
+store 구현이 PostgreSQL용과 SQLite용(`internal/litestore`) 둘이라, 행 타입을 `pgstore`에 두면 SQLite 구현이 PostgreSQL용 패키지를 가져와야 하기 때문이다.
 
 세 패키지의 선언부를 차례로 발췌한다.
-첫째는 `internal/model`이 적어 둔 계약으로, 저장소가 할 줄 알아야 하는 메서드 목록과 행이 없을 때 쓰는 에러 값 하나다.
+첫째는 `internal/model`이 적어 둔 계약으로, store가 할 줄 알아야 하는 메서드 목록과 행이 없을 때 쓰는 에러 값 하나다.
 
 [source,go]
 ----
 include::../../flashcard-advanced/internal/model/store.go[tag=store-head]
-	// ... 덱 스토리·카드·세션·공유·스마트 덱·통계 메서드 생략 (모두 합해 35개)
+	// ... 덱 스토리·카드·세션·공유·스마트 덱·통계 메서드 생략
 }
 
 // internal/model/model.go
@@ -133,7 +133,7 @@ include::../../flashcard-advanced/internal/handlers/handlers.go[tag=deck-id-by-s
 === pkg/app: Gin 엔진을 만드는 조립 지점
 
 다음은 핸들러 조립과 라우트 등록을 마친 `*gin.Engine`을 만드는 부분이다.
-엔진을 프로세스에 하나만 만들어 돌려주는 `Engine`과, 설정과 저장소를 받아 라우터를 조립하는 `New`가 등장한다.
+엔진을 프로세스에 하나만 만들어 돌려주는 `Engine`과, 설정과 store를 받아 라우터를 조립하는 `New`가 등장한다.
 
 [source,go]
 ----
@@ -185,7 +185,7 @@ func New(cfg *config.Config, s model.Store) *gin.Engine {
 
 첫째, 조립과 준비가 두 함수로 나뉘어 있다.
 `New`는 설정과 스토어를 받아 라우터를 만드는 순수한 조립 함수이고, `Engine`은 설정 로드와 DB 커넥션 풀 생성까지 마친 완성품을 돌려주는 포장이다.
-`New`가 `model.Store` 인터페이스({ch-go-types})를 받으므로 어떤 저장소 구현이든 꽂을 수 있다.
+`New`가 `model.Store` 인터페이스({ch-go-types})를 받으므로 어떤 store 구현이든 꽂을 수 있다.
 
 둘째, `Engine`은 `sync.Once`로 엔진을 프로세스(process)당 한 번만 만든다.
 서버리스 함수는 요청이 뜸하면 꺼졌다가 새 요청이 오면 다시 켜지고, 켜진 동안에는 뒤이은 요청들을 같은 프로세스에서 처리한다.
@@ -294,7 +294,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 
 </div>
 
-<p class="fc-caption">그림 16 하나의 엔진, 두 개의 진입점. 라우터를 조립하는 것은 <code>pkg/app</code>의 <code>New</code> 하나다. 로컬 서버는 드라이버에 따라 SQLite 저장소를 직접 꽂거나 <code>Engine()</code>을 부르고, Vercel 함수는 <code>Engine()</code>만 부른다.</p>
+<p class="fc-caption">그림 16 하나의 엔진, 두 개의 진입점. 라우터를 조립하는 것은 <code>pkg/app</code>의 <code>New</code> 하나다. 로컬 서버는 드라이버에 따라 SQLite store를 직접 꽂거나 <code>Engine()</code>을 부르고, Vercel 함수는 <code>Engine()</code>만 부른다.</p>
 ++++
 
 진입점은 둘이어도 조립은 `New` 하나라서 로컬과 운영의 요청이 같은 라우팅·핸들러·미들웨어 순서를 지난다.
@@ -305,11 +305,11 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 
 `AGENTS.md`에는 계층 규약을 적는다.
 "핸들러는 바인딩과 응답만 하고 로직은 store로 내린다", "새 라우트는 `pkg/app`의 조립부에 등록한다", "DB 접근은 Store 인터페이스를 통해서만 한다"가 이 저장소의 후보다.
-"덱 목록에 카드 수를 더해 달라"는 요청에 에이전트는 스토어 메서드를 고치는 대신 핸들러 안에서 `count(*)` 질의를 바로 보내는 쪽으로 기울기 쉬우므로, 계층 경계일수록 지침이 필요하다.
+"덱 목록에 카드 수를 더해 달라"는 요청에 에이전트는 스토어 메서드를 고치는 대신 핸들러 안에서 `count(*)` 쿼리를 바로 보내는 쪽으로 기울기 쉬우므로, 계층 경계일수록 지침이 필요하다.
 
 조립 코드의 위치 제약은 지침보다 검사에 맡긴다.
 `api/index.go`가 `internal/`을 가져올 수 없다는 규칙은 어겨도 로컬 빌드가 통과한다.
-그래서 커밋 전에 도는 `./check.sh`가 `api/index.go`를 단독으로 빌드해, 이 규칙을 어기면 실패하게 했다({ch-quality-gates}).
+그래서 커밋 전에 도는 `./check.sh`는 빌드 대신 `go list`로 `api` 패키지가 가져오는 패키지 목록을 뽑아, 경로에 `/internal/`이 든 것이 하나라도 있으면 실패한다({ch-quality-gates}, {ch-vercel-config}).
 
 == 정리
 

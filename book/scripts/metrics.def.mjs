@@ -98,7 +98,7 @@ export const definitions = {
     measure: () => filesIn('internal/web/templates/pages').length,
   },
   'store-methods': {
-    desc: '저장소 계약 model.Store 인터페이스의 메서드 수',
+    desc: 'store 계약 model.Store 인터페이스의 메서드 수',
     korean: true,
     measure: () => {
       const src = readFileSync(at('internal/model/store.go'), 'utf8')
@@ -133,6 +133,13 @@ export const definitions = {
     desc: '"N줄 남짓"에 쓰는 internal/web/static/app.js의 줄 수 (10 단위로 내림)',
     measure: () => {
       const lines = readFileSync(at('internal/web/static/app.js'), 'utf8').split('\n').length - 1
+      return Math.floor(lines / 10) * 10
+    },
+  },
+  'app-css-lines': {
+    desc: '"N줄 남짓"에 쓰는 internal/web/static/app.css의 줄 수 (10 단위로 내림)',
+    measure: () => {
+      const lines = readFileSync(at('internal/web/static/app.css'), 'utf8').split('\n').length - 1
       return Math.floor(lines / 10) * 10
     },
   },

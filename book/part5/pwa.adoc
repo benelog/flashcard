@@ -144,7 +144,7 @@ PWA를 고른 이유는 네이티브 앱의 배포 부담을 피하려는 것이
 
 설치 관련 파일은 값 하나가 틀려도 빌드가 깨지지 않고, 증상은 설치 화면에서야 드러난다.
 
-* manifest 수정은 에이전트에게 맡기되, "`manifest.webmanifest`에 마스크 가능 아이콘을 추가해 달라"고 지시한 뒤 개발자 도구의 Application 탭에서 실제로 인식되는지 눈으로 확인하는 왕복이 가장 빠르다.
+* manifest 수정은 에이전트에게 맡기되, "`manifest.webmanifest`에 덱 목록(`/decks`)과 통계(`/stats`)로 가는 바로가기(`shortcuts`, 설치한 아이콘을 길게 누르면 뜨는 메뉴)를 추가해 달라"고 지시한 뒤 개발자 도구의 Application 탭에서 실제로 인식되는지 눈으로 확인하는 왕복이 가장 빠르다.
 * `AGENTS.md`에는 "새 자산 파일을 추가하면 해시 대상 목록에도 넣는다"를 적어 둔다. 그 목록은 `internal/web/routes.go`의 `assetVersion`이 해시하는 `app.css`·`app.js`·`htmx.min.js` 세 파일이고, 잊으면 캐시가 이전 버전 파일을 붙잡는다({ch-caching}).
 
 == 정리
